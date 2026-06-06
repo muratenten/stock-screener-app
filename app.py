@@ -1921,10 +1921,66 @@ def color_pl_cell(val):
     return ''
 
 # Sidebar setup for personalizing portfolios
-st.sidebar.markdown("### 👤 専用ページの切り替え")
-# Read default value from URL query parameter if present
 query_user = st.query_params.get("user", "default")
 
+if query_user == "default":
+    # ---------------------------------------------------------
+    # WELCOME PORTAL PAGE (Shown when no user ID is set)
+    # ---------------------------------------------------------
+    st.markdown("""
+    <div class="title-container" style="text-align: center; margin-top: 40px; margin-bottom: 20px;">
+        <h1 class="title-text" style="font-size: 2.5rem; color: #1e3a8a;">Rising Stock Screener</h1>
+        <p class="subtitle-text" style="font-size: 1.1rem; color: #64748b;">AI分析とファンダメンタルズによる上昇期待銘柄選定システム</p>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    col_w1, col_w2, col_w3 = st.columns([0.8, 2.4, 0.8])
+    with col_w2:
+        st.markdown("""
+        <div style="background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 30px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); margin-bottom: 20px;">
+            <h3 style="font-size: 1.3rem; font-weight: bold; margin-bottom: 15px; color: #0f172a; text-align: center; border-bottom: 2px solid #f1f5f9; padding-bottom: 10px;">
+                👤 マイページ（専用フォルダ）へのログイン
+            </h3>
+            <p style="font-size: 0.95rem; color: #475569; margin-bottom: 20px; line-height: 1.6;">
+                本システムは、ユーザーごとに独立したポートフォリオ、デモトレード記録、お気に入り銘柄（ウォッチリスト）を管理できます。<br>
+                下にお名前または専用IDを入力してマイページにアクセスしてください。
+            </p>
+        """, unsafe_allow_html=True)
+        
+        entered_id = st.text_input(
+            "名前・専用IDを入力してください（半角英数字のみ）",
+            value="",
+            placeholder="例: takkun, user_abc",
+            autocomplete="off",
+            key="portal_user_id_input"
+        )
+        
+        st.markdown("""
+            <div style="background-color: #fef2f2; border-left: 4px solid #ef4444; padding: 12px 15px; border-radius: 4px; margin-top: 15px; margin-bottom: 20px;">
+                <span style="font-size: 0.85rem; color: #991b1b; font-weight: bold; display: block; margin-bottom: 3px;">⚠️ 注意事項</span>
+                <span style="font-size: 0.8rem; color: #7f1d1d; line-height: 1.4; display: block;">
+                    初めて入力された名前の場合は、自動的にその名前で新しい専用マイページファイルが作成されます。<br>
+                    <b>入力した名前を忘れると、これまでのデモトレードやウォッチリストの記録にアクセスできなくなります</b>ので、必ず名前をメモするか、アクセス後のURLをブックマークして保存してください。
+                </span>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        if st.button("🚀 マイページを開く", type="primary", use_container_width=True, key="portal_login_btn"):
+            safe_id = "".join([c for c in str(entered_id) if c.isalnum() or c in ('-', '_')]).strip()
+            if safe_id:
+                st.query_params["user"] = safe_id
+                st.session_state['user_key'] = safe_id
+                st.rerun()
+            else:
+                st.error("有効な名前（英数字のみ）を入力してください。")
+    # Stop execution of the remaining script
+    st.stop()
+
+# ---------------------------------------------------------
+# MAIN APP INTERFACE (Shown when user ID is set)
+# ---------------------------------------------------------
+st.sidebar.markdown("### 👤 専用ページの切り替え")
 user_key = st.sidebar.text_input(
     "名前・専用IDを入力してください",
     value=query_user,
@@ -1932,9 +1988,14 @@ user_key = st.sidebar.text_input(
     help="ここに名前（半角英数字）を入力すると、他のユーザーと混ざらない『あなた専用のページ』に切り替わります。同じIDを入力すれば別のデバイスからもアクセス可能です。"
 )
 st.sidebar.caption("💡 **【重要】** 初めて入力されたIDであなた専用のマイページファイルが自動作成されます。**IDを忘れるとこれまでの取引データにアクセスできなくなります**ので、必ずIDをメモするか、URLをブックマークして保存してください。")
-# Sync to URL query parameters
-st.query_params["user"] = user_key
+
+if st.sidebar.button("🚪 ログアウト (ログイン画面に戻る)", use_container_width=True, key="sidebar_logout_btn"):
+    st.query_params["user"] = "default"
+    st.session_state['user_key'] = "default"
+    st.rerun()
+
 st.session_state['user_key'] = user_key
+st.query_params["user"] = user_key
 
 # Initialize portfolio data in session state
 portfolio_data = load_portfolio()
