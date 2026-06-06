@@ -1,0 +1,74 @@
+{
+    "purchase_records": [
+        {
+            "ticker": "9022.T",
+            "name": "JR東海",
+            "purchase_date": "2026-06-06",
+            "purchase_price": 3345.0,
+            "invest_amount": 66900.0,
+            "quantity": 20.0
+        },
+        {
+            "ticker": "6701.T",
+            "name": "日本電気 (NEC)",
+            "purchase_date": "2026-06-06",
+            "purchase_price": 4253.0,
+            "invest_amount": 85060.0,
+            "quantity": 20.0
+        },
+        {
+            "ticker": "9104.T",
+            "name": "商船三井",
+            "purchase_date": "2026-06-06",
+            "purchase_price": 5801.0,
+            "invest_amount": 116020.0,
+            "quantity": 20.0
+        },
+        {
+            "ticker": "7203.T",
+            "name": "トヨタ自動車",
+            "purchase_date": "2026-06-06",
+            "purchase_price": 2850.0,
+            "invest_amount": 57000.0,
+            "quantity": 20.0
+        },
+        {
+            "ticker": "9101.T",
+            "name": "日本郵船",
+            "purchase_date": "2026-06-06",
+            "purchase_price": 5609.0,
+            "invest_amount": 112180.0,
+            "quantity": 20.0
+        },
+        {
+            "ticker": "3632.T",
+            "name": "グリー",
+            "purchase_date": "2026-06-06",
+            "purchase_price": 407.0,
+            "invest_amount": 40700.0,
+            "quantity": 100.0
+        },
+        {
+            "ticker": "9107.T",
+            "name": "川崎汽船",
+            "purchase_date": "2026-06-06",
+            "purchase_price": 2701.5,
+            "invest_amount": 54030.0,
+            "quantity": 20.0
+        }
+    ],
+    "sales_records": [],
+    "total_realized_pl_jpy": 0.0,
+    "last_valid_prices": {
+        "9022.T": 3345.0,
+        "6701.T": 4253.0,
+        "9104.T": 5801.0,
+        "7203.T": 2850.0,
+        "9101.T": 5609.0,
+        "3632.T": 407.0,
+        "9107.T": 2701.5
+    },
+    "watchlist": {
+        "9433.T": "KDDI"
+    }
+}
