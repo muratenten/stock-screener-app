@@ -1934,7 +1934,10 @@ if query_user == "default":
         <div class="portal-blob portal-blob-3"></div>
     </div>
     <style>
-    .stApp {
+    .stApp, [data-testid="stMainViewContainer"], .main {
+        background-color: transparent !important;
+    }
+    [data-testid="stAppViewContainer"] {
         background-color: #f8fafc !important;
     }
     .portal-bg-container {
@@ -1944,40 +1947,40 @@ if query_user == "default":
         width: 100vw;
         height: 100vh;
         overflow: hidden;
-        z-index: -999;
+        z-index: -1;
         pointer-events: none;
     }
     .portal-blob {
         position: absolute;
         border-radius: 50%;
         filter: blur(80px);
-        opacity: 0.3;
+        opacity: 0.45;
         animation: float-blob 22s infinite alternate ease-in-out;
     }
     .portal-blob-1 {
-        width: 400px;
-        height: 400px;
-        background: #93c5fd;
+        width: 450px;
+        height: 450px;
+        background: #bae6fd;
         top: -100px;
         left: -100px;
         animation-delay: 0s;
         animation-duration: 20s;
     }
     .portal-blob-2 {
-        width: 450px;
-        height: 450px;
-        background: #c084fc;
+        width: 500px;
+        height: 500px;
+        background: #d8b4fe;
         bottom: -150px;
         right: -100px;
         animation-delay: -5s;
         animation-duration: 25s;
     }
     .portal-blob-3 {
-        width: 320px;
-        height: 320px;
-        background: #f472b6;
-        top: 35%;
-        left: 40%;
+        width: 350px;
+        height: 350px;
+        background: #fbcfe8;
+        top: 30%;
+        left: 35%;
         animation-delay: -10s;
         animation-duration: 22s;
     }
