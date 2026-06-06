@@ -858,6 +858,8 @@ def create_chart(df, ticker, name):
     fig.update_yaxes(gridcolor='#f1f5f9', zerolinecolor='#cbd5e1')
     fig.update_xaxes(gridcolor='#f1f5f9')
     
+    return fig
+
 def generate_similar_pattern_explanation(ticker, name, m, N):
     start_dt = m['start_date']
     end_dt = m['end_date']
