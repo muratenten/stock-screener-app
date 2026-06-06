@@ -1922,11 +1922,16 @@ def color_pl_cell(val):
 
 # Sidebar setup for personalizing portfolios
 st.sidebar.markdown("### 💼 ポートフォリオ個人化")
+# Read default value from URL query parameter if present
+query_user = st.query_params.get("user", "default")
+
 user_key = st.sidebar.text_input(
     "ユーザーID (ポートフォリオキー)",
-    value="default",
+    value=query_user,
     help="個人別のポートフォリオを作るための識別子です。自分専用のIDを入力すると、他のユーザーと混ざらずに自分だけのポートフォリオやお気に入りを管理できます。同じIDを入力すれば、別のデバイスからでも同じデータにアクセスできます。"
 )
+# Sync to URL query parameters
+st.query_params["user"] = user_key
 st.session_state['user_key'] = user_key
 
 # Initialize portfolio data in session state
