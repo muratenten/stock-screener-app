@@ -498,10 +498,12 @@ def get_ticker_info(ticker):
 @st.cache_data(ttl=86400)
 def fetch_nikkei225_tickers():
     try:
+        import io
         url = "https://ja.wikipedia.org/wiki/" + urllib.parse.quote("日経平均株価")
         req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
-        html = urllib.request.urlopen(req).read()
-        tables = pd.read_html(html)
+        html_bytes = urllib.request.urlopen(req).read()
+        html_str = html_bytes.decode('utf-8')
+        tables = pd.read_html(io.StringIO(html_str))
         components = {}
         for df in tables:
             if '証券コード' in df.columns and '銘柄' in df.columns:
