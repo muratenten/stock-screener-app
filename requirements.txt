@@ -3,3 +3,6 @@ yfinance
 pandas
 plotly
 numpy
+lxml
+beautifulsoup4
+html5lib
