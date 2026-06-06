@@ -498,28 +498,46 @@ def get_ticker_info(ticker):
 @st.cache_data(ttl=86400)
 def fetch_nikkei225_tickers():
     try:
-        import io
+        from bs4 import BeautifulSoup
         url = "https://ja.wikipedia.org/wiki/" + urllib.parse.quote("日経平均株価")
         req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
         html_bytes = urllib.request.urlopen(req).read()
         html_str = html_bytes.decode('utf-8')
-        tables = pd.read_html(io.StringIO(html_str))
+        soup = BeautifulSoup(html_str, 'html.parser')
+        
         components = {}
-        for df in tables:
-            if '証券コード' in df.columns and '銘柄' in df.columns:
-                for _, row in df.iterrows():
-                    try:
-                        code_val = row['証券コード']
-                        if isinstance(code_val, (int, float)) and not pd.isna(code_val):
-                            code = str(int(code_val))
-                        else:
-                            code = str(code_val).strip()
-                        if len(code) == 4 and code.isalnum():
-                            ticker = f"{code}.T"
-                            name = str(row['銘柄']).strip()
-                            components[ticker] = {"name": name, "tags": ["日経225"]}
-                    except:
-                        continue
+        current_sector = "不明"
+        
+        for element in soup.find_all(['h3', 'h4', 'table']):
+            if element.name in ['h3', 'h4']:
+                text = element.text.strip()
+                if '[' in text:
+                    text = text.split('[')[0].strip()
+                if '（' in text:
+                    text = text.split('（')[0].strip()
+                if '(' in text:
+                    text = text.split('(')[0].strip()
+                current_sector = text
+            elif element.name == 'table':
+                headers = [th.text.strip() for th in element.find_all('th')]
+                if '証券コード' in headers and '銘柄' in headers:
+                    rows = element.find_all('tr')[1:]
+                    for row in rows:
+                        cols = row.find_all('td')
+                        if len(cols) >= 2:
+                            code_text = cols[0].text.strip()
+                            name_text = cols[1].text.strip()
+                            if len(code_text) == 4 and code_text.isalnum():
+                                ticker = f"{code_text}.T"
+                                
+                                # Inherit hand-curated tags from JP_TICKERS if available
+                                inherited_tags = []
+                                if ticker in JP_TICKERS:
+                                    inherited_tags = JP_TICKERS[ticker].get("tags", [])
+                                
+                                tags = list(set(["日経225", current_sector] + inherited_tags))
+                                components[ticker] = {"name": name_text, "tags": tags}
+                                
         if components:
             return components
     except Exception as e:
@@ -2037,7 +2055,7 @@ with tab_screen:
         is_ai_semi = "AI" in tags or "半導体" in tags or any(x in str(tags) for x in ["Technology", "Semiconductor", "Software", "ソフトウェア", "電気機器", "設計"])
         is_space = "宇宙" in tags or any(x in str(tags) for x in ["Space", "Aerospace", "Defense", "防衛", "航空宇宙", "航空重工", "ロケット", "月面開発", "月面着陸", "衛星システム", "衛星レーダー", "衛星データ分析"])
         is_explosive = "急騰期待" in tags
-        is_high_dividend_value = "高配当" in tags or "商社" in tags or "銀行業" in tags or "保険業" in tags or "金融" in tags or "バリュー" in tags or "高配当" in str(tags) or "卸売業" in tags
+        is_high_dividend_value = "高配当" in tags or "商社" in tags or "銀行業" in tags or "銀行" in tags or "保険業" in tags or "保険" in tags or "金融" in tags or "その他金融" in tags or "バリュー" in tags or "高配当" in str(tags) or "卸売業" in tags or "商業" in tags
         is_crypto_meme = "ビットコイン保有" in tags or "暗号資産" in tags or "ミーム株" in tags or "暗号資産取引所" in tags or "暗号資産マイニング" in tags or any(x in str(tags) for x in ["Bitcoin", "Crypto", "Meme"])
         is_entertainment_vtuber_game = "VTuber" in tags or "ゲーム" in tags or "エンタメ" in tags or "ゲーム・メタバース" in tags or "その他製品" in tags or "ストリーミング" in tags or "SNS" in tags
         is_defense_heavy = "防衛" in tags or "宇宙" in tags or "ロケット" in tags or "機械" in tags or "輸送用機器" in tags or "航空重工" in tags or "精密機器" in tags
