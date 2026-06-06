@@ -858,7 +858,125 @@ def create_chart(df, ticker, name):
     fig.update_yaxes(gridcolor='#f1f5f9', zerolinecolor='#cbd5e1')
     fig.update_xaxes(gridcolor='#f1f5f9')
     
-    return fig
+def generate_similar_pattern_explanation(ticker, name, m, N):
+    start_dt = m['start_date']
+    end_dt = m['end_date']
+    similarity = m['similarity']
+    all_prices = m['all_prices']
+    
+    price_at_end = all_prices[N-1]
+    price_after = all_prices[-1]
+    ret = (price_after - price_at_end) / price_at_end * 100
+    
+    year = start_dt.year
+    month = start_dt.month
+    
+    # Identify macro/時事 event based on the period
+    macro_title = "グローバル市場の調整局面"
+    macro_desc = "この時期、特に目立った局所的イベントはありませんでしたが、金利動向や市場センチメントの推移に応じて価格形成が行われていました。"
+    
+    if year == 2018:
+        macro_title = "米中貿易摩擦の激化と世界的な景気減速懸念"
+        macro_desc = "トランプ大統領（当時）による対中関税発動などから米中対立が深刻化し、世界的にハイテク株や輸出株を中心に株価のボラティリティ（値幅）が激しく高まりました。日本市場も新興株を中心に売り優勢となりました。"
+    elif year == 2019:
+        if month >= 8 or month <= 11:
+            macro_title = "消費税増税（10%へ）と駆け込み需要の反動減"
+            macro_desc = "10月の消費税増税前後の時期です。駆け込み需要による小売業の一時的活況とその後の反動減、さらに世界的な米中交渉の行方に神経質な相場展開が続き、内需・ディフェンシブ株が二極化しました。"
+        else:
+            macro_title = "世界的な金融緩和の推進局面"
+            macro_desc = "米FRBが予防的利下げを開始し、日米欧の金融緩和姿勢が改めて材料視されました。半導体セクターの底入れ期待が浮上し、グロース株に買い戻しが入る土台ができました。"
+    elif year == 2020:
+        if month <= 4:
+            macro_title = "新型コロナウイルス（コロナショック）による世界同時暴落"
+            macro_desc = "世界的な感染爆発により景気シャットダウン懸念が台頭し、日経平均は一時16,000円台へ急落。市場からリスクマネーが急速に引き揚げられ、全業種がセクターを問わずパニック売りに見舞われました。"
+        else:
+            macro_title = "コロナ後金融緩和による大規模流動性相場"
+            macro_desc = "各国中銀による未曾有の資金供給（ゼロ金利、量的緩和）とテレワーク普及等の「巣ごもり需要」を背景に、IT・通信、DX関連、半導体株などの特定テーマ株が歴史的な急騰劇を演じました。"
+    elif year == 2021:
+        macro_title = "ワクチン普及と経済再開（リオープン）期待、金融引き締め前夜"
+        macro_desc = "新型コロナワクチンの本格的普及により、それまで売り込まれていた旅行・空運やバリュー株（鉄鋼・銀行等）に資金が還流する一方、景気回復に伴うインフレ懸念が徐々に市場へ台頭し始めた過渡期です。"
+    elif year == 2022:
+        if month <= 4:
+            macro_title = "ロシア・ウクライナ軍事衝突の勃発と資源価格の暴騰"
+            macro_desc = "ロシアによるウクライナ侵攻が開始され、原油や天然ガス、穀物などの資源原材料価格が一段と急騰。コストプッシュ型のインフレ懸念が急激に広がり、グローバル株価は大幅な下落圧力に晒されました。"
+        else:
+            macro_title = "米FRBの利上げ開始と激しい日米金利差拡大・大幅な円安"
+            macro_desc = "インフレ抑制のため米FRBが急速な大幅利上げを開始。日銀の緩和継続姿勢との乖離から、為替は一時1ドル150円台に迫る歴史的な円安が進行し、輸出企業と輸入企業の損益格差が際立ちました。"
+    elif year == 2023:
+        macro_title = "東証のPBR1倍割れ改善要求とウォーレン・バフェット効果"
+        macro_desc = "東京証券取引所による「資本効率・株価意識 of 経営要求」がサプライズとなり、バリュー株（低PBR株）への見直し買いが活発化。バフェット氏の日本株買い増し報道も加わり、海外機関投資家の巨額マネーが日本株を押し上げました。"
+    elif year == 2024:
+        if month <= 3:
+            macro_title = "日経平均史上最高値更新（4万円突破）とマイナス金利解除"
+            macro_desc = "日本企業の業績好調と円安を追い風に、日経平均株価がバブル期の史上最高値を34年ぶりに更新し初の4万円台に到達。日銀がマイナス金利解除を決定し、金利のある世界への転換点が意識されました。"
+        elif month >= 7 and month <= 9:
+            macro_title = "日銀追加利上げと円高進行、歴史的ボラティリティ上昇（株価大震災）"
+            macro_desc = "日銀の追加利上げと米景気後退懸念が重なり、為替が急激に円高方向へ転換。円キャリートレードの巻き戻しから、日経平均は史上最大（-4,451円）の暴落を記録し、その後に急反発する記録的ボラティリティ相場となりました。"
+        else:
+            macro_title = "新NISA開始と新政権発足に伴う国内株の再評価相場"
+            macro_desc = "新NISA制度のスタートにより個人マネーが流入し、自社株買いや増配などの株主還元強化を続ける日本企業が選別される相場環境となりました。政権交代や衆院選などの政治イベントにも値動きが敏感に反応しました。"
+    elif year >= 2025:
+        macro_title = "金利上昇局面におけるクオリティ株・バリュー株優位の展開"
+        macro_desc = "国内の徐々な利上げ観測の強まりから、銀行株や手元資金の厚いキャッシュリッチ企業が堅調に推移する一方、高PBR・無配グロー株などのバリュエーション調整が継続する選別的な相場展開となりました。"
+        
+    direction = "上昇" if ret >= 0 else "下落"
+    ret_style = f"color: {'#16a34a' if ret >= 0 else '#dc2626'}; font-weight: bold;"
+    
+    explanation = f"""
+    <div style="background-color: #f8fafc; border-radius: 8px; padding: 16px; border-left: 4px solid {'#16a34a' if ret >= 0 else '#dc2626'}; margin-bottom: 12px; border-top: 1px solid #e2e8f0; border-right: 1px solid #e2e8f0; border-bottom: 1px solid #e2e8f0;">
+        <div style="display: flex; justify-content: space-between; font-weight: bold; margin-bottom: 8px;">
+            <span style="font-size: 0.95rem; color: #1e293b;">🕒 期間: {start_dt.strftime('%Y-%m-%d')} 〜 {end_dt.strftime('%Y-%m-%d')} (類似度: {similarity:.1f}%)</span>
+            <span style="font-size: 1rem; {ret_style}">その後20営業日の値動き: {ret:+.2f}% ({direction})</span>
+        </div>
+        <div style="font-size: 0.9rem; color: #334155; line-height: 1.6;">
+            <strong>【当時の主要な時事・市況イベント】：{macro_title}</strong><br/>
+            {macro_desc}
+        </div>
+        <div style="font-size: 0.88rem; color: #475569; margin-top: 8px; border-top: 1px dashed #cbd5e1; padding-top: 8px;">
+            ℹ️ <strong>この期間中の {name} の挙動</strong>:<br/>
+            パターン終了時点で当時の株価は短期的な形状マッチングを示していましたが、その後20日間にわたり <span style="font-weight: 600; color: {'#16a34a' if ret >= 0 else '#dc2626'};">{ret:+.2f}%</span> の{direction}トレンドへと移行しました。当時の市場全体のトレンドと同調する形で動いたと考えられます。
+        </div>
+    </div>
+    """
+    return explanation
+
+def generate_final_pattern_implication(name, matches_data, avg_ret):
+    avg_color = "#16a34a" if avg_ret >= 0 else "#dc2626"
+    avg_sign = "+" if avg_ret >= 0 else ""
+    direction_text = "上昇する傾向" if avg_ret >= 0 else "下落（または調整）する傾向"
+    
+    up_count = 0
+    for m in matches_data:
+        N = len(m['all_prices']) - 20
+        price_at_end = m['all_prices'][N-1]
+        price_after = m['all_prices'][-1]
+        if price_after >= price_at_end:
+            up_count += 1
+            
+    win_rate = (up_count / len(matches_data)) * 100
+    
+    if win_rate >= 66:
+        strategy = f"過去の類似局面では高い確率で株価が上昇しており、現在の値動きパターンからも**強い順張り（押し目買い・買い追随）**の優位性が期待されます。"
+    elif win_rate <= 33:
+        strategy = f"過去の類似局面では下落・調整傾向が高く、現在の株価の動きにおいても天井圏での反落や、ブレイク失敗に伴う急落リスクが懸念されます。**利益確定の検討や、押し目を引き付けての慎重なエントリー**が推奨されます。"
+    else:
+        strategy = f"過去の類似局面における上昇率は二極化しており、方向感は中立です。チャート形状単体でのエントリー判断は避け、直近の出来高やファンダメンタルズの動向、決算発表スケジュール等を併せて考慮すべき局面です。"
+
+    text = f"""
+    <div style="background-color: #f8fafc; border-left: 5px solid {avg_color}; border-radius: 8px; padding: 20px; margin-top: 20px; box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05); border-top: 1px solid #e2e8f0; border-right: 1px solid #e2e8f0; border-bottom: 1px solid #e2e8f0;">
+        <h5 style="margin: 0 0 10px 0; color: #1e293b; font-size: 1.05rem;">💡 歴史的パターンから導かれる総合考察</h5>
+        <div style="font-size: 0.95rem; color: #334155; line-height: 1.6; margin-bottom: 12px;">
+            過去5年間のデータから抽出された類似パターン上位3例において、形状終了から20営業日後の平均騰落率は 
+            <strong style="color: {avg_color}; font-size: 1.2rem;">{avg_sign}{avg_ret:.2f}%</strong> となり、
+            過去の統計上は<strong>{direction_text}</strong>が見られます。（3回中 {up_count} 回で上昇）
+        </div>
+        <div style="font-size: 0.92rem; color: #475569; line-height: 1.6; border-top: 1px dashed #cbd5e1; padding-top: 12px;">
+            <strong>🎯 推奨される投資戦略のアプローチ：</strong><br/>
+            {strategy}
+        </div>
+    </div>
+    """
+    return text
 
 def render_detail_dashboard(selected_ticker, selected_name, raw_analysis, key_suffix=""):
     # Get owned stock details for the dashboard
@@ -1229,16 +1347,14 @@ def render_detail_dashboard(selected_ticker, selected_name, raw_analysis, key_su
                         styled_df = df_table.style.map(style_ret, subset=["その後の上昇・下落率"])
                         st.dataframe(styled_df, use_container_width=True, hide_index=True)
                         
+                        st.markdown("#### 🕒 各類似期間における背景・市況分析")
+                        for m in matches_data:
+                            expl_html = generate_similar_pattern_explanation(selected_ticker, selected_name, m, N_val)
+                            st.markdown(expl_html, unsafe_allow_html=True)
+                            
                         avg_ret = df_table['raw_ret'].mean()
-                        avg_color = "#16a34a" if avg_ret >= 0 else "#dc2626"
-                        avg_sign = "+" if avg_ret >= 0 else ""
-                        st.markdown(f"""
-                        <div style="background-color: #f8fafc; border-left: 5px solid {avg_color}; border-radius: 6px; padding: 15px; margin-top: 15px;">
-                            <h5 style="margin: 0 0 5px 0; color: #1e293b;">💡 歴史的パターンからの示唆</h5>
-                            過去の類似局面におけるパターン終了から20営業日後の平均上昇・下落率は 
-                            <strong style="color: {avg_color}; font-size: 1.15rem;">{avg_sign}{avg_ret:.2f}%</strong> です。
-                        </div>
-                        """, unsafe_allow_html=True)
+                        implication_html = generate_final_pattern_implication(selected_name, matches_data, avg_ret)
+                        st.markdown(implication_html, unsafe_allow_html=True)
         
     # Virtual simulated trading panel inside function
     st.markdown("#### 💼 仮想シミュレーション（デモトレード）に追加 / 売却")
