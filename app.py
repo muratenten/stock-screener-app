@@ -1930,7 +1930,7 @@ user_key = st.sidebar.text_input(
     value=query_user,
     help="ここに名前（半角英数字）を入力すると、他のユーザーと混ざらない『あなた専用のページ』に切り替わります。同じIDを入力すれば別のデバイスからもアクセス可能です。"
 )
-st.sidebar.caption("💡 名前を入力してEnterを押すと専用ページに切り替わります。入力後のURLをブックマークしてご利用ください。")
+st.sidebar.caption("💡 **【重要】** 初めて入力されたIDであなた専用のマイページファイルが自動作成されます。**IDを忘れるとこれまでの取引データにアクセスできなくなります**ので、必ずIDをメモするか、URLをブックマークして保存してください。")
 # Sync to URL query parameters
 st.query_params["user"] = user_key
 st.session_state['user_key'] = user_key
