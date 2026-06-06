@@ -860,6 +860,79 @@ def create_chart(df, ticker, name):
     
     return fig
 
+def fetch_historical_google_news(query, start_date, end_date):
+    import urllib.request
+    import urllib.parse
+    import re
+    import html
+    
+    start_str = start_date.strftime('%Y-%m-%d')
+    end_str = end_date.strftime('%Y-%m-%d')
+    
+    # Clean query (remove parts in parenthesis)
+    search_query = f"{query.split('(')[0].split('（')[0].strip()} after:{start_str} before:{end_str}"
+    encoded_query = urllib.parse.quote(search_query)
+    
+    url = f"https://news.google.com/rss/search?q={encoded_query}&hl=ja&gl=JP&ceid=JP:ja"
+    
+    try:
+        req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
+        with urllib.request.urlopen(req, timeout=4) as response:
+            xml_data = response.read().decode('utf-8', errors='ignore')
+            
+        items = re.findall(r'<item>(.*?)</item>', xml_data, re.DOTALL)
+        results = []
+        for item in items[:5]: # Take top 5 news items
+            title_m = re.search(r'<title>(.*?)</title>', item)
+            pub_date_m = re.search(r'<pubDate>(.*?)</pubDate>', item)
+            link_m = re.search(r'<link>(.*?)</link>', item)
+            
+            if title_m:
+                title = html.unescape(title_m.group(1))
+                parts = title.split(" - ")
+                if len(parts) > 1:
+                    title_clean = " - ".join(parts[:-1])
+                    source = parts[-1]
+                else:
+                    title_clean = title
+                    source = ""
+                    
+                pub_date_str = pub_date_m.group(1) if pub_date_m else ""
+                try:
+                    date_parts = pub_date_str.split(" ")
+                    if len(date_parts) >= 4:
+                        day = date_parts[1]
+                        month_str = date_parts[2]
+                        year_str = date_parts[3]
+                        months = {"Jan":"01", "Feb":"02", "Mar":"03", "Apr":"04", "May":"05", "Jun":"06",
+                                  "Jul":"07", "Aug":"08", "Sep":"09", "Oct":"10", "Nov":"11", "Dec":"12"}
+                        month_num = months.get(month_str[:3], "01")
+                        readable_date = f"{year_str}/{month_num}/{day.zfill(2)}"
+                    else:
+                        readable_date = pub_date_str
+                except:
+                    readable_date = pub_date_str
+                    
+                link = link_m.group(1) if link_m else ""
+                results.append({"title": title_clean, "date": readable_date, "link": link, "source": source})
+        return results
+    except Exception as e:
+        return []
+
+def fetch_all_historical_news_in_parallel(name, matches_data):
+    from concurrent.futures import ThreadPoolExecutor
+    
+    def fetch_one(m):
+        m['news'] = fetch_historical_google_news(name, m['start_date'], m['end_date'])
+        
+    try:
+        with ThreadPoolExecutor(max_workers=len(matches_data)) as executor:
+            executor.map(fetch_one, matches_data)
+    except Exception as e:
+        for m in matches_data:
+            if 'news' not in m:
+                m['news'] = []
+
 def generate_similar_pattern_explanation(ticker, name, m, N):
     start_dt = m['start_date']
     end_dt = m['end_date']
@@ -1008,7 +1081,7 @@ def generate_similar_pattern_explanation(ticker, name, m, N):
         elif year == 2023:
             corp_event = "経済産業省から「生成AI開発支援のためのスパコン整備事業者」として正式に選定され、政府からの巨額の助成金とGPU調達の優位性が判明。生成AI国策銘柄の筆頭として、個人投資家の投機的な買いが集中し株価は大化けを開始しました。"
         elif year >= 2024:
-            corp_event = "NVIDIA製GPUの本格稼働とAI開発需要の拡大により、営業利益の劇的な急増見通しを発表。投資マネーの流入が止まらず、連日株価は乱高下を繰り返し、新興市場きって of スター株として値動きが激化しました。"
+            corp_event = "NVIDIA製GPUの本格稼働とAI開発需要の拡大により、営業利益の劇的な急増見通しを発表。投資マネーの流入が止まらず、連日株価は乱高下を繰り返し、新興市場きってのスター株として値動きが激化しました。"
 
     elif ticker == "9348.T":
         if year == 2023:
@@ -1081,7 +1154,7 @@ def generate_similar_pattern_explanation(ticker, name, m, N):
             elif year == 2021:
                 corp_event = f"自動車向け半導体の世界的な枯渇や、サプライチェーンの混乱による「強制的な減産」が重荷となりました。一方、海外の中古車価格高騰などの需要過熱が価格交渉力を生み、実質の収益力は維持されました。"
             elif year == 2022:
-                corp_event = f"インフレによる部品や輸送費のコスト増を、急激な円安（1ドル115円から150円へ）による為替換算メリットが補い、結果的に業績が大幅に押し上げられ、バリュー株として底堅い展開となりました。"
+                corp_event = f"インフレによる部品や輸送費のコスト増を、急激な円安（1ドル115円から150円へ）による為替換算メリットが補い、結果的に業績が大幅に押し上げられ、バリュー株として底堅く展開となりました。"
             elif year == 2023:
                 corp_event = f"車載半導体不足が解消し減産からの生産挽回が本格化。EVの普及スピード減速から、日本メーカーの強みであるハイブリッド車（HEV）の実用性と収益力がグローバルで脚光を浴び、自動車株は軒並み好業績を記録しました。"
             elif year >= 2024:
@@ -1113,25 +1186,51 @@ def generate_similar_pattern_explanation(ticker, name, m, N):
             elif year >= 2024:
                 corp_event = f"日本企業の好業績やデフレ脱却期待という大局的な好材料と、日銀の金融政策決定や為替の円高転換という個別材料が交錯し、ボラティリティが高いなかでも {name} の個別ファンダメンタルズが選別された相場環境でした。"
             else:
-                corp_event = f"この時期、{name} のセクター特性に応じた個別の需給変化や季節要因が株価形成 of 主因となっていました。"
+                corp_event = f"この時期、{name} のセクター特性に応じた個別の需給変化や季節要因が株価形成の主因となっていました。"
 
     # Build explaining paragraph
     direction = "上昇" if ret >= 0 else "下落"
     ret_style = f"color: {'#16a34a' if ret >= 0 else '#dc2626'}; font-weight: bold;"
     
+    # Render real-time Google News if available
+    news_items = m.get('news', [])
+    news_html = ""
+    if news_items:
+        for item in news_items:
+            source_badge = f"""<span style="background-color: #e2e8f0; color: #475569; font-size: 0.72rem; padding: 2px 6px; border-radius: 4px; margin-left: 6px; font-weight: 500; display: inline-block; vertical-align: middle;">{item['source']}</span>""" if item['source'] else ""
+            news_html += f"""
+            <li style="margin-bottom: 6px; list-style-type: square; margin-left: 15px;">
+                <span style="color: #64748b; font-size: 0.85rem; font-family: monospace; margin-right: 6px;">[{item['date']}]</span>
+                <a href="{item['link']}" target="_blank" style="color: #2563eb; text-decoration: none; font-weight: 500; font-size: 0.88rem; border-bottom: 1px dashed #93c5fd;">{item['title']}</a>
+                {source_badge}
+            </li>
+            """
+    else:
+        news_html = """
+        <li style="margin-bottom: 6px; list-style-type: none; margin-left: 0px; color: #64748b; font-size: 0.88rem;">
+            ℹ️ 当時のニュース履歴を取得できませんでした（期間外、またはインデックス未登録）。
+        </li>
+        """
+
     explanation = f"""
     <div style="background-color: #f8fafc; border-radius: 8px; padding: 16px; border-left: 4px solid {'#16a34a' if ret >= 0 else '#dc2626'}; margin-bottom: 12px; border-top: 1px solid #e2e8f0; border-right: 1px solid #e2e8f0; border-bottom: 1px solid #e2e8f0;">
         <div style="display: flex; justify-content: space-between; font-weight: bold; margin-bottom: 8px;">
-            <span style="font-size: 0.95rem; color: #1e293b;">🕒 期間: {start_dt.strftime('%Y-%m-%d')} 〜 {end_dt.strftime('%Y-%m-%d')} (類似度: {similarity:.1f}%)</span>
-            <span style="font-size: 1rem; {ret_style}">その後20営業日の値動き: {ret:+.2f}% ({direction})</span>
+            <span style="font-size: 0.95rem; color: #1e293b;">🕒 類似期間: {start_dt.strftime('%Y-%m-%d')} 〜 {end_dt.strftime('%Y-%m-%d')} (類似度: {similarity:.1f}%)</span>
+            <span style="font-size: 1rem; {ret_style}">その後の20営業日の動向: {ret:+.2f}% ({direction})</span>
         </div>
-        <div style="font-size: 0.9rem; color: #334155; line-height: 1.6;">
+        <div style="font-size: 0.9rem; color: #334155; line-height: 1.6; margin-bottom: 8px;">
             <strong>【当時の主要な時事・市況イベント】：{macro_title}</strong><br/>
             {macro_desc}
         </div>
-        <div style="font-size: 0.88rem; color: #475569; margin-top: 8px; border-top: 1px dashed #cbd5e1; padding-top: 8px;">
-            ℹ️ <strong>この期間中の {name} の挙動</strong>:<br/>
-            パターン終了時点で当時の株価は短期的な形状マッチングを示していましたが、その後20日間にわたり <span style="font-weight: 600; color: {'#16a34a' if ret >= 0 else '#dc2626'};">{ret:+.2f}%</span> の{direction}トレンドへと移行しました。当時の市場全体のトレンドと同調する形で動いたと考えられます。
+        <div style="font-size: 0.9rem; color: #334155; line-height: 1.6; border-top: 1px dashed #cbd5e1; padding-top: 8px; margin-bottom: 8px;">
+            <strong>📰 当時（同日〜同月内）に報道された主要ニュース（リアルタイム取得）</strong>:<br/>
+            <ul style="margin: 6px 0 0 0; padding-left: 5px; line-height: 1.5;">
+                {news_html}
+            </ul>
+        </div>
+        <div style="font-size: 0.9rem; color: #1e3a8a; line-height: 1.6; border-top: 1px dashed #cbd5e1; padding-top: 8px; background-color: #f0f5ff; padding: 8px; border-radius: 6px; margin-top: 8px;">
+            <strong>🏢 当時の {name} に関係した主要出来事・材料（専門分析）</strong>:<br/>
+            {corp_event}
         </div>
     </div>
     """
@@ -1545,6 +1644,7 @@ def render_detail_dashboard(selected_ticker, selected_name, raw_analysis, key_su
                         st.dataframe(styled_df, use_container_width=True, hide_index=True)
                         
                         st.markdown("#### 🕒 各類似期間における背景・市況分析")
+                        fetch_all_historical_news_in_parallel(selected_name, matches_data)
                         for m in matches_data:
                             expl_html = generate_similar_pattern_explanation(selected_ticker, selected_name, m, N_val)
                             st.markdown(expl_html, unsafe_allow_html=True)
