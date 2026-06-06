@@ -1234,7 +1234,7 @@ def generate_similar_pattern_explanation(ticker, name, m, N):
         </div>
     </div>
     """
-    return explanation
+    return "\n".join([line.strip() for line in explanation.split("\n")])
 
 def generate_final_pattern_implication(name, matches_data, avg_ret):
     avg_color = "#16a34a" if avg_ret >= 0 else "#dc2626"
@@ -1272,7 +1272,7 @@ def generate_final_pattern_implication(name, matches_data, avg_ret):
         </div>
     </div>
     """
-    return text
+    return "\n".join([line.strip() for line in text.split("\n")])
 
 def render_detail_dashboard(selected_ticker, selected_name, raw_analysis, key_suffix=""):
     # Get owned stock details for the dashboard
