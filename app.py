@@ -9,7 +9,7 @@ import urllib.request
 import urllib.parse
 import json
 import os
-from tickers import JP_TICKERS
+from tickers import JP_TICKERS, US_TICKERS
 
 # Page config
 st.set_page_config(
@@ -69,23 +69,53 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
+# Helper function to check if a ticker is a US stock
+def is_us_stock(ticker):
+    if not ticker:
+        return False
+    return not ticker.endswith(".T") and not ticker.isdigit()
+
+# Helper function to get USD/JPY exchange rate
+@st.cache_data(ttl=3600)
+def get_usdjpy_rate():
+    try:
+        rate_ticker = yf.Ticker("JPY=X")
+        df = rate_ticker.history(period="1d")
+        if not df.empty:
+            rate = float(df['Close'].iloc[-1])
+            return rate
+    except Exception:
+        pass
+    return 155.0
+
 # Helper function to format price
-def format_price(price):
+def format_price(price, ticker=None):
     if price is None or pd.isna(price):
         return "N/A"
+    if ticker and is_us_stock(ticker):
+        return f"${price:,.2f}"
     return f"¥{int(price):,}"
 
-# Helper function to format large JPY figures (e.g. market cap, net income)
-def format_large_jpy(val):
+# Helper function to format large currency figures
+def format_large_jpy(val, ticker=None):
     if val is None or pd.isna(val):
         return "N/A"
-    abs_val = abs(val)
-    if abs_val >= 10**12:
-        return f"¥{val / 10**12:.2f}兆円"
-    elif abs_val >= 10**8:
-        return f"¥{val / 10**8:.1f}億円"
+    if ticker and is_us_stock(ticker):
+        abs_val = abs(val)
+        if abs_val >= 10**12:
+            return f"${val / 10**12:.2f}兆ドル"
+        elif abs_val >= 10**8:
+            return f"${val / 10**8:.1f}億ドル"
+        else:
+            return f"${val:,.2f}"
     else:
-        return f"¥{int(val):,}円"
+        abs_val = abs(val)
+        if abs_val >= 10**12:
+            return f"¥{val / 10**12:.2f}兆円"
+        elif abs_val >= 10**8:
+            return f"¥{val / 10**8:.1f}億円"
+        else:
+            return f"¥{int(val):,}円"
 
 # Helper functions for Technical Indicators
 def calculate_rsi(series, period=14):
@@ -140,12 +170,12 @@ def show_purchase_success_dialog(name, ticker, qty, price, total_cost):
         <!-- 平均取得単価 -->
         <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e2e8f0; padding: 10px 0;">
             <span style="color: #64748b; min-width: 100px; flex-shrink: 0; text-align: left;">平均取得単価</span>
-            <span style="text-align: right; font-weight: bold; color: #16a34a;">¥{int(price):,}</span>
+            <span style="text-align: right; font-weight: bold; color: #16a34a;">{format_price(price, ticker)}</span>
         </div>
         <!-- 概算投資金額 -->
         <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 0;">
             <span style="color: #64748b; font-weight: bold; min-width: 100px; flex-shrink: 0; text-align: left;">概算投資金額</span>
-            <span style="text-align: right; font-weight: bold; color: #2563eb; font-size: 1.2rem;">¥{int(total_cost):,}</span>
+            <span style="text-align: right; font-weight: bold; color: #2563eb; font-size: 1.2rem;">{format_price(total_cost, ticker)}</span>
         </div>
     </div>
     
@@ -159,6 +189,17 @@ def show_purchase_success_dialog(name, ticker, qty, price, total_cost):
 def show_sell_success_dialog(name, ticker, qty, price, total_return, realized_pl):
     pl_color = "#16a34a" if realized_pl >= 0 else "#dc2626"
     pl_sign = "+" if realized_pl >= 0 else ""
+    rate = get_usdjpy_rate() if is_us_stock(ticker) else 1.0
+    
+    if is_us_stock(ticker):
+        price_str = format_price(price, ticker)
+        total_return_str = f"{format_price(total_return, ticker)} (¥{int(total_return * rate):,})"
+        realized_pl_str = f"{pl_sign}{format_price(realized_pl, ticker)} ({pl_sign}¥{int(realized_pl * rate):,})"
+    else:
+        price_str = format_price(price, ticker)
+        total_return_str = format_price(total_return, ticker)
+        realized_pl_str = f"{pl_sign}{format_price(realized_pl, ticker)}"
+
     st.markdown(f"""
     ### **{name} ({ticker})** の売却が完了しました！
     
@@ -178,17 +219,17 @@ def show_sell_success_dialog(name, ticker, qty, price, total_return, realized_pl
         <!-- 売却単価 -->
         <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e2e8f0; padding: 10px 0;">
             <span style="color: #64748b; min-width: 100px; flex-shrink: 0; text-align: left;">売却単価</span>
-            <span style="text-align: right; font-weight: bold; color: #0f172a;">¥{int(price):,}</span>
+            <span style="text-align: right; font-weight: bold; color: #0f172a;">{price_str}</span>
         </div>
         <!-- 売却受取金額 -->
         <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e2e8f0; padding: 10px 0;">
             <span style="color: #64748b; min-width: 100px; flex-shrink: 0; text-align: left;">売却受取金額</span>
-            <span style="text-align: right; font-weight: bold; color: #2563eb;">¥{int(total_return):,}</span>
+            <span style="text-align: right; font-weight: bold; color: #2563eb;">{total_return_str}</span>
         </div>
         <!-- 確定実現損益 -->
         <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 0;">
             <span style="color: #64748b; font-weight: bold; min-width: 100px; flex-shrink: 0; text-align: left;">確定実現損益</span>
-            <span style="text-align: right; font-weight: bold; color: {pl_color}; font-size: 1.2rem;">{pl_sign}¥{int(realized_pl):,}</span>
+            <span style="text-align: right; font-weight: bold; color: {pl_color}; font-size: 1.2rem;">{realized_pl_str}</span>
         </div>
     </div>
     
@@ -250,10 +291,14 @@ def get_stock_5y_history(ticker):
     except Exception:
         return pd.DataFrame()
 
-def create_pattern_overlay_chart(target_prices, matches_data, N):
+def create_pattern_overlay_chart(target_prices, matches_data, N, ticker=None):
     fig = go.Figure()
     
-    # Target pattern (absolute JPY prices)
+    symbol = "$" if ticker and is_us_stock(ticker) else "¥"
+    fmt = ".2f" if ticker and is_us_stock(ticker) else ".0f"
+    unit = "ドル" if ticker and is_us_stock(ticker) else "円"
+    
+    # Target pattern
     fig.add_trace(go.Scatter(
         x=list(range(N)),
         y=target_prices,
@@ -261,16 +306,14 @@ def create_pattern_overlay_chart(target_prices, matches_data, N):
         name='基準パターン (指定範囲)',
         line=dict(color='#1e3a8a', width=4),
         marker=dict(size=6),
-        hovertemplate="日目: %{x}<br>株価: ¥%{y:,.0f}<extra></extra>"
+        hovertemplate=f"日目: %{{x}}<br>株価: {symbol}%{{y:,{fmt}}}<extra></extra>"
     ))
     
     colors = ['#eab308', '#10b981', '#f97316']
-    # The starting price of the target pattern:
     t0 = target_prices[0] if target_prices[0] != 0 else 1
     
     for idx, m in enumerate(matches_data):
         all_prices = m['all_prices']
-        # Scale the match prices so that they start at exactly t0 JPY:
         a0 = all_prices[0] if all_prices[0] != 0 else 1
         scale_factor = t0 / a0
         scaled_prices = all_prices * scale_factor
@@ -283,10 +326,9 @@ def create_pattern_overlay_chart(target_prices, matches_data, N):
             mode='lines',
             name=f"類似{idx+1}位 ({m['similarity']:.1f}%): {period_str}",
             line=dict(color=colors[idx % len(colors)], width=2, dash='solid' if idx == 0 else 'dash'),
-            hovertemplate="日目: %{x}<br>株価 (スケール後): ¥%{y:,.0f}<extra></extra>"
+            hovertemplate=f"日目: %{{x}}<br>株価 (スケール後): {symbol}%{{y:,{fmt}}}<extra></extra>"
         ))
         
-    # Vertical line at N-1
     fig.add_vline(
         x=N-1, 
         line_width=1.5, 
@@ -299,7 +341,7 @@ def create_pattern_overlay_chart(target_prices, matches_data, N):
     fig.update_layout(
         title="類似パターンの株価値動き重ね合わせ (現在値基準でスケール調整)",
         xaxis_title="経過営業日 (日)",
-        yaxis_title="株価 (円)",
+        yaxis_title=f"株価 ({unit})",
         template="plotly_white",
         height=450,
         margin=dict(l=10, r=10, t=50, b=50),
@@ -310,6 +352,10 @@ def create_pattern_overlay_chart(target_prices, matches_data, N):
 def create_selection_chart(df, ticker, name, start_date, end_date):
     fig = go.Figure()
     
+    symbol = "$" if is_us_stock(ticker) else "¥"
+    fmt = ".2f" if is_us_stock(ticker) else ".0f"
+    unit = "ドル" if is_us_stock(ticker) else "円"
+    
     # Plot Close price
     fig.add_trace(go.Scatter(
         x=df.index,
@@ -317,7 +363,7 @@ def create_selection_chart(df, ticker, name, start_date, end_date):
         mode='lines',
         name='株価 (終値)',
         line=dict(color='#2563eb', width=2),
-        hovertemplate="日付: %{x|%Y-%m-%d}<br>株価: ¥%{y:,.0f}<extra></extra>"
+        hovertemplate=f"日付: %{{x|%Y-%m-%d}}<br>株価: {symbol}%{{y:,{fmt}}}<extra></extra>"
     ))
     
     # 1. Draw static vertical lines and shaded rect for current state
@@ -335,7 +381,7 @@ def create_selection_chart(df, ticker, name, start_date, end_date):
     fig.update_layout(
         title=f"{name} ({ticker}) - パターン範囲選択（ドラッグして期間を調整）",
         xaxis_title="日付",
-        yaxis_title="株価 (円)",
+        yaxis_title=f"株価 ({unit})",
         template="plotly_white",
         height=320,
         margin=dict(l=10, r=10, t=40, b=10),
@@ -527,15 +573,25 @@ def evaluate_stock(ticker, df, info=None):
     
     tech_score = sum([t_uptrend, t_trend_reversal, t_volume_surge])
     
+    rsi_val = df['RSI'].iloc[-1]
+    bb_lower_val = df['BB_Lower'].iloc[-1]
+    bb_upper_val = df['BB_Upper'].iloc[-1]
+    
+    rsi_oversold = rsi_val < 30
+    rsi_overbought = rsi_val > 70
+    bb_rebound = close.iloc[-1] <= bb_lower_val
+    bb_upper_breakout = close.iloc[-1] >= bb_upper_val
+    
     signals = {
         'perfect_order': t_uptrend,
         'trend_reversal': t_trend_reversal,
         'volume_surge': t_volume_surge,
-        # 互換性マッピング
         'golden_cross': golden_cross,
-        'rsi_oversold': False,
+        'rsi_oversold': rsi_oversold,
+        'rsi_overbought': rsi_overbought,
         'macd_cross': macd_cross,
-        'bb_rebound': False,
+        'bb_rebound': bb_rebound,
+        'bb_upper_breakout': bb_upper_breakout,
         'uptrend': t_uptrend
     }
     
@@ -1279,8 +1335,9 @@ def render_detail_dashboard(selected_ticker, selected_name, raw_analysis, key_su
     portfolio = load_portfolio()
     owned_rec = next((r for r in portfolio.get("purchase_records", []) if r["ticker"] == selected_ticker), None)
     if owned_rec:
-        owned_text = f"保有中: {int(owned_rec['quantity']):,}株"
-        owned_sub = f"取得単価: {format_price(owned_rec['purchase_price'])}"
+        qty_str = f"{int(owned_rec['quantity']):,}株" if not is_us_stock(selected_ticker) else f"{owned_rec['quantity']:,.2f}株" if int(owned_rec['quantity']) != owned_rec['quantity'] else f"{int(owned_rec['quantity']):,}株"
+        owned_text = f"保有中: {qty_str}"
+        owned_sub = f"取得単価: {format_price(owned_rec['purchase_price'], selected_ticker)}"
         owned_color = "#16a34a" # Green
     else:
         owned_text = "未保有"
@@ -1312,7 +1369,7 @@ def render_detail_dashboard(selected_ticker, selected_name, raw_analysis, key_su
     with col1:
         st.markdown(f"""<div class="card">
              <div class="metric-title">現在株価</div>
-             <div class="metric-value metric-accent">{format_price(metrics['price'])}</div>
+             <div class="metric-value metric-accent">{format_price(metrics['price'], selected_ticker)}</div>
          </div>""", unsafe_allow_html=True)
     with col2:
         st.markdown(f"""<div class="card">
@@ -1602,7 +1659,7 @@ def render_detail_dashboard(selected_ticker, selected_name, raw_analysis, key_su
                         st.markdown("---")
                         st.markdown("### 📊 検索結果とパターン比較")
                         
-                        fig_pattern = create_pattern_overlay_chart(target_prices, matches_data, N_val)
+                        fig_pattern = create_pattern_overlay_chart(target_prices, matches_data, N_val, selected_ticker)
                         st.plotly_chart(fig_pattern, use_container_width=True)
                         
                         st.markdown("#### 類似期間の詳細データと「その後」の値動き")
@@ -1657,10 +1714,12 @@ def render_detail_dashboard(selected_ticker, selected_name, raw_analysis, key_su
     st.markdown("#### 💼 仮想シミュレーション（デモトレード）に追加 / 売却")
     sim_col1, sim_col2 = st.columns([3, 1])
     with sim_col1:
+        lot_size = 1 if is_us_stock(selected_ticker) else 100
+        lot_desc = "米国株は1株単位推奨" if is_us_stock(selected_ticker) else "日本株は100株単位推奨"
         sim_qty = st.number_input(
-            f"購入・売却株数 (日本株は100株単位推奨 / 1単元={format_price(metrics['price'] * 100)})", 
+            f"購入・売却株数 ({lot_desc} / 1単元={format_price(metrics['price'] * lot_size, selected_ticker)})", 
             min_value=1, 
-            value=100, 
+            value=lot_size, 
             step=1, 
             format="%d", 
             key=f"purchase_qty_input_{selected_ticker}{key_suffix}"
@@ -1668,7 +1727,11 @@ def render_detail_dashboard(selected_ticker, selected_name, raw_analysis, key_su
         
         current_price_val = metrics['price']
         total_cost = sim_qty * current_price_val
-        st.write(f"概算売買金額: **¥{int(total_cost):,}**")
+        usdjpy_rate = get_usdjpy_rate()
+        if is_us_stock(selected_ticker):
+            st.write(f"概算売買金額: **{format_price(total_cost, selected_ticker)}** (約 ¥{int(total_cost * usdjpy_rate):,})")
+        else:
+            st.write(f"概算売買金額: **{format_price(total_cost, selected_ticker)}**")
     with sim_col2:
         st.write("") # スペース調整
         st.write("")
@@ -1728,14 +1791,19 @@ def render_detail_dashboard(selected_ticker, selected_name, raw_analysis, key_su
                     
                     pl = (current_price_val - p_price) * sim_qty
                     
+                    # Convert USD PL to JPY for realized PL total calculation
+                    rate = get_usdjpy_rate() if is_us_stock(selected_ticker) else 1.0
+                    pl_jpy = pl * rate
+                    
                     sales_records.append({
                         "ticker": selected_ticker,
                         "name": selected_name,
-                        "sales_date": datetime.date.today().strftime("%Y-%m-%d"),
+                        "sell_date": datetime.date.today().strftime("%Y-%m-%d"),
                         "purchase_price": float(p_price),
-                        "sales_price": float(current_price_val),
+                        "sell_price": float(current_price_val),
                         "quantity": float(sim_qty),
-                        "profit_loss_jpy": float(pl)
+                        "realized_pl": float(pl),
+                        "currency": "USD" if is_us_stock(selected_ticker) else "JPY"
                     })
                     
                     target_rec["quantity"] -= float(sim_qty)
@@ -1746,16 +1814,16 @@ def render_detail_dashboard(selected_ticker, selected_name, raw_analysis, key_su
                         
                     portfolio["purchase_records"] = purchase_records
                     portfolio["sales_records"] = sales_records
-                    portfolio["total_realized_pl_jpy"] += float(pl)
+                    portfolio["total_realized_pl_jpy"] += float(pl_jpy)
                     
                     if save_portfolio(portfolio):
                         st.session_state['show_sell_dialog'] = {
                             'name': selected_name,
                             'ticker': selected_ticker,
                             'qty': int(sim_qty),
-                            'p_price': float(p_price),
-                            's_price': float(current_price_val),
-                            'pl': float(pl)
+                            'price': float(current_price_val),
+                            'total_return': float(sim_qty * current_price_val),
+                            'realized_pl': float(pl)
                         }
                         st.rerun()
 
@@ -1817,9 +1885,9 @@ def save_portfolio(data):
 # CSS styling color coding for tables
 def color_pl_cell(val):
     if isinstance(val, str):
-        if val.startswith('+') or (val.startswith('¥') and '+' in val):
+        if '+' in val:
             return 'color: #16a34a; font-weight: bold;'
-        elif val.startswith('-') or (val.startswith('¥') and '-' in val):
+        elif '-' in val:
             return 'color: #dc2626; font-weight: bold;'
     return ''
 
@@ -1884,6 +1952,7 @@ with tab_screen:
             "全体集合（スクリーニング対象）の選択",
             [
                 f"日本株 厳選トレンド銘柄 ({len(JP_TICKERS)}件)",
+                f"米国株 厳選トレンド銘柄 ({len(US_TICKERS)}件)",
                 "日経平均株価 (日経225全銘柄 - 動的取得)",
                 "カスタム指定"
             ],
@@ -1892,7 +1961,16 @@ with tab_screen:
     with col_cfg2:
         theme_filter = st.selectbox(
             "トレンドテーマ絞り込み",
-            ["すべて", "AI・半導体関連", "宇宙産業・開発関連", "爆発的急騰期待株"],
+            [
+                "すべて",
+                "AI・半導体関連",
+                "宇宙産業・開発関連",
+                "爆発的急騰期待株",
+                "高配当・バリュー株",
+                "暗号資産・ネットミーム・ハイベータ",
+                "エンタメ・VTuber・ゲーム",
+                "防衛・宇宙・重工業"
+            ],
             key="scr_theme"
         )
     with col_cfg3:
@@ -1912,23 +1990,33 @@ with tab_screen:
 
     # Details expander for score and financial criteria
     with st.expander("📊 詳細なスコア・財務条件フィルタ (クリックで開閉)", expanded=False):
-        col_f1, col_f2 = st.columns(2)
+        col_f1, col_f2, col_f3 = st.columns([1.3, 1.3, 1.4])
         with col_f1:
-            st.markdown("**🎯 最小スコア設定 (スコアが高い銘柄に絞り込み)**")
+            st.markdown("**🎯 最小スコア設定**")
             min_total_score = st.slider("最小総合スコア (最大10点)", 0, 10, 5, key="scr_min_total")
             min_tech_score = st.slider("最小テクニカルスコア (最大3点)", 0, 3, 1, key="scr_min_tech")
             min_fund_score = st.slider("最小ファンダメンタルスコア (最大7点)", 0, 7, 3, key="scr_min_fund")
         with col_f2:
             st.markdown("**💰 財務指標フィルタ**")
-            filter_pbr = st.checkbox("PBR 1.0倍未満 (解散価値割れ) のみ", key="scr_filter_pbr")
+            filter_pbr = st.checkbox("PBR 1.0倍未満 (割安バリュー) のみ", key="scr_filter_pbr")
             filter_per = st.checkbox("PER 15倍未満 (低PER) のみ", key="scr_filter_per")
-            filter_roe = st.checkbox("ROE 10%以上 (高収益率) のみ", key="scr_filter_roe")
+            filter_roe = st.checkbox("ROE 10%以上 (高PBR効率) のみ", key="scr_filter_roe")
             filter_dividend = st.checkbox("配当利回り 3%以上 のみ", key="scr_filter_dividend")
+        with col_f3:
+            st.markdown("**📈 テクニカル指標フィルタ**")
+            filter_golden_cross = st.checkbox("5日/25日ゴールデンクロス", key="scr_filter_gc")
+            filter_macd_cross = st.checkbox("MACDゴールデンクロス", key="scr_filter_macd")
+            filter_rsi_oversold = st.checkbox("RSI 30以下 (売られすぎ/割安)", key="scr_filter_rsi_os")
+            filter_rsi_overbought = st.checkbox("RSI 70以上 (買われすぎ/過熱)", key="scr_filter_rsi_ob")
+            filter_bb_rebound = st.checkbox("ボリンジャーバンド -2σ以下", key="scr_filter_bb_re")
+            filter_volume_surge = st.checkbox("出来高急増 (5日平均 > 25日平均*1.2)", key="scr_filter_vol_su")
 
     # Prepare target ticker list
     tickers_pool = {}
     if market == f"日本株 厳選トレンド銘柄 ({len(JP_TICKERS)}件)":
         tickers_pool = JP_TICKERS
+    elif market == f"米国株 厳選トレンド銘柄 ({len(US_TICKERS)}件)":
+        tickers_pool = US_TICKERS
     elif market == "日経平均株価 (日経225全銘柄 - 動的取得)":
         tickers_pool = fetch_nikkei225_tickers()
     else:
@@ -1944,9 +2032,13 @@ with tab_screen:
         tags = info.get('tags', [])
         
         # Sector matching based tags
-        is_ai_semi = "AI" in tags or "半導体" in tags or any(x in str(tags) for x in ["Technology", "Semiconductor", "Software", "ソフトウェア"])
-        is_space = "宇宙" in tags or any(x in str(tags) for x in ["Space", "Aerospace", "Defense", "防衛", "航空宇宙"])
+        is_ai_semi = "AI" in tags or "半導体" in tags or any(x in str(tags) for x in ["Technology", "Semiconductor", "Software", "ソフトウェア", "電気機器", "設計"])
+        is_space = "宇宙" in tags or any(x in str(tags) for x in ["Space", "Aerospace", "Defense", "防衛", "航空宇宙", "航空重工", "ロケット", "月面開発", "月面着陸", "衛星システム", "衛星レーダー", "衛星データ分析"])
         is_explosive = "急騰期待" in tags
+        is_high_dividend_value = "高配当" in tags or "商社" in tags or "銀行業" in tags or "保険業" in tags or "金融" in tags or "バリュー" in tags or "高配当" in str(tags) or "卸売業" in tags
+        is_crypto_meme = "ビットコイン保有" in tags or "暗号資産" in tags or "ミーム株" in tags or "暗号資産取引所" in tags or "暗号資産マイニング" in tags or any(x in str(tags) for x in ["Bitcoin", "Crypto", "Meme"])
+        is_entertainment_vtuber_game = "VTuber" in tags or "ゲーム" in tags or "エンタメ" in tags or "ゲーム・メタバース" in tags or "その他製品" in tags or "ストリーミング" in tags or "SNS" in tags
+        is_defense_heavy = "防衛" in tags or "宇宙" in tags or "ロケット" in tags or "機械" in tags or "輸送用機器" in tags or "航空重工" in tags or "精密機器" in tags
         
         if theme_filter == "AI・半導体関連":
             if is_ai_semi:
@@ -1956,6 +2048,18 @@ with tab_screen:
                 filtered_pool[ticker] = info
         elif theme_filter == "爆発的急騰期待株":
             if is_explosive:
+                filtered_pool[ticker] = info
+        elif theme_filter == "高配当・バリュー株":
+            if is_high_dividend_value:
+                filtered_pool[ticker] = info
+        elif theme_filter == "暗号資産・ネットミーム・ハイベータ":
+            if is_crypto_meme:
+                filtered_pool[ticker] = info
+        elif theme_filter == "エンタメ・VTuber・ゲーム":
+            if is_entertainment_vtuber_game:
+                filtered_pool[ticker] = info
+        elif theme_filter == "防衛・宇宙・重工業":
+            if is_defense_heavy:
                 filtered_pool[ticker] = info
         else:
             filtered_pool[ticker] = info
@@ -1994,6 +2098,20 @@ with tab_screen:
                     if tech_analysis['tech_score'] < min_tech_score:
                         continue
                         
+                    # Apply advanced technical filters in the fast-track step
+                    if filter_golden_cross and not tech_analysis['signals']['golden_cross']:
+                        continue
+                    if filter_macd_cross and not tech_analysis['signals']['macd_cross']:
+                        continue
+                    if filter_rsi_oversold and not tech_analysis['signals']['rsi_oversold']:
+                        continue
+                    if filter_rsi_overbought and not tech_analysis['signals']['rsi_overbought']:
+                        continue
+                    if filter_bb_rebound and not tech_analysis['signals']['bb_rebound']:
+                        continue
+                    if filter_volume_surge and not tech_analysis['signals']['volume_surge']:
+                        continue
+                        
                     # 2. Fetch fundamentals ONLY for stocks passing technical checks
                     info = get_ticker_info(ticker)
                     
@@ -2019,13 +2137,27 @@ with tab_screen:
                     if filter_dividend and (metrics['dividend_yield'] is None or metrics['dividend_yield'] < 3.0):
                         continue
                         
+                    # Advanced technical checks (Full)
+                    if filter_golden_cross and not analysis['signals']['golden_cross']:
+                        continue
+                    if filter_macd_cross and not analysis['signals']['macd_cross']:
+                        continue
+                    if filter_rsi_oversold and not analysis['signals']['rsi_oversold']:
+                        continue
+                    if filter_rsi_overbought and not analysis['signals']['rsi_overbought']:
+                        continue
+                    if filter_bb_rebound and not analysis['signals']['bb_rebound']:
+                        continue
+                    if filter_volume_surge and not analysis['signals']['volume_surge']:
+                        continue
+                        
                     results.append({
                         'ティッカー': ticker,
                         '銘柄名': filtered_pool[ticker]['name'],
                         '総合スコア (10点)': f"{analysis['total_score']} / 10",
                         'テクニカルスコア (3点)': f"{analysis['tech_score']} / 3",
                         'ファンダスコア (7点)': f"{analysis['fund_score']} / 7",
-                        '株価': format_price(metrics['price']),
+                        '株価': format_price(metrics['price'], ticker),
                         '前日比 (%)': f"{metrics['change_pct']:.2f}%",
                         'PER (倍)': f"{metrics['per']:.1f}" if metrics['per'] is not None else "N/A",
                         'PBR (倍)': f"{metrics['pbr']:.2f}" if metrics['pbr'] is not None else "N/A",
@@ -2245,7 +2377,8 @@ with tab_favorite:
             st.markdown("##### 💼 保有銘柄一覧 (クリックして選択)")
             if purchase_records:
                 for rec in purchase_records:
-                    btn_label = f"💼 {rec['name']} ({rec['ticker']}) | {int(rec['quantity']):,}株 (平均取得: {format_price(rec['purchase_price'])})"
+                    qty_str = f"{int(rec['quantity']):,}株" if not is_us_stock(rec['ticker']) else f"{rec['quantity']:,.2f}株" if int(rec['quantity']) != rec['quantity'] else f"{int(rec['quantity']):,}株"
+                    btn_label = f"💼 {rec['name']} ({rec['ticker']}) | {qty_str} (平均取得: {format_price(rec['purchase_price'], rec['ticker'])})"
                     is_active = (rec['ticker'] == st.session_state.get("selected_fav_ticker"))
                     btn_type = "primary" if is_active else "secondary"
                     if st.button(btn_label, key=f"btn_owned_{rec['ticker']}", use_container_width=True, type=btn_type):
@@ -2355,6 +2488,7 @@ with tab_simulation:
     total_curr_jpy = 0.0
     
     portfolio_table = []
+    usdjpy_rate = get_usdjpy_rate()
     
     if records:
         unique_tickers = list(set([r["ticker"] for r in records]))
@@ -2424,20 +2558,31 @@ with tab_simulation:
             pl_amount = curr_val - invest_amount
             pl_pct = ((curr_price - purchase_price) / purchase_price) * 100
             
-            total_invest_jpy += invest_amount
-            total_curr_jpy += curr_val
+            rate = usdjpy_rate if is_us_stock(ticker) else 1.0
+            total_invest_jpy += invest_amount * rate
+            total_curr_jpy += curr_val * rate
+            
+            qty_str = f"{int(qty):,} 株" if not is_us_stock(ticker) else f"{qty:,.2f} 株" if int(qty) != qty else f"{int(qty):,} 株"
+            
+            if pd.isna(pl_amount):
+                pl_str = "N/A"
+            elif is_us_stock(ticker):
+                sign = "+" if pl_amount >= 0 else ""
+                pl_str = f"{sign}${abs(pl_amount):,.2f} ({sign}¥{int(pl_amount * rate):,})"
+            else:
+                pl_str = f"¥{int(pl_amount):+,}"
                 
             portfolio_table.append({
                 "ID": i,
                 "ティッカー": ticker,
                 "銘柄名": r["name"],
                 "購入日": purchase_date_str,
-                "平均取得単価": format_price(purchase_price),
-                "現在値": format_price(curr_price),
-                "保有株数": f"{int(qty):,} 株",
-                "投資額": format_price(invest_amount),
-                "評価額": format_price(curr_val),
-                "評価損益": f"¥{int(pl_amount):+,}" if not pd.isna(pl_amount) else "N/A",
+                "平均取得単価": format_price(purchase_price, ticker),
+                "現在値": format_price(curr_price, ticker),
+                "保有株数": qty_str,
+                "投資額": format_price(invest_amount, ticker),
+                "評価額": format_price(curr_val, ticker),
+                "評価損益": pl_str,
                 "損益率": f"{pl_pct:+.2f}%" if not pd.isna(pl_pct) else "N/A",
                 "raw_pl": pl_amount,
                 "raw_pl_pct": pl_pct
@@ -2555,7 +2700,7 @@ with tab_simulation:
                 </div>
                 <div style="display: flex; justify-content: space-between; margin-top: 5px;">
                     <span style="color: #64748b;">現在価格:</span>
-                    <span style="font-weight: bold; color: #1e293b;">{format_price(curr_price)}</span>
+                    <span style="font-weight: bold; color: #1e293b;">{format_price(curr_price, selected_rec['ticker'])}</span>
                 </div>
             </div>
             """, unsafe_allow_html=True)
@@ -2579,15 +2724,25 @@ with tab_simulation:
             pl_color_style = "color: #16a34a;" if realized_pl >= 0 else "color: #dc2626;"
             pl_sign = "+" if realized_pl >= 0 else ""
             
+            ticker = selected_rec["ticker"]
+            rate = get_usdjpy_rate() if is_us_stock(ticker) else 1.0
+            
+            if is_us_stock(ticker):
+                expected_return_str = f"{format_price(expected_return, ticker)} (約 ¥{int(expected_return * rate):,})"
+                realized_pl_str = f"{pl_sign}{format_price(realized_pl, ticker)} ({pl_sign}¥{int(realized_pl * rate):,})"
+            else:
+                expected_return_str = format_price(expected_return, ticker)
+                realized_pl_str = f"{pl_sign}{format_price(realized_pl, ticker)}"
+            
             st.markdown(f"""
             <div style="background-color: #f1f5f9; border-radius: 6px; padding: 10px 12px; margin-bottom: 15px; font-size: 0.9rem;">
                 <div style="display: flex; justify-content: space-between;">
                     <span style="color: #475569;">売却予定金額:</span>
-                    <span style="font-weight: bold; color: #0f172a;">¥{int(expected_return):,}</span>
+                    <span style="font-weight: bold; color: #0f172a;">{expected_return_str}</span>
                 </div>
                 <div style="display: flex; justify-content: space-between; margin-top: 5px;">
                     <span style="color: #475569;">確定実現損益:</span>
-                    <span style="font-weight: bold; {pl_color_style}">{pl_sign}¥{int(realized_pl):,}</span>
+                    <span style="font-weight: bold; {pl_color_style}">{realized_pl_str}</span>
                 </div>
             </div>
             """, unsafe_allow_html=True)
@@ -2611,10 +2766,13 @@ with tab_simulation:
                     "sell_price": float(curr_price),
                     "quantity": float(sell_qty),
                     "realized_pl": float(realized_pl_val),
-                    "currency": "JPY"
+                    "currency": "USD" if is_us_stock(selected_rec["ticker"]) else "JPY"
                 })
                 portfolio_data["sales_records"] = sales
-                portfolio_data["total_realized_pl_jpy"] = portfolio_data.get("total_realized_pl_jpy", 0.0) + realized_pl_val
+                
+                # Convert realized PL to JPY for cumulative tracking
+                realized_pl_jpy_val = realized_pl_val * rate
+                portfolio_data["total_realized_pl_jpy"] = portfolio_data.get("total_realized_pl_jpy", 0.0) + realized_pl_jpy_val
                 portfolio_data["purchase_records"] = records
                 
                 if save_portfolio(portfolio_data):
@@ -2650,6 +2808,15 @@ with tab_simulation:
         # 集計用データフレーム
         df_total = pd.DataFrame(0.0, index=timeline, columns=['invested', 'current'])
         
+        # Get historical JPY=X exchange rate aligned to timeline
+        try:
+            usdjpy_ticker = yf.Ticker("JPY=X")
+            df_usdjpy = usdjpy_ticker.history(start=start_fetch_date)
+            df_usdjpy_aligned = df_usdjpy.reindex(timeline).ffill().bfill()
+            usdjpy_series = df_usdjpy_aligned['Close'].fillna(usdjpy_rate)
+        except Exception:
+            usdjpy_series = pd.Series(usdjpy_rate, index=timeline)
+        
         for r in records:
             ticker = r["ticker"]
             qty = r["quantity"]
@@ -2661,8 +2828,12 @@ with tab_simulation:
                 df_h_aligned = df_h.reindex(timeline).ffill().bfill()
                 
                 mask = timeline >= p_date
-                df_total.loc[mask, 'invested'] += invest_amount
-                df_total.loc[mask, 'current'] += qty * df_h_aligned.loc[mask, 'Close']
+                if is_us_stock(ticker):
+                    df_total.loc[mask, 'invested'] += invest_amount * usdjpy_series.loc[mask]
+                    df_total.loc[mask, 'current'] += qty * df_h_aligned.loc[mask, 'Close'] * usdjpy_series.loc[mask]
+                else:
+                    df_total.loc[mask, 'invested'] += invest_amount
+                    df_total.loc[mask, 'current'] += qty * df_h_aligned.loc[mask, 'Close']
                     
         df_total['pl'] = df_total['current'] - df_total['invested']
         
@@ -2676,7 +2847,8 @@ with tab_simulation:
             if curr_price is None or pd.isna(curr_price):
                 curr_price = st.session_state['last_valid_prices'].get(ticker, purchase_price)
             
-            pl_jpy = (curr_price - purchase_price) * qty
+            rate = usdjpy_rate if is_us_stock(ticker) else 1.0
+            pl_jpy = (curr_price - purchase_price) * qty * rate
             
             item_pl_list.append({
                 "label": f"{r['name']} ({ticker})",
@@ -2692,10 +2864,14 @@ with tab_simulation:
         for s in sales_records:
             t = s["ticker"]
             name = s["name"]
-            pl = s["realized_pl"]
+            
+            # backward compatibility for key
+            pl = s.get("realized_pl") or s.get("profit_loss_jpy") or 0.0
+            rate = usdjpy_rate if is_us_stock(t) else 1.0
+            pl_jpy = pl * rate
             
             key = f"{name} ({t})"
-            realized_by_ticker[key] = realized_by_ticker.get(key, 0.0) + pl
+            realized_by_ticker[key] = realized_by_ticker.get(key, 0.0) + pl_jpy
             
         realized_pl_list = []
         for key, pl_jpy in realized_by_ticker.items():
@@ -2706,7 +2882,7 @@ with tab_simulation:
             })
         realized_pl_list = sorted(realized_pl_list, key=lambda x: x["pl_jpy"])
         
-        chart_tab_total, chart_tab_items = st.tabs(["全体損益推移", "個別銘柄の損益寄与"])
+        chart_tab_total, chart_tab_items = st.tabs(["全体損益推移", "個別銘柄 of 損益寄与"])
         
         with chart_tab_total:
             fig_total = go.Figure()
@@ -2811,14 +2987,31 @@ with tab_simulation:
         with st.expander("確定取引（仮想売却）履歴一覧"):
             sales_table = []
             for s in sales_records:
+                ticker = s["ticker"]
+                rate = usdjpy_rate if is_us_stock(ticker) else 1.0
+                
+                # backward-compatible key reading
+                sell_date = s.get("sell_date") or s.get("sales_date") or "N/A"
+                purchase_price = s.get("purchase_price") or 0.0
+                sell_price = s.get("sell_price") or s.get("sales_price") or 0.0
+                qty = s.get("quantity") or 0.0
+                pl = s.get("realized_pl") or s.get("profit_loss_jpy") or 0.0
+                
+                pl_sign = "+" if pl >= 0 else ""
+                
+                if is_us_stock(ticker):
+                    pl_str = f"{pl_sign}{format_price(pl, ticker)} ({pl_sign}¥{int(pl * rate):,})"
+                else:
+                    pl_str = f"¥{int(pl):+,}"
+                
                 sales_table.append({
-                    "売却日": s["sell_date"],
-                    "ティッカー": s["ticker"],
+                    "売却日": sell_date,
+                    "ティッカー": ticker,
                     "銘柄名": s["name"],
-                    "取得単価": format_price(s['purchase_price']),
-                    "売却単価": format_price(s['sell_price']),
-                    "売却株数": f"{int(s['quantity']):,} 株",
-                    "確定損益": f"¥{int(s['realized_pl']):+,}"
+                    "取得単価": format_price(purchase_price, ticker),
+                    "売却単価": format_price(sell_price, ticker),
+                    "売却株数": f"{int(qty):,} 株" if not is_us_stock(ticker) else f"{qty:,.2f} 株" if int(qty) != qty else f"{int(qty):,} 株",
+                    "確定損益": pl_str
                 })
             df_sales_show = pd.DataFrame(sales_table)
             
