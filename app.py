@@ -1965,7 +1965,7 @@ if query_user == "default":
     .portal-blob-1 {
         width: 500px;
         height: 500px;
-        background: #60a5fa;
+        background: #34d399;
         top: -100px;
         left: -100px;
         animation-delay: 0s;
@@ -1974,7 +1974,7 @@ if query_user == "default":
     .portal-blob-2 {
         width: 550px;
         height: 550px;
-        background: #c084fc;
+        background: #2dd4bf;
         bottom: -150px;
         right: -100px;
         animation-delay: -5s;
@@ -1983,7 +1983,7 @@ if query_user == "default":
     .portal-blob-3 {
         width: 380px;
         height: 380px;
-        background: #f472b6;
+        background: #60a5fa;
         top: 30%;
         left: 35%;
         animation-delay: -10s;
