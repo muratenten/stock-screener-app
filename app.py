@@ -1928,6 +1928,7 @@ query_user = st.query_params.get("user", "default")
 user_key = st.sidebar.text_input(
     "名前・専用IDを入力してください",
     value=query_user,
+    autocomplete="off",
     help="ここに名前（半角英数字）を入力すると、他のユーザーと混ざらない『あなた専用のページ』に切り替わります。同じIDを入力すれば別のデバイスからもアクセス可能です。"
 )
 st.sidebar.caption("💡 **【重要】** 初めて入力されたIDであなた専用のマイページファイルが自動作成されます。**IDを忘れるとこれまでの取引データにアクセスできなくなります**ので、必ずIDをメモするか、URLをブックマークして保存してください。")
