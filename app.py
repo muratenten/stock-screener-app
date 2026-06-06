@@ -1928,23 +1928,92 @@ if query_user == "default":
     # WELCOME PORTAL PAGE (Shown when no user ID is set)
     # ---------------------------------------------------------
     st.markdown("""
-    <div class="title-container" style="text-align: center; margin-top: 40px; margin-bottom: 20px;">
-        <h1 class="title-text" style="font-size: 2.5rem; color: #1e3a8a;">Rising Stock Screener</h1>
-        <p class="subtitle-text" style="font-size: 1.1rem; color: #64748b;">AI分析とファンダメンタルズによる上昇期待銘柄選定システム</p>
-    </div>
+    <style>
+    .login-container {
+        background: rgba(255, 255, 255, 0.85);
+        padding: 35px;
+        border-radius: 20px;
+        box-shadow: 0 20px 45px rgba(30, 41, 59, 0.08);
+        border: 1px solid rgba(255, 255, 255, 0.7);
+        backdrop-filter: blur(15px);
+        margin-bottom: 25px;
+    }
+    .login-title-glow {
+        font-size: 2.5rem;
+        font-weight: 900;
+        background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 50%, #3b82f6 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        text-align: center;
+        margin-top: 30px;
+        margin-bottom: 5px;
+        letter-spacing: -0.8px;
+    }
+    .login-subtitle-glow {
+        font-size: 1.05rem;
+        color: #64748b;
+        text-align: center;
+        margin-bottom: 35px;
+        font-weight: 500;
+    }
+    .login-header-section {
+        border-bottom: 1.5px solid #f1f5f9;
+        padding-bottom: 18px;
+        margin-bottom: 22px;
+    }
+    .login-section-title {
+        font-size: 1.35rem;
+        font-weight: 800;
+        color: #0f172a;
+        text-align: center;
+        margin-bottom: 10px;
+        letter-spacing: -0.3px;
+    }
+    .login-intro-text {
+        font-size: 0.92rem;
+        color: #475569;
+        line-height: 1.6;
+        text-align: center;
+        margin: 0;
+    }
+    .login-warning-box {
+        background: #fffbeb;
+        border-left: 4px solid #f59e0b;
+        padding: 15px;
+        border-radius: 8px;
+        margin-top: 20px;
+        margin-bottom: 10px;
+    }
+    .login-warning-title {
+        font-size: 0.85rem;
+        font-weight: 700;
+        color: #b45309;
+        display: block;
+        margin-bottom: 4px;
+    }
+    .login-warning-text {
+        font-size: 0.8rem;
+        color: #78350f;
+        line-height: 1.5;
+        display: block;
+    }
+    </style>
     """, unsafe_allow_html=True)
     
-    col_w1, col_w2, col_w3 = st.columns([0.8, 2.4, 0.8])
+    col_w1, col_w2, col_w3 = st.columns([0.6, 2.8, 0.6])
     with col_w2:
+        st.markdown('<h1 class="login-title-glow">Rising Stock Screener</h1>', unsafe_allow_html=True)
+        st.markdown('<p class="login-subtitle-glow">AI分析とファンダメンタルズによる上昇期待銘柄選定システム</p>', unsafe_allow_html=True)
+        
         st.markdown("""
-        <div style="background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 30px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); margin-bottom: 20px;">
-            <h3 style="font-size: 1.3rem; font-weight: bold; margin-bottom: 15px; color: #0f172a; text-align: center; border-bottom: 2px solid #f1f5f9; padding-bottom: 10px;">
-                👤 マイページ（専用フォルダ）へのログイン
-            </h3>
-            <p style="font-size: 0.95rem; color: #475569; margin-bottom: 20px; line-height: 1.6;">
-                本システムは、ユーザーごとに独立したポートフォリオ、デモトレード記録、お気に入り銘柄（ウォッチリスト）を管理できます。<br>
-                下にお名前または専用IDを入力してマイページにアクセスしてください。
-            </p>
+        <div class="login-container">
+            <div class="login-header-section">
+                <h3 class="login-section-title">👤 マイページ（専用フォルダ）へのログイン</h3>
+                <p class="login-intro-text">
+                    本システムは、ユーザーごとに独立したポートフォリオ、デモトレード記録、お気に入り銘柄（ウォッチリスト）を管理できます。
+                </p>
+            </div>
+            <div style="margin-bottom: 8px; font-weight: 600; font-size: 0.9rem; color: #334155;">専用マイページ名（半角英数字）</div>
         """, unsafe_allow_html=True)
         
         entered_id = st.text_input(
@@ -1952,13 +2021,14 @@ if query_user == "default":
             value="",
             placeholder="例: takkun, user_abc",
             autocomplete="off",
-            key="portal_user_id_input"
+            key="portal_user_id_input",
+            label_visibility="collapsed"
         )
         
         st.markdown("""
-            <div style="background-color: #fef2f2; border-left: 4px solid #ef4444; padding: 12px 15px; border-radius: 4px; margin-top: 15px; margin-bottom: 20px;">
-                <span style="font-size: 0.85rem; color: #991b1b; font-weight: bold; display: block; margin-bottom: 3px;">⚠️ 注意事項</span>
-                <span style="font-size: 0.8rem; color: #7f1d1d; line-height: 1.4; display: block;">
+            <div class="login-warning-box">
+                <span class="login-warning-title">⚠️ 注意事項</span>
+                <span class="login-warning-text">
                     初めて入力された名前の場合は、自動的にその名前で新しい専用マイページファイルが作成されます。<br>
                     <b>入力した名前を忘れると、これまでのデモトレードやウォッチリストの記録にアクセスできなくなります</b>ので、必ず名前をメモするか、アクセス後のURLをブックマークして保存してください。
                 </span>
