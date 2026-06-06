@@ -1934,11 +1934,16 @@ if query_user == "default":
         <div class="portal-blob portal-blob-3"></div>
     </div>
     <style>
-    .stApp, [data-testid="stMainViewContainer"], .main {
-        background-color: transparent !important;
-    }
-    [data-testid="stAppViewContainer"] {
+    html, body {
         background-color: #f8fafc !important;
+    }
+    .stApp, 
+    [data-testid="stApp"], 
+    [data-testid="stAppViewContainer"], 
+    [data-testid="stMainViewContainer"], 
+    [data-testid="stHeader"], 
+    .main {
+        background-color: transparent !important;
     }
     .portal-bg-container {
         position: fixed;
@@ -1953,32 +1958,32 @@ if query_user == "default":
     .portal-blob {
         position: absolute;
         border-radius: 50%;
-        filter: blur(80px);
-        opacity: 0.45;
+        filter: blur(120px);
+        opacity: 0.65;
         animation: float-blob 22s infinite alternate ease-in-out;
     }
     .portal-blob-1 {
-        width: 450px;
-        height: 450px;
-        background: #bae6fd;
+        width: 500px;
+        height: 500px;
+        background: #60a5fa;
         top: -100px;
         left: -100px;
         animation-delay: 0s;
         animation-duration: 20s;
     }
     .portal-blob-2 {
-        width: 500px;
-        height: 500px;
-        background: #d8b4fe;
+        width: 550px;
+        height: 550px;
+        background: #c084fc;
         bottom: -150px;
         right: -100px;
         animation-delay: -5s;
         animation-duration: 25s;
     }
     .portal-blob-3 {
-        width: 350px;
-        height: 350px;
-        background: #fbcfe8;
+        width: 380px;
+        height: 380px;
+        background: #f472b6;
         top: 30%;
         left: 35%;
         animation-delay: -10s;
@@ -1989,10 +1994,10 @@ if query_user == "default":
             transform: translate(0px, 0px) scale(1);
         }
         33% {
-            transform: translate(40px, -60px) scale(1.1);
+            transform: translate(50px, -70px) scale(1.15);
         }
         66% {
-            transform: translate(-30px, 30px) scale(0.95);
+            transform: translate(-40px, 40px) scale(0.9);
         }
         100% {
             transform: translate(0px, 0px) scale(1);
