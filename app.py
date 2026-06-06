@@ -1850,8 +1850,16 @@ def render_detail_dashboard(selected_ticker, selected_name, raw_analysis, key_su
 # Virtual Portfolio Data Persistence
 PORTFOLIO_FILE = "virtual_portfolio.json"
 
+def get_portfolio_filename():
+    user_key = st.session_state.get('user_key', 'default')
+    safe_key = "".join([c for c in str(user_key) if c.isalnum() or c in ('-', '_')]).strip()
+    if not safe_key or safe_key == "default":
+        return PORTFOLIO_FILE
+    return f"virtual_portfolio_{safe_key}.json"
+
 def load_portfolio():
-    if not os.path.exists(PORTFOLIO_FILE):
+    filename = get_portfolio_filename()
+    if not os.path.exists(filename):
         return {
             "purchase_records": [],
             "sales_records": [],
@@ -1860,7 +1868,7 @@ def load_portfolio():
             "watchlist": {}
         }
     try:
-        with open(PORTFOLIO_FILE, "r", encoding="utf-8") as f:
+        with open(filename, "r", encoding="utf-8") as f:
             data = json.load(f)
             # Ensure keys exist
             if "purchase_records" not in data:
@@ -1875,7 +1883,7 @@ def load_portfolio():
                 data["watchlist"] = {}
             return data
     except Exception as e:
-        st.error(f"ポートフォリオデータの読み込みエラー: {e}")
+        st.error(f"ポートフォリオデータの読み込みエラー ({filename}): {e}")
         return {
             "purchase_records": [],
             "sales_records": [],
@@ -1894,12 +1902,13 @@ def save_watchlist(watchlist):
     save_portfolio(portfolio)
 
 def save_portfolio(data):
+    filename = get_portfolio_filename()
     try:
-        with open(PORTFOLIO_FILE, "w", encoding="utf-8") as f:
+        with open(filename, "w", encoding="utf-8") as f:
             json.dump(data, f, indent=4, ensure_ascii=False)
         return True
     except Exception as e:
-        st.error(f"ポートフォリオデータの保存エラー: {e}")
+        st.error(f"ポートフォリオデータの保存エラー ({filename}): {e}")
         return False
 
 # CSS styling color coding for tables
@@ -1910,6 +1919,15 @@ def color_pl_cell(val):
         elif '-' in val:
             return 'color: #dc2626; font-weight: bold;'
     return ''
+
+# Sidebar setup for personalizing portfolios
+st.sidebar.markdown("### 💼 ポートフォリオ個人化")
+user_key = st.sidebar.text_input(
+    "ユーザーID (ポートフォリオキー)",
+    value="default",
+    help="個人別のポートフォリオを作るための識別子です。自分専用のIDを入力すると、他のユーザーと混ざらずに自分だけのポートフォリオやお気に入りを管理できます。同じIDを入力すれば、別のデバイスからでも同じデータにアクセスできます。"
+)
+st.session_state['user_key'] = user_key
 
 # Initialize portfolio data in session state
 portfolio_data = load_portfolio()
