@@ -1928,15 +1928,84 @@ if query_user == "default":
     # WELCOME PORTAL PAGE (Shown when no user ID is set)
     # ---------------------------------------------------------
     st.markdown("""
+    <div class="portal-bg-container">
+        <div class="portal-blob portal-blob-1"></div>
+        <div class="portal-blob portal-blob-2"></div>
+        <div class="portal-blob portal-blob-3"></div>
+    </div>
     <style>
+    .stApp {
+        background-color: #f8fafc !important;
+    }
+    .portal-bg-container {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        overflow: hidden;
+        z-index: -999;
+        pointer-events: none;
+    }
+    .portal-blob {
+        position: absolute;
+        border-radius: 50%;
+        filter: blur(80px);
+        opacity: 0.3;
+        animation: float-blob 22s infinite alternate ease-in-out;
+    }
+    .portal-blob-1 {
+        width: 400px;
+        height: 400px;
+        background: #93c5fd;
+        top: -100px;
+        left: -100px;
+        animation-delay: 0s;
+        animation-duration: 20s;
+    }
+    .portal-blob-2 {
+        width: 450px;
+        height: 450px;
+        background: #c084fc;
+        bottom: -150px;
+        right: -100px;
+        animation-delay: -5s;
+        animation-duration: 25s;
+    }
+    .portal-blob-3 {
+        width: 320px;
+        height: 320px;
+        background: #f472b6;
+        top: 35%;
+        left: 40%;
+        animation-delay: -10s;
+        animation-duration: 22s;
+    }
+    @keyframes float-blob {
+        0% {
+            transform: translate(0px, 0px) scale(1);
+        }
+        33% {
+            transform: translate(40px, -60px) scale(1.1);
+        }
+        66% {
+            transform: translate(-30px, 30px) scale(0.95);
+        }
+        100% {
+            transform: translate(0px, 0px) scale(1);
+        }
+    }
     .login-container {
-        background: rgba(255, 255, 255, 0.85);
+        background: rgba(255, 255, 255, 0.75);
         padding: 35px;
         border-radius: 20px;
-        box-shadow: 0 20px 45px rgba(30, 41, 59, 0.08);
-        border: 1px solid rgba(255, 255, 255, 0.7);
+        box-shadow: 0 20px 45px rgba(30, 41, 59, 0.06);
+        border: 1px solid rgba(255, 255, 255, 0.6);
         backdrop-filter: blur(15px);
+        -webkit-backdrop-filter: blur(15px);
         margin-bottom: 25px;
+        position: relative;
+        z-index: 1;
     }
     .login-title-glow {
         font-size: 2.5rem;
@@ -1998,7 +2067,7 @@ if query_user == "default":
         display: block;
     }
     </style>
-    """, unsafe_allow_html=True)
+    """,unsafe_allow_html=True)
     
     col_w1, col_w2, col_w3 = st.columns([0.6, 2.8, 0.6])
     with col_w2:
@@ -2036,7 +2105,7 @@ if query_user == "default":
         </div>
         """, unsafe_allow_html=True)
         
-        if st.button("🚀 マイページを開く", type="primary", use_container_width=True, key="portal_login_btn"):
+        if st.button("マイページを開く", type="primary", use_container_width=True, key="portal_login_btn"):
             safe_id = "".join([c for c in str(entered_id) if c.isalnum() or c in ('-', '_')]).strip()
             if safe_id:
                 st.query_params["user"] = safe_id

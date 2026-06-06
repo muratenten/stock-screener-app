@@ -55,6 +55,14 @@
             "purchase_price": 2701.5,
             "invest_amount": 54030.0,
             "quantity": 20.0
+        },
+        {
+            "ticker": "8306.T",
+            "name": "三菱UFJフィナンシャルG",
+            "purchase_date": "2026-06-06",
+            "purchase_price": 3219.0,
+            "invest_amount": 64380.0,
+            "quantity": 20.0
         }
     ],
     "sales_records": [],
@@ -66,7 +74,8 @@
         "7203.T": 2850.0,
         "9101.T": 5609.0,
         "3632.T": 407.0,
-        "9107.T": 2701.5
+        "9107.T": 2701.5,
+        "8306.T": 3219.0
     },
     "watchlist": {
         "9433.T": "KDDI"
