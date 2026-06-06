@@ -514,7 +514,7 @@ def fetch_nikkei225_tickers():
                             code = str(int(code_val))
                         else:
                             code = str(code_val).strip()
-                        if code.isdigit() and len(code) == 4:
+                        if len(code) == 4 and code.isalnum():
                             ticker = f"{code}.T"
                             name = str(row['銘柄']).strip()
                             components[ticker] = {"name": name, "tags": ["日経225"]}
