@@ -123,7 +123,11 @@ st.components.v1.html("""
         const buttons = parentDoc.querySelectorAll('button');
         buttons.forEach(btn => {
             const txt = btn.textContent || "";
-            if (btn.closest('[data-testid="stSegmentedControl"]')) {
+            if (btn.closest('[data-testid="stSegmentedControl"]') || btn.closest('[data-testid="stTabs"]') || btn.getAttribute('role') === 'tab') {
+                if (btn.classList.contains('premium-list-btn')) {
+                    btn.classList.remove('premium-list-btn');
+                    btn.classList.remove('premium-active');
+                }
                 return;
             }
             if (txt.includes('💼') || txt.includes('⭐') || txt.includes('📈') || txt.includes('📉') || txt.includes('🔄')) {
