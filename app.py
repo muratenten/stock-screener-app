@@ -269,6 +269,43 @@ def z_normalize(seq):
         return np.zeros_like(arr)
     return (arr - np.mean(arr)) / std
 
+def check_shape_match(prices, threshold=0.70):
+    if len(prices) < 20:
+        return None, 0.0
+    
+    # Take last 20 days
+    y_stock = prices[-20:]
+    Z_stock = z_normalize(y_stock)
+    
+    t = np.arange(20)
+    # Template 1: Upward Trend (上昇傾向)
+    temp1 = t
+    Z_temp1 = z_normalize(temp1)
+    
+    # Template 2: Downward Attenuation (下降減衰)
+    temp2 = np.exp(-0.08 * t)
+    Z_temp2 = z_normalize(temp2)
+    
+    # Template 3: Reversal / Bottomed Out & Rising (上昇反転)
+    temp3 = (t - 8) ** 2
+    Z_temp3 = z_normalize(temp3)
+    
+    # Calculate correlations
+    r1 = np.dot(Z_stock, Z_temp1) / 20.0
+    r2 = np.dot(Z_stock, Z_temp2) / 20.0
+    r3 = np.dot(Z_stock, Z_temp3) / 20.0
+    
+    corrs = [r1, r2, r3]
+    max_idx = np.argmax(corrs)
+    max_corr = corrs[max_idx]
+    
+    labels = ["上昇傾向", "下降減衰", "上昇反転"]
+    matched_label = labels[max_idx]
+    
+    if max_corr >= threshold:
+        return matched_label, max_corr
+    return None, 0.0
+
 def localize_timestamp(ts, tz):
     ts_pd = pd.to_datetime(ts)
     if tz is not None:
@@ -2337,11 +2374,20 @@ with tab_screen:
             filter_rsi_overbought = st.checkbox("RSI 70以上 (買われすぎ/過熱)", key="scr_filter_rsi_ob")
             filter_bb_rebound = st.checkbox("ボリンジャーバンド -2σ以下", key="scr_filter_bb_re")
             filter_volume_surge = st.checkbox("出来高急増 (5日平均 > 25日平均*1.2)", key="scr_filter_vol_su")
-            filter_similarity_pattern = st.checkbox("🔍 類似連動 (過去類似3局面の20日後上昇率フィルタ)", key="scr_filter_similarity", help="直近20日間のチャート形状に類似する過去の局面を直近5年間の歴史データから3つ抽出し、そのすべての局面において20営業日後の上昇率が指定値以上となった銘柄のみを抽出します。他フィルタで絞り込んだ後、最後に実行されます。")
+            filter_similarity_pattern = st.checkbox("🔍 類似連動 (過去類似3局面の20日後上昇率フィルタ)", key="scr_filter_similarity", help="直近20日間のチャート形状に類似する過去 of 局面を直近5年間の歴史データから3つ抽出し、そのすべての局面において20営業日後の上昇率が指定値以上となった銘柄のみを抽出します。他フィルタで絞り込んだ後、最後に実行されます。")
             if filter_similarity_pattern:
                 similarity_threshold_pct = st.slider("   ↳ 必要上昇率 (%)", 0.0, 15.0, 5.0, step=0.5, key="scr_similarity_pct")
             else:
                 similarity_threshold_pct = 5.0
+                
+            st.markdown("---")
+            filter_shape_match = st.checkbox("📈 チャート形状パターン指定", key="scr_filter_shape_match", help="直近20日間のチャート形状が、指定した特定のパターン（上昇傾向、下降減衰、上昇反転）に類似する銘柄のみを抽出します。")
+            if filter_shape_match:
+                selected_shapes = st.multiselect("   ↳ 対象形状を選択:", ["上昇傾向", "下降減衰", "上昇反転"], default=["上昇傾向", "下降減衰", "上昇反転"], key="scr_selected_shapes")
+                shape_threshold = st.slider("   ↳ 形状類似度しきい値", 0.70, 0.95, 0.80, step=0.02, key="scr_shape_threshold", help="しきい値が高いほど、理想的な形状に近い銘柄のみが抽出されます（0.80推奨）。")
+            else:
+                selected_shapes = []
+                shape_threshold = 0.80
 
     # Prepare target ticker list
     tickers_pool = {}
@@ -2562,11 +2608,33 @@ with tab_screen:
                                     
                         if not pass_similarity_filter:
                             continue
+                            
+                    # 4. Apply the chart shape match filter (Computed anyway to show in results table)
+                    matched_shape_label = "判定不可"
+                    matched_shape_corr = 0.0
+                    
+                    prices_for_shape = df['Close'].values
+                    if len(prices_for_shape) >= 20:
+                        shape_lbl, shape_corr = check_shape_match(prices_for_shape, threshold=0.70)
+                        if shape_lbl:
+                            matched_shape_label = f"{shape_lbl} ({shape_corr*100:.0f}%)"
+                            matched_shape_corr = shape_corr
+                            
+                    if filter_shape_match:
+                        if matched_shape_label == "判定不可":
+                            continue
+                        # Extract the base label (e.g. "上昇傾向")
+                        base_lbl = matched_shape_label.split(" ")[0]
+                        if base_lbl not in selected_shapes:
+                            continue
+                        if matched_shape_corr < shape_threshold:
+                            continue
                         
                     results.append({
                         'ティッカー': ticker,
                         '銘柄名': filtered_pool[ticker]['name'],
                         '総合スコア (10点)': f"{analysis['total_score']} / 10",
+                        'チャート形状': matched_shape_label,
                         'テクニカルスコア (3点)': f"{analysis['tech_score']} / 3",
                         'ファンダスコア (7点)': f"{analysis['fund_score']} / 7",
                         '株価': format_price(metrics['price'], ticker),
