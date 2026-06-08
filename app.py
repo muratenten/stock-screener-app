@@ -2459,7 +2459,6 @@ with tab_screen:
             else:
                 similarity_threshold_pct = 5.0
                 
-            st.markdown("---")
             filter_shape_match = st.checkbox("📈 チャート形状パターン指定", key="scr_filter_shape_match", help="直近20日間のチャート形状が、指定した特定のパターン（上昇傾向、下降減衰、上昇反転）に類似する銘柄のみを抽出します。")
             if filter_shape_match:
                 # Store selected shapes in session state to enable toggle buttons
