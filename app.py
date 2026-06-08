@@ -1065,13 +1065,227 @@ def generate_recommendation_text(ticker, name, tech_score, fund_score, signals, 
         
     return text
 
+# Helper to translate text dynamically
+@st.cache_data(ttl=86400)
+def translate_text(text, dest_lang="ja", src_lang="en"):
+    if not text:
+        return ""
+    try:
+        import urllib.request
+        import urllib.parse
+        import json
+        truncated_text = text[:1200]
+        url = 'https://translate.googleapis.com/translate_a/single?client=gtx&sl=' + src_lang + '&tl=' + dest_lang + '&dt=t&q=' + urllib.parse.quote(truncated_text)
+        req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
+        with urllib.request.urlopen(req, timeout=5) as response:
+            res = json.loads(response.read().decode('utf-8'))
+            result = ''.join([item[0] for item in res[0] if item[0]])
+            return result
+    except Exception:
+        return text
+
+# Helper to classify industry
+def classify_industry(industry, sector, summary_lower):
+    ind_lower = (industry or "").lower()
+    sec_lower = (sector or "").lower()
+    
+    if "auto" in ind_lower or "vehicle" in ind_lower or "automotive" in ind_lower:
+        return "automotive"
+    elif "semiconductor" in ind_lower or "silicon" in ind_lower or "lithography" in ind_lower or "wafer" in ind_lower:
+        return "semiconductors"
+    elif "conglomerates" in ind_lower or "trading company" in ind_lower or "trading" in ind_lower or "物産" in ind_lower or "商事" in ind_lower:
+        return "trading_conglomerates"
+    elif "electronic components" in ind_lower or "scientific" in ind_lower or "sensor" in ind_lower or "precision" in ind_lower or "instruments" in ind_lower:
+        return "electronics"
+    elif "telecom" in ind_lower or "communication services" in sec_lower or "carrier" in ind_lower:
+        return "telecom"
+    elif "internet content" in ind_lower or "internet retail" in ind_lower or "e-commerce" in ind_lower or "web" in ind_lower:
+        return "internet"
+    elif "software—application" in ind_lower or "software—infrastructure" in ind_lower or "saas" in ind_lower or "system integrator" in ind_lower or "information technology services" in ind_lower:
+        return "software"
+    elif "drug" in ind_lower or "biotechnology" in ind_lower or "pharmaceutical" in ind_lower:
+        return "biotech"
+    elif "medical devices" in ind_lower or "medical instruments" in ind_lower or "diagnostics" in ind_lower:
+        return "medical_devices"
+    elif "chemical" in ind_lower:
+        return "chemicals"
+    elif "steel" in ind_lower or "metal" in ind_lower or "mining" in ind_lower:
+        return "metals"
+    elif "machinery" in ind_lower or "tool" in ind_lower or "automation" in ind_lower:
+        return "machinery"
+    elif "construction" in ind_lower or "engineering" in ind_lower or "infrastructure" in ind_lower:
+        return "construction"
+    elif "real estate" in ind_lower or "reit" in ind_lower or "property" in ind_lower:
+        return "realestate"
+    elif "banks" in ind_lower:
+        return "banks"
+    elif "capital markets" in ind_lower or "brokerage" in ind_lower or "financial conglomerates" in ind_lower or "asset management" in ind_lower:
+        return "brokerage"
+    elif "insurance" in ind_lower:
+        return "insurance"
+    elif "gaming" in ind_lower or "entertainment" in ind_lower or "toy" in ind_lower or "game" in ind_lower:
+        return "entertainment"
+    elif "retail" in ind_lower or "store" in ind_lower or "shop" in ind_lower:
+        return "retail"
+    elif "packaged foods" in ind_lower or "beverage" in ind_lower or "food" in ind_lower:
+        return "food"
+    elif "marine shipping" in ind_lower or "shipping" in ind_lower or "vessel" in ind_lower or "ocean freight" in ind_lower:
+        return "marine_shipping"
+    elif "airline" in ind_lower or "rail" in ind_lower or "freight" in ind_lower or "transportation" in ind_lower or "logistics" in ind_lower:
+        return "transportation"
+    elif "utilities" in sec_lower or "power" in ind_lower or "gas" in ind_lower:
+        return "utilities"
+    elif "wholesale" in ind_lower:
+        if "conglomerate" in sec_lower or "trading" in sec_lower:
+            return "trading_conglomerates"
+        elif "electronic" in sec_lower or "computer" in sec_lower:
+            return "electronics"
+        return "retail"
+    
+    if "technology" in sec_lower:
+        return "software"
+    elif "financial" in sec_lower:
+        return "banks"
+    elif "energy" in sec_lower:
+        return "utilities"
+    elif "materials" in sec_lower:
+        return "chemicals"
+    elif "industrials" in sec_lower:
+        return "machinery"
+    
+    return "other"
+
+# Dictionary of industry catalysts
+INDUSTRY_CATALYSTS = {
+    "automotive": [
+        "**新型EV・ハイブリッド車(HEV)のグローバル販売増**: 北米やアジア等の主要市場における新型車両のシェア伸長や電動化ロードマップの進捗IR。",
+        "**為替の円安推移に伴う輸出利益の上振れ**: 輸出比率が高いため、想定為替レートより円安で推移した四半期決算時の大幅な経常利益上振れシナリオ。",
+        "**車載半導体や重要部材サプライチェーンの正常化**: 部品調達不足の解消に伴う生産稼働率の向上と、操業度改善による営業マージンの回復。"
+    ],
+    "semiconductors": [
+        "**生成AI向けGPU・HBM（高帯域幅メモリ）向け受注の拡大**: AIサーバーやデータセンター需要に伴う、最先端の微細化・パッケージング関連装置の大口受注獲得IR。",
+        "**大手ファウンドリ（TSMC・Samsung等）の設備投資計画(CapEx)の引き上げ**: 主要顧客の巨額投資ニュースは、直接的な中長期受注残の拡大期待として株価の強い押し上げ要因になります。",
+        "**シリコンサイクルの底打ちと在庫調整完了**: 半導体製造業界全体の需給バランス回復に伴う、装置および周辺部材の新規受注サイクルの再加速。"
+    ],
+    "trading_conglomerates": [
+        "**原油・LNG・鉄鉱石・銅などの国際商品市況の上昇**: 資源価格の高騰は、資源権益比率の高い総合商社の持分法投資損益を直接押し上げる最大の好材料です。",
+        "**非資源分野（DX・リテール・ヘルスケア・再エネ）の事業拡大**: 投資ポートフォリオの多角化による収益の安定化と、新規事業立ち上げによる企業価値向上への期待。",
+        "**東証の要請を受けた株主還元の強化（増配・積極的な自社株買い）**: 豊富なキャッシュフローを背景とした、累進配当の導入や機動的な株主還元姿勢の発表。"
+    ],
+    "electronics": [
+        "**スマートフォン（新型iPhone等）や車載電子部品向けの需要回復**: 積層セラミックコンデンサ（MLCC）や基板用材料の出荷数量の反転回復。",
+        "**ファクトリーオートメーション（FA）向け高精度センサやアクチュエータの受注底打ち**: グローバルな製造業設備投資の回復サイクルへの突入実績の開示。",
+        "**最先端電子デバイスの新規顧客開拓**: 米国や欧州の主要メーカーへの新規格部品の採用決定に関するリリース。"
+    ],
+    "telecom": [
+        "**5G/6Gインフラ構築と法人向けDX・セキュリティソリューションの売上成長**: 単なる回線提供にとどまらない、クラウド連携やサイバーセキュリティ等の高付加価値ソリューションの契約獲得。",
+        "**データセンター・生成AIインフラ事業の本格収益化**: 生成AIの爆発的普及に伴うデータ通信量増加に対応したデータセンターの増設と、稼働率の上昇による増収寄与。",
+        "**インフレに連動した通信プランの価格改定およびARPU（ユーザー平均単価）の向上**: 顧客離脱を防ぎつつ単価を改善する料金プラン戦略の成功。"
+    ],
+    "internet": [
+        "**EC流通取引総額（GMV）の拡大および加盟店手数料・広告枠売上の成長**: プラットフォームの活性化と広告出稿企業の増加による売上高の伸長。",
+        "**生成AI等の新テクノロジーを活用した体験向上とLTV（顧客生涯価値）改善**: ユーザーにパーソナライズされた提案機能や業務効率化ツールのリリースによる解約率の低下。",
+        "**フィンテック（決済・金融）分野や独自ポイント経済圏とのクロスセル進展**: サービス内での金融取引アクティブ化に伴う高利益率の周辺事業の収益寄与。"
+    ],
+    "software": [
+        "**ARR（年間経常収益）の伸長と解約率（Churn Rate）の低水準維持**: サブスクリプションSaaSビジネスにおける安定した収益基盤の成長実績と顧客定着率の高さの証明。",
+        "**大手企業（エンタープライズ領域）での大口パッケージ導入IR**: システムインテグレーションや基幹システムクラウド移行（DX）におけるメガ顧客の獲得発表。",
+        "**自社ソフトへのAI機能搭載に伴うアップセル・基本料金の値上げ**: プロダクト価値の向上に合わせた上位プランへの移行促進や価格転嫁による、売上総利益率の向上。"
+    ],
+    "biotech": [
+        "**開発中パイプライン（新薬候補）の治験（第II相/第III相）での良好な結果公表**: 主要評価項目のクリアや良好な臨床データの発表は、バイオテクノロジー企業の企業価値を飛躍的に高めます。",
+        "**規制当局（厚労省PMDA、米国FDAなど）からの製造販売承認の獲得**: 開発フェーズから販売・収益化フェーズへと切り替わる、最も事業リスクが低下するマイルストーン達成。",
+        "**グローバルメガファーマとのライセンスアウト（導出）および共同開発契約の締結**: 一時金の獲得や開発進捗に伴うマイルストーン収入、および将来の販売ロイヤリティの確保。"
+    ],
+    "medical_devices": [
+        "**低侵襲手術用デバイスや最先端内視鏡装置のグローバルシェア拡大**: 北米、中国、新興国での販売実績の伸長や、病院での新規導入契約の獲得実績。",
+        "**海外での薬事承認取得および販売パートナーシップ締結**: 巨大市場での販売活動が可能になるマイルストーンの達成と、現地ディストリビューターの販売網活用による立ち上がり加速。",
+        "**配送される消耗品の販売比率上昇に伴う収益安定化（ストックビジネス化）**: 機器本体の累積稼働台数増加に伴う、定期的な消耗品・メンテナンス売上の積み上がりによる粗利益率の改善。"
+    ],
+    "chemicals": [
+        "**EV電池用セパレータや半導体レジストなど高機能・高付加価値素材の採用獲得**: 次世代成長産業向け部材の特定顧客での独占採用やサプライヤー指定IR。",
+        "**ナフサなど原油由来原料コストの下落に伴うスプレッド（利ざや）の拡大**: 原材料価格下落に対して製品価格を維持、あるいは迅速な価格改定を行うことによるマージン改善。",
+        "**環境配慮型素材（バイオプラスチック・再生材料）の商用化とグリーン調達の受注**: 大手メーカーの環境基準に対応した製品供給の本格化によるシェア獲得。"
+    ],
+    "metals": [
+        "**銅・ニッケル等の非鉄金属や鉄鋼・石炭の国際市況（LME価格等）の上昇**: グローバルな需要逼迫に伴う販売単価の引き上げと、保有権益からの持分法利益の大幅な増加。",
+        "**EV向け高性能電磁鋼板など高付加価値金属材料の販売比率拡大**: 競合他社が追随しにくい独自の高合金材料や環境負荷低減素材の受注増による単価・マージンの向上。",
+        "**自動車・産業機械など主要製造業顧客の在庫調整完了に伴う出荷量回復**: 製造業の景気循環回復に連動した、稼働率上昇による利益の急復元。"
+    ],
+    "machinery": [
+        "**工作機械・産業用ロボットの月次受注動向の底打ち・反転上昇**: 設備投資の先行指標である受注高が反転することによる、中長期的な業績成長期待の復活。",
+        "**海外（北米、インド、東南アジア）のインフラ・建設需要を取り込んだ建機販売の拡大**: 各国の公共投資や宅地開発に伴う、中大型機・油圧ショベル等の好調な出荷実績。",
+        "**IoT・予兆保全サービス（ストック事業）の拡大と営業利益率の向上**: 稼働データを活用したメンテナンスや消耗品供給の直接提供比率向上による、安定高収益モデルの構築。"
+    ],
+    "construction": [
+        "**都心再開発や半導体工場建設などに伴う大型受注・施工の進捗**: 豊富な手持ち工事残高の確実な竣工と、採算重視の選別受注による利益率の確保。",
+        "**資材価格・労務費の上昇に対する請負価格の適正なスライド改定**: コスト上昇分を発注者に適正に転嫁する交渉の進展による、利益率のボトムアウト確認。",
+        "**脱炭素・新エネルギー関連（洋上風力や水素インフラ）の土木施工案件の獲得**: 新たな大型インフラ投資分野におけるフロントランナーとしての受注実績IR。"
+    ],
+    "realestate": [
+        "**都心オフィスビルの空室率低下と平均賃料の上昇トレンド維持**: 新築ビルの満室稼働や、既存ビルの契約更改におけるインフレを反映した賃料引き上げの成功。",
+        "**物流施設や高級マンション開発物件の販売好調による早期売却益の計上**: 機動的なアセットローテーション（私募リート等への売却）によるまとまった特別利益の計上。",
+        "**保有不動産の含み益拡大を背景とした資産価値評価の引き上げ**: 低PBR解消に向けた、保有資産の売却や還元枠の拡大を伴う経営戦略の発表。"
+    ],
+    "banks": [
+        "**日本銀行の利上げ局面に伴う貸出金利ざや（純金利マージン）の拡大**: 金利上昇による預貸スプレッドの改善は、銀行のコア収益（資金利益）を飛躍的に増加させます。",
+        "**国債等の保有資産の利回り改善とポートフォリオ再構築**: 高金利環境における再投資利回りの向上に伴う、中長期的な資金運用収益の上振れ。",
+        "**資本効率重視の還元姿勢（配当性向の引き上げ、積極的な自社株買い）**: 豊富な自己資本を原資とした、東証のPBR改善要請への積極的なコミットメント開示。"
+    ],
+    "brokerage": [
+        "**株式市場の活況・取引高急増に伴う委託手数料の拡大**: 個人投資家の取引活発化によるブローカレッジ収入の急増、および信用取引残高の増加に伴う金利収入の拡大。",
+        "**新NISA等の普及による投資信託・預かり資産残高（AUM）の継続的増加**: 顧客層の拡大に伴う、ストック収益である信託報酬・口座管理手数料の安定的な積み上がり。",
+        "**M&A仲介・IPO支援等のコーポレートファイナンス業務の好調**: 企業の再編意欲の高まりを背景とした、アドバイザリー手数料および引受手数料の増加。"
+    ],
+    "insurance": [
+        "**金利上昇による運用環境の改善（利回り向上メリット）**: 生保・損保における超長期債等での新規運用利回り向上による、将来的な利差益の拡大・安定化。",
+        "**保険料率（自動車保険・火災保険等）の改定による収益力の復元**: 事故率や災害発生率のデータに基づいた適正な保険料引き上げによる、コンバインド・レシオ（費用率）の低下改善。",
+        "**政策保有株式の縮減前倒しに伴う売却益と株主還元枠の設定**: 保有株売却で得たキャッシュを原資とする増配・大規模自社株買いの発表による需給改善。"
+    ],
+    "entertainment": [
+        "**新規ゲームタイトルや大型IP商品のグローバル市場での大ヒット**: 発売初期のセールス本数ミリオン突破や、アプリストアのセールスランキング上位維持による業績急拡大サプライズ。",
+        "**人気IP（知的財産）の多角化・メディアミックス展開（アニメ・映画・グッズ）の成功**: ライセンス収入（ロイヤリティ）の増加と、ゲーム等本業へのファン流入相乗効果のIR。",
+        "**主力タイトルの大型アップデートや有名コラボイベントによる月次売上の急増**: アプリ運営におけるMAU（月間アクティブ）の再活性化と、課金率の反転回復実績。"
+    ],
+    "retail": [
+        "**月次既存店売上高の好調持続（客数・客単価の前年比上振れ）**: 独自ブランド（PB）製品のヒットや店舗改装効果による、毎月開示される業績数値の好進捗実績。",
+        "**訪日外国人（インバウンド）による免税売上の急拡大**: インバウンド客の増加や為替の円安基調を受けた、免税売上比率の拡大とそれに伴う利益率の向上。",
+        "**海外店舗（アジア・北米等）の新規出店と黒字化ペースの加速**: 国内の人口減少を見据えたグローバル展開の成功と、海外現地でのブランド認知度の高まり。"
+    ],
+    "food": [
+        "**国内での適正な価格改定（値上げ）の浸透とマージン回復**: 原材料費・エネルギーコストの上昇に対する値上げが定着し、販売数量が底堅く推移することによる粗利率の急上昇。",
+        "**海外事業（北米やアジア等）におけるローカライズ展開の好調**: 海外市場での販売網開拓や現地工場の稼働本格化による、高成長率・高利益率路線の獲得。",
+        "**小麦・大豆・コーヒー豆等の主要輸入原材料価格の落ち着き**: コモディティ相場の下落や為替の安定化に伴う、四半期決算での原価率引き下げ効果。"
+    ],
+    "marine_shipping": [
+        "**バルチック海運指数 (BDI) やコンテナ運賃などの海運市況の反発**: グローバルな船腹需給タイト化による運賃高騰は、海運株の売上・利益を最も強烈に押し上げるカタリストです。",
+        "**地政学的リスク（運河の通航制限等）に伴う運賃市況の高騰**: 迂回ルートの発生による船腹の供給不足と、それに伴うスポット運賃（SCFI等）の急上昇シナリオ。",
+        "**新造船の竣工スケジュールとスクラップ動向**: 業界全体の供給能力調整や、老朽船の環境規制対応に伴う廃船進捗による船腹需給のタイト化。"
+    ],
+    "transportation": [
+        "**「物流2024年問題」に対応した運賃改定（基本運賃値上げ）の成否**: 陸運・宅配における積載効率の向上や適正運賃交渉の妥結による、営業利益率の復元。",
+        "**インバウンド旅客および国内外 of ビジネス人流の本格回復に伴う鉄道・航空搭乗率の上昇**: 新幹線や国際線の需要増加による、高マージンな長距離旅客セグメントの収益寄与。",
+        "**燃油サーチャージや為替変動（円高方向への修正）に伴う燃料コスト負担の軽減**: 航空・陸運における原燃料費の負担軽減によるマージン率の改善。"
+    ],
+    "utilities": [
+        "**燃料調整制度のタイムラグ解消やエネルギー原料市況（LNG・石炭）の下落**: 発電コストの低下に対して電気料金の改定効果が発現することによる、経常損益の大幅な黒字転換・拡大。",
+        "**原子力発電所の安全対策工事完了と再稼働プロセスの進捗**: 火力発電用の燃料調達コスト（LNG等）の莫大な削減効果をもたらす、最もインパクトの大きい収益改善カタリスト。",
+        "**再生可能エネルギー（洋上風力・地熱等）の新規発電所運転開始**: クリーンエネルギー調達を重視する法人向け契約の増加と、長期安定的な売電キャッシュフローの創出。"
+    ],
+    "other": [
+        "**四半期決算における進捗率の高さと営業利益の上振れサプライズ**: 市場コンセンサスを上回る決算数値の公表による、短期的な買い需要の呼び込み。",
+        "**新規顧客向けのパイロット導入・業務提携IR**: 新たな成長の足がかりとなる業務資本提携や、新規市場への進出ロードマップの発表。"
+    ]
+}
+
 # Generate IR and Catalyst scenario analysis
 def generate_ir_catalysts(ticker, tags, info):
+    # Retrieve raw fields safely
     summary = info.get('longBusinessSummary') or ""
     sector = info.get('sector') or "未分類"
     industry = info.get('industry') or "未分類"
     
-    # Determine sector name in Japanese
+    # Translate industry & sector to Japanese dynamically
     sector_ja = {
         "Technology": "テクノロジー・情報技術",
         "Financial Services": "金融サービス",
@@ -1084,72 +1298,115 @@ def generate_ir_catalysts(ticker, tags, info):
         "Real Estate": "不動産",
         "Energy": "エネルギー",
         "Utilities": "公益事業"
-    }.get(sector, sector)
+    }.get(sector, None)
     
-    text = f"### ビジネスモデルとカタリスト（株価上昇材料）分析\n\n"
-    text += f"**セクター**: `{sector_ja}` | **業界**: `{industry}`\n\n"
-    
-    # 1. Business Description Summary
-    text += "#### 企業の主要事業活動\n"
-    if summary:
-        text += f"> {summary[:600]}...\n\n"
-        text += "*※Yahoo Financeより自動取得した事業サマリー（原文）を表示しています。*\n\n"
-    else:
-        text += "事業活動の詳細概要は取得できませんでした。（カスタム銘柄の場合は財務情報の取得が制限されることがあります）\n\n"
+    if sector_ja is None and sector != "未分類":
+        sector_ja = translate_text(sector)
+    elif sector_ja is None:
+        sector_ja = "未分類"
         
-    # 2. Upcoming IR & Catalyst Scenarios based on tags
-    text += "#### 期待される今後の株価上昇材料 (カタリスト)\n"
+    industry_ja = "未分類"
+    if industry != "未分類":
+        industry_ja = translate_text(industry)
+        
+    # Translate description summary
+    translated_summary = ""
+    if summary:
+        translated_summary = translate_text(summary)
+    else:
+        translated_summary = "事業サマリー情報はありませんでした。"
+        
+    # Classify the industry
+    summary_lower = summary.lower()
+    classified = classify_industry(industry, sector, summary_lower)
     
+    # Initialize catalysts list
     catalysts = []
     
-    # Space Tag
-    if "宇宙" in tags or any(x in sector or x in industry for x in ["Space", "Aerospace", "Defense", "防衛", "航空宇宙"]):
-        catalysts.extend([
-            "**宇宙開発・打上げ成功IR**: 自社人工衛星や顧客衛星の打上げスケジュール・打上げ成否に関する公式アナウンス。ミッションの成功は直接的な収益化や技術実証となり、最も強力な買い材料になります。",
-            "**防衛省・JAXA等からの政府受注**: 政府が推進する宇宙技術戦略基金などの開発補助金の採択、または防衛関連での大型契約受注IRが株価急騰の最大のトリガーです。",
-            "**月面探査プロジェクトの進捗**: 月面データビジネスや着陸船の着陸予定、各種パートナーシップ企業の開示など、宇宙ビジネスの実現性に直結するアップデート。"
-        ])
+    # 1. Add Industry-specific Catalysts
+    ind_cats = INDUSTRY_CATALYSTS.get(classified, INDUSTRY_CATALYSTS["other"])
+    catalysts.extend(ind_cats)
+    
+    # 2. Keyword-Specific Catalyst Injector
+    # EV / Battery
+    if any(k in summary_lower for k in ["ev ", "battery", "batteries", "electric vehicle", "electrification", "hybrid"]):
+        catalysts.append("**EV（電気自動車）および次世代バッテリー向け製品・部材の需要拡大**: 主要メーカーによる新型EVの投入や、自社部材（電極材料、バッテリーパック、車載センサー等）の採用実績・販売動向が株価を大きく動かす可能性があります。")
+    
+    # Hydrogen / Ammonia / Decarbon
+    if any(k in summary_lower for k in ["hydrogen", "ammonia", "decarbon", "renewable", "wind power", "solar power"]):
+        catalysts.append("**水素・アンモニアおよびクリーンエネルギー（脱炭素）関連プロジェクトの進展**: 政府の温室効果ガス削減目標や補助金支援を受けて開発中の、次世代クリーン燃料供給チェーン構築や大規模実証事業のニュース。")
         
-    # AI / Semi Tag
-    if "AI" in tags or "半導体" in tags or any(x in sector or x in industry for x in ["Technology", "Semiconductor", "Software", "ソフトウェア"]):
-        catalysts.extend([
-            "**次世代AIサーバー / SoCの出荷 / テープアウト**: 最先端AIチップ（NVIDIA製等）の安定確保やデータセンターの拡張IR、カスタムSoC（ソシオネクスト等）の開発進捗（テープアウト完了）に関する発表。",
-            "**グローバルAIリーダー（NVIDIA等）の決算**: AI・半導体セクターは連動性が非常に高いため、米NVIDIA等の決算内容や将来の設備投資計画（CapEx）に関するカンファレンスコール自体が、自社株の強力なカタリストになります。",
-            "**政府による国内製造支援・助成金**: データセンター整備費用への政府補助金の採択、経産省による半導体技術支援プロジェクトへの参画認定IR。"
-        ])
+    # AI / Machine Learning
+    if any(k in summary_lower for k in ["ai ", "artificial intelligence", "machine learning", "deep learning", "generative ai"]):
+        catalysts.append("**生成AI（人工知能）ソリューションや機械学習プラットフォームの機能拡張・受注**: 顧客企業の業務効率化やDX（デジタルトランスフォーメーション）加速に向けた新規AI機能の実装や、特化型AIモデルの共同開発IR。")
         
-    # High Volatility / growth tag
-    if "急騰期待" in tags:
-        catalysts.extend([
-            "**業績ガイダンスの上方修正（サプライズ）**: 急成長株において、四半期決算で通期予想を上方修正したり、市場のコンセンサス予想を大幅に超える進捗率を見せた際の決算IRは、ストップ高を誘発しやすくなります。",
-            "**業界巨人・グローバル企業との業務資本提携**: 認知度や資本力に劣る新興ベンチャーが、NTTやトヨタ等の国内大手、あるいは海外メガテック企業とのシステム連携や共同出資を発表した際の株価インパクトは絶大です。",
-            "**株式分割・株主優待制度の新設**: 個人投資家の売買活発度が高いため、最低投資金額を引き下げる株式分割や、魅力的な優待の新設IRは、需給関係を急激に好転させます。"
-        ])
+    # Defense / Space
+    if "宇宙" in tags or "防衛" in tags or any(k in summary_lower for k in ["defense", "military", "aerospace", "jaxa"]):
+        catalysts.append("**防衛装備品や宇宙産業（JAXA等官公庁）関連の大型プロジェクト受注**: 国防予算増額や宇宙開発推進基金を背景とした、国家主導の新型レーダー、飛翔体、宇宙デブリ回収等の大型受注・補助金採択。")
         
-    # PBR < 1
-    pbr = info.get('priceToBook')
+    # Inbound / Tourist
+    if any(k in summary_lower for k in ["inbound", "tourist", "tourism", "hotel", "lodging"]):
+        catalysts.append("**訪日外国人観光客（インバウンド）による免税売上および客単価の上振れ**: 旅行需要の活況や為替の円安傾向を受けた、インバウンド顧客向けの高付加価値サービス販売や免税売上比率の向上。")
+        
+    # M&A
+    if any(k in summary_lower for k in ["acquisition", "merger", "m&a", "takeover"]):
+        catalysts.append("**M&A（合併・買収）や資本業務提携によるシナジー発揮と事業拡大**: 成長余地の大きい海外企業や、競合・周辺領域企業の買収に伴う連結売上高の急増および新市場への参入スピード加速。")
+        
+    # Global expansion
+    if any(k in summary_lower for k in ["global", "overseas", "north america", "europe", "china", "asia"]):
+        catalysts.append("**海外事業（グローバル市場）における販売比率の増加と為替影響**: 北米、アジア、欧州など巨大市場でのローカライズ展開や、想定為替レート（円安）に対する上振れ利益メリット。")
+
+    # 3. Financial/Structure Catalysts
+    def local_safe_float(val):
+        if val is None:
+            return None
+        try:
+            return float(val)
+        except (ValueError, TypeError):
+            return None
+
+    pbr = local_safe_float(info.get('priceToBook'))
     if pbr is not None and pbr < 1.0:
-        catalysts.extend([
-            "**東証PBR改革要求への対応策の開示**: 「資本コストや株価を意識した経営の具体策」に関するIR発表。これが中長期的に最も評価されるカタリストです。",
-            "**自社株買い・配当性向の引き上げ（増配）**: 企業内に蓄積されたキャッシュを株主に還元する、数百万株規模の自社株買いや特別配当の決定IR。",
-            "**MBO（経営陣による自社買収）またはTOB**: 割安すぎる評価に甘んじている優良企業が、非公開化を選択するMBOや親会社による子会社化を発表する動き。提示されるプレミアム価格まで一気に上昇します。"
-        ])
+        catalysts.append(f"**PBR改善要求（現状PBR: {pbr:.2f}倍）に対する資本効率改善策の発表**: PBRが1倍を下回っているため、東証からの改善要請に基づき、配当増額や大規模な自社株買い、政策保有株の縮減といった還元強化策が出やすい株価位置にあります。")
         
-    # General default if no specific catalysts match
-    if not catalysts:
-        catalysts.extend([
-            "**四半期決算時の利益進捗（コンセンサス上振れ）**: 定期決算における、市場予想を上回るポジティブサプライズの発表。",
-            "**新規プロダクトのローンチ・主要アップデート**: 既存顧客へのアップセルにつながる新機能や、新規市場への進出ロードマップの公表。"
-        ])
+    div_yield = local_safe_float(info.get('dividendYield'))
+    if div_yield is not None and div_yield >= 0.035:
+        catalysts.append(f"**高配当利回り（現状予想配当利回り: {div_yield*100:.2f}%）による株価下値の堅さとインカム買い**: 安定した配当利回りが投資家の買いを呼び込みやすく、市場全体の下落局面でも下値のサポートとして機能します。")
         
+    market_cap = local_safe_float(info.get('marketCap'))
+    if market_cap is not None and market_cap < 150 * 10**8: # Under 150億円
+        catalysts.append(f"**中小型株特有のアナリスト新規カバレッジ開始や買収プレミアム期待 (時価総額: {market_cap/10**8:.1f}億円)**: 流動性が低いため、証券会社のアナリストによるカバー開始や、大手企業による資本提携・TOB等のニュースで株価が急上昇しやすい材料性があります。")
+
+    # Compile the final layout
+    text = f"### 💡 ビジネスモデルとカタリスト（株価上昇材料）分析\n\n"
+    text += f"**セクター**: `{sector_ja}` | **業界**: `{industry_ja}`\n\n"
+    
+    text += f"#### 🏢 企業の主要事業活動（詳細サマリー）\n"
+    text += f"{translated_summary}\n\n"
+    
+    text += f"#### 🚀 期待される今後の株価上昇材料 (カタリスト)\n"
+    
+    # Deduplicate and limit to top 4
+    seen = set()
+    unique_catalysts = []
     for c in catalysts:
+        title = c.split(":")[0] if ":" in c else c
+        if title not in seen:
+            seen.add(title)
+            unique_catalysts.append(c)
+            
+    if not unique_catalysts:
+        unique_catalysts.extend([
+            "**四半期決算時の利益進捗（コンセンサス上振れ）**: 定期決算における、市場予想を上回る営業利益・純利益のポジティブサプライズ発表。",
+            "**新規プロダクトのローンチ・主要アップデート**: 既存顧客へのアップセルや、新規市場への進出ロードマップの公表による売上期待。"
+        ])
+        
+    for c in unique_catalysts[:4]:
         text += f"- {c}\n\n"
         
-    # 3. Next Earnings Info
-    text += "#### 次回決算・IR予定におけるリスク管理\n"
-    text += "グロース企業やテーマ株において、**決算発表日は最も株価が激しく動く「両刃の剣」**です。\n"
-    text += "- ポジティブなIRが出ても「材料出尽くし」として一時的に売られるケースがあるため、決算発表前の過度な買い煽り局面でのエントリーは避け、発表後の反応を確認する『決算またぎの回避』も有効な手段です。\n"
-    text += "- 反対に、期待値が低い割安バリュー株は、僅かな上方修正や株主還元IRだけで株価が大きく跳ね上がります。"
+    text += f"#### ⚠️ 直近の注目点・リスク要因\n"
+    text += "- **決算発表時のガイダンス（今期見通し）の強さ**: 株価の上昇トレンド維持には、実績値だけでなく次回ガイダンスの数値が市場コンセンサスをクリアすることが重要です。\n"
+    text += "- **為替・金利動向およびマクロ経済環境**: 各種為替動向や金利上昇シナリオが企業の支払利息や輸出採算に与える影響に留意してください。\n"
     
     return text
 
