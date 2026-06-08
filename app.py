@@ -742,7 +742,7 @@ def parse_jpx_df(df):
     components = {}
     for idx, row in prime_df.iterrows():
         code = str(row['コード']).strip()
-        if len(code) == 4 and code.isdigit():
+        if len(code) == 4 and code.isalnum():
             ticker = f"{code}.T"
             name = str(row['銘柄名']).strip()
             sector = str(row['33業種区分']).strip()
@@ -823,6 +823,26 @@ def fetch_tse_prime_tickers():
     except Exception as e:
         st.warning(f"東証プライム銘柄の動的取得に失敗しました。ローカルデータを使用します。エラー: {e}")
         
+@st.cache_data(ttl=86400)
+def fetch_tse_growth_tickers():
+    # 1. Try to load from local JSON (High Performance & Stable)
+    try:
+        json_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "tse_growth_tickers.json")
+        if os.path.exists(json_path):
+            with open(json_path, "r", encoding="utf-8") as f:
+                res = json.load(f)
+                if res:
+                    # Merge JP_TICKERS tags for matching tickers
+                    for k, v in JP_TICKERS.items():
+                        if k in res:
+                            existing_tags = res[k].get("tags", [])
+                            merged_tags = list(set(existing_tags + v.get("tags", [])))
+                            res[k]["tags"] = merged_tags
+                    return res
+    except Exception:
+        pass
+    return {}
+
     # 3. Last resort fallback based on JP_TICKERS
     fallback_res = {}
     for k, v in JP_TICKERS.items():
@@ -2859,6 +2879,7 @@ with tab_screen:
                 f"米国株 厳選トレンド銘柄 ({len(US_TICKERS)}件)",
                 "日経平均株価 (日経225全銘柄 - 動的取得)",
                 "東証プライム (全上場銘柄 - 動的取得)",
+                "東証グロース (全上場銘柄 - 動的取得)",
                 "カスタム指定"
             ],
             key="scr_market"
@@ -2893,7 +2914,7 @@ with tab_screen:
             key="scr_custom_tickers"
         )
 
-    # Added: Conditional Sector & Size filters for TSE Prime
+    # Added: Conditional Sector & Size filters for TSE Prime & Growth
     selected_sectors = []
     selected_sizes = []
     if market == "東証プライム (全上場銘柄 - 動的取得)":
@@ -2928,6 +2949,31 @@ with tab_screen:
                 placeholder="すべての規模 (未選択)",
                 key="scr_prime_sizes"
             )
+    elif market == "東証グロース (全上場銘柄 - 動的取得)":
+        growth_tickers = fetch_tse_growth_tickers()
+        all_growth_sectors = ["✨ AI・半導体関連 (テーマ)", "✨ 宇宙開発・防衛関連 (テーマ)"] + sorted(list(set(info.get("sector", "その他") for info in growth_tickers.values() if info.get("sector"))))
+        
+        st.markdown(
+            '<div style="background-color: rgba(37, 99, 235, 0.03); border: 1px solid rgba(37, 99, 235, 0.1); border-radius: 12px; padding: 16px; margin-bottom: 20px;">'
+            '<span style="font-size: 0.95rem; font-weight: 600; color: #2563eb;">⚡️ 東証グロース対象銘柄の絞り込み (推奨)</span>'
+            '<div style="font-size: 0.8rem; color: #64748b; margin-top: 4px; margin-bottom: 12px;">'
+            '※ 候補銘柄数を絞り込むことで、スクリーニング速度が向上し、APIのレートリミットを回避できます。'
+            '</div>'
+            '</div>', 
+            unsafe_allow_html=True
+        )
+        
+        selected_sectors = st.multiselect(
+            "🎨 対象業種（33業種区分）で絞り込む (未選択で全業種)",
+            options=all_growth_sectors,
+            default=[],
+            placeholder="すべての業種 (未選択)",
+            key="scr_growth_sectors"
+        )
+    # Skip original prime checks because we redefine it
+    skip_flag = True
+    if not skip_flag:
+        pass
 
     # Details expander for score and financial criteria
     with st.expander("📊 詳細なスコア・財務条件フィルタ (クリックで開閉)", expanded=False):
@@ -3013,6 +3059,8 @@ with tab_screen:
         tickers_pool = fetch_nikkei225_tickers()
     elif market == "東証プライム (全上場銘柄 - 動的取得)":
         tickers_pool = fetch_tse_prime_tickers()
+    elif market == "東証グロース (全上場銘柄 - 動的取得)":
+        tickers_pool = fetch_tse_growth_tickers()
     else:
         # Custom
         if custom_tickers:
@@ -3048,7 +3096,7 @@ with tab_screen:
         is_defense_heavy = "防衛" in tags or "宇宙" in tags or "ロケット" in tags or "機械" in tags or "輸送用機器" in tags or "航空重工" in tags or "精密機器" in tags or is_space
         
         # Apply market-specific filters
-        if market == "東証プライム (全上場銘柄 - 動的取得)":
+        if market == "東証プライム (全上場銘柄 - 動的取得)" or market == "東証グロース (全上場銘柄 - 動的取得)":
             if selected_sectors:
                 match_sector = False
                 for sel in selected_sectors:
@@ -3066,7 +3114,7 @@ with tab_screen:
                             break
                 if not match_sector:
                     continue
-            if selected_sizes and info.get("size") not in selected_sizes:
+            if market == "東証プライム (全上場銘柄 - 動的取得)" and selected_sizes and info.get("size") not in selected_sizes:
                 continue
                 
         # Apply theme filter
