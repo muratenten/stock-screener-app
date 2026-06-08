@@ -68,13 +68,9 @@ st.markdown("""
     }
     /* Base style for premium list buttons */
     button.premium-list-btn {
-        text-align: center !important;
         display: flex !important;
-        justify-content: center !important;
         align-items: center !important;
         border-radius: 12px !important;
-        padding: 8px 4px !important;
-        font-size: 0.8rem !important;
         font-weight: 600 !important;
         border: 1px solid #e2e8f0 !important;
         background: #ffffff !important;
@@ -87,8 +83,15 @@ st.markdown("""
         overflow: hidden !important;
         text-overflow: ellipsis !important;
     }
-    /* Adjust text alignment to left for owned and watchlist buttons */
-    div[data-testid="column"] button.premium-list-btn {
+    /* Centered styling for shape toggle buttons */
+    button.premium-list-btn.premium-center {
+        text-align: center !important;
+        justify-content: center !important;
+        padding: 8px 4px !important;
+        font-size: 0.8rem !important;
+    }
+    /* Left-aligned styling for portfolio and watchlist buttons */
+    button.premium-list-btn.premium-left {
         text-align: left !important;
         justify-content: flex-start !important;
         padding: 14px 18px !important;
@@ -130,6 +133,8 @@ st.components.v1.html("""
                 if (btn.classList.contains('premium-list-btn')) {
                     btn.classList.remove('premium-list-btn');
                     btn.classList.remove('premium-active');
+                    btn.classList.remove('premium-left');
+                    btn.classList.remove('premium-center');
                 }
                 return;
             }
@@ -142,6 +147,14 @@ st.components.v1.html("""
                     btn.classList.add('premium-active');
                 } else {
                     btn.classList.remove('premium-active');
+                }
+                
+                if (txt.includes('💼') || txt.includes('⭐')) {
+                    btn.classList.add('premium-left');
+                    btn.classList.remove('premium-center');
+                } else {
+                    btn.classList.add('premium-center');
+                    btn.classList.remove('premium-left');
                 }
             }
         });
@@ -320,8 +333,14 @@ def show_sell_success_dialog(name, ticker, qty, price, total_return, realized_pl
     if st.button("確認して閉じる", type="primary", use_container_width=True, key="dlg_sell_confirm_close_btn"):
         st.rerun()
 
-def patch_history_with_fast_info(ticker, df):
+def patch_history_with_fast_info(ticker, df, skip_fast_info=False):
     if df.empty:
+        return df
+    # Drop rows where Close is NaN first (especially weekend trailing empty rows)
+    df = df.dropna(subset=['Close'])
+    if df.empty:
+        return df
+    if skip_fast_info:
         return df
     # Check if the last row has NaN for Close (typical yfinance weekend bug for JPY stocks)
     last_idx = df.index[-1]
@@ -514,37 +533,26 @@ def create_selection_chart(df, ticker, name, start_date, end_date):
     )
     return fig
 
-# Cached function for downloading batch histories
 @st.cache_data(ttl=3600)
 def batch_download_histories(tickers_list, period="1y"):
+    import time
     if not tickers_list:
         return {}
-    try:
-        data = yf.download(tickers_list, period=period, progress=False)
-    except Exception as e:
-        st.error(f"データのダウンロード中にエラーが発生しました: {e}")
-        return {}
-    
+        
+    chunk_size = 150
     histories = {}
-    if len(tickers_list) == 1:
-        ticker = tickers_list[0]
-        if isinstance(data.columns, pd.MultiIndex):
-            df = pd.DataFrame({
-                'Open': data['Open'][ticker],
-                'High': data['High'][ticker],
-                'Low': data['Low'][ticker],
-                'Close': data['Close'][ticker],
-                'Volume': data['Volume'][ticker]
-            })
-        else:
-            df = data.copy()
-        df = patch_history_with_fast_info(ticker, df)
-        df = df.dropna(subset=['Close'])
-        histories[ticker] = df
-    else:
-        for ticker in tickers_list:
-            try:
-                if ticker in data['Close'].columns:
+    
+    # Process in chunks of 150 to avoid URL length limitations and reduce rate limiting risk
+    for i in range(0, len(tickers_list), chunk_size):
+        chunk = tickers_list[i:i+chunk_size]
+        try:
+            data = yf.download(chunk, period=period, progress=False)
+            if data.empty:
+                continue
+                
+            if len(chunk) == 1:
+                ticker = chunk[0]
+                if isinstance(data.columns, pd.MultiIndex):
                     df = pd.DataFrame({
                         'Open': data['Open'][ticker],
                         'High': data['High'][ticker],
@@ -552,12 +560,35 @@ def batch_download_histories(tickers_list, period="1y"):
                         'Close': data['Close'][ticker],
                         'Volume': data['Volume'][ticker]
                     })
-                    df = patch_history_with_fast_info(ticker, df)
-                    df = df.dropna(subset=['Close'])
-                    if not df.empty:
-                        histories[ticker] = df
-            except Exception:
-                continue
+                else:
+                    df = data.copy()
+                df = patch_history_with_fast_info(ticker, df, skip_fast_info=True)
+                df = df.dropna(subset=['Close'])
+                if not df.empty:
+                    histories[ticker] = df
+            else:
+                for ticker in chunk:
+                    try:
+                        if isinstance(data.columns, pd.MultiIndex) and 'Close' in data and ticker in data['Close'].columns:
+                            df = pd.DataFrame({
+                                'Open': data['Open'][ticker],
+                                'High': data['High'][ticker],
+                                'Low': data['Low'][ticker],
+                                'Close': data['Close'][ticker],
+                                'Volume': data['Volume'][ticker]
+                            })
+                            df = patch_history_with_fast_info(ticker, df, skip_fast_info=True)
+                            df = df.dropna(subset=['Close'])
+                            if not df.empty:
+                                histories[ticker] = df
+                    except Exception:
+                        continue
+            # Small throttle delay between chunks
+            if len(tickers_list) > chunk_size:
+                time.sleep(0.3)
+        except Exception:
+            continue
+            
     return histories
 
 # Cached function for downloading ticker fundamental info
@@ -662,6 +693,112 @@ def fetch_nikkei225_tickers():
     except Exception as e:
         st.sidebar.warning(f"日経225の動的取得に失敗しました。ローカルデータを使用します。: {e}")
     return JP_TICKERS
+
+def parse_jpx_df(df):
+    market_col = '市場・商品区分'
+    if market_col not in df.columns:
+        for col in df.columns:
+            if '市場' in str(col) or '区分' in str(col):
+                if df[col].astype(str).str.contains("プライム").any():
+                    market_col = col
+                    break
+                    
+    size_col = '規模区分'
+    if size_col not in df.columns:
+        for col in df.columns:
+            if '規模' in str(col):
+                size_col = col
+                break
+    
+    prime_df = df[df[market_col].astype(str).str.contains("プライム")]
+    components = {}
+    for idx, row in prime_df.iterrows():
+        code = str(row['コード']).strip()
+        if len(code) == 4 and code.isdigit():
+            ticker = f"{code}.T"
+            name = str(row['銘柄名']).strip()
+            sector = str(row['33業種区分']).strip()
+            
+            size_val = "-"
+            if size_col in df.columns:
+                size_val = str(row[size_col]).strip()
+            
+            # Map size division to a cleaner tag
+            size_tag = "その他"
+            if "Core30" in size_val:
+                size_tag = "TOPIX Core30 (超大型株)"
+            elif "Large70" in size_val:
+                size_tag = "TOPIX Large70 (大型株)"
+            elif "Mid400" in size_val:
+                size_tag = "TOPIX Mid400 (中堅・中型株)"
+            elif "Small 1" in size_val:
+                size_tag = "TOPIX Small 1 (中小型株)"
+            elif "Small 2" in size_val:
+                size_tag = "TOPIX Small 2 (小型株)"
+                
+            inherited_tags = []
+            if ticker in JP_TICKERS:
+                inherited_tags = JP_TICKERS[ticker].get("tags", [])
+                
+            components[ticker] = {
+                "name": name,
+                "tags": list(set(["東証プライム", sector, size_tag] + inherited_tags)),
+                "sector": sector,
+                "size": size_tag
+            }
+    return components
+
+@st.cache_data(ttl=86400)
+def fetch_tse_prime_tickers():
+    # 1. Try to load from local JSON (High Performance & Stable)
+    try:
+        json_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "tse_prime_tickers.json")
+        if os.path.exists(json_path):
+            with open(json_path, "r", encoding="utf-8") as f:
+                res = json.load(f)
+                if res:
+                    return res
+    except Exception:
+        pass
+
+    # 2. Fallback to dynamic URL download
+    url = "https://www.jpx.co.jp/markets/statistics-equities/misc/tvdivq0000001vg2-att/data_j.xls"
+    try:
+        df = pd.read_excel(url)
+        res = parse_jpx_df(df)
+        if res:
+            return res
+    except Exception:
+        pass
+        
+    try:
+        page_url = "https://www.jpx.co.jp/markets/statistics-equities/misc/01.html"
+        headers = {"User-Agent": "Mozilla/5.0"}
+        req = urllib.request.Request(page_url, headers=headers)
+        with urllib.request.urlopen(req) as response:
+            html = response.read()
+        from bs4 import BeautifulSoup
+        soup = BeautifulSoup(html, "html.parser")
+        for a in soup.find_all("a", href=True):
+            if "data_j.xls" in a["href"]:
+                resolved_url = urllib.parse.urljoin(page_url, a["href"])
+                df = pd.read_excel(resolved_url)
+                res = parse_jpx_df(df)
+                if res:
+                    return res
+    except Exception as e:
+        st.warning(f"東証プライム銘柄の動的取得に失敗しました。ローカルデータを使用します。エラー: {e}")
+        
+    # 3. Last resort fallback based on JP_TICKERS
+    fallback_res = {}
+    for k, v in JP_TICKERS.items():
+        fallback_res[k] = {
+            "name": v.get("name", k),
+            "tags": v.get("tags", []) + ["東証プライム"],
+            "sector": v.get("tags", ["その他"])[0],
+            "size": "その他"
+        }
+    return fallback_res
 
 # Build indicator scoring logic
 def evaluate_stock(ticker, df, info=None):
@@ -2046,9 +2183,31 @@ PORTFOLIO_FILE = "virtual_portfolio.json"
 def get_portfolio_filename():
     user_key = st.session_state.get('user_key', 'default')
     safe_key = "".join([c for c in str(user_key) if c.isalnum() or c in ('-', '_')]).strip()
+    
+    # Base directory where app.py is located
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    
     if not safe_key or safe_key == "default":
-        return PORTFOLIO_FILE
-    return f"virtual_portfolio_{safe_key}.json"
+        local_filename = "virtual_portfolio.json"
+    else:
+        local_filename = f"virtual_portfolio_{safe_key}.json"
+        
+    target_path = os.path.join(base_dir, local_filename)
+    
+    # Fallback / migration: if target_path does NOT exist, but the file exists in the parent directory of base_dir,
+    # let's migrate (copy) it so the user doesn't lose their data!
+    if not os.path.exists(target_path):
+        parent_dir = os.path.dirname(base_dir)
+        parent_path = os.path.join(parent_dir, local_filename)
+        if os.path.exists(parent_path):
+            try:
+                import shutil
+                shutil.copy2(parent_path, target_path)
+                st.toast(f"ℹ️ 前回の保存データ ({local_filename}) を移行しました。")
+            except Exception:
+                pass
+                
+    return target_path
 
 def load_portfolio():
     filename = get_portfolio_filename()
@@ -2400,6 +2559,7 @@ with tab_screen:
                 f"日本株 厳選トレンド銘柄 ({len(JP_TICKERS)}件)",
                 f"米国株 厳選トレンド銘柄 ({len(US_TICKERS)}件)",
                 "日経平均株価 (日経225全銘柄 - 動的取得)",
+                "東証プライム (全上場銘柄 - 動的取得)",
                 "カスタム指定"
             ],
             key="scr_market"
@@ -2433,6 +2593,42 @@ with tab_screen:
             help="日本株は末尾に .T をつけてください (例: トヨタは 7203.T)",
             key="scr_custom_tickers"
         )
+
+    # Added: Conditional Sector & Size filters for TSE Prime
+    selected_sectors = []
+    selected_sizes = []
+    if market == "東証プライム (全上場銘柄 - 動的取得)":
+        prime_tickers = fetch_tse_prime_tickers()
+        all_prime_sectors = sorted(list(set(info.get("sector", "その他") for info in prime_tickers.values() if info.get("sector"))))
+        all_prime_sizes = ["TOPIX Core30 (超大型株)", "TOPIX Large70 (大型株)", "TOPIX Mid400 (中堅・中型株)", "TOPIX Small 1 (中小型株)", "TOPIX Small 2 (小型株)"]
+        
+        st.markdown(
+            '<div style="background-color: rgba(37, 99, 235, 0.03); border: 1px solid rgba(37, 99, 235, 0.1); border-radius: 12px; padding: 16px; margin-bottom: 20px;">'
+            '<span style="font-size: 0.95rem; font-weight: 600; color: #2563eb;">⚡️ 東証プライム対象銘柄の絞り込み (推奨)</span>'
+            '<div style="font-size: 0.8rem; color: #64748b; margin-top: 4px; margin-bottom: 12px;">'
+            '※ 候補銘柄数を100〜200銘柄程度に絞り込むことで、スクリーニング速度が劇的に向上し、APIのレートリミットを回避できます。'
+            '</div>'
+            '</div>', 
+            unsafe_allow_html=True
+        )
+        
+        col_prime1, col_prime2 = st.columns(2)
+        with col_prime1:
+            selected_sectors = st.multiselect(
+                "🎨 対象業種（33業種区分）で絞り込む (未選択で全業種)",
+                options=all_prime_sectors,
+                default=[],
+                placeholder="すべての業種 (未選択)",
+                key="scr_prime_sectors"
+            )
+        with col_prime2:
+            selected_sizes = st.multiselect(
+                "🏢 企業規模（TOPIX規模区分）で絞り込む (未選択で全規模)",
+                options=all_prime_sizes,
+                default=[],
+                placeholder="すべての規模 (未選択)",
+                key="scr_prime_sizes"
+            )
 
     # Details expander for score and financial criteria
     with st.expander("📊 詳細なスコア・財務条件フィルタ (クリックで開閉)", expanded=False):
@@ -2509,7 +2705,6 @@ with tab_screen:
                 selected_shapes = []
                 shape_threshold = 0.80
 
-    # Prepare target ticker list
     tickers_pool = {}
     if market == f"日本株 厳選トレンド銘柄 ({len(JP_TICKERS)}件)":
         tickers_pool = JP_TICKERS
@@ -2517,6 +2712,8 @@ with tab_screen:
         tickers_pool = US_TICKERS
     elif market == "日経平均株価 (日経225全銘柄 - 動的取得)":
         tickers_pool = fetch_nikkei225_tickers()
+    elif market == "東証プライム (全上場銘柄 - 動的取得)":
+        tickers_pool = fetch_tse_prime_tickers()
     else:
         # Custom
         if custom_tickers:
@@ -2527,10 +2724,16 @@ with tab_screen:
     # Apply theme filter
     filtered_pool = {}
     for ticker, info in tickers_pool.items():
+        if market == "東証プライム (全上場銘柄 - 動的取得)":
+            if selected_sectors and info.get("sector") not in selected_sectors:
+                continue
+            if selected_sizes and info.get("size") not in selected_sizes:
+                continue
+                
         tags = info.get('tags', [])
         
         # Sector matching based tags
-        is_ai_semi = "AI" in tags or "半導体" in tags or any(x in str(tags) for x in ["Technology", "Semiconductor", "Software", "ソフトウェア", "電気機器", "設計"])
+        is_ai_semi = "AI" in tags or "半導体" in tags or any(x in str(tags) for x in ["Technology", "Semiconductor", "Software", "ソフトウェア", "電気機器", "設計", "情報・通信業"])
         is_space = "宇宙" in tags or any(x in str(tags) for x in ["Space", "Aerospace", "Defense", "防衛", "航空宇宙", "航空重工", "ロケット", "月面開発", "月面着陸", "衛星システム", "衛星レーダー", "衛星データ分析"])
         is_explosive = "急騰期待" in tags
         is_high_dividend_value = "高配当" in tags or "商社" in tags or "銀行業" in tags or "銀行" in tags or "保険業" in tags or "保険" in tags or "金融" in tags or "その他金融" in tags or "バリュー" in tags or "高配当" in str(tags) or "卸売業" in tags or "商業" in tags
@@ -2567,6 +2770,8 @@ with tab_screen:
         st.info("条件に該当する銘柄がありません。他の市場を選択するか、カスタムティッカーを入力してください。")
     else:
         st.markdown(f"**現在のスクリーニング対象候補数**: {len(filtered_pool)} 銘柄")
+        if len(filtered_pool) > 300:
+            st.warning(f"⚠️ 候補銘柄数が多いため（現在 {len(filtered_pool)} 銘柄）、スクリーニング開始時のデータ取得に10〜20秒程度かかる場合があります。必要に応じてサイドバーの「業種・テーマ絞り込み」や「詳細なスコア・財務条件フィルタ」を活用して事前に候補数を絞り込んでください。")
         
         # Start button
         if st.button("スクリーニングを開始する", type="primary", use_container_width=True):
