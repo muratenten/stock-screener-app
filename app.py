@@ -2337,6 +2337,7 @@ with tab_screen:
             filter_rsi_overbought = st.checkbox("RSI 70以上 (買われすぎ/過熱)", key="scr_filter_rsi_ob")
             filter_bb_rebound = st.checkbox("ボリンジャーバンド -2σ以下", key="scr_filter_bb_re")
             filter_volume_surge = st.checkbox("出来高急増 (5日平均 > 25日平均*1.2)", key="scr_filter_vol_su")
+            filter_similarity_pattern = st.checkbox("🔍 類似連動 (直近20日形状の過去類似3局面すべてで20日後+5%以上)", key="scr_filter_similarity", help="直近20日間のチャート形状に類似する過去の局面を直近5年間の歴史データから3つ抽出し、そのすべての局面において20営業日後の上昇率が+5%以上となった銘柄のみを抽出します。他フィルタで絞り込んだ後、最後に実行されます。")
 
     # Prepare target ticker list
     tickers_pool = {}
@@ -2477,6 +2478,86 @@ with tab_screen:
                         continue
                     if filter_volume_surge and not analysis['signals']['volume_surge']:
                         continue
+                        
+                    # 3. Apply the similarity pattern search filter if enabled (Run last for optimal performance)
+                    if filter_similarity_pattern:
+                        df_5y = get_stock_5y_history(ticker)
+                        if df_5y.empty:
+                            continue
+                        
+                        N_len = 20
+                        if len(df) < N_len:
+                            continue
+                            
+                        target_prices = df['Close'].iloc[-N_len:].values
+                        Z_target = z_normalize(target_prices)
+                        
+                        matches = []
+                        for i in range(len(df_5y) - N_len - 20 + 1):
+                            window_df = df_5y.iloc[i : i + N_len]
+                            w_start = window_df.index[0]
+                            w_end = window_df.index[-1]
+                            
+                            # Avoid overlapping with the current target window (the last N_len days of df_5y)
+                            if i + N_len > len(df_5y) - N_len:
+                                continue
+                                
+                            window_prices = window_df['Close'].values
+                            if np.any(np.isnan(window_prices)):
+                                continue
+                                
+                            Z_hist = z_normalize(window_prices)
+                            r = np.dot(Z_target, Z_hist) / N_len
+                            similarity = max(0.0, r * 100)
+                            
+                            end_idx = i + N_len + 20
+                            all_prices = df_5y['Close'].iloc[i : end_idx].values
+                            
+                            matches.append({
+                                'similarity': similarity,
+                                'start_date': w_start,
+                                'end_date': w_end,
+                                'all_prices': all_prices
+                            })
+                        
+                        # Sort by similarity desc
+                        matches = sorted(matches, key=lambda x: x['similarity'], reverse=True)
+                        
+                        # Filter close matches (must be at least 30 days apart)
+                        filtered_matches = []
+                        for m in matches:
+                            too_close = False
+                            for fm in filtered_matches:
+                                if abs((m['start_date'] - fm['start_date']).days) < 30:
+                                    too_close = True
+                                    break
+                            if not too_close:
+                                filtered_matches.append(m)
+                            if len(filtered_matches) >= 3:
+                                break
+                                
+                        # Check if for all 3 matches, 20-day return is >= 5%
+                        pass_similarity_filter = True
+                        if len(filtered_matches) < 3:
+                            pass_similarity_filter = False
+                        else:
+                            for m in filtered_matches:
+                                all_prices = m['all_prices']
+                                if len(all_prices) < N_len + 20:
+                                    pass_similarity_filter = False
+                                    break
+                                price_at_end = all_prices[N_len-1]
+                                price_after = all_prices[-1]
+                                if price_at_end == 0:
+                                    pass_similarity_filter = False
+                                    break
+                                ret = (price_after - price_at_end) / price_at_end * 100
+                                if ret < 5.0:
+                                    pass_similarity_filter = False
+                                    break
+                                    
+                        if not pass_similarity_filter:
+                            continue
                         
                     results.append({
                         'ティッカー': ticker,
