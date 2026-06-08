@@ -785,6 +785,12 @@ def fetch_tse_prime_tickers():
             with open(json_path, "r", encoding="utf-8") as f:
                 res = json.load(f)
                 if res:
+                    # Merge JP_TICKERS tags for matching tickers
+                    for k, v in JP_TICKERS.items():
+                        if k in res:
+                            existing_tags = res[k].get("tags", [])
+                            merged_tags = list(set(existing_tags + v.get("tags", [])))
+                            res[k]["tags"] = merged_tags
                     return res
     except Exception:
         pass
@@ -2892,7 +2898,7 @@ with tab_screen:
     selected_sizes = []
     if market == "東証プライム (全上場銘柄 - 動的取得)":
         prime_tickers = fetch_tse_prime_tickers()
-        all_prime_sectors = sorted(list(set(info.get("sector", "その他") for info in prime_tickers.values() if info.get("sector"))))
+        all_prime_sectors = ["✨ AI・半導体関連 (テーマ)", "✨ 宇宙開発・防衛関連 (テーマ)"] + sorted(list(set(info.get("sector", "その他") for info in prime_tickers.values() if info.get("sector"))))
         all_prime_sizes = ["TOPIX Core30 (超大型株)", "TOPIX Large70 (大型株)", "TOPIX Mid400 (中堅・中型株)", "TOPIX Small 1 (中小型株)", "TOPIX Small 2 (小型株)"]
         
         st.markdown(
@@ -3017,23 +3023,53 @@ with tab_screen:
     # Apply theme filter
     filtered_pool = {}
     for ticker, info in tickers_pool.items():
+        tags = info.get('tags', [])
+        name = info.get('name', '')
+        sector = info.get('sector', '')
+        
+        # Smart thematic matching
+        is_ai_semi = (
+            "AI" in tags or "半導体" in tags or 
+            any(x in name for x in ["半導体", "ソシオネクスト", "ルネサス", "アドバンテスト", "エレクトロン", "ディスコ", "レーザーテック", "信越化", "東京応化", "ＳＣＲＥＥＮ", "ソフトバンク", "さくらインターネット", "ブレインパッド", "ヘッドウォータ", "ＰＫＳＨＡ", "Ａｐｐｉｅｒ"]) or
+            any(x in str(tags) for x in ["Technology", "Semiconductor", "Software", "ソフトウェア", "電気機器", "設計", "情報・通信業"]) or
+            sector in ["電気機器", "情報・通信業"]
+        )
+        
+        is_space = (
+            "宇宙" in tags or "防衛" in tags or
+            any(x in name for x in ["宇宙", "防衛", "重工", "ＩＨＩ", "川崎重", "ispace", "ＱＰＳ", "パスコ", "セック", "明星電気", "細谷火工", "石川製作", "日本アビオ", "東京計器"]) or
+            any(x in str(tags) for x in ["Space", "Aerospace", "Defense", "防衛", "航空宇宙", "航空重工", "ロケット", "月面開発", "月面着陸", "衛星システム", "衛星レーダー", "衛星データ分析"])
+        )
+        
+        is_explosive = "急騰期待" in tags or any(x in name for x in ["さくらインターネット", "カバー", "ANYCOLOR", "ＱＰＳ", "ispace", "ヘッドウォータ"])
+        is_high_dividend_value = "高配当" in tags or "商社" in tags or "銀行業" in tags or "銀行" in tags or "保険業" in tags or "保険" in tags or "金融" in tags or "その他金融" in tags or "バリュー" in tags or "高配当" in str(tags) or "卸売業" in tags or "商業" in tags or sector in ["卸売業", "銀行業", "保険業", "証券、商品先物取引業", "その他金融業"]
+        is_crypto_meme = "ビットコイン保有" in tags or "暗号資産" in tags or "ミーム株" in tags or "暗号資産取引所" in tags or "暗号資産マイニング" in tags or any(x in str(tags) for x in ["Bitcoin", "Crypto", "Meme"]) or any(x in name for x in ["マネックス", "セレス", "リミックス"])
+        is_entertainment_vtuber_game = "VTuber" in tags or "ゲーム" in tags or "エンタメ" in tags or "ゲーム・メタバース" in tags or "その他製品" in tags or "ストリーミング" in tags or "SNS" in tags or any(x in name for x in ["任天堂", "ソニー", "カプコン", "スクエニ", "コーエー", "ネクソン", "コナミ", "バンダイ", "カバー", "ANYCOLOR"])
+        is_defense_heavy = "防衛" in tags or "宇宙" in tags or "ロケット" in tags or "機械" in tags or "輸送用機器" in tags or "航空重工" in tags or "精密機器" in tags or is_space
+        
+        # Apply market-specific filters
         if market == "東証プライム (全上場銘柄 - 動的取得)":
-            if selected_sectors and info.get("sector") not in selected_sectors:
-                continue
+            if selected_sectors:
+                match_sector = False
+                for sel in selected_sectors:
+                    if sel == "✨ AI・半導体関連 (テーマ)":
+                        if is_ai_semi:
+                            match_sector = True
+                            break
+                    elif sel == "✨ 宇宙開発・防衛関連 (テーマ)":
+                        if is_space:
+                            match_sector = True
+                            break
+                    else:
+                        if sector == sel:
+                            match_sector = True
+                            break
+                if not match_sector:
+                    continue
             if selected_sizes and info.get("size") not in selected_sizes:
                 continue
                 
-        tags = info.get('tags', [])
-        
-        # Sector matching based tags
-        is_ai_semi = "AI" in tags or "半導体" in tags or any(x in str(tags) for x in ["Technology", "Semiconductor", "Software", "ソフトウェア", "電気機器", "設計", "情報・通信業"])
-        is_space = "宇宙" in tags or any(x in str(tags) for x in ["Space", "Aerospace", "Defense", "防衛", "航空宇宙", "航空重工", "ロケット", "月面開発", "月面着陸", "衛星システム", "衛星レーダー", "衛星データ分析"])
-        is_explosive = "急騰期待" in tags
-        is_high_dividend_value = "高配当" in tags or "商社" in tags or "銀行業" in tags or "銀行" in tags or "保険業" in tags or "保険" in tags or "金融" in tags or "その他金融" in tags or "バリュー" in tags or "高配当" in str(tags) or "卸売業" in tags or "商業" in tags
-        is_crypto_meme = "ビットコイン保有" in tags or "暗号資産" in tags or "ミーム株" in tags or "暗号資産取引所" in tags or "暗号資産マイニング" in tags or any(x in str(tags) for x in ["Bitcoin", "Crypto", "Meme"])
-        is_entertainment_vtuber_game = "VTuber" in tags or "ゲーム" in tags or "エンタメ" in tags or "ゲーム・メタバース" in tags or "その他製品" in tags or "ストリーミング" in tags or "SNS" in tags
-        is_defense_heavy = "防衛" in tags or "宇宙" in tags or "ロケット" in tags or "機械" in tags or "輸送用機器" in tags or "航空重工" in tags or "精密機器" in tags
-        
+        # Apply theme filter
         if theme_filter == "AI・半導体関連":
             if is_ai_semi:
                 filtered_pool[ticker] = info
