@@ -13,7 +13,7 @@ from tickers import JP_TICKERS, US_TICKERS
 
 # Page config
 st.set_page_config(
-    page_title="Rising Stock Screener | 株価上昇シグナル選定ツール",
+    page_title="ZenStockScreener | 株価上昇シグナル選定ツール",
     page_icon="📈",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -2724,7 +2724,7 @@ if query_user == "default":
     
     col_w1, col_w2, col_w3 = st.columns([0.6, 2.8, 0.6])
     with col_w2:
-        st.markdown('<h1 class="login-title-glow">Rising Stock Screener</h1>', unsafe_allow_html=True)
+        st.markdown('<h1 class="login-title-glow">ZenStockScreener</h1>', unsafe_allow_html=True)
         st.markdown('<p class="login-subtitle-glow">AI分析とファンダメンタルズによる上昇期待銘柄選定システム</p>', unsafe_allow_html=True)
         
         st.markdown("""
@@ -2820,7 +2820,7 @@ if 'show_sell_dialog' in st.session_state:
 # Header
 st.markdown("""
 <div class="title-container">
-    <h1 class="title-text">Rising Stock Screener</h1>
+    <h1 class="title-text">ZenStockScreener</h1>
     <p class="subtitle-text">AI分析とファンダメンタルズ指標による日本株上昇期待銘柄の選定システム</p>
 </div>
 """, unsafe_allow_html=True)
