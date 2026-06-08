@@ -371,30 +371,30 @@ def z_normalize(seq):
     return (arr - np.mean(arr)) / std
 
 def check_shape_match(prices, threshold=0.70):
-    if len(prices) < 20:
+    if len(prices) < 30:
         return None, 0.0
     
-    # Take last 20 days
-    y_stock = prices[-20:]
+    # Take last 30 days
+    y_stock = prices[-30:]
     Z_stock = z_normalize(y_stock)
     
-    t = np.arange(20)
+    t = np.arange(30)
     # Template 1: Upward Trend (上昇傾向)
     temp1 = t
     Z_temp1 = z_normalize(temp1)
     
     # Template 2: Downward Attenuation (下降減衰)
-    temp2 = np.exp(-0.08 * t)
+    temp2 = np.exp(-0.05 * t)
     Z_temp2 = z_normalize(temp2)
     
     # Template 3: Reversal / Bottomed Out & Rising (上昇反転)
-    temp3 = (t - 8) ** 2
+    temp3 = (t - 12) ** 2
     Z_temp3 = z_normalize(temp3)
     
     # Calculate correlations
-    r1 = np.dot(Z_stock, Z_temp1) / 20.0
-    r2 = np.dot(Z_stock, Z_temp2) / 20.0
-    r3 = np.dot(Z_stock, Z_temp3) / 20.0
+    r1 = np.dot(Z_stock, Z_temp1) / 30.0
+    r2 = np.dot(Z_stock, Z_temp2) / 30.0
+    r3 = np.dot(Z_stock, Z_temp3) / 30.0
     
     corrs = [r1, r2, r3]
     max_idx = np.argmax(corrs)
@@ -2658,7 +2658,7 @@ with tab_screen:
             else:
                 similarity_threshold_pct = 5.0
                 
-            filter_shape_match = st.checkbox("📈 チャート形状パターン指定", key="scr_filter_shape_match", help="直近20日間のチャート形状が、指定した特定のパターン（上昇傾向、下降減衰、上昇反転）に類似する銘柄のみを抽出します。")
+            filter_shape_match = st.checkbox("📈 チャート形状パターン指定", key="scr_filter_shape_match", help="直近30日間のチャート形状が、指定した特定のパターン（上昇傾向、下降減衰、上昇反転）に類似する銘柄のみを抽出します。")
             if filter_shape_match:
                 # Store selected shapes in session state to enable toggle buttons
                 if "selected_shapes" not in st.session_state:
@@ -2939,7 +2939,7 @@ with tab_screen:
                     matched_shape_corr = 0.0
                     
                     prices_for_shape = df['Close'].values
-                    if len(prices_for_shape) >= 20:
+                    if len(prices_for_shape) >= 30:
                         shape_lbl, shape_corr = check_shape_match(prices_for_shape, threshold=0.70)
                         if shape_lbl:
                             matched_shape_label = f"{shape_lbl} ({shape_corr*100:.0f}%)"
