@@ -2337,7 +2337,11 @@ with tab_screen:
             filter_rsi_overbought = st.checkbox("RSI 70以上 (買われすぎ/過熱)", key="scr_filter_rsi_ob")
             filter_bb_rebound = st.checkbox("ボリンジャーバンド -2σ以下", key="scr_filter_bb_re")
             filter_volume_surge = st.checkbox("出来高急増 (5日平均 > 25日平均*1.2)", key="scr_filter_vol_su")
-            filter_similarity_pattern = st.checkbox("🔍 類似連動 (直近20日形状の過去類似3局面すべてで20日後+5%以上)", key="scr_filter_similarity", help="直近20日間のチャート形状に類似する過去の局面を直近5年間の歴史データから3つ抽出し、そのすべての局面において20営業日後の上昇率が+5%以上となった銘柄のみを抽出します。他フィルタで絞り込んだ後、最後に実行されます。")
+            filter_similarity_pattern = st.checkbox("🔍 類似連動 (過去類似3局面の20日後上昇率フィルタ)", key="scr_filter_similarity", help="直近20日間のチャート形状に類似する過去の局面を直近5年間の歴史データから3つ抽出し、そのすべての局面において20営業日後の上昇率が指定値以上となった銘柄のみを抽出します。他フィルタで絞り込んだ後、最後に実行されます。")
+            if filter_similarity_pattern:
+                similarity_threshold_pct = st.slider("   ↳ 必要上昇率 (%)", 0.0, 15.0, 5.0, step=0.5, key="scr_similarity_pct")
+            else:
+                similarity_threshold_pct = 5.0
 
     # Prepare target ticker list
     tickers_pool = {}
@@ -2552,7 +2556,7 @@ with tab_screen:
                                     pass_similarity_filter = False
                                     break
                                 ret = (price_after - price_at_end) / price_at_end * 100
-                                if ret < 5.0:
+                                if ret < similarity_threshold_pct:
                                     pass_similarity_filter = False
                                     break
                                     
