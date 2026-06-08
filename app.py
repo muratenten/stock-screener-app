@@ -403,7 +403,13 @@ def check_shape_match(prices, threshold=0.70):
     labels = ["上昇傾向", "下降減衰", "上昇反転"]
     matched_label = labels[max_idx]
     
-    if max_corr >= threshold:
+    # If the matched label is "上昇反転" and the price has gone up in the last 5 days,
+    # we allow a lower correlation threshold (e.g. 0.45 instead of 0.70) to classify it!
+    effective_threshold = threshold
+    if matched_label == "上昇反転" and len(prices) >= 5 and prices[-1] > prices[-5]:
+        effective_threshold = 0.45
+        
+    if max_corr >= effective_threshold:
         return matched_label, max_corr
     return None, 0.0
 
@@ -2982,7 +2988,14 @@ with tab_screen:
                         base_lbl = matched_shape_label.split(" ")[0]
                         if base_lbl not in selected_shapes:
                             continue
-                        if matched_shape_corr < shape_threshold:
+                            
+                        # Bypass the strict threshold if it is a Reversal shape and has a positive 5-day price change
+                        is_reversal_rising = False
+                        if base_lbl == "上昇反転" and len(prices_for_shape) >= 5:
+                            if prices_for_shape[-1] > prices_for_shape[-5]:
+                                is_reversal_rising = True
+                                
+                        if not is_reversal_rising and matched_shape_corr < shape_threshold:
                             continue
                         
                     results.append({
