@@ -3065,8 +3065,23 @@ with tab_screen:
         # Custom
         if custom_tickers:
             parsed = [t.strip().upper() for t in custom_tickers.replace('\n', ',').split(',') if t.strip()]
+            
+            # Fetch local databases to lookup names
+            prime_dir = fetch_tse_prime_tickers()
+            growth_dir = fetch_tse_growth_tickers()
+            
             for p in parsed:
-                tickers_pool[p] = {"name": p, "tags": ["カスタム"]}
+                name_lookup = p
+                if p in prime_dir:
+                    name_lookup = prime_dir[p].get("name", p)
+                elif p in growth_dir:
+                    name_lookup = growth_dir[p].get("name", p)
+                elif p in JP_TICKERS:
+                    name_lookup = JP_TICKERS[p].get("name", p)
+                elif p in US_TICKERS:
+                    name_lookup = US_TICKERS[p].get("name", p)
+                    
+                tickers_pool[p] = {"name": name_lookup, "tags": ["カスタム"]}
                 
     # Apply theme filter
     filtered_pool = {}
@@ -3341,7 +3356,7 @@ with tab_screen:
                         
                     results.append({
                         'ティッカー': ticker,
-                        '銘柄名': filtered_pool[ticker]['name'],
+                        '銘柄名': metrics.get('name') or filtered_pool[ticker]['name'],
                         '総合スコア (10点)': f"{analysis['total_score']} / 10",
                         'チャート形状': matched_shape_label,
                         'テクニカルスコア (3点)': f"{analysis['tech_score']} / 3",
