@@ -66,8 +66,83 @@ st.markdown("""
     .metric-accent {
         color: #16a34a;
     }
+    /* Base style for premium list buttons */
+    button.premium-list-btn {
+        text-align: center !important;
+        display: flex !important;
+        justify-content: center !important;
+        align-items: center !important;
+        border-radius: 12px !important;
+        padding: 10px 14px !important;
+        font-size: 0.88rem !important;
+        font-weight: 600 !important;
+        border: 1px solid #e2e8f0 !important;
+        background: #ffffff !important;
+        color: #1e293b !important;
+        box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05) !important;
+        transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        margin-bottom: 8px !important;
+        width: 100% !important;
+    }
+    /* Adjust text alignment to left for owned and watchlist buttons */
+    div[data-testid="column"] button.premium-list-btn {
+        text-align: left !important;
+        justify-content: flex-start !important;
+        padding: 14px 18px !important;
+        font-size: 0.92rem !important;
+    }
+    /* Hover effect */
+    button.premium-list-btn:hover {
+        border-color: #3b82f6 !important;
+        background-color: #f8fafc !important;
+        color: #2563eb !important;
+        transform: translateY(-2px) !important;
+        box-shadow: 0 4px 12px -2px rgba(37, 99, 235, 0.12) !important;
+    }
+    /* Active selected style (Primary button override) */
+    button.premium-list-btn.premium-active {
+        border-color: #2563eb !important;
+        background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%) !important;
+        color: #ffffff !important;
+        box-shadow: 0 4px 14px 0 rgba(37, 99, 235, 0.3) !important;
+    }
+    button.premium-list-btn.premium-active:hover {
+        background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%) !important;
+        color: #ffffff !important;
+        transform: translateY(-2px) !important;
+        box-shadow: 0 6px 18px 0 rgba(37, 99, 235, 0.4) !important;
+    }
 </style>
 """, unsafe_allow_html=True)
+
+# Inject global Javascript for premium button styling
+st.components.v1.html("""
+<script>
+    const parentDoc = window.parent.document;
+    function applyStyles() {
+        const buttons = parentDoc.querySelectorAll('button');
+        buttons.forEach(btn => {
+            const txt = btn.textContent || "";
+            if (btn.closest('[data-testid="stSegmentedControl"]')) {
+                return;
+            }
+            if (txt.includes('💼') || txt.includes('⭐') || txt.includes('📈') || txt.includes('📉') || txt.includes('🔄')) {
+                if (!btn.classList.contains('premium-list-btn')) {
+                    btn.classList.add('premium-list-btn');
+                }
+                const testid = btn.getAttribute('data-testid');
+                if (testid && testid.includes('primary')) {
+                    btn.classList.add('premium-active');
+                } else {
+                    btn.classList.remove('premium-active');
+                }
+            }
+        });
+    }
+    setInterval(applyStyles, 150);
+    applyStyles();
+</script>
+""", height=0, width=0)
 
 # Helper function to check if a ticker is a US stock
 def is_us_stock(ticker):
@@ -2383,7 +2458,46 @@ with tab_screen:
             st.markdown("---")
             filter_shape_match = st.checkbox("📈 チャート形状パターン指定", key="scr_filter_shape_match", help="直近20日間のチャート形状が、指定した特定のパターン（上昇傾向、下降減衰、上昇反転）に類似する銘柄のみを抽出します。")
             if filter_shape_match:
-                selected_shapes = st.multiselect("   ↳ 対象形状を選択:", ["上昇傾向", "下降減衰", "上昇反転"], default=["上昇傾向", "下降減衰", "上昇反転"], key="scr_selected_shapes")
+                # Store selected shapes in session state to enable toggle buttons
+                if "selected_shapes" not in st.session_state:
+                    st.session_state["selected_shapes"] = ["上昇傾向", "下降減衰", "上昇反転"]
+                
+                st.markdown('<div style="margin-top: 5px; margin-bottom: 5px; font-size: 0.9rem; font-weight: 600; color: #475569;">   ↳ 対象形状を選択 (クリックして切替):</div>', unsafe_allow_html=True)
+                
+                # Render 3 toggle buttons in columns
+                col_s1, col_s2, col_s3 = st.columns(3)
+                with col_s1:
+                    s_name = "上昇傾向"
+                    is_active = s_name in st.session_state["selected_shapes"]
+                    if st.button(f"📈 {s_name}", key="btn_shape_up", use_container_width=True, type="primary" if is_active else "secondary"):
+                        if is_active:
+                            if len(st.session_state["selected_shapes"]) > 1:
+                                st.session_state["selected_shapes"].remove(s_name)
+                        else:
+                            st.session_state["selected_shapes"].append(s_name)
+                        st.rerun()
+                with col_s2:
+                    s_name = "下降減衰"
+                    is_active = s_name in st.session_state["selected_shapes"]
+                    if st.button(f"📉 {s_name}", key="btn_shape_down", use_container_width=True, type="primary" if is_active else "secondary"):
+                        if is_active:
+                            if len(st.session_state["selected_shapes"]) > 1:
+                                st.session_state["selected_shapes"].remove(s_name)
+                        else:
+                            st.session_state["selected_shapes"].append(s_name)
+                        st.rerun()
+                with col_s3:
+                    s_name = "上昇反転"
+                    is_active = s_name in st.session_state["selected_shapes"]
+                    if st.button(f"🔄 {s_name}", key="btn_shape_rev", use_container_width=True, type="primary" if is_active else "secondary"):
+                        if is_active:
+                            if len(st.session_state["selected_shapes"]) > 1:
+                                st.session_state["selected_shapes"].remove(s_name)
+                        else:
+                            st.session_state["selected_shapes"].append(s_name)
+                        st.rerun()
+                
+                selected_shapes = st.session_state["selected_shapes"]
                 shape_threshold = st.slider("   ↳ 形状類似度しきい値", 0.70, 0.95, 0.80, step=0.02, key="scr_shape_threshold", help="しきい値が高いほど、理想的な形状に近い銘柄のみが抽出されます（0.80推奨）。")
             else:
                 selected_shapes = []
@@ -2746,74 +2860,6 @@ with tab_screen:
 # TAB 1.5: HOLDINGS & FAVORITES ANALYSIS
 # -----------------------------------------------------------------------------
 with tab_favorite:
-    # Inject premium CSS and Javascript styling
-    st.markdown("""
-    <style>
-    /* Base style for premium list buttons */
-    div[data-testid="column"] button.premium-list-btn {
-        text-align: left !important;
-        display: flex !important;
-        justify-content: flex-start !important;
-        align-items: center !important;
-        border-radius: 12px !important;
-        padding: 14px 18px !important;
-        font-size: 0.92rem !important;
-        font-weight: 600 !important;
-        border: 1px solid #e2e8f0 !important;
-        background: #ffffff !important;
-        color: #1e293b !important;
-        box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05) !important;
-        transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
-        margin-bottom: 8px !important;
-    }
-    /* Hover effect */
-    div[data-testid="column"] button.premium-list-btn:hover {
-        border-color: #3b82f6 !important;
-        background-color: #f8fafc !important;
-        color: #2563eb !important;
-        transform: translateY(-2px) !important;
-        box-shadow: 0 4px 12px -2px rgba(37, 99, 235, 0.12) !important;
-    }
-    /* Active selected style (Primary button override) */
-    div[data-testid="column"] button.premium-list-btn.premium-active {
-        border-color: #2563eb !important;
-        background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%) !important;
-        color: #ffffff !important;
-        box-shadow: 0 4px 14px 0 rgba(37, 99, 235, 0.3) !important;
-    }
-    div[data-testid="column"] button.premium-list-btn.premium-active:hover {
-        background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%) !important;
-        color: #ffffff !important;
-        transform: translateY(-2px) !important;
-        box-shadow: 0 6px 18px 0 rgba(37, 99, 235, 0.4) !important;
-    }
-    </style>
-    """, unsafe_allow_html=True)
-
-    st.components.v1.html("""
-    <script>
-        const parentDoc = window.parent.document;
-        function applyStyles() {
-            const buttons = parentDoc.querySelectorAll('button');
-            buttons.forEach(btn => {
-                const txt = btn.textContent || "";
-                if (txt.includes('💼') || txt.includes('⭐')) {
-                    if (!btn.classList.contains('premium-list-btn')) {
-                        btn.classList.add('premium-list-btn');
-                    }
-                    const testid = btn.getAttribute('data-testid');
-                    if (testid && testid.includes('primary')) {
-                        btn.classList.add('premium-active');
-                    } else {
-                        btn.classList.remove('premium-active');
-                    }
-                }
-            });
-        }
-        setInterval(applyStyles, 150);
-        applyStyles();
-    </script>
-    """, height=0, width=0)
 
     st.markdown("### ⭐ 保有・お気に入り銘柄の分析")
     st.markdown("現在保有している仮想ポートフォリオ銘柄、およびお気に入り（ウォッチリスト）に登録されている銘柄のリアルタイム分析・値動きを表示します。")
