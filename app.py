@@ -3354,9 +3354,14 @@ with tab_screen:
                         if not is_reversal_rising and matched_shape_corr < shape_threshold:
                             continue
                         
+                    # Determine display name: prefer offline name unless it is equal to ticker
+                    display_name = filtered_pool[ticker].get('name', ticker)
+                    if (display_name == ticker or not display_name) and metrics.get('name'):
+                        display_name = metrics['name']
+                        
                     results.append({
                         'ティッカー': ticker,
-                        '銘柄名': metrics.get('name') or filtered_pool[ticker]['name'],
+                        '銘柄名': display_name,
                         '総合スコア (10点)': f"{analysis['total_score']} / 10",
                         'チャート形状': matched_shape_label,
                         'テクニカルスコア (3点)': f"{analysis['tech_score']} / 3",
