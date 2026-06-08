@@ -625,6 +625,28 @@ def get_ticker_info(ticker):
             'debtToEquity': debt_equity
         }
         
+        def safe_float(val):
+            if val is None:
+                return None
+            try:
+                return float(val)
+            except (ValueError, TypeError):
+                return None
+
+        # Clean numeric fields
+        needed['trailingPE'] = safe_float(needed['trailingPE'])
+        needed['priceToBook'] = safe_float(needed['priceToBook'])
+        needed['returnOnEquity'] = safe_float(needed['returnOnEquity'])
+        needed['dividendYield'] = safe_float(needed['dividendYield'])
+        needed['marketCap'] = safe_float(needed['marketCap'])
+        needed['fiftyTwoWeekHigh'] = safe_float(needed['fiftyTwoWeekHigh'])
+        needed['fiftyTwoWeekLow'] = safe_float(needed['fiftyTwoWeekLow'])
+        needed['netIncome'] = safe_float(needed['netIncome'])
+        needed['opMargin'] = safe_float(needed['opMargin'])
+        needed['totalCash'] = safe_float(needed['totalCash'])
+        needed['totalDebt'] = safe_float(needed['totalDebt'])
+        needed['debtToEquity'] = safe_float(needed['debtToEquity'])
+        
         # Adjust ROE (fraction to % value)
         if needed['returnOnEquity'] is not None:
             if abs(needed['returnOnEquity']) < 1.0:
@@ -884,13 +906,21 @@ def evaluate_stock(ticker, df, info=None):
         }
         
     # --- 2. ファンダメンタルズスコアリング（7点満点に拡張） ---
-    per = info.get('trailingPE')
-    pbr = info.get('priceToBook')
-    roe = info.get('returnOnEquity')
-    div_yield = info.get('dividendYield')
-    net_inc = info.get('netIncome')
-    op_margin = info.get('opMargin')
-    de_ratio = info.get('debtToEquity')
+    def safe_float(val):
+        if val is None:
+            return None
+        try:
+            return float(val)
+        except (ValueError, TypeError):
+            return None
+
+    per = safe_float(info.get('trailingPE'))
+    pbr = safe_float(info.get('priceToBook'))
+    roe = safe_float(info.get('returnOnEquity'))
+    div_yield = safe_float(info.get('dividendYield'))
+    net_inc = safe_float(info.get('netIncome'))
+    op_margin = safe_float(info.get('opMargin'))
+    de_ratio = safe_float(info.get('debtToEquity'))
     
     # (a) 資本効率 (ROE >= 10%)
     f_roe = roe is not None and roe >= 10.0
@@ -910,8 +940,8 @@ def evaluate_stock(ticker, df, info=None):
     # (f) 財務健全性 (D/E比率 < 100% または 実質無借金)
     f_solvency = de_ratio is not None and de_ratio < 100.0
     if de_ratio is None:
-        cash_val = info.get('totalCash') or 0
-        debt_val = info.get('totalDebt') or 0
+        cash_val = safe_float(info.get('totalCash')) or 0.0
+        debt_val = safe_float(info.get('totalDebt')) or 0.0
         f_solvency = cash_val >= debt_val
         
     # (g) 還元・インカム (配当利回り >= 3%)
