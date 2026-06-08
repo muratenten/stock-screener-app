@@ -861,8 +861,39 @@ def generate_ir_catalysts(ticker, tags, info):
     
     return text
 
+@st.cache_data(ttl=300)
+def fetch_chart_data(ticker, interval="1d", period="1y"):
+    try:
+        tk = yf.Ticker(ticker)
+        df = tk.history(period=period, interval=interval)
+        if df.empty:
+            return pd.DataFrame()
+        df = patch_history_with_fast_info(ticker, df)
+        return df
+    except Exception as e:
+        st.error(f"データ取得中にエラーが発生しました: {e}")
+        return pd.DataFrame()
+
+def calculate_indicators_for_df(df, interval="1d"):
+    if df.empty:
+        return df
+    close = df['Close']
+    df['SMA5'] = close.rolling(window=5).mean()
+    df['SMA25'] = close.rolling(window=25).mean()
+    df['SMA75'] = close.rolling(window=75).mean()
+    df['RSI'] = calculate_rsi(close)
+    macd, macd_signal, macd_hist = calculate_macd(close)
+    df['MACD'] = macd
+    df['MACD_Signal'] = macd_signal
+    df['MACD_Hist'] = macd_hist
+    upper, middle, lower = calculate_bollinger_bands(close)
+    df['BB_Upper'] = upper
+    df['BB_Middle'] = middle
+    df['BB_Lower'] = lower
+    return df
+
 # Create Plotly interactive chart
-def create_chart(df, ticker, name):
+def create_chart(df, ticker, name, interval="1d"):
     fig = make_subplots(
         rows=3, cols=1, 
         shared_xaxes=True, 
@@ -886,10 +917,20 @@ def create_chart(df, ticker, name):
         row=1, col=1
     )
     
+    # Row 1: Moving Averages legend adjustments based on interval
+    if interval == "5m":
+        ma5_name, ma25_name, ma75_name = 'SMA5 (25分)', 'SMA25 (125分)', 'SMA75 (375分)'
+    elif interval == "1wk":
+        ma5_name, ma25_name, ma75_name = '5週線', '25週線', '75週線'
+    elif interval == "1mo":
+        ma5_name, ma25_name, ma75_name = '5ヶ月線', '25ヶ月線', '75ヶ月線'
+    else:
+        ma5_name, ma25_name, ma75_name = '5日線', '25日線', '75日線'
+        
     # Row 1: Moving Averages (high visibility on white background)
-    fig.add_trace(go.Scatter(x=df.index, y=df['SMA5'], name='5日線', line=dict(color='#d97706', width=1.2)), row=1, col=1)
-    fig.add_trace(go.Scatter(x=df.index, y=df['SMA25'], name='25日線', line=dict(color='#2563eb', width=1.5)), row=1, col=1)
-    fig.add_trace(go.Scatter(x=df.index, y=df['SMA75'], name='75日線', line=dict(color='#7c3aed', width=1.5)), row=1, col=1)
+    fig.add_trace(go.Scatter(x=df.index, y=df['SMA5'], name=ma5_name, line=dict(color='#d97706', width=1.2)), row=1, col=1)
+    fig.add_trace(go.Scatter(x=df.index, y=df['SMA25'], name=ma25_name, line=dict(color='#2563eb', width=1.5)), row=1, col=1)
+    fig.add_trace(go.Scatter(x=df.index, y=df['SMA75'], name=ma75_name, line=dict(color='#7c3aed', width=1.5)), row=1, col=1)
     
     # Row 1: Bollinger Bands
     fig.add_trace(go.Scatter(x=df.index, y=df['BB_Upper'], name='BB上限 (+2σ)', line=dict(color='rgba(100,116,139,0.3)', width=1, dash='dash')), row=1, col=1)
@@ -1459,8 +1500,41 @@ def render_detail_dashboard(selected_ticker, selected_name, raw_analysis, key_su
         selected_tab = tab_options[0]
     
     if selected_tab == "📈 チャート・指標":
-        # Display chart and report vertically for better readability
-        fig = create_chart(raw_analysis['df'], selected_ticker, selected_name)
+        # Add interval selector for chart: 5m, 1d, 1wk, 1mo
+        st.markdown('<div style="margin-top: 10px; margin-bottom: 6px; font-weight: 600; font-size: 0.9rem; color: #1e293b;">📊 表示時間足の選択:</div>', unsafe_allow_html=True)
+        interval_options = {
+            "5分足": ("5m", "5d"),
+            "日足 (標準)": ("1d", "1y"),
+            "週足": ("1wk", "5y"),
+            "月足": ("1mo", "10y")
+        }
+        selected_interval_label = st.segmented_control(
+            "時間足",
+            options=list(interval_options.keys()),
+            default="日足 (標準)",
+            key=f"chart_interval_{selected_ticker}{key_suffix}",
+            label_visibility="collapsed"
+        )
+        if not selected_interval_label:
+            selected_interval_label = "日足 (標準)"
+            
+        interval, period = interval_options[selected_interval_label]
+        
+        # Load chart data based on interval
+        if interval == "1d":
+            chart_df = raw_analysis['df'].copy()
+        else:
+            with st.spinner(f"{selected_interval_label}のデータを取得中..."):
+                chart_df = fetch_chart_data(selected_ticker, interval=interval, period=period)
+                if not chart_df.empty:
+                    chart_df = calculate_indicators_for_df(chart_df, interval=interval)
+                    
+        if chart_df.empty:
+            st.warning(f"{selected_interval_label}のデータを十分に取得できませんでした。")
+            chart_df = raw_analysis['df']
+            interval = "1d"
+            
+        fig = create_chart(chart_df, selected_ticker, selected_name, interval=interval)
         st.plotly_chart(fig, use_container_width=True)
         
         report_md = generate_recommendation_text(
