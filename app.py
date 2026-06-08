@@ -73,8 +73,8 @@ st.markdown("""
         justify-content: center !important;
         align-items: center !important;
         border-radius: 12px !important;
-        padding: 10px 14px !important;
-        font-size: 0.88rem !important;
+        padding: 8px 4px !important;
+        font-size: 0.8rem !important;
         font-weight: 600 !important;
         border: 1px solid #e2e8f0 !important;
         background: #ffffff !important;
@@ -83,6 +83,9 @@ st.markdown("""
         transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
         margin-bottom: 8px !important;
         width: 100% !important;
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
     }
     /* Adjust text alignment to left for owned and watchlist buttons */
     div[data-testid="column"] button.premium-list-btn {
