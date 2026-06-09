@@ -3016,21 +3016,28 @@ if user_key not in st.session_state['ls_loaded_keys']:
             st.session_state['ls_loaded_keys'][user_key] = True
             
             val_str = None
+            data_source = None
             
             # 1. Try loading from Firebase first if configured (extremely fast!)
             firebase_project_id = st.session_state.get('firebase_project_id', DEFAULT_FIREBASE_PROJECT_ID)
             if firebase_project_id:
                 val_str = load_portfolio_from_firebase(user_key, firebase_project_id)
+                if val_str:
+                    data_source = "Firebase"
                 
             # 2. Try loading from Google Sheets next if configured and Firebase was empty
             if not val_str:
                 gas_url = st.session_state.get('gas_url', '')
                 if gas_url:
                     val_str = load_portfolio_from_gsheet(user_key, gas_url)
+                    if val_str:
+                        data_source = "Google Sheets"
             
             # 3. Fallback to browser localStorage if not found on cloud
             if not val_str:
                 val_str = res.get("value")
+                if val_str:
+                    data_source = "Browser LocalStorage"
             
             # Load local portfolio file to check if it's empty
             local_portfolio_data = load_portfolio()
@@ -3048,7 +3055,13 @@ if user_key not in st.session_state['ls_loaded_keys']:
                         filename = get_portfolio_filename()
                         with open(filename, "w", encoding="utf-8") as f:
                             json.dump(browser_portfolio_data, f, indent=4, ensure_ascii=False)
-                        st.toast("🔄 ブラウザ保存のデータを復元しました。")
+                        
+                        if data_source == "Firebase":
+                            st.toast("🔥 Firebaseから最新データを同期しました。")
+                        elif data_source == "Google Sheets":
+                            st.toast("☁️ Googleスプレッドシートからデータを復元しました。")
+                        else:
+                            st.toast("🔄 ブラウザ保存のデータを復元しました。")
                 except Exception as e:
                     pass
             else:
