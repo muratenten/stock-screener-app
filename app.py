@@ -3069,37 +3069,6 @@ portfolio_data = load_portfolio()
 # Sidebar Data Backup & Restore
 
 
-# 4. Firebase Firestore Synchronization (Optional, High-speed cloud sync)
-st.sidebar.markdown("---")
-st.sidebar.markdown("### 🔥 Firebase 同期（高速クラウド同期）")
-st.sidebar.markdown(
-    "<div style='font-size: 0.8rem; color: #64748b; margin-bottom: 10px; line-height: 1.4;'>"
-    "Firebase Firestore を使ってデータを高速にクラウド保存します。データは即座に反映され、もっさり感（遅延）がありません。"
-    "</div>",
-    unsafe_allow_html=True
-)
-
-prev_firebase_project_id = st.session_state.get('firebase_project_id', DEFAULT_FIREBASE_PROJECT_ID)
-firebase_project_id = st.sidebar.text_input(
-    "Firebase プロジェクト ID",
-    value=prev_firebase_project_id,
-    placeholder="例: my-stock-screener-123",
-    help="Firebaseで作成したプロジェクトIDを入力します。空欄にすると同期が無効になります。"
-)
-if firebase_project_id != prev_firebase_project_id:
-    st.session_state['firebase_project_id'] = firebase_project_id
-    if 'ls_loaded_keys' in st.session_state:
-        st.session_state['ls_loaded_keys'].clear()
-    st.rerun()
-
-with st.sidebar.expander("🛠️ Firebase Firestore の設定方法"):
-    st.markdown("""
-    1. **[Firebase Console](https://console.firebase.google.com/)** にログインし、「プロジェクトを追加」から新しいプロジェクトを作成します。
-    2. プロジェクト作成後、左メニューから **「Firestore Database」** を選択し、**「データベースの作成」** をクリックします。
-    3. ロケーションを選択し、セキュリティルールで **「テストモードで開始」**（誰でも読み書き可能）を選択して作成します。
-    4. データベース作成後、画面左上の **「プロジェクトの概要」横の歯車マーク ➔ 「プロジェクト設定」** を開き、**「プロジェクト ID」** をコピーします。
-    5. コピーしたプロジェクトIDを上の入力欄に貼り付けます。
-    """)
 
 # UI LAYOUT
 # Check if we need to show the purchase dialog
