@@ -2869,14 +2869,14 @@ st.query_params["user"] = user_key
 
 # --- localStorage Auto-Restore & Sync Setup ---
 if 'ls_loaded_keys' not in st.session_state:
-    st.session_state['ls_loaded_keys'] = set()
+    st.session_state['ls_loaded_keys'] = {}
 
 if user_key not in st.session_state['ls_loaded_keys']:
     with st.spinner("📂 ブラウザの保存データを読み込んでいます..."):
         res = local_storage(action="get", item_key=f"zen_portfolio_{user_key}", key=f"ls_get_{user_key}")
         if res is not None:
             # Mark as loaded for this user_key
-            st.session_state['ls_loaded_keys'].add(user_key)
+            st.session_state['ls_loaded_keys'][user_key] = True
             
             # Try loading from Google Sheets first if configured
             val_str = None
@@ -2912,7 +2912,6 @@ if user_key not in st.session_state['ls_loaded_keys']:
                 if not local_is_empty:
                     st.session_state['ls_needs_sync'] = True
                     st.session_state['ls_sync_counter'] = st.session_state.get('ls_sync_counter', 0) + 1
-            st.rerun()
         else:
             st.stop()
 
@@ -2977,13 +2976,18 @@ st.sidebar.markdown(
     unsafe_allow_html=True
 )
 
+prev_gas_url = st.session_state.get('gas_url', '')
 gas_url = st.sidebar.text_input(
     "GAS ウェブアプリ URL",
-    value=st.session_state.get('gas_url', ''),
+    value=prev_gas_url,
     placeholder="https://script.google.com/macros/s/.../exec",
     help="デプロイしたGASのウェブアプリURLを入力します。空欄にすると同期が無効になります。"
 )
-st.session_state['gas_url'] = gas_url
+if gas_url != prev_gas_url:
+    st.session_state['gas_url'] = gas_url
+    if 'ls_loaded_keys' in st.session_state:
+        st.session_state['ls_loaded_keys'].clear()
+    st.rerun()
 
 with st.sidebar.expander("🛠️ Google Apps Script の設定方法"):
     st.markdown("""
