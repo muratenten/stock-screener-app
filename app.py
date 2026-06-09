@@ -2968,15 +2968,15 @@ if query_user == "default":
             
             submitted = st.form_submit_button("マイページを開く", type="primary", use_container_width=True)
             
-            st.markdown("""
-                <div class="login-info-box">
-                    <span class="login-info-title">ℹ️ IDについて</span>
-                    <span class="login-info-text">
-                        新規のIDを入力すると、自動的にそのID用の専用マイページが生成されます。<br>
-                        IDはデータのアクセス・復元キーとなります。ログイン後は<b>このURLをブックマークして保存</b>することをお勧めします。
-                    </span>
-                </div>
-            """, unsafe_allow_html=True)
+        st.markdown("""
+            <div class="login-info-box">
+                <span class="login-info-title">ℹ️ IDについて</span>
+                <span class="login-info-text">
+                    新規のIDを入力すると、自動的にそのID用の専用マイページが生成されます。<br>
+                    IDはデータのアクセス・復元キーとなります。ログイン後は<b>このURLをブックマークして保存</b>することをお勧めします。
+                </span>
+            </div>
+        """, unsafe_allow_html=True)
             
         if submitted:
             safe_id = "".join([c for c in str(entered_id) if c.isalnum() or c in ('-', '_')]).strip()
