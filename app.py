@@ -2991,8 +2991,7 @@ if query_user == "default":
 # ---------------------------------------------------------
 # MAIN APP INTERFACE (Shown when user ID is set)
 # ---------------------------------------------------------
-st.sidebar.markdown("### 👤 ログイン中のユーザー")
-st.sidebar.info(f"**{query_user}**")
+st.sidebar.markdown(f"### 👤 ログイン中: **{query_user}**")
 st.sidebar.caption("💡 別のIDに切り替える、または初期画面に戻るには下のボタンからログアウトしてください。")
 
 if st.sidebar.button("🚪 ログアウト (ログイン画面に戻る)", use_container_width=True, key="sidebar_logout_btn"):
