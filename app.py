@@ -12,6 +12,11 @@ import json
 import os
 from tickers import JP_TICKERS, US_TICKERS
 
+# Default Firebase configuration fallback
+DEFAULT_FIREBASE_PROJECT_ID = "zenstock-screener"
+if "firebase_project_id" in st.secrets:
+    DEFAULT_FIREBASE_PROJECT_ID = st.secrets["firebase_project_id"]
+
 # Declare custom component for localStorage access
 _parent_dir = os.path.dirname(os.path.abspath(__file__))
 _build_dir = os.path.join(_parent_dir, "local_storage_component")
@@ -2747,7 +2752,7 @@ def save_portfolio(data):
         val_str = json.dumps(data, indent=4, ensure_ascii=False)
         
         # 1. Sync to Firebase Firestore if configured (extremely fast!)
-        firebase_project_id = st.session_state.get('firebase_project_id', '')
+        firebase_project_id = st.session_state.get('firebase_project_id', DEFAULT_FIREBASE_PROJECT_ID)
         if firebase_project_id:
             save_portfolio_to_firebase(user_key, firebase_project_id, val_str)
         
@@ -3017,7 +3022,7 @@ if user_key not in st.session_state['ls_loaded_keys']:
             val_str = None
             
             # 1. Try loading from Firebase first if configured (extremely fast!)
-            firebase_project_id = st.session_state.get('firebase_project_id', '')
+            firebase_project_id = st.session_state.get('firebase_project_id', DEFAULT_FIREBASE_PROJECT_ID)
             if firebase_project_id:
                 val_str = load_portfolio_from_firebase(user_key, firebase_project_id)
                 
@@ -3198,7 +3203,7 @@ st.sidebar.markdown(
     unsafe_allow_html=True
 )
 
-prev_firebase_project_id = st.session_state.get('firebase_project_id', '')
+prev_firebase_project_id = st.session_state.get('firebase_project_id', DEFAULT_FIREBASE_PROJECT_ID)
 firebase_project_id = st.sidebar.text_input(
     "Firebase プロジェクト ID",
     value=prev_firebase_project_id,
