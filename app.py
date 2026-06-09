@@ -2634,6 +2634,15 @@ def save_portfolio(data):
         st.error(f"ポートフォリオデータの保存エラー ({filename}): {e}")
         return False
 
+def save_portfolio_cache_only(data):
+    filename = get_portfolio_filename()
+    try:
+        with open(filename, "w", encoding="utf-8") as f:
+            json.dump(data, f, indent=4, ensure_ascii=False)
+        return True
+    except Exception:
+        return False
+
 # CSS styling color coding for tables
 def color_pl_cell(val):
     if isinstance(val, str):
@@ -3904,8 +3913,8 @@ with tab_simulation:
                     # Silence warnings and rely on cache fallback
                     pass
             
-            # Save updated price cache back to portfolio file
-            save_portfolio(portfolio_data)
+            # Save updated price cache back to portfolio file without triggering localStorage sync
+            save_portfolio_cache_only(portfolio_data)
                     
         # Calculate active records
         for i, r in enumerate(records):
