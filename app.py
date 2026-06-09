@@ -2867,17 +2867,17 @@ if query_user == "default":
             transform: translate(0px, 0px) scale(1);
         }
     }
-    .login-container {
-        background: rgba(255, 255, 255, 0.75);
-        padding: 35px;
-        border-radius: 20px;
-        box-shadow: 0 20px 45px rgba(30, 41, 59, 0.06);
-        border: 1px solid rgba(255, 255, 255, 0.6);
-        backdrop-filter: blur(15px);
-        -webkit-backdrop-filter: blur(15px);
-        margin-bottom: 25px;
-        position: relative;
-        z-index: 1;
+    [data-testid="stForm"] {
+        background: rgba(255, 255, 255, 0.75) !important;
+        padding: 35px !important;
+        border-radius: 20px !important;
+        box-shadow: 0 20px 45px rgba(30, 41, 59, 0.06) !important;
+        border: 1px solid rgba(255, 255, 255, 0.6) !important;
+        backdrop-filter: blur(15px) !important;
+        -webkit-backdrop-filter: blur(15px) !important;
+        margin-bottom: 25px !important;
+        position: relative !important;
+        z-index: 1 !important;
     }
     .login-title-glow {
         font-size: 2.5rem;
@@ -2946,8 +2946,8 @@ if query_user == "default":
         st.markdown('<h1 class="login-title-glow">ZenStockScreener</h1>', unsafe_allow_html=True)
         st.markdown('<p class="login-subtitle-glow">AI・ファンダメンタルズ指標分析システム</p>', unsafe_allow_html=True)
         
-        st.markdown("""
-        <div class="login-container">
+        with st.form("login_form", clear_on_submit=False):
+            st.markdown("""
             <div class="login-header-section">
                 <h3 class="login-section-title">👤 マイページへのアクセス</h3>
                 <p class="login-intro-text">
@@ -2955,29 +2955,30 @@ if query_user == "default":
                 </p>
             </div>
             <div style="margin-bottom: 8px; font-weight: 600; font-size: 0.9rem; color: #334155;">マイページID（半角英数字）</div>
-        """, unsafe_allow_html=True)
-        
-        entered_id = st.text_input(
-            "名前・専用IDを入力してください（半角英数字のみ）",
-            value="",
-            placeholder="例: takkun, user_abc",
-            autocomplete="off",
-            key="portal_user_id_input",
-            label_visibility="collapsed"
-        )
-        
-        st.markdown("""
-            <div class="login-info-box">
-                <span class="login-info-title">ℹ️ IDについて</span>
-                <span class="login-info-text">
-                    新規のIDを入力すると、自動的にそのID用の専用マイページが生成されます。<br>
-                    IDはデータのアクセス・復元キーとなります。ログイン後は<b>このURLをブックマークして保存</b>することをお勧めします。
-                </span>
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
-        
-        if st.button("マイページを開く", type="primary", use_container_width=True, key="portal_login_btn"):
+            """, unsafe_allow_html=True)
+            
+            entered_id = st.text_input(
+                "名前・専用IDを入力してください（半角英数字のみ）",
+                value="",
+                placeholder="例: takkun, user_abc",
+                autocomplete="off",
+                key="portal_user_id_input",
+                label_visibility="collapsed"
+            )
+            
+            submitted = st.form_submit_button("マイページを開く", type="primary", use_container_width=True)
+            
+            st.markdown("""
+                <div class="login-info-box">
+                    <span class="login-info-title">ℹ️ IDについて</span>
+                    <span class="login-info-text">
+                        新規のIDを入力すると、自動的にそのID用の専用マイページが生成されます。<br>
+                        IDはデータのアクセス・復元キーとなります。ログイン後は<b>このURLをブックマークして保存</b>することをお勧めします。
+                    </span>
+                </div>
+            """, unsafe_allow_html=True)
+            
+        if submitted:
             safe_id = "".join([c for c in str(entered_id) if c.isalnum() or c in ('-', '_')]).strip()
             if safe_id:
                 st.query_params["user"] = safe_id
