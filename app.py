@@ -20,6 +20,39 @@ _local_storage_component = components.declare_component("local_storage", path=_b
 def local_storage(action, item_key, value=None, key=None):
     return _local_storage_component(action=action, item_key=item_key, value=value, key=key, default=None)
 
+def load_portfolio_from_gsheet(user_key, gas_url):
+    if not gas_url:
+        return None
+    try:
+        url = f"{gas_url}?user={urllib.parse.quote(user_key)}"
+        req = urllib.request.Request(url, method="GET")
+        with urllib.request.urlopen(req, timeout=5) as response:
+            res_data = json.loads(response.read().decode("utf-8"))
+            if res_data.get("status") == "success":
+                return res_data.get("value")
+    except Exception:
+        pass
+    return None
+
+def save_portfolio_to_gsheet(user_key, gas_url, val_str):
+    if not gas_url:
+        return False
+    try:
+        data = json.dumps({"user": user_key, "value": val_str}).encode("utf-8")
+        req = urllib.request.Request(
+            gas_url,
+            data=data,
+            headers={"Content-Type": "application/json"},
+            method="POST"
+        )
+        with urllib.request.urlopen(req, timeout=5) as response:
+            res_content = response.read().decode("utf-8")
+            if "success" in res_content:
+                return True
+    except Exception:
+        pass
+    return True
+
 # Page config
 st.set_page_config(
     page_title="ZenStockScreener | 株価上昇シグナル選定ツール",
@@ -2588,6 +2621,14 @@ def save_portfolio(data):
             json.dump(data, f, indent=4, ensure_ascii=False)
         st.session_state['ls_needs_sync'] = True
         st.session_state['ls_sync_counter'] = st.session_state.get('ls_sync_counter', 0) + 1
+        
+        # Sync to Google Sheets if configured (simulating the write latency/lag)
+        gas_url = st.session_state.get('gas_url', '')
+        if gas_url:
+            user_key = st.session_state.get('user_key', 'default')
+            val_str = json.dumps(data, indent=4, ensure_ascii=False)
+            save_portfolio_to_gsheet(user_key, gas_url, val_str)
+            
         return True
     except Exception as e:
         st.error(f"ポートフォリオデータの保存エラー ({filename}): {e}")
@@ -2836,7 +2877,16 @@ if user_key not in st.session_state['ls_loaded_keys']:
         if res is not None:
             # Mark as loaded for this user_key
             st.session_state['ls_loaded_keys'].add(user_key)
-            val_str = res.get("value")
+            
+            # Try loading from Google Sheets first if configured
+            val_str = None
+            gas_url = st.session_state.get('gas_url', '')
+            if gas_url:
+                val_str = load_portfolio_from_gsheet(user_key, gas_url)
+            
+            # Fallback to browser localStorage if not found on Google Sheets
+            if not val_str:
+                val_str = res.get("value")
             
             # Load local portfolio file to check if it's empty
             local_portfolio_data = load_portfolio()
@@ -2916,6 +2966,80 @@ if uploaded_file is not None:
             st.sidebar.error("❌ 無効なバックアップファイルです。")
     except Exception as e:
         st.sidebar.error(f"❌ ファイルの読み込みに失敗しました: {e}")
+
+# 3. Google Sheets (GAS) Synchronization (Experimental)
+st.sidebar.markdown("---")
+st.sidebar.markdown("### ☁️ スプレッドシート同期（体験用）")
+st.sidebar.markdown(
+    "<div style='font-size: 0.8rem; color: #64748b; margin-bottom: 10px; line-height: 1.4;'>"
+    "Google Apps Script (GAS) を使ってスプレッドシートに同期し、クラウド保存のもっさり感（ラグ）を体験できます。"
+    "</div>",
+    unsafe_allow_html=True
+)
+
+gas_url = st.sidebar.text_input(
+    "GAS ウェブアプリ URL",
+    value=st.session_state.get('gas_url', ''),
+    placeholder="https://script.google.com/macros/s/.../exec",
+    help="デプロイしたGASのウェブアプリURLを入力します。空欄にすると同期が無効になります。"
+)
+st.session_state['gas_url'] = gas_url
+
+with st.sidebar.expander("🛠️ Google Apps Script の設定方法"):
+    st.markdown("""
+    1. **スプレッドシートを作成**し、メニューから **「拡張機能」 ➔ 「Apps Script」** を開きます。
+    2. もともとあるコードを消して、以下のコードを貼り付けます：
+    """)
+    st.code("""
+function doGet(e) {
+  var user = e.parameter.user;
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+  if (sheet.getLastRow() > 0) {
+    var data = sheet.getRange(1, 1, sheet.getLastRow(), 2).getValues();
+    for (var i = 0; i < data.length; i++) {
+      if (data[i][0] == user) {
+        return ContentService.createTextOutput(JSON.stringify({status: "success", value: data[i][1]}))
+          .setMimeType(ContentService.MimeType.JSON);
+      }
+    }
+  }
+  return ContentService.createTextOutput(JSON.stringify({status: "not_found"}))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
+function doPost(e) {
+  var postData = JSON.parse(e.postData.contents);
+  var user = postData.user;
+  var valStr = postData.value;
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+  var foundIndex = -1;
+  if (sheet.getLastRow() > 0) {
+    var data = sheet.getRange(1, 1, sheet.getLastRow(), 1).getValues();
+    for (var i = 0; i < data.length; i++) {
+      if (data[i][0] == user) {
+        foundIndex = i + 1;
+        break;
+      }
+    }
+  }
+  if (foundIndex != -1) {
+    sheet.getRange(foundIndex, 2).setValue(valStr);
+  } else {
+    sheet.appendRow([user, valStr]);
+  }
+  return ContentService.createTextOutput(JSON.stringify({status: "success"}))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+    """, language="javascript")
+    st.markdown("""
+    3. 右上の **「デプロイ」 ➔ 「新しいデプロイ」** をクリックします。
+    4. 種類の選択で **「ウェブアプリ」** を選びます。
+    5. 設定項目を以下のように指定します：
+       * **次のユーザーとして実行:** 「自分」
+       * **アクセスできるユーザー:** 「全員」
+    6. **「デプロイ」** を押し、アクセスを承認します。
+    7. 発行された **「ウェブアプリのURL」** をコピーして、上の入力欄に貼り付けます。
+    """)
 
 # UI LAYOUT
 # Check if we need to show the purchase dialog
