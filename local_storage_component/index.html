@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      background: transparent;
+    }
+  </style>
+</head>
+<body>
+  <!-- This is an invisible component used solely for localStorage operations -->
+  <script type="text/javascript">
+    // Helper function to send value to Streamlit
+    function sendValue(value) {
+      window.parent.postMessage({
+        isStreamlitMessage: true,
+        type: "streamlit:setComponentValue",
+        value: value
+      }, "*");
+    }
+
+    // Tell Streamlit that the component is ready
+    function initialize() {
+      // Set frame height to 0 so it's invisible
+      window.parent.postMessage({
+        isStreamlitMessage: true,
+        type: "streamlit:setFrameHeight",
+        height: 0
+      }, "*");
+    }
+
+    // Listen for render event
+    window.addEventListener("message", function(event) {
+      if (event.data.type === "streamlit:render") {
+        const args = event.data.args;
+        const action = args.action;
+        const key = args.item_key;
+        const value = args.value;
+
+        if (action === "get") {
+          try {
+            const storedValue = localStorage.getItem(key);
+            sendValue({
+              status: "success",
+              action: "get",
+              key: key,
+              value: storedValue
+            });
+          } catch (e) {
+            sendValue({
+              status: "error",
+              action: "get",
+              message: e.toString()
+            });
+          }
+        } else if (action === "set") {
+          try {
+            localStorage.setItem(key, value);
+            sendValue({
+              status: "success",
+              action: "set",
+              key: key
+            });
+          } catch (e) {
+            sendValue({
+              status: "error",
+              action: "set",
+              message: e.toString()
+            });
+          }
+        } else if (action === "clear") {
+          try {
+            localStorage.removeItem(key);
+            sendValue({
+              status: "success",
+              action: "clear",
+              key: key
+            });
+          } catch (e) {
+            sendValue({
+              status: "error",
+              action: "clear",
+              message: e.toString()
+            });
+          }
+        }
+      }
+    });
+
+    // Notify Streamlit we are ready
+    window.parent.postMessage({
+      isStreamlitMessage: true,
+      type: "streamlit:componentReady",
+      apiVersion: 1
+    }, "*");
+    
+    initialize();
+  </script>
+</body>
+</html>

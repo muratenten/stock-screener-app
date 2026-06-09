@@ -1,4 +1,5 @@
 import streamlit as st
+import streamlit.components.v1 as components
 import pandas as pd
 import numpy as np
 import yfinance as yf
@@ -10,6 +11,14 @@ import urllib.parse
 import json
 import os
 from tickers import JP_TICKERS, US_TICKERS
+
+# Declare custom component for localStorage access
+_parent_dir = os.path.dirname(os.path.abspath(__file__))
+_build_dir = os.path.join(_parent_dir, "local_storage_component")
+_local_storage_component = components.declare_component("local_storage", path=_build_dir)
+
+def local_storage(action, item_key, value=None, key=None):
+    return _local_storage_component(action=action, item_key=item_key, value=value, key=key, default=None)
 
 # Page config
 st.set_page_config(
@@ -2577,6 +2586,8 @@ def save_portfolio(data):
     try:
         with open(filename, "w", encoding="utf-8") as f:
             json.dump(data, f, indent=4, ensure_ascii=False)
+        st.session_state['ls_needs_sync'] = True
+        st.session_state['ls_sync_counter'] = st.session_state.get('ls_sync_counter', 0) + 1
         return True
     except Exception as e:
         st.error(f"ポートフォリオデータの保存エラー ({filename}): {e}")
@@ -2814,6 +2825,46 @@ if st.sidebar.button("🚪 ログアウト (ログイン画面に戻る)", use_c
 
 st.session_state['user_key'] = user_key
 st.query_params["user"] = user_key
+
+# --- localStorage Auto-Restore & Sync Setup ---
+if 'ls_loaded_keys' not in st.session_state:
+    st.session_state['ls_loaded_keys'] = set()
+
+if user_key not in st.session_state['ls_loaded_keys']:
+    with st.spinner("📂 ブラウザの保存データを読み込んでいます..."):
+        res = local_storage(action="get", item_key=f"zen_portfolio_{user_key}", key=f"ls_get_{user_key}")
+        if res is not None:
+            # Mark as loaded for this user_key
+            st.session_state['ls_loaded_keys'].add(user_key)
+            val_str = res.get("value")
+            
+            # Load local portfolio file to check if it's empty
+            local_portfolio_data = load_portfolio()
+            local_is_empty = (
+                not local_portfolio_data.get("purchase_records") and 
+                not local_portfolio_data.get("sales_records") and 
+                not local_portfolio_data.get("watchlist")
+            )
+            
+            if val_str:
+                try:
+                    browser_portfolio_data = json.loads(val_str)
+                    if isinstance(browser_portfolio_data, dict) and ("purchase_records" in browser_portfolio_data or "watchlist" in browser_portfolio_data):
+                        # Save browser data to local JSON file to restore it
+                        filename = get_portfolio_filename()
+                        with open(filename, "w", encoding="utf-8") as f:
+                            json.dump(browser_portfolio_data, f, indent=4, ensure_ascii=False)
+                        st.toast("🔄 ブラウザ保存のデータを復元しました。")
+                except Exception as e:
+                    pass
+            else:
+                # If local file has data but browser has nothing, queue a sync to browser
+                if not local_is_empty:
+                    st.session_state['ls_needs_sync'] = True
+                    st.session_state['ls_sync_counter'] = st.session_state.get('ls_sync_counter', 0) + 1
+            st.rerun()
+        else:
+            st.stop()
 
 # Initialize portfolio data in session state
 portfolio_data = load_portfolio()
@@ -4289,3 +4340,19 @@ with tab_explanation:
        - **仕組み**: 株価に対する年間配当金の割合。
        - **上昇期待の理由**: 高い配当利回りは、株価が下落した際に「利回り妙味」から下値支持（クッション）として機能します。また、**長期投資家が保有し続けやすいポートフォリオの土台**となります。
     """)
+
+# --- localStorage SET synchronization block ---
+if st.session_state.get('ls_needs_sync', False):
+    portfolio_data_to_sync = load_portfolio()
+    portfolio_json_to_sync = json.dumps(portfolio_data_to_sync, indent=4, ensure_ascii=False)
+    sync_counter = st.session_state.get('ls_sync_counter', 0)
+    res_set = local_storage(
+        action="set",
+        item_key=f"zen_portfolio_{user_key}",
+        value=portfolio_json_to_sync,
+        key=f"ls_set_{user_key}_{sync_counter}"
+    )
+    if res_set is not None:
+        st.session_state['ls_needs_sync'] = False
+        st.toast("💾 データをブラウザに自動保存しました。")
+        st.rerun()
