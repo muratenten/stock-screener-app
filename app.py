@@ -2991,29 +2991,16 @@ if query_user == "default":
 # ---------------------------------------------------------
 # MAIN APP INTERFACE (Shown when user ID is set)
 # ---------------------------------------------------------
-st.sidebar.markdown("### 👤 専用ページの切り替え")
-user_key_input = st.sidebar.text_input(
-    "名前・専用IDを入力してください",
-    value=query_user,
-    autocomplete="off",
-    help="ここに名前（半角英数字）を入力すると、他のユーザーと混ざらない『あなた専用のページ』に切り替わります。同じIDを入力すれば別のデバイスからもアクセス可能です。"
-)
-st.sidebar.caption("💡 **【重要】** 初めて入力されたIDであなた専用のマイページファイルが自動作成されます。**IDを忘れるとこれまでの取引データにアクセスできなくなります**ので、必ずIDをメモするか、URLをブックマークして保存してください。")
-
-# Sanitize and validate
-user_key = "".join([c for c in str(user_key_input) if c.isalnum() or c in ('-', '_')]).strip()
-
-if not user_key:
-    # If empty or cleared, automatically redirect back to the welcome/login portal
-    st.query_params["user"] = "default"
-    st.session_state['user_key'] = "default"
-    st.rerun()
+st.sidebar.markdown("### 👤 ログイン中のユーザー")
+st.sidebar.info(f"**{query_user}**")
+st.sidebar.caption("💡 別のIDに切り替える、または初期画面に戻るには下のボタンからログアウトしてください。")
 
 if st.sidebar.button("🚪 ログアウト (ログイン画面に戻る)", use_container_width=True, key="sidebar_logout_btn"):
     st.query_params["user"] = "default"
     st.session_state['user_key'] = "default"
     st.rerun()
 
+user_key = query_user
 st.session_state['user_key'] = user_key
 st.query_params["user"] = user_key
 
