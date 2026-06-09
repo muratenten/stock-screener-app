@@ -2818,6 +2818,54 @@ st.query_params["user"] = user_key
 # Initialize portfolio data in session state
 portfolio_data = load_portfolio()
 
+# Sidebar Data Backup & Restore
+st.sidebar.markdown("---")
+st.sidebar.markdown("### 💾 データ管理（バックアップ＆復元）")
+st.sidebar.markdown(
+    "<div style='font-size: 0.8rem; color: #64748b; margin-bottom: 10px; line-height: 1.4;'>"
+    "※ウェブ版（Streamlit Cloud）は一定時間操作がない場合やアップデート時にサーバーのデータが自動リセットされる仕組みになっています。<br>"
+    "お気に入りや取引記録を残すために、定期的なバックアップ保存をお勧めします。"
+    "</div>",
+    unsafe_allow_html=True
+)
+
+# 1. Download Backup
+portfolio_json = json.dumps(portfolio_data, indent=4, ensure_ascii=False)
+st.sidebar.download_button(
+    label="📤 バックアップをPCに保存",
+    data=portfolio_json,
+    file_name=f"ZenStockScreener_backup_{user_key}.json",
+    mime="application/json",
+    use_container_width=True,
+    key="backup_download_btn"
+)
+
+# 2. Upload Restore
+uploaded_file = st.sidebar.file_uploader(
+    "📥 バックアップから復元",
+    type=["json"],
+    help="PCに保存したJSONバックアップファイルを選択してください。",
+    key="backup_upload_file"
+)
+
+if uploaded_file is not None:
+    try:
+        imported_data = json.load(uploaded_file)
+        if isinstance(imported_data, dict) and "purchase_records" in imported_data and "watchlist" in imported_data:
+            if imported_data != portfolio_data:
+                if save_portfolio(imported_data):
+                    st.sidebar.success("✅ データを正常に復元しました！")
+                    st.toast("✅ データを正常に復元しました。アプリを再読み込みします。")
+                    import time
+                    time.sleep(0.5)
+                    st.rerun()
+                else:
+                    st.sidebar.error("❌ データの保存に失敗しました。")
+        else:
+            st.sidebar.error("❌ 無効なバックアップファイルです。")
+    except Exception as e:
+        st.sidebar.error(f"❌ ファイルの読み込みに失敗しました: {e}")
+
 # UI LAYOUT
 # Check if we need to show the purchase dialog
 if 'show_purchase_dialog' in st.session_state:
