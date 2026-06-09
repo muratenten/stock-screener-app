@@ -2917,24 +2917,24 @@ if query_user == "default":
         text-align: center;
         margin: 0;
     }
-    .login-warning-box {
-        background: #fffbeb;
-        border-left: 4px solid #f59e0b;
+    .login-info-box {
+        background: #f8fafc;
+        border-left: 4px solid #3b82f6;
         padding: 15px;
         border-radius: 8px;
         margin-top: 20px;
         margin-bottom: 10px;
     }
-    .login-warning-title {
+    .login-info-title {
         font-size: 0.85rem;
         font-weight: 700;
-        color: #b45309;
+        color: #1e3a8a;
         display: block;
         margin-bottom: 4px;
     }
-    .login-warning-text {
+    .login-info-text {
         font-size: 0.8rem;
-        color: #78350f;
+        color: #475569;
         line-height: 1.5;
         display: block;
     }
@@ -2944,17 +2944,17 @@ if query_user == "default":
     col_w1, col_w2, col_w3 = st.columns([0.6, 2.8, 0.6])
     with col_w2:
         st.markdown('<h1 class="login-title-glow">ZenStockScreener</h1>', unsafe_allow_html=True)
-        st.markdown('<p class="login-subtitle-glow">AI分析とファンダメンタルズによる上昇期待銘柄選定システム</p>', unsafe_allow_html=True)
+        st.markdown('<p class="login-subtitle-glow">AI・ファンダメンタルズ指標分析システム</p>', unsafe_allow_html=True)
         
         st.markdown("""
         <div class="login-container">
             <div class="login-header-section">
-                <h3 class="login-section-title">👤 マイページ（専用フォルダ）へのログイン</h3>
+                <h3 class="login-section-title">👤 マイページへのアクセス</h3>
                 <p class="login-intro-text">
-                    本システムは、ユーザーごとに独立したポートフォリオ、デモトレード記録、お気に入り銘柄（ウォッチリスト）を管理できます。
+                    お気に入り銘柄、シミュレーション取引、ポートフォリオを個別に管理・保存できる専用領域をロードします。
                 </p>
             </div>
-            <div style="margin-bottom: 8px; font-weight: 600; font-size: 0.9rem; color: #334155;">専用マイページ名（半角英数字）</div>
+            <div style="margin-bottom: 8px; font-weight: 600; font-size: 0.9rem; color: #334155;">マイページID（半角英数字）</div>
         """, unsafe_allow_html=True)
         
         entered_id = st.text_input(
@@ -2967,11 +2967,11 @@ if query_user == "default":
         )
         
         st.markdown("""
-            <div class="login-warning-box">
-                <span class="login-warning-title">⚠️ 注意事項</span>
-                <span class="login-warning-text">
-                    初めて入力された名前の場合は、自動的にその名前で新しい専用マイページファイルが作成されます。<br>
-                    <b>入力した名前を忘れると、これまでのデモトレードやウォッチリストの記録にアクセスできなくなります</b>ので、必ず名前をメモするか、アクセス後のURLをブックマークして保存してください。
+            <div class="login-info-box">
+                <span class="login-info-title">ℹ️ IDについて</span>
+                <span class="login-info-text">
+                    新規のIDを入力すると、自動的にそのID用の専用マイページが生成されます。<br>
+                    IDはデータのアクセス・復元キーとなります。ログイン後は<b>このURLをブックマークして保存</b>することをお勧めします。
                 </span>
             </div>
         </div>
