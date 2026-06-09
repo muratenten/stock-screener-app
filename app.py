@@ -642,13 +642,87 @@ def batch_download_histories(tickers_list, period="1y"):
 # Cached function for downloading ticker fundamental info
 @st.cache_data(ttl=86400)
 def get_ticker_info(ticker):
+    raw_info = None
     try:
         t = yf.Ticker(ticker)
         raw_info = t.info
+    except Exception:
+        raw_info = {}
         
+    # If raw_info failed or is empty (typical on Streamlit Cloud due to rate limit/IP block), 
+    # and it is a Japanese stock, fall back to official Yahoo Finance JP scraping!
+    if (not raw_info or not raw_info.get('longName')) and ticker.endswith('.T'):
+        code = ticker.split('.')[0]
+        try:
+            import re
+            url = f"https://finance.yahoo.co.jp/quote/{code}"
+            req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
+            html = urllib.request.urlopen(req, timeout=5).read().decode('utf-8')
+            
+            # Find detailData block
+            target = '\\"detailData\\":'
+            idx = html.find(target)
+            if idx == -1:
+                target = '"detailData":'
+                idx = html.find(target)
+                
+            if idx != -1:
+                start_idx = idx + len(target)
+                brace_count = 0
+                end_idx = start_idx
+                for i in range(start_idx, len(html)):
+                    if html[i] == '{':
+                        brace_count += 1
+                    elif html[i] == '}':
+                        brace_count -= 1
+                        if brace_count == 0:
+                            end_idx = i + 1
+                            break
+                            
+                json_str = html[start_idx:end_idx].replace('\\"', '"').replace('\\\\', '\\')
+                data = json.loads(json_str)
+                
+                # Parse title for company name
+                long_name = ticker
+                title_match = re.search(r'<title>(.+?)</title>', html)
+                if title_match:
+                    title_text = title_match.group(1)
+                    name_match = re.search(r'(.+?)【[^】]+】', title_text)
+                    if name_match:
+                        long_name = name_match.group(1).strip()
+                
+                indicators = data.get('indicators', {})
+                industry = data.get('industry', {}).get('name')
+                
+                raw_info = {
+                    'longName': long_name,
+                    'shortName': long_name,
+                    'trailingPE': indicators.get('per', {}).get('value'),
+                    'priceToBook': indicators.get('pbr', {}).get('value'),
+                    'returnOnEquity': indicators.get('roe', {}).get('value'),
+                    'dividendYield': indicators.get('shareDividendYield', {}).get('value'),
+                    'marketCap': None,
+                    'fiftyTwoWeekHigh': None,
+                    'fiftyTwoWeekLow': None,
+                    'sector': industry,
+                    'industry': industry,
+                    'longBusinessSummary': "",
+                    'netIncome': None,
+                    'opMargin': indicators.get('operatingMargins', {}).get('value'),
+                    'totalCash': None,
+                    'totalDebt': None,
+                    'debtToEquity': indicators.get('equityRatio', {}).get('value')
+                }
+        except Exception:
+            pass
+
+    if not raw_info:
+        raw_info = {}
+
+    try:
         # Extract net income keys
         net_income = raw_info.get('netIncome') or raw_info.get('netIncomeToCommon')
-        op_margin = raw_info.get('operatingMargins')
+        op_margin = raw_info.get('operatingMargins') if raw_info.get('operatingMargins') is not None else raw_info.get('opMargin')
         total_cash = raw_info.get('totalCash')
         total_debt = raw_info.get('totalDebt')
         debt_equity = raw_info.get('debtToEquity')
@@ -677,6 +751,10 @@ def get_ticker_info(ticker):
             if val is None:
                 return None
             try:
+                if isinstance(val, str):
+                    val = val.replace(',', '').replace('%', '').strip()
+                    if val == '---' or val == '':
+                        return None
                 return float(val)
             except (ValueError, TypeError):
                 return None
