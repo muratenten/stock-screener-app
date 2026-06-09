@@ -53,6 +53,49 @@ def save_portfolio_to_gsheet(user_key, gas_url, val_str):
         pass
     return True
 
+def load_portfolio_from_firebase(user_key, project_id):
+    if not project_id:
+        return None
+    try:
+        url = f"https://firestore.googleapis.com/v1/projects/{project_id}/databases/(default)/documents/portfolios/{user_key}"
+        req = urllib.request.Request(url, method="GET")
+        with urllib.request.urlopen(req, timeout=5) as response:
+            res_data = json.loads(response.read().decode("utf-8"))
+            fields = res_data.get("fields", {})
+            portfolio_str = fields.get("portfolio_data", {}).get("stringValue")
+            return portfolio_str
+    except Exception:
+        # Expected if document doesn't exist yet (returns 404)
+        pass
+    return None
+
+def save_portfolio_to_firebase(user_key, project_id, val_str):
+    if not project_id:
+        return False
+    try:
+        url = f"https://firestore.googleapis.com/v1/projects/{project_id}/databases/(default)/documents/portfolios/{user_key}?updateMask.fieldPaths=portfolio_data"
+        body = {
+            "fields": {
+                "portfolio_data": {
+                    "stringValue": val_str
+                }
+            }
+        }
+        data = json.dumps(body).encode("utf-8")
+        req = urllib.request.Request(
+            url,
+            data=data,
+            headers={"Content-Type": "application/json"},
+            method="PATCH" # Creates document if it doesn't exist, updates if it does
+        )
+        with urllib.request.urlopen(req, timeout=5) as response:
+            res_content = response.read().decode("utf-8")
+            if "portfolio_data" in res_content:
+                return True
+    except Exception:
+        pass
+    return True
+
 # Page config
 st.set_page_config(
     page_title="ZenStockScreener | 株価上昇シグナル選定ツール",
@@ -2700,11 +2743,17 @@ def save_portfolio(data):
         st.session_state['ls_needs_sync'] = True
         st.session_state['ls_sync_counter'] = st.session_state.get('ls_sync_counter', 0) + 1
         
-        # Sync to Google Sheets if configured (simulating the write latency/lag)
+        user_key = st.session_state.get('user_key', 'default')
+        val_str = json.dumps(data, indent=4, ensure_ascii=False)
+        
+        # 1. Sync to Firebase Firestore if configured (extremely fast!)
+        firebase_project_id = st.session_state.get('firebase_project_id', '')
+        if firebase_project_id:
+            save_portfolio_to_firebase(user_key, firebase_project_id, val_str)
+        
+        # 2. Sync to Google Sheets if configured (simulating the write latency/lag)
         gas_url = st.session_state.get('gas_url', '')
         if gas_url:
-            user_key = st.session_state.get('user_key', 'default')
-            val_str = json.dumps(data, indent=4, ensure_ascii=False)
             save_portfolio_to_gsheet(user_key, gas_url, val_str)
             
         return True
@@ -2965,13 +3014,20 @@ if user_key not in st.session_state['ls_loaded_keys']:
             # Mark as loaded for this user_key
             st.session_state['ls_loaded_keys'][user_key] = True
             
-            # Try loading from Google Sheets first if configured
             val_str = None
-            gas_url = st.session_state.get('gas_url', '')
-            if gas_url:
-                val_str = load_portfolio_from_gsheet(user_key, gas_url)
             
-            # Fallback to browser localStorage if not found on Google Sheets
+            # 1. Try loading from Firebase first if configured (extremely fast!)
+            firebase_project_id = st.session_state.get('firebase_project_id', '')
+            if firebase_project_id:
+                val_str = load_portfolio_from_firebase(user_key, firebase_project_id)
+                
+            # 2. Try loading from Google Sheets next if configured and Firebase was empty
+            if not val_str:
+                gas_url = st.session_state.get('gas_url', '')
+                if gas_url:
+                    val_str = load_portfolio_from_gsheet(user_key, gas_url)
+            
+            # 3. Fallback to browser localStorage if not found on cloud
             if not val_str:
                 val_str = res.get("value")
             
@@ -3130,6 +3186,38 @@ function doPost(e) {
        * **アクセスできるユーザー:** 「全員」
     6. **「デプロイ」** を押し、アクセスを承認します。
     7. 発行された **「ウェブアプリのURL」** をコピーして、上の入力欄に貼り付けます。
+    """)
+
+# 4. Firebase Firestore Synchronization (Optional, High-speed cloud sync)
+st.sidebar.markdown("---")
+st.sidebar.markdown("### 🔥 Firebase 同期（高速クラウド同期）")
+st.sidebar.markdown(
+    "<div style='font-size: 0.8rem; color: #64748b; margin-bottom: 10px; line-height: 1.4;'>"
+    "Firebase Firestore を使ってデータを高速にクラウド保存します。データは即座に反映され、もっさり感（遅延）がありません。"
+    "</div>",
+    unsafe_allow_html=True
+)
+
+prev_firebase_project_id = st.session_state.get('firebase_project_id', '')
+firebase_project_id = st.sidebar.text_input(
+    "Firebase プロジェクト ID",
+    value=prev_firebase_project_id,
+    placeholder="例: my-stock-screener-123",
+    help="Firebaseで作成したプロジェクトIDを入力します。空欄にすると同期が無効になります。"
+)
+if firebase_project_id != prev_firebase_project_id:
+    st.session_state['firebase_project_id'] = firebase_project_id
+    if 'ls_loaded_keys' in st.session_state:
+        st.session_state['ls_loaded_keys'].clear()
+    st.rerun()
+
+with st.sidebar.expander("🛠️ Firebase Firestore の設定方法"):
+    st.markdown("""
+    1. **[Firebase Console](https://console.firebase.google.com/)** にログインし、「プロジェクトを追加」から新しいプロジェクトを作成します。
+    2. プロジェクト作成後、左メニューから **「Firestore Database」** を選択し、**「データベースの作成」** をクリックします。
+    3. ロケーションを選択し、セキュリティルールで **「テストモードで開始」**（誰でも読み書き可能）を選択して作成します。
+    4. データベース作成後、画面左上の **「プロジェクトの概要」横の歯車マーク ➔ 「プロジェクト設定」** を開き、**「プロジェクト ID」** をコピーします。
+    5. コピーしたプロジェクトIDを上の入力欄に貼り付けます。
     """)
 
 # UI LAYOUT
