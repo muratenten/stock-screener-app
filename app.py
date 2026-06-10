@@ -401,6 +401,29 @@ st.markdown(f"""
         color: var(--text-color) !important;
         opacity: 0.95;
     }}
+    
+    /* Segmented Control Styling */
+    div[data-testid="stSegmentedControl"] {{
+        background-color: transparent !important;
+    }}
+    div[data-testid="stSegmentedControl"] button {{
+        background-color: var(--secondary-background-color) !important;
+        color: var(--text-color) !important;
+        border: 1px solid var(--border-color) !important;
+        transition: all 0.2s ease !important;
+    }}
+    div[data-testid="stSegmentedControl"] button:hover {{
+        border-color: var(--primary-color) !important;
+        color: var(--primary-color) !important;
+        background-color: var(--background-color) !important;
+    }}
+    /* Selected segment */
+    div[data-testid="stSegmentedControl"] button[aria-checked="true"], 
+    div[data-testid="stSegmentedControl"] button[aria-selected="true"] {{
+        background-color: var(--primary-color) !important;
+        color: #ffffff !important;
+        border-color: var(--primary-color) !important;
+    }}
 </style>
 
 """, unsafe_allow_html=True)
@@ -2581,7 +2604,7 @@ def render_detail_dashboard(selected_ticker, selected_name, raw_analysis, key_su
     
     if selected_tab == "📈 チャート・指標":
         # Add interval selector for chart: 5m, 1d, 1wk, 1mo
-        st.markdown('<div style="margin-top: 10px; margin-bottom: 6px; font-weight: 600; font-size: 0.9rem; color: #1e293b;">📊 表示時間足の選択:</div>', unsafe_allow_html=True)
+        st.markdown('<div style="margin-top: 10px; margin-bottom: 6px; font-weight: 600; font-size: 0.9rem; color: var(--text-color, #1e293b);">📊 表示時間足の選択:</div>', unsafe_allow_html=True)
         interval_options = {
             "5分足": ("5m", "5d"),
             "日足 (標準)": ("1d", "1y"),
