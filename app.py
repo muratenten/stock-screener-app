@@ -17,7 +17,8 @@ PLOTLY_CONFIG = {
     'scrollZoom': True,
     'displayModeBar': True,
     'displaylogo': False,
-    'responsive': True
+    'responsive': True,
+    'modeBarButtons': [['zoomIn2d', 'zoomOut2d', 'resetScale2d']]
 }
 
 # Default Firebase configuration fallback
@@ -601,7 +602,8 @@ def create_pattern_overlay_chart(target_prices, matches_data, N, ticker=None):
         template="plotly_white",
         height=450,
         margin=dict(l=10, r=10, t=50, b=50),
-        legend=dict(orientation="h", yanchor="top", y=-0.15, xanchor="center", x=0.5)
+        legend=dict(orientation="h", yanchor="top", y=-0.15, xanchor="center", x=0.5),
+        dragmode="pan"
     )
     return fig
 
@@ -1752,7 +1754,8 @@ def create_chart(df, ticker, name, interval="1d"):
         plot_bgcolor='rgba(0,0,0,0)',
         paper_bgcolor='rgba(0,0,0,0)',
         margin=dict(l=10, r=margin_right, t=35, b=10),
-        legend=legend_cfg
+        legend=legend_cfg,
+        dragmode="pan"
     )
     
     # Clean grids
@@ -4572,7 +4575,8 @@ with tab_simulation:
                 template="plotly_white",
                 height=380,
                 margin=dict(l=10, r=10, t=20, b=10),
-                legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
+                legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
+                dragmode="pan"
             )
             st.plotly_chart(fig_total, use_container_width=True, config=PLOTLY_CONFIG)
             
@@ -4604,7 +4608,8 @@ with tab_simulation:
                             yaxis_title=None,
                             template="plotly_white",
                             height=320,
-                            margin=dict(l=10, r=10, t=10, b=10)
+                            margin=dict(l=10, r=10, t=10, b=10),
+                            dragmode="pan"
                         )
                         st.plotly_chart(fig_bar_active, use_container_width=True, config=PLOTLY_CONFIG)
                     else:
@@ -4627,7 +4632,8 @@ with tab_simulation:
                         yaxis_title=None,
                         template="plotly_white",
                         height=320,
-                        margin=dict(l=10, r=10, t=10, b=10)
+                        margin=dict(l=10, r=10, t=10, b=10),
+                        dragmode="pan"
                     )
                     st.plotly_chart(fig_bar_realized, use_container_width=True, config=PLOTLY_CONFIG)
             else:
@@ -4647,7 +4653,8 @@ with tab_simulation:
                         yaxis_title=None,
                         template="plotly_white",
                         height=320,
-                        margin=dict(l=10, r=10, t=10, b=10)
+                        margin=dict(l=10, r=10, t=10, b=10),
+                        dragmode="pan"
                     )
                     st.plotly_chart(fig_bar_active, use_container_width=True, config=PLOTLY_CONFIG)
                 else:
