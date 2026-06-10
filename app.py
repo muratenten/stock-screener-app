@@ -1758,20 +1758,12 @@ def create_chart(df, ticker, name, interval="1d"):
         pass
 
     chart_height = 600 if is_mobile else 750
-    margin_right = 10 if is_mobile else 120
-    
     legend_cfg = dict(
         orientation="h",
         yanchor="top",
         y=-0.12,
         xanchor="center",
         x=0.5
-    ) if is_mobile else dict(
-        orientation="v",
-        yanchor="top",
-        y=1.0,
-        xanchor="left",
-        x=1.02
     )
 
     # Formatting layout
@@ -1781,7 +1773,7 @@ def create_chart(df, ticker, name, interval="1d"):
         template="plotly_white", # White template for clean charting
         plot_bgcolor='rgba(0,0,0,0)',
         paper_bgcolor='rgba(0,0,0,0)',
-        margin=dict(l=10, r=margin_right, t=40, b=50 if is_mobile else 10),
+        margin=dict(l=10, r=10, t=40, b=50),
         legend=legend_cfg,
         dragmode=False if is_mobile else "pan"
     )
