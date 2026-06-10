@@ -551,6 +551,13 @@ def get_stock_5y_history(ticker):
 def create_pattern_overlay_chart(target_prices, matches_data, N, ticker=None):
     fig = go.Figure()
     
+    is_mobile = False
+    try:
+        import streamlit as st
+        is_mobile = st.session_state.get('ui_mode', 'PC') == 'スマホ'
+    except:
+        pass
+        
     symbol = "$" if ticker and is_us_stock(ticker) else "¥"
     fmt = ".2f" if ticker and is_us_stock(ticker) else ".0f"
     unit = "ドル" if ticker and is_us_stock(ticker) else "円"
@@ -595,8 +602,12 @@ def create_pattern_overlay_chart(target_prices, matches_data, N, ticker=None):
         annotation_position="top left"
     )
     
+    title_text = "類似パターンの重ね合わせ" if is_mobile else "類似パターンの株価値動き重ね合わせ (現在値基準でスケール調整)"
     fig.update_layout(
-        title="類似パターンの株価値動き重ね合わせ (現在値基準でスケール調整)",
+        title=dict(
+            text=title_text,
+            font=dict(size=13 if is_mobile else 15)
+        ),
         xaxis_title="経過営業日 (日)",
         yaxis_title=f"株価 ({unit})",
         template="plotly_white",
@@ -610,6 +621,13 @@ def create_pattern_overlay_chart(target_prices, matches_data, N, ticker=None):
 def create_selection_chart(df, ticker, name, start_date, end_date):
     fig = go.Figure()
     
+    is_mobile = False
+    try:
+        import streamlit as st
+        is_mobile = st.session_state.get('ui_mode', 'PC') == 'スマホ'
+    except:
+        pass
+        
     symbol = "$" if is_us_stock(ticker) else "¥"
     fmt = ".2f" if is_us_stock(ticker) else ".0f"
     unit = "ドル" if is_us_stock(ticker) else "円"
@@ -636,8 +654,12 @@ def create_selection_chart(df, ticker, name, start_date, end_date):
         line_width=0
     )
     
+    title_text = f"{ticker} - 期間選択" if is_mobile else f"{name} ({ticker}) - パターン範囲選択（ドラッグして期間を調整）"
     fig.update_layout(
-        title=f"{name} ({ticker}) - パターン範囲選択（ドラッグして期間を調整）",
+        title=dict(
+            text=title_text,
+            font=dict(size=13 if is_mobile else 15)
+        ),
         xaxis_title="日付",
         yaxis_title=f"株価 ({unit})",
         template="plotly_white",
@@ -1661,12 +1683,21 @@ def calculate_indicators_for_df(df, interval="1d"):
 
 # Create Plotly interactive chart
 def create_chart(df, ticker, name, interval="1d"):
+    is_mobile = False
+    try:
+        import streamlit as st
+        is_mobile = st.session_state.get('ui_mode', 'PC') == 'スマホ'
+    except:
+        pass
+
+    subplot_titles = ("株価/MA/BB", "RSI", "MACD") if is_mobile else ("株価 / 移動平均線 / ボリンジャーバンド (-2σから+2σ)", "RSI (相対力指数 - 30/70基準線)", "MACD / シグナル線")
+
     fig = make_subplots(
         rows=3, cols=1, 
         shared_xaxes=True, 
         vertical_spacing=0.08, # Spacing increased to prevent subplot titles overlapping
         row_width=[0.2, 0.2, 0.6],
-        subplot_titles=("株価 / 移動平均線 / ボリンジャーバンド (-2σから+2σ)", "RSI (相対力指数 - 30/70基準線)", "MACD / シグナル線")
+        subplot_titles=subplot_titles
     )
     
     # Row 1: Candlestick
@@ -1700,26 +1731,27 @@ def create_chart(df, ticker, name, interval="1d"):
     fig.add_trace(go.Scatter(x=df.index, y=df['SMA75'], name=ma75_name, line=dict(color='#7c3aed', width=1.5)), row=1, col=1)
     
     # Row 1: Bollinger Bands
-    fig.add_trace(go.Scatter(x=df.index, y=df['BB_Upper'], name='BB上限 (+2σ)', line=dict(color='rgba(100,116,139,0.3)', width=1, dash='dash')), row=1, col=1)
+    fig.add_trace(go.Scatter(x=df.index, y=df['BB_Upper'], name='BB上限 (+2σ)', line=dict(color='rgba(100,116,139,0.3)', width=1, dash='dash'), showlegend=False), row=1, col=1)
     fig.add_trace(go.Scatter(
         x=df.index, y=df['BB_Lower'], name='BB下限 (-2σ)', 
         line=dict(color='rgba(100,116,139,0.3)', width=1, dash='dash'),
-        fill='tonexty', fillcolor='rgba(37, 99, 235, 0.03)'
+        fill='tonexty', fillcolor='rgba(37, 99, 235, 0.03)',
+        showlegend=False
     ), row=1, col=1)
     
     # Row 2: RSI
-    fig.add_trace(go.Scatter(x=df.index, y=df['RSI'], name='RSI (14)', line=dict(color='#ea580c', width=1.5)), row=2, col=1)
+    fig.add_trace(go.Scatter(x=df.index, y=df['RSI'], name='RSI (14)', line=dict(color='#ea580c', width=1.5), showlegend=False), row=2, col=1)
     fig.add_shape(type="line", x0=df.index[0], y0=30, x1=df.index[-1], y1=30, line=dict(color="#dc2626", width=1, dash="dash"), row=2, col=1)
     fig.add_shape(type="line", x0=df.index[0], y0=70, x1=df.index[-1], y1=70, line=dict(color="#16a34a", width=1, dash="dash"), row=2, col=1)
     fig.update_yaxes(range=[10, 90], row=2, col=1)
     
     # Row 3: MACD
-    fig.add_trace(go.Scatter(x=df.index, y=df['MACD'], name='MACD', line=dict(color='#2563eb', width=1.5)), row=3, col=1)
-    fig.add_trace(go.Scatter(x=df.index, y=df['MACD_Signal'], name='シグナル', line=dict(color='#ea580c', width=1.5)), row=3, col=1)
+    fig.add_trace(go.Scatter(x=df.index, y=df['MACD'], name='MACD', line=dict(color='#2563eb', width=1.5), showlegend=False), row=3, col=1)
+    fig.add_trace(go.Scatter(x=df.index, y=df['MACD_Signal'], name='シグナル', line=dict(color='#ea580c', width=1.5), showlegend=False), row=3, col=1)
     
     # MACD Hist bars
     hist_colors = ['#16a34a' if val >= 0 else '#dc2626' for val in df['MACD_Hist']]
-    fig.add_trace(go.Bar(x=df.index, y=df['MACD_Hist'], name='ヒストグラム', marker_color=hist_colors, opacity=0.5), row=3, col=1)
+    fig.add_trace(go.Bar(x=df.index, y=df['MACD_Hist'], name='ヒストグラム', marker_color=hist_colors, opacity=0.5, showlegend=False), row=3, col=1)
     
     # Detect UI mode for responsive layout sizing
     is_mobile = False
@@ -1729,15 +1761,15 @@ def create_chart(df, ticker, name, interval="1d"):
     except:
         pass
 
-    chart_height = 500 if is_mobile else 750
+    chart_height = 600 if is_mobile else 750
     margin_right = 10 if is_mobile else 120
     
     legend_cfg = dict(
         orientation="h",
-        yanchor="bottom",
-        y=1.01,
-        xanchor="left",
-        x=0.01
+        yanchor="top",
+        y=-0.12,
+        xanchor="center",
+        x=0.5
     ) if is_mobile else dict(
         orientation="v",
         yanchor="top",
@@ -1753,14 +1785,15 @@ def create_chart(df, ticker, name, interval="1d"):
         template="plotly_white", # White template for clean charting
         plot_bgcolor='rgba(0,0,0,0)',
         paper_bgcolor='rgba(0,0,0,0)',
-        margin=dict(l=10, r=margin_right, t=35, b=10),
+        margin=dict(l=10, r=margin_right, t=40, b=50 if is_mobile else 10),
         legend=legend_cfg,
         dragmode="pan"
     )
     
-    # Clean grids
-    fig.update_yaxes(gridcolor='#f1f5f9', zerolinecolor='#cbd5e1')
-    fig.update_xaxes(gridcolor='#f1f5f9')
+    # Clean grids and adjust tick/font sizes for mobile
+    fig.update_yaxes(gridcolor='#f1f5f9', zerolinecolor='#cbd5e1', tickfont=dict(size=9 if is_mobile else 11))
+    fig.update_xaxes(gridcolor='#f1f5f9', tickfont=dict(size=9 if is_mobile else 11))
+    fig.update_annotations(font_size=10 if is_mobile else 12)
     
     return fig
 
@@ -4576,7 +4609,8 @@ with tab_simulation:
                 height=380,
                 margin=dict(l=10, r=10, t=20, b=10),
                 legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
-                dragmode="pan"
+                dragmode="pan",
+                showlegend=not is_mobile
             )
             st.plotly_chart(fig_total, use_container_width=True, config=PLOTLY_CONFIG)
             
