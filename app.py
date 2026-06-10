@@ -3398,6 +3398,50 @@ with tab_screen:
                 similarity_threshold_pct = st.slider("   ↳ 必要上昇率 (%)", 0.0, 15.0, 5.0, step=0.5, key="scr_similarity_pct")
             else:
                 similarity_threshold_pct = 5.0
+                
+            # Define shape matching filter on mobile
+            filter_shape_match = st.checkbox("📈 チャート形状パターン指定", key="scr_filter_shape_match_mobile", help="直近30日間のチャート形状が、指定した特定のパターン（上昇傾向、下降減衰、上昇反転）に類似する銘柄のみを抽出します。")
+            if filter_shape_match:
+                if "selected_shapes" not in st.session_state:
+                    st.session_state["selected_shapes"] = ["上昇傾向", "下降減衰", "上昇反転"]
+                st.markdown('<div style="margin-top: 5px; margin-bottom: 5px; font-size: 0.9rem; font-weight: 600; color: #475569;">   ↳ 対象形状を選択 (クリックして切替):</div>', unsafe_allow_html=True)
+                
+                m_col_s1, m_col_s2, m_col_s3 = st.columns(3)
+                with m_col_s1:
+                    s_name = "上昇傾向"
+                    is_active = s_name in st.session_state["selected_shapes"]
+                    if st.button(f"📈 {s_name}", key="btn_shape_up_mobile", use_container_width=True, type="primary" if is_active else "secondary"):
+                        if is_active:
+                            if len(st.session_state["selected_shapes"]) > 1:
+                                st.session_state["selected_shapes"].remove(s_name)
+                        else:
+                            st.session_state["selected_shapes"].append(s_name)
+                        st.rerun()
+                with m_col_s2:
+                    s_name = "下降減衰"
+                    is_active = s_name in st.session_state["selected_shapes"]
+                    if st.button(f"📉 {s_name}", key="btn_shape_down_mobile", use_container_width=True, type="primary" if is_active else "secondary"):
+                        if is_active:
+                            if len(st.session_state["selected_shapes"]) > 1:
+                                st.session_state["selected_shapes"].remove(s_name)
+                        else:
+                            st.session_state["selected_shapes"].append(s_name)
+                        st.rerun()
+                with m_col_s3:
+                    s_name = "上昇反転"
+                    is_active = s_name in st.session_state["selected_shapes"]
+                    if st.button(f"🔄 {s_name}", key="btn_shape_rev_mobile", use_container_width=True, type="primary" if is_active else "secondary"):
+                        if is_active:
+                            if len(st.session_state["selected_shapes"]) > 1:
+                                st.session_state["selected_shapes"].remove(s_name)
+                        else:
+                            st.session_state["selected_shapes"].append(s_name)
+                        st.rerun()
+                selected_shapes = st.session_state["selected_shapes"]
+                shape_threshold = st.slider("   ↳ 形状類似度しきい値", 0.70, 0.95, 0.80, step=0.02, key="scr_shape_threshold_mobile", help="しきい値が高いほど、理想的な形状に近い銘柄のみが抽出されます（0.80推奨）。")
+            else:
+                selected_shapes = []
+                shape_threshold = 0.80
         else:
             col_f1, col_f2, col_f3 = st.columns([1.3, 1.3, 1.4])
             with col_f1:
@@ -4184,8 +4228,9 @@ with tab_simulation:
     # Portfolio summary cards at the top
     # ----------------------------------------------------
     if is_mobile:
-        sum_col1, sum_col2 = st.columns(2)
-        sum_col3, sum_col4 = sum_col1, sum_col2 # stack vertically in 2x2 on mobile
+        row1_col1, row1_col2 = st.columns(2)
+        row2_col1, row2_col2 = st.columns(2)
+        sum_col1, sum_col2, sum_col3, sum_col4 = row1_col1, row1_col2, row2_col1, row2_col2
     else:
         sum_col1, sum_col2, sum_col3, sum_col4 = st.columns(4)
     
