@@ -427,29 +427,44 @@ def patch_history_with_fast_info(ticker, df, skip_fast_info=False):
     if df.empty:
         return df
         
-    if not skip_fast_info:
-        # Check if the last row has NaN for Close (typical yfinance weekend bug for JPY stocks)
-        last_idx = df.index[-1]
-        if pd.isna(df.loc[last_idx, 'Close']):
-            try:
-                tk = yf.Ticker(ticker)
-                f_info = tk.fast_info
-                last_price = f_info.get('lastPrice')
-                if last_price is not None and not pd.isna(last_price):
-                    df.loc[last_idx, 'Close'] = last_price
-                    if 'Open' in df.columns and f_info.get('open') is not None:
-                        df.loc[last_idx, 'Open'] = f_info.get('open')
-                    if 'High' in df.columns and f_info.get('dayHigh') is not None:
-                        df.loc[last_idx, 'High'] = f_info.get('dayHigh')
-                    if 'Low' in df.columns and f_info.get('dayLow') is not None:
-                        df.loc[last_idx, 'Low'] = f_info.get('dayLow')
-                    if 'Volume' in df.columns and f_info.get('lastVolume') is not None:
-                        df.loc[last_idx, 'Volume'] = f_info.get('lastVolume')
-            except Exception:
-                pass
-                
-    # Drop rows where Close is NaN (especially weekend trailing empty rows or if patching failed)
+    # Drop rows where Close is NaN first
     df = df.dropna(subset=['Close'])
+    if df.empty:
+        return df
+        
+    if not skip_fast_info:
+        try:
+            tk = yf.Ticker(ticker)
+            f_info = tk.fast_info
+            last_price = f_info.get('lastPrice')
+            if last_price is not None and not pd.isna(last_price):
+                tz = df.index.tz
+                today = datetime.datetime.now(tz)
+                today_start = today.replace(hour=0, minute=0, second=0, microsecond=0)
+                
+                # If today's date is not in the history index, append a new row for today
+                if today_start not in df.index:
+                    new_row = pd.DataFrame(index=[today_start])
+                    new_row['Close'] = last_price
+                    if 'Open' in df.columns: new_row['Open'] = f_info.get('open') or last_price
+                    if 'High' in df.columns: new_row['High'] = f_info.get('dayHigh') or last_price
+                    if 'Low' in df.columns: new_row['Low'] = f_info.get('dayLow') or last_price
+                    if 'Volume' in df.columns: new_row['Volume'] = f_info.get('lastVolume') or 0.0
+                    df = pd.concat([df, new_row])
+                else:
+                    # Update today's row with the latest real-time price
+                    df.loc[today_start, 'Close'] = last_price
+                    if 'Open' in df.columns and f_info.get('open') is not None:
+                        df.loc[today_start, 'Open'] = f_info.get('open')
+                    if 'High' in df.columns and f_info.get('dayHigh') is not None:
+                        df.loc[today_start, 'High'] = f_info.get('dayHigh')
+                    if 'Low' in df.columns and f_info.get('dayLow') is not None:
+                        df.loc[today_start, 'Low'] = f_info.get('dayLow')
+                    if 'Volume' in df.columns and f_info.get('lastVolume') is not None:
+                        df.loc[today_start, 'Volume'] = f_info.get('lastVolume')
+        except Exception:
+            pass
+            
     return df
 
 def z_normalize(seq):
