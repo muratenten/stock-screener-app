@@ -1892,7 +1892,7 @@ def fetch_all_historical_news_in_parallel(name, matches_data):
             if 'news' not in m:
                 m['news'] = []
 
-def generate_similar_pattern_explanation(ticker, name, m, N):
+def generate_similar_pattern_explanation(ticker, name, m, N, future_days=20):
     start_dt = m['start_date']
     end_dt = m['end_date']
     similarity = m['similarity']
@@ -2175,7 +2175,7 @@ def generate_similar_pattern_explanation(ticker, name, m, N):
     <div style="background-color: #f8fafc; border-radius: 8px; padding: 16px; border-left: 4px solid {'#16a34a' if ret >= 0 else '#dc2626'}; margin-bottom: 12px; border-top: 1px solid #e2e8f0; border-right: 1px solid #e2e8f0; border-bottom: 1px solid #e2e8f0;">
         <div style="display: flex; justify-content: space-between; font-weight: bold; margin-bottom: 8px;">
             <span style="font-size: 0.95rem; color: #1e293b;">🕒 類似期間: {start_dt.strftime('%Y-%m-%d')} 〜 {end_dt.strftime('%Y-%m-%d')} (類似度: {similarity:.1f}%)</span>
-            <span style="font-size: 1rem; {ret_style}">その後の20営業日の動向: {ret:+.2f}% ({direction})</span>
+            <span style="font-size: 1rem; {ret_style}">その後の{future_days}営業日の動向: {ret:+.2f}% ({direction})</span>
         </div>
         <div style="font-size: 0.9rem; color: #334155; line-height: 1.6; margin-bottom: 8px;">
             <strong>【当時の主要な時事・市況イベント】：{macro_title}</strong><br/>
@@ -2195,14 +2195,14 @@ def generate_similar_pattern_explanation(ticker, name, m, N):
     """
     return "\n".join([line.strip() for line in explanation.split("\n")])
 
-def generate_final_pattern_implication(name, matches_data, avg_ret):
+def generate_final_pattern_implication(name, matches_data, avg_ret, future_days=20):
     avg_color = "#16a34a" if avg_ret >= 0 else "#dc2626"
     avg_sign = "+" if avg_ret >= 0 else ""
     direction_text = "上昇する傾向" if avg_ret >= 0 else "下落（または調整）する傾向"
     
     up_count = 0
     for m in matches_data:
-        N = len(m['all_prices']) - 20
+        N = len(m['all_prices']) - future_days
         price_at_end = m['all_prices'][N-1]
         price_after = m['all_prices'][-1]
         if price_after >= price_at_end:
@@ -2221,7 +2221,7 @@ def generate_final_pattern_implication(name, matches_data, avg_ret):
     <div style="background-color: #f8fafc; border-left: 5px solid {avg_color}; border-radius: 8px; padding: 20px; margin-top: 20px; box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05); border-top: 1px solid #e2e8f0; border-right: 1px solid #e2e8f0; border-bottom: 1px solid #e2e8f0;">
         <h5 style="margin: 0 0 10px 0; color: #1e293b; font-size: 1.05rem;">💡 歴史的パターンから導かれる総合考察</h5>
         <div style="font-size: 0.95rem; color: #334155; line-height: 1.6; margin-bottom: 12px;">
-            過去5年間のデータから抽出された類似パターン上位3例において、形状終了から20営業日後の平均騰落率は 
+            過去5年間のデータから抽出された類似パターン上位3例において、形状終了から{future_days}営業日後の平均騰落率は 
             <strong style="color: {avg_color}; font-size: 1.2rem;">{avg_sign}{avg_ret:.2f}%</strong> となり、
             過去の統計上は<strong>{direction_text}</strong>が見られます。（3回中 {up_count} 回で上昇）
         </div>
@@ -2537,6 +2537,22 @@ def render_detail_dashboard(selected_ticker, selected_name, raw_analysis, key_su
             
             if selected_range != st.session_state[range_key]:
                 st.session_state[range_key] = selected_range
+                
+            future_days_key = f"pattern_future_days_{selected_ticker}{key_suffix}"
+            if future_days_key not in st.session_state:
+                st.session_state[future_days_key] = 20
+                
+            future_days = st.slider(
+                "予測・比較したいその後の期間（営業日）：",
+                min_value=5,
+                max_value=120,
+                value=st.session_state[future_days_key],
+                step=5,
+                key=f"pattern_future_days_slider_{selected_ticker}{key_suffix}"
+            )
+            
+            if future_days != st.session_state[future_days_key]:
+                st.session_state[future_days_key] = future_days
             
             with chart_container:
                 fig_select = create_selection_chart(
@@ -2576,7 +2592,7 @@ def render_detail_dashboard(selected_ticker, selected_name, raw_analysis, key_su
                             Z_target = z_normalize(target_prices)
                             
                             matches = []
-                            for i in range(len(df_5y) - N_len - 20 + 1):
+                            for i in range(len(df_5y) - N_len - future_days + 1):
                                 window_df = df_5y.iloc[i : i + N_len]
                                 w_start = window_df.index[0]
                                 w_end = window_df.index[-1]
@@ -2597,7 +2613,7 @@ def render_detail_dashboard(selected_ticker, selected_name, raw_analysis, key_su
                                 r = np.dot(Z_target, Z_hist) / N_len
                                 similarity = max(0.0, r * 100)
                                 
-                                end_idx = min(len(df_5y), i + N_len + 20)
+                                end_idx = min(len(df_5y), i + N_len + future_days)
                                 all_prices = df_5y['Close'].iloc[i : end_idx].values
                                 
                                 matches.append({
@@ -2625,7 +2641,8 @@ def render_detail_dashboard(selected_ticker, selected_name, raw_analysis, key_su
                             st.session_state[f"pattern_matches_{selected_ticker}{key_suffix}"] = {
                                 'target_prices': target_prices,
                                 'matches': filtered_matches,
-                                'N': N_len
+                                'N': N_len,
+                                'future_days': future_days
                             }
                             st.session_state[f"scroll_to_pattern_results_{selected_ticker}{key_suffix}"] = True
                 
@@ -2636,6 +2653,7 @@ def render_detail_dashboard(selected_ticker, selected_name, raw_analysis, key_su
                     target_prices = data_matches['target_prices']
                     matches_data = data_matches['matches']
                     N_val = data_matches['N']
+                    future_days_val = data_matches.get('future_days', 20)
                     
                     if not matches_data:
                         st.warning("類似するパターンが見つかりませんでした。")
@@ -2686,7 +2704,7 @@ def render_detail_dashboard(selected_ticker, selected_name, raw_analysis, key_su
                                 "類似度": f"{m['similarity']:.1f}%",
                                 "歴史的期間": f"{m['start_date'].strftime('%Y-%m-%d')} 〜 {m['end_date'].strftime('%Y-%m-%d')}",
                                 "パターン終了時株価 (円)": f"¥{int(scaled_price_at_end):,}",
-                                "20営業日後の株価 (円)": f"¥{int(scaled_price_after):,}",
+                                f"{future_days_val}営業日後の株価 (円)": f"¥{int(scaled_price_after):,}",
                                 "その後の上昇・下落率": ret_str,
                                 "raw_ret": ret
                             })
@@ -2705,11 +2723,11 @@ def render_detail_dashboard(selected_ticker, selected_name, raw_analysis, key_su
                         st.markdown("#### 🕒 各類似期間における背景・市況分析")
                         fetch_all_historical_news_in_parallel(selected_name, matches_data)
                         for m in matches_data:
-                            expl_html = generate_similar_pattern_explanation(selected_ticker, selected_name, m, N_val)
+                            expl_html = generate_similar_pattern_explanation(selected_ticker, selected_name, m, N_val, future_days_val)
                             st.markdown(expl_html, unsafe_allow_html=True)
                             
                         avg_ret = df_table['raw_ret'].mean()
-                        implication_html = generate_final_pattern_implication(selected_name, matches_data, avg_ret)
+                        implication_html = generate_final_pattern_implication(selected_name, matches_data, avg_ret, future_days_val)
                         st.markdown(implication_html, unsafe_allow_html=True)
         
     # Virtual simulated trading panel inside function
