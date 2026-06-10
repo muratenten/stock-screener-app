@@ -12,6 +12,14 @@ import json
 import os
 from tickers import JP_TICKERS, US_TICKERS
 
+# Plotly config for scroll/pinch-to-zoom and permanently visible modebar
+PLOTLY_CONFIG = {
+    'scrollZoom': True,
+    'displayModeBar': True,
+    'displaylogo': False,
+    'responsive': True
+}
+
 # Default Firebase configuration fallback
 DEFAULT_FIREBASE_PROJECT_ID = "zenstock-screener"
 if "firebase_project_id" in st.secrets:
@@ -2355,7 +2363,7 @@ def render_detail_dashboard(selected_ticker, selected_name, raw_analysis, key_su
             interval = "1d"
             
         fig = create_chart(chart_df, selected_ticker, selected_name, interval=interval)
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, use_container_width=True, config=PLOTLY_CONFIG)
         
         report_md = generate_recommendation_text(
             ticker=selected_ticker,
@@ -2484,7 +2492,8 @@ def render_detail_dashboard(selected_ticker, selected_name, raw_analysis, key_su
                 st.plotly_chart(
                     fig_select, 
                     on_select="rerun", 
-                    key=chart_key
+                    key=chart_key,
+                    config=PLOTLY_CONFIG
                 )
             
             start_date_pd = localize_timestamp(st.session_state[range_key][0], df_current.index.tz)
@@ -2574,7 +2583,7 @@ def render_detail_dashboard(selected_ticker, selected_name, raw_analysis, key_su
                         st.markdown("### 📊 検索結果とパターン比較")
                         
                         fig_pattern = create_pattern_overlay_chart(target_prices, matches_data, N_val, selected_ticker)
-                        st.plotly_chart(fig_pattern, use_container_width=True)
+                        st.plotly_chart(fig_pattern, use_container_width=True, config=PLOTLY_CONFIG)
                         
                         st.markdown("#### 類似期間の詳細データと「その後」の値動き")
                         
@@ -4565,7 +4574,7 @@ with tab_simulation:
                 margin=dict(l=10, r=10, t=20, b=10),
                 legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
             )
-            st.plotly_chart(fig_total, use_container_width=True)
+            st.plotly_chart(fig_total, use_container_width=True, config=PLOTLY_CONFIG)
             
         with chart_tab_items:
             is_mobile = st.session_state.get('ui_mode', 'PC') == 'スマホ'
@@ -4597,7 +4606,7 @@ with tab_simulation:
                             height=320,
                             margin=dict(l=10, r=10, t=10, b=10)
                         )
-                        st.plotly_chart(fig_bar_active, use_container_width=True)
+                        st.plotly_chart(fig_bar_active, use_container_width=True, config=PLOTLY_CONFIG)
                     else:
                         st.info("現在保有している銘柄はありません。")
                 with item_container2:
@@ -4620,7 +4629,7 @@ with tab_simulation:
                         height=320,
                         margin=dict(l=10, r=10, t=10, b=10)
                     )
-                    st.plotly_chart(fig_bar_realized, use_container_width=True)
+                    st.plotly_chart(fig_bar_realized, use_container_width=True, config=PLOTLY_CONFIG)
             else:
                 st.markdown("<h5 style='text-align: center; color: #1e293b; margin-bottom: 10px;'>保有銘柄の評価損益 (含み損益)</h5>", unsafe_allow_html=True)
                 if item_pl_list:
@@ -4640,7 +4649,7 @@ with tab_simulation:
                         height=320,
                         margin=dict(l=10, r=10, t=10, b=10)
                     )
-                    st.plotly_chart(fig_bar_active, use_container_width=True)
+                    st.plotly_chart(fig_bar_active, use_container_width=True, config=PLOTLY_CONFIG)
                 else:
                     st.info("現在保有している銘柄はありません。")
 
