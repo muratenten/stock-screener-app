@@ -658,8 +658,6 @@ def create_selection_chart(df, ticker, name, start_date, end_date):
             text=title_text,
             font=dict(size=13 if is_mobile else 15)
         ),
-        xaxis_title="日付",
-        yaxis_title=f"株価 ({unit})",
         template="plotly_white",
         height=320,
         margin=dict(l=10, r=10, t=40, b=10),
