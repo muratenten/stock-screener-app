@@ -3986,48 +3986,41 @@ with tab_favorite:
         st.info("保有銘柄、またはお気に入り登録された銘柄がありません。🔍「スクリーニング実行と結果分析」タブの銘柄詳細ダッシュボードから「☆ お気に入り追加」または「仮想購入する」をクリックして登録してください。")
     else:
         if is_mobile:
-            # Compact dropdown selector on mobile
-            selected_option = st.selectbox(
-                "📈 分析する銘柄を選択してください",
-                options=all_tickers,
-                format_func=lambda x: ticker_display[x],
-                index=all_tickers.index(st.session_state["selected_fav_ticker"]) if st.session_state["selected_fav_ticker"] in all_tickers else 0,
-                key="mobile_fav_ticker_selectbox"
-            )
-            if selected_option != st.session_state["selected_fav_ticker"]:
-                st.session_state["selected_fav_ticker"] = selected_option
-                st.rerun()
+            col_list_owned = st.container()
+            col_list_fav = st.container()
         else:
-            # Display the simple lists of owned and watchlisted stocks as clickable buttons
             col_list_owned, col_list_fav = st.columns(2)
-            with col_list_owned:
-                st.markdown("##### 💼 保有銘柄一覧 (クリックして選択)")
-                if purchase_records:
-                    for rec in purchase_records:
-                        qty_str = f"{int(rec['quantity']):,}株" if not is_us_stock(rec['ticker']) else f"{rec['quantity']:,.2f}株" if int(rec['quantity']) != rec['quantity'] else f"{int(rec['quantity']):,}株"
-                        btn_label = f"💼 {rec['name']} ({rec['ticker']}) | {qty_str} (平均取得: {format_price(rec['purchase_price'], rec['ticker'])})"
-                        is_active = (rec['ticker'] == st.session_state.get("selected_fav_ticker"))
-                        btn_type = "primary" if is_active else "secondary"
-                        if st.button(btn_label, key=f"btn_owned_{rec['ticker']}", use_container_width=True, type=btn_type):
-                            st.session_state["selected_fav_ticker"] = rec['ticker']
-                            st.session_state["scroll_fav"] = True
-                            st.rerun()
-                else:
-                    st.caption("保有している銘柄はありません。")
-                    
-            with col_list_fav:
-                st.markdown("##### ⭐ お気に入り銘柄一覧 (クリックして選択)")
-                if watchlist:
-                    for t, n in watchlist.items():
-                        btn_label = f"⭐ {n} ({t})"
-                        is_active = (t == st.session_state.get("selected_fav_ticker"))
-                        btn_type = "primary" if is_active else "secondary"
-                        if st.button(btn_label, key=f"btn_fav_{t}", use_container_width=True, type=btn_type):
-                            st.session_state["selected_fav_ticker"] = t
-                            st.session_state["scroll_fav"] = True
-                            st.rerun()
-                else:
-                    st.caption("お気に入り登録されている銘柄はありません。")
+            
+        with col_list_owned:
+            st.markdown("##### 💼 保有銘柄一覧 (クリックして選択)")
+            if purchase_records:
+                for rec in purchase_records:
+                    qty_str = f"{int(rec['quantity']):,}株" if not is_us_stock(rec['ticker']) else f"{rec['quantity']:,.2f}株" if int(rec['quantity']) != rec['quantity'] else f"{int(rec['quantity']):,}株"
+                    btn_label = f"💼 {rec['name']} ({rec['ticker']}) | {qty_str} (平均取得: {format_price(rec['purchase_price'], rec['ticker'])})"
+                    is_active = (rec['ticker'] == st.session_state.get("selected_fav_ticker"))
+                    btn_type = "primary" if is_active else "secondary"
+                    if st.button(btn_label, key=f"btn_owned_{rec['ticker']}", use_container_width=True, type=btn_type):
+                        st.session_state["selected_fav_ticker"] = rec['ticker']
+                        st.session_state["scroll_fav"] = True
+                        st.rerun()
+            else:
+                st.caption("保有している銘柄はありません。")
+                
+        with col_list_fav:
+            if is_mobile:
+                st.markdown("<div style='margin-top: 15px;'></div>", unsafe_allow_html=True)
+            st.markdown("##### ⭐ お気に入り銘柄一覧 (クリックして選択)")
+            if watchlist:
+                for t, n in watchlist.items():
+                    btn_label = f"⭐ {n} ({t})"
+                    is_active = (t == st.session_state.get("selected_fav_ticker"))
+                    btn_type = "primary" if is_active else "secondary"
+                    if st.button(btn_label, key=f"btn_fav_{t}", use_container_width=True, type=btn_type):
+                        st.session_state["selected_fav_ticker"] = t
+                        st.session_state["scroll_fav"] = True
+                        st.rerun()
+            else:
+                st.caption("お気に入り登録されている銘柄はありません。")
                 
         st.markdown("<hr style='margin: 15px 0; border: none; border-top: 1px solid #e2e8f0;'>", unsafe_allow_html=True)
         
