@@ -214,16 +214,18 @@ st.markdown(f"""
     }}
     .title-text {{
         font-family: 'Outfit', sans-serif;
-        color: {title_text_color};
-        font-weight: 800;
-        font-size: 2.5rem;
-        margin: 0;
+        color: {title_text_color} !important;
+        font-weight: 800 !important;
+        font-size: 2.5rem !important;
+        margin: 0 !important;
+        display: block !important;
     }}
     .subtitle-text {{
-        color: {subtitle_text_color};
-        font-size: 1.1rem;
-        margin-top: 10px;
-        margin-bottom: 0;
+        color: {subtitle_text_color} !important;
+        font-size: 1.1rem !important;
+        margin-top: 10px !important;
+        margin-bottom: 0 !important;
+        display: block !important;
     }}
     .card {{
         background: {card_bg};
@@ -3299,22 +3301,24 @@ if query_user == "default":
         z-index: 1 !important;
     }
     .login-title-glow {
-        font-size: 2.5rem;
-        font-weight: 900;
-        background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 50%, #3b82f6 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        text-align: center;
-        margin-top: 30px;
-        margin-bottom: 5px;
-        letter-spacing: -0.8px;
+        font-size: 2.5rem !important;
+        font-weight: 900 !important;
+        background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 50%, #3b82f6 100%) !important;
+        -webkit-background-clip: text !important;
+        -webkit-text-fill-color: transparent !important;
+        text-align: center !important;
+        margin-top: 30px !important;
+        margin-bottom: 5px !important;
+        letter-spacing: -0.8px !important;
+        display: block !important;
     }
     .login-subtitle-glow {
-        font-size: 1.05rem;
-        color: #64748b;
-        text-align: center;
-        margin-bottom: 35px;
-        font-weight: 500;
+        font-size: 1.05rem !important;
+        color: #64748b !important;
+        text-align: center !important;
+        margin-bottom: 35px !important;
+        font-weight: 500 !important;
+        display: block !important;
     }
     .login-header-section {
         border-bottom: 1.5px solid #f1f5f9;
@@ -3366,8 +3370,8 @@ if query_user == "default":
         col_w1, col_w2, col_w3 = st.columns([0.6, 2.8, 0.6])
         
     with col_w2:
-        st.markdown('<h1 class="login-title-glow">ZenStockScreener</h1>', unsafe_allow_html=True)
-        st.markdown('<p class="login-subtitle-glow">AI・ファンダメンタルズ指標分析システム</p>', unsafe_allow_html=True)
+        st.markdown('<div class="login-title-glow">ZenStockScreener</div>', unsafe_allow_html=True)
+        st.markdown('<div class="login-subtitle-glow">AI・ファンダメンタルズ指標分析システム</div>', unsafe_allow_html=True)
         
         with st.form("login_form", clear_on_submit=False):
             st.markdown("""
@@ -3531,8 +3535,8 @@ if 'show_sell_dialog' in st.session_state:
 # Header
 st.markdown("""
 <div class="title-container">
-    <h1 class="title-text">ZenStockScreener</h1>
-    <p class="subtitle-text">AI分析とファンダメンタルズ指標による日本株上昇期待銘柄の選定システム</p>
+    <div class="title-text">ZenStockScreener</div>
+    <div class="subtitle-text">AI分析とファンダメンタルズ指標による日本株上昇期待銘柄の選定システム</div>
 </div>
 """, unsafe_allow_html=True)
 
