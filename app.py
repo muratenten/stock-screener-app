@@ -608,8 +608,6 @@ def create_pattern_overlay_chart(target_prices, matches_data, N, ticker=None):
             text=title_text,
             font=dict(size=13 if is_mobile else 15)
         ),
-        xaxis_title="経過営業日 (日)",
-        yaxis_title=f"株価 ({unit})",
         template="plotly_white",
         height=450,
         margin=dict(l=10, r=10, t=50, b=50),
