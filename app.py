@@ -2627,6 +2627,7 @@ def render_detail_dashboard(selected_ticker, selected_name, raw_analysis, key_su
                                 'matches': filtered_matches,
                                 'N': N_len
                             }
+                            st.session_state[f"scroll_to_pattern_results_{selected_ticker}{key_suffix}"] = True
                 
                 # Render results if cached in session state
                 match_cache_key = f"pattern_matches_{selected_ticker}{key_suffix}"
@@ -2640,8 +2641,25 @@ def render_detail_dashboard(selected_ticker, selected_name, raw_analysis, key_su
                         st.warning("類似するパターンが見つかりませんでした。")
                     else:
                         st.markdown("---")
+                        st.markdown('<div id="pattern-results-anchor"></div>', unsafe_allow_html=True)
                         st.markdown("### 📊 検索結果とパターン比較")
                         
+                        # Smooth scroll to results on calculation
+                        scroll_flag_key = f"scroll_to_pattern_results_{selected_ticker}{key_suffix}"
+                        if st.session_state.get(scroll_flag_key):
+                            js = """
+                            <script>
+                                setTimeout(function() {
+                                    var element = window.parent.document.getElementById('pattern-results-anchor');
+                                    if (element) {
+                                        element.scrollIntoView({behavior: 'smooth', block: 'start'});
+                                    }
+                                }, 300);
+                            </script>
+                            """
+                            components.html(js, height=0)
+                            st.session_state[scroll_flag_key] = False
+                            
                         fig_pattern = create_pattern_overlay_chart(target_prices, matches_data, N_val, selected_ticker)
                         with st.container(border=True):
                             st.plotly_chart(fig_pattern, use_container_width=True, config=PLOTLY_CONFIG)
