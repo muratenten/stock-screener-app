@@ -614,7 +614,7 @@ def create_pattern_overlay_chart(target_prices, matches_data, N, ticker=None):
         height=450,
         margin=dict(l=10, r=10, t=50, b=50),
         legend=dict(orientation="h", yanchor="top", y=-0.15, xanchor="center", x=0.5),
-        dragmode="pan"
+        dragmode=False if is_mobile else "pan"
     )
     return fig
 
@@ -1787,7 +1787,7 @@ def create_chart(df, ticker, name, interval="1d"):
         paper_bgcolor='rgba(0,0,0,0)',
         margin=dict(l=10, r=margin_right, t=40, b=50 if is_mobile else 10),
         legend=legend_cfg,
-        dragmode="pan"
+        dragmode=False if is_mobile else "pan"
     )
     
     # Clean grids and adjust tick/font sizes for mobile
@@ -1795,6 +1795,32 @@ def create_chart(df, ticker, name, interval="1d"):
     fig.update_xaxes(gridcolor='#f1f5f9', tickfont=dict(size=9 if is_mobile else 11))
     fig.update_annotations(font_size=10 if is_mobile else 12)
     
+    # Adjust y-axis range of Row 1 (candlestick chart) to fit the stock price nicely
+    # and prevent extreme BB values from compressing the candles.
+    valid_df = df.dropna(subset=['Low', 'High'])
+    if not valid_df.empty:
+        ymin = valid_df['Low'].min()
+        ymax = valid_df['High'].max()
+        if 'BB_Lower' in df.columns:
+            bb_min = df['BB_Lower'].dropna().min()
+            if pd.notna(bb_min):
+                ymin = min(ymin, bb_min)
+        if 'BB_Upper' in df.columns:
+            bb_max = df['BB_Upper'].dropna().max()
+            if pd.notna(bb_max):
+                ymax = max(ymax, bb_max)
+                
+        price_min = valid_df['Low'].min()
+        price_max = valid_df['High'].max()
+        if ymin < price_min * 0.9:
+            ymin = price_min * 0.9
+        if ymax > price_max * 1.1:
+            ymax = price_max * 1.1
+            
+        yrange = ymax - ymin
+        if yrange > 0:
+            fig.update_yaxes(range=[ymin - yrange * 0.02, ymax + yrange * 0.02], row=1, col=1)
+            
     return fig
 
 def fetch_historical_google_news(query, start_date, end_date):
@@ -2399,7 +2425,8 @@ def render_detail_dashboard(selected_ticker, selected_name, raw_analysis, key_su
             interval = "1d"
             
         fig = create_chart(chart_df, selected_ticker, selected_name, interval=interval)
-        st.plotly_chart(fig, use_container_width=True, config=PLOTLY_CONFIG)
+        with st.container(border=True):
+            st.plotly_chart(fig, use_container_width=True, config=PLOTLY_CONFIG)
         
         report_md = generate_recommendation_text(
             ticker=selected_ticker,
@@ -2525,12 +2552,13 @@ def render_detail_dashboard(selected_ticker, selected_name, raw_analysis, key_su
                 )
                 fig_select.update_layout(dragmode="select")
                 
-                st.plotly_chart(
-                    fig_select, 
-                    on_select="rerun", 
-                    key=chart_key,
-                    config=PLOTLY_CONFIG
-                )
+                with st.container(border=True):
+                    st.plotly_chart(
+                        fig_select, 
+                        on_select="rerun", 
+                        key=chart_key,
+                        config=PLOTLY_CONFIG
+                    )
             
             start_date_pd = localize_timestamp(st.session_state[range_key][0], df_current.index.tz)
             end_date_pd = localize_timestamp(st.session_state[range_key][1], df_current.index.tz)
@@ -2619,7 +2647,8 @@ def render_detail_dashboard(selected_ticker, selected_name, raw_analysis, key_su
                         st.markdown("### 📊 検索結果とパターン比較")
                         
                         fig_pattern = create_pattern_overlay_chart(target_prices, matches_data, N_val, selected_ticker)
-                        st.plotly_chart(fig_pattern, use_container_width=True, config=PLOTLY_CONFIG)
+                        with st.container(border=True):
+                            st.plotly_chart(fig_pattern, use_container_width=True, config=PLOTLY_CONFIG)
                         
                         st.markdown("#### 類似期間の詳細データと「その後」の値動き")
                         
@@ -4496,6 +4525,7 @@ with tab_simulation:
     # Portfolio performance timeline chart
     # ----------------------------------------------------
     if records:
+        is_mobile = st.session_state.get('ui_mode', 'PC') == 'スマホ'
         st.markdown("---")
         st.markdown("### ポートフォリオ評価額推移と個別パフォーマンス分析")
         
@@ -4609,10 +4639,11 @@ with tab_simulation:
                 height=380,
                 margin=dict(l=10, r=10, t=20, b=10),
                 legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
-                dragmode="pan",
+                dragmode=False if is_mobile else "pan",
                 showlegend=not is_mobile
             )
-            st.plotly_chart(fig_total, use_container_width=True, config=PLOTLY_CONFIG)
+            with st.container(border=True):
+                st.plotly_chart(fig_total, use_container_width=True, config=PLOTLY_CONFIG)
             
         with chart_tab_items:
             is_mobile = st.session_state.get('ui_mode', 'PC') == 'スマホ'
@@ -4643,9 +4674,10 @@ with tab_simulation:
                             template="plotly_white",
                             height=320,
                             margin=dict(l=10, r=10, t=10, b=10),
-                            dragmode="pan"
+                            dragmode=False if is_mobile else "pan"
                         )
-                        st.plotly_chart(fig_bar_active, use_container_width=True, config=PLOTLY_CONFIG)
+                        with st.container(border=True):
+                            st.plotly_chart(fig_bar_active, use_container_width=True, config=PLOTLY_CONFIG)
                     else:
                         st.info("現在保有している銘柄はありません。")
                 with item_container2:
@@ -4667,9 +4699,10 @@ with tab_simulation:
                         template="plotly_white",
                         height=320,
                         margin=dict(l=10, r=10, t=10, b=10),
-                        dragmode="pan"
+                        dragmode=False if is_mobile else "pan"
                     )
-                    st.plotly_chart(fig_bar_realized, use_container_width=True, config=PLOTLY_CONFIG)
+                    with st.container(border=True):
+                        st.plotly_chart(fig_bar_realized, use_container_width=True, config=PLOTLY_CONFIG)
             else:
                 st.markdown("<h5 style='text-align: center; color: #1e293b; margin-bottom: 10px;'>保有銘柄の評価損益 (含み損益)</h5>", unsafe_allow_html=True)
                 if item_pl_list:
@@ -4688,9 +4721,10 @@ with tab_simulation:
                         template="plotly_white",
                         height=320,
                         margin=dict(l=10, r=10, t=10, b=10),
-                        dragmode="pan"
+                        dragmode=False if is_mobile else "pan"
                     )
-                    st.plotly_chart(fig_bar_active, use_container_width=True, config=PLOTLY_CONFIG)
+                    with st.container(border=True):
+                        st.plotly_chart(fig_bar_active, use_container_width=True, config=PLOTLY_CONFIG)
                 else:
                     st.info("現在保有している銘柄はありません。")
 
