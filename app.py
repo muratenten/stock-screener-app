@@ -1697,21 +1697,40 @@ def create_chart(df, ticker, name, interval="1d"):
     hist_colors = ['#16a34a' if val >= 0 else '#dc2626' for val in df['MACD_Hist']]
     fig.add_trace(go.Bar(x=df.index, y=df['MACD_Hist'], name='ヒストグラム', marker_color=hist_colors, opacity=0.5), row=3, col=1)
     
+    # Detect UI mode for responsive layout sizing
+    is_mobile = False
+    try:
+        import streamlit as st
+        is_mobile = st.session_state.get('ui_mode', 'PC') == 'スマホ'
+    except:
+        pass
+
+    chart_height = 500 if is_mobile else 750
+    margin_right = 10 if is_mobile else 120
+    
+    legend_cfg = dict(
+        orientation="h",
+        yanchor="bottom",
+        y=1.01,
+        xanchor="left",
+        x=0.01
+    ) if is_mobile else dict(
+        orientation="v",
+        yanchor="top",
+        y=1.0,
+        xanchor="left",
+        x=1.02
+    )
+
     # Formatting layout
     fig.update_layout(
         xaxis_rangeslider_visible=False,
-        height=750,
+        height=chart_height,
         template="plotly_white", # White template for clean charting
         plot_bgcolor='rgba(0,0,0,0)',
         paper_bgcolor='rgba(0,0,0,0)',
-        margin=dict(l=10, r=120, t=35, b=10),
-        legend=dict(
-            orientation="v",
-            yanchor="top",
-            y=1.0,
-            xanchor="left",
-            x=1.02
-        )
+        margin=dict(l=10, r=margin_right, t=35, b=10),
+        legend=legend_cfg
     )
     
     # Clean grids
@@ -2154,10 +2173,10 @@ def render_detail_dashboard(selected_ticker, selected_name, raw_analysis, key_su
     watchlist = load_watchlist()
     is_favorite = selected_ticker in watchlist
     
-    wl_col1, wl_col2 = st.columns([3.8, 1.2])
-    with wl_col1:
-        st.markdown(f"#### {selected_name} ({selected_ticker}) の分析ダッシュボード")
-    with wl_col2:
+    is_mobile = st.session_state.get('ui_mode', 'PC') == 'スマホ'
+    
+    if is_mobile:
+        st.markdown(f"#### {selected_name} ({selected_ticker})")
         if is_favorite:
             if st.button("⭐ お気に入り解除", key=f"fav_btn_{selected_ticker}{key_suffix}", use_container_width=True):
                 del watchlist[selected_ticker]
@@ -2168,39 +2187,83 @@ def render_detail_dashboard(selected_ticker, selected_name, raw_analysis, key_su
                 watchlist[selected_ticker] = selected_name
                 save_watchlist(watchlist)
                 st.rerun()
+                
+        m_col1, m_col2 = st.columns(2)
+        with m_col1:
+            st.markdown(f"""<div class="card">
+                 <div class="metric-title">現在株価</div>
+                 <div class="metric-value metric-accent">{format_price(metrics['price'], selected_ticker)}</div>
+             </div>""", unsafe_allow_html=True)
+            st.markdown(f"""<div class="card">
+                 <div class="metric-title">PER (倍)</div>
+                 <div class="metric-value">{f"{metrics['per']:.1f}" if metrics['per'] is not None else "N/A"}</div>
+             </div>""", unsafe_allow_html=True)
+            st.markdown(f"""<div class="card">
+                 <div class="metric-title">配当利回り</div>
+                 <div class="metric-value">{f"{metrics['dividend_yield']:.2f}%" if metrics['dividend_yield'] is not None else "N/A"}</div>
+             </div>""", unsafe_allow_html=True)
+        with m_col2:
+            st.markdown(f"""<div class="card">
+                 <div class="metric-title">前日比</div>
+                 <div class="metric-value" style="color: {'#16a34a' if metrics['change_pct'] >= 0 else '#dc2626'}">{metrics['change_pct']:.2f}%</div>
+             </div>""", unsafe_allow_html=True)
+            st.markdown(f"""<div class="card">
+                 <div class="metric-title">PBR (倍)</div>
+                 <div class="metric-value">{f"{metrics['pbr']:.2f}" if metrics['pbr'] is not None else "N/A"}</div>
+             </div>""", unsafe_allow_html=True)
+            st.markdown(f"""<div class="card" style="border-left: 4px solid {owned_color};">
+                 <div class="metric-title">保有状況</div>
+                 <div class="metric-value" style="color: {owned_color};">{owned_text}</div>
+                 <div style="font-size: 0.8rem; color: #64748b; margin-top: 2px;">{owned_sub}</div>
+             </div>""", unsafe_allow_html=True)
+    else:
+        wl_col1, wl_col2 = st.columns([3.8, 1.2])
+        with wl_col1:
+            st.markdown(f"#### {selected_name} ({selected_ticker}) の分析ダッシュボード")
+        with wl_col2:
+            if is_favorite:
+                if st.button("⭐ お気に入り解除", key=f"fav_btn_{selected_ticker}{key_suffix}", use_container_width=True):
+                    del watchlist[selected_ticker]
+                    save_watchlist(watchlist)
+                    st.rerun()
+            else:
+                if st.button("☆ お気に入り追加", key=f"fav_btn_{selected_ticker}{key_suffix}", use_container_width=True):
+                    watchlist[selected_ticker] = selected_name
+                    save_watchlist(watchlist)
+                    st.rerun()
 
-    col1, col2, col3, col4, col5, col6 = st.columns(6)
-    with col1:
-        st.markdown(f"""<div class="card">
-             <div class="metric-title">現在株価</div>
-             <div class="metric-value metric-accent">{format_price(metrics['price'], selected_ticker)}</div>
-         </div>""", unsafe_allow_html=True)
-    with col2:
-        st.markdown(f"""<div class="card">
-             <div class="metric-title">前日比</div>
-             <div class="metric-value" style="color: {'#16a34a' if metrics['change_pct'] >= 0 else '#dc2626'}">{metrics['change_pct']:.2f}%</div>
-         </div>""", unsafe_allow_html=True)
-    with col3:
-        st.markdown(f"""<div class="card">
-             <div class="metric-title">PER (倍)</div>
-             <div class="metric-value">{f"{metrics['per']:.1f}" if metrics['per'] is not None else "N/A"}</div>
-         </div>""", unsafe_allow_html=True)
-    with col4:
-        st.markdown(f"""<div class="card">
-             <div class="metric-title">PBR (倍)</div>
-             <div class="metric-value">{f"{metrics['pbr']:.2f}" if metrics['pbr'] is not None else "N/A"}</div>
-         </div>""", unsafe_allow_html=True)
-    with col5:
-        st.markdown(f"""<div class="card">
-             <div class="metric-title">配当利回り</div>
-             <div class="metric-value">{f"{metrics['dividend_yield']:.2f}%" if metrics['dividend_yield'] is not None else "N/A"}</div>
-         </div>""", unsafe_allow_html=True)
-    with col6:
-        st.markdown(f"""<div class="card" style="border-left: 4px solid {owned_color};">
-             <div class="metric-title">保有状況</div>
-             <div class="metric-value" style="color: {owned_color};">{owned_text}</div>
-             <div style="font-size: 0.8rem; color: #64748b; margin-top: 2px;">{owned_sub}</div>
-         </div>""", unsafe_allow_html=True)
+        col1, col2, col3, col4, col5, col6 = st.columns(6)
+        with col1:
+            st.markdown(f"""<div class="card">
+                 <div class="metric-title">現在株価</div>
+                 <div class="metric-value metric-accent">{format_price(metrics['price'], selected_ticker)}</div>
+             </div>""", unsafe_allow_html=True)
+        with col2:
+            st.markdown(f"""<div class="card">
+                 <div class="metric-title">前日比</div>
+                 <div class="metric-value" style="color: {'#16a34a' if metrics['change_pct'] >= 0 else '#dc2626'}">{metrics['change_pct']:.2f}%</div>
+             </div>""", unsafe_allow_html=True)
+        with col3:
+            st.markdown(f"""<div class="card">
+                 <div class="metric-title">PER (倍)</div>
+                 <div class="metric-value">{f"{metrics['per']:.1f}" if metrics['per'] is not None else "N/A"}</div>
+             </div>""", unsafe_allow_html=True)
+        with col4:
+            st.markdown(f"""<div class="card">
+                 <div class="metric-title">PBR (倍)</div>
+                 <div class="metric-value">{f"{metrics['pbr']:.2f}" if metrics['pbr'] is not None else "N/A"}</div>
+             </div>""", unsafe_allow_html=True)
+        with col5:
+            st.markdown(f"""<div class="card">
+                 <div class="metric-title">配当利回り</div>
+                 <div class="metric-value">{f"{metrics['dividend_yield']:.2f}%" if metrics['dividend_yield'] is not None else "N/A"}</div>
+             </div>""", unsafe_allow_html=True)
+        with col6:
+            st.markdown(f"""<div class="card" style="border-left: 4px solid {owned_color};">
+                 <div class="metric-title">保有状況</div>
+                 <div class="metric-value" style="color: {owned_color};">{owned_text}</div>
+                 <div style="font-size: 0.8rem; color: #64748b; margin-top: 2px;">{owned_sub}</div>
+             </div>""", unsafe_allow_html=True)
     
     # CSS styling to stretch st.segmented_control to full width and make buttons equal width
     st.markdown("""
@@ -2549,8 +2612,15 @@ def render_detail_dashboard(selected_ticker, selected_name, raw_analysis, key_su
         
     # Virtual simulated trading panel inside function
     st.markdown("#### 💼 仮想シミュレーション（デモトレード）に追加 / 売却")
-    sim_col1, sim_col2 = st.columns([3, 1])
-    with sim_col1:
+    if is_mobile:
+        sim_container1 = st.container()
+        sim_container2 = st.container()
+    else:
+        sim_col1, sim_col2 = st.columns([3, 1])
+        sim_container1 = sim_col1
+        sim_container2 = sim_col2
+        
+    with sim_container1:
         lot_size = 1 if is_us_stock(selected_ticker) else 100
         lot_desc = "米国株は1株単位推奨" if is_us_stock(selected_ticker) else "日本株は100株単位推奨"
         sim_qty = st.number_input(
@@ -2569,9 +2639,11 @@ def render_detail_dashboard(selected_ticker, selected_name, raw_analysis, key_su
             st.write(f"概算売買金額: **{format_price(total_cost, selected_ticker)}** (約 ¥{int(total_cost * usdjpy_rate):,})")
         else:
             st.write(f"概算売買金額: **{format_price(total_cost, selected_ticker)}**")
-    with sim_col2:
-        st.write("") # スペース調整
-        st.write("")
+            
+    with sim_container2:
+        if not is_mobile:
+            st.write("") # スペース調整
+            st.write("")
         if st.button("仮想購入する", type="primary", use_container_width=True, key=f"sim_purchase_btn_{selected_ticker}{key_suffix}"):
             portfolio = load_portfolio()
             purchase_records = portfolio.get("purchase_records", [])
@@ -2784,6 +2856,18 @@ def color_pl_cell(val):
             return 'color: #dc2626; font-weight: bold;'
     return ''
 
+# UI Mode selector (Placed here so it works on both login page and main app)
+st.sidebar.markdown("### 📱 表示モード")
+ui_mode_label = st.sidebar.radio(
+    "レイアウトの最適化",
+    options=["PC版 (マルチカラム)", "スマホ版 (縦並び)"],
+    index=0 if st.session_state.get('ui_mode', 'PC') == 'PC' else 1,
+    label_visibility="collapsed",
+    key="sidebar_ui_mode_selector"
+)
+st.session_state['ui_mode'] = 'PC' if ui_mode_label == "PC版 (マルチカラム)" else 'スマホ'
+is_mobile = st.session_state.get('ui_mode', 'PC') == 'スマホ'
+
 # Sidebar setup for personalizing portfolios
 query_user = st.query_params.get("user", "default")
 
@@ -2941,7 +3025,11 @@ if query_user == "default":
     </style>
     """,unsafe_allow_html=True)
     
-    col_w1, col_w2, col_w3 = st.columns([0.6, 2.8, 0.6])
+    if is_mobile:
+        col_w1, col_w2, col_w3 = st.columns([0.02, 0.96, 0.02])
+    else:
+        col_w1, col_w2, col_w3 = st.columns([0.6, 2.8, 0.6])
+        
     with col_w2:
         st.markdown('<h1 class="login-title-glow">ZenStockScreener</h1>', unsafe_allow_html=True)
         st.markdown('<p class="login-subtitle-glow">AI・ファンダメンタルズ指標分析システム</p>', unsafe_allow_html=True)
@@ -3131,8 +3219,9 @@ tab_screen, tab_favorite, tab_simulation, tab_explanation = st.tabs([
 with tab_screen:
     st.markdown("### ⚙️ スクリーニング条件の設定")
     
-    col_cfg1, col_cfg2, col_cfg3 = st.columns([1.5, 1.5, 1.0])
-    with col_cfg1:
+    is_mobile = st.session_state.get('ui_mode', 'PC') == 'スマホ'
+    
+    if is_mobile:
         market = st.selectbox(
             "全体集合（スクリーニング対象）の選択",
             [
@@ -3145,7 +3234,6 @@ with tab_screen:
             ],
             key="scr_market"
         )
-    with col_cfg2:
         theme_filter = st.selectbox(
             "トレンドテーマ絞り込み",
             [
@@ -3160,10 +3248,42 @@ with tab_screen:
             ],
             key="scr_theme"
         )
-    with col_cfg3:
         period = st.selectbox("データ期間 (チャート用)", ["6ヶ月", "1年", "2年"], index=1, key="scr_period")
-        period_map = {"6ヶ月": "6m", "1年": "1y", "2年": "2y"}
-        selected_period = period_map[period]
+    else:
+        col_cfg1, col_cfg2, col_cfg3 = st.columns([1.5, 1.5, 1.0])
+        with col_cfg1:
+            market = st.selectbox(
+                "全体集合（スクリーニング対象）の選択",
+                [
+                    f"日本株 厳選トレンド銘柄 ({len(JP_TICKERS)}件)",
+                    f"米国株 厳選トレンド銘柄 ({len(US_TICKERS)}件)",
+                    "日経平均株価 (日経225全銘柄 - 動的取得)",
+                    "東証プライム (全上場銘柄 - 動的取得)",
+                    "東証グロース (全上場銘柄 - 動的取得)",
+                    "カスタム指定"
+                ],
+                key="scr_market"
+            )
+        with col_cfg2:
+            theme_filter = st.selectbox(
+                "トレンドテーマ絞り込み",
+                [
+                    "すべて",
+                    "AI・半導体関連",
+                    "宇宙産業・開発関連",
+                    "爆発的急騰期待株",
+                    "高配当・バリュー株",
+                    "暗号資産・ネットミーム・ハイベータ",
+                    "エンタメ・VTuber・ゲーム",
+                    "防衛・宇宙・重工業"
+                ],
+                key="scr_theme"
+            )
+        with col_cfg3:
+            period = st.selectbox("データ期間 (チャート用)", ["6ヶ月", "1年", "2年"], index=1, key="scr_period")
+            
+    period_map = {"6ヶ月": "6m", "1年": "1y", "2年": "2y"}
+    selected_period = period_map[period]
 
     # Custom tickers input
     custom_tickers = ""
@@ -3193,8 +3313,7 @@ with tab_screen:
             unsafe_allow_html=True
         )
         
-        col_prime1, col_prime2 = st.columns(2)
-        with col_prime1:
+        if is_mobile:
             selected_sectors = st.multiselect(
                 "🎨 対象業種（33業種区分）で絞り込む (未選択で全業種)",
                 options=all_prime_sectors,
@@ -3202,7 +3321,6 @@ with tab_screen:
                 placeholder="すべての業種 (未選択)",
                 key="scr_prime_sectors"
             )
-        with col_prime2:
             selected_sizes = st.multiselect(
                 "🏢 企業規模（TOPIX規模区分）で絞り込む (未選択で全規模)",
                 options=all_prime_sizes,
@@ -3210,6 +3328,24 @@ with tab_screen:
                 placeholder="すべての規模 (未選択)",
                 key="scr_prime_sizes"
             )
+        else:
+            col_prime1, col_prime2 = st.columns(2)
+            with col_prime1:
+                selected_sectors = st.multiselect(
+                    "🎨 対象業種（33業種区分）で絞り込む (未選択で全業種)",
+                    options=all_prime_sectors,
+                    default=[],
+                    placeholder="すべての業種 (未選択)",
+                    key="scr_prime_sectors"
+                )
+            with col_prime2:
+                selected_sizes = st.multiselect(
+                    "🏢 企業規模（TOPIX規模区分）で絞り込む (未選択で全規模)",
+                    options=all_prime_sizes,
+                    default=[],
+                    placeholder="すべての規模 (未選択)",
+                    key="scr_prime_sizes"
+                )
     elif market == "東証グロース (全上場銘柄 - 動的取得)":
         growth_tickers = fetch_tse_growth_tickers()
         all_growth_sectors = ["✨ AI・半導体関連 (テーマ)", "✨ 宇宙開発・防衛関連 (テーマ)"] + sorted(list(set(info.get("sector", "その他") for info in growth_tickers.values() if info.get("sector"))))
@@ -3238,20 +3374,19 @@ with tab_screen:
 
     # Details expander for score and financial criteria
     with st.expander("📊 詳細なスコア・財務条件フィルタ (クリックで開閉)", expanded=False):
-        col_f1, col_f2, col_f3 = st.columns([1.3, 1.3, 1.4])
-        with col_f1:
+        if is_mobile:
             st.markdown("**🎯 最小スコア設定**")
             min_total_score = st.slider("最小総合スコア (最大10点)", 0, 10, 5, key="scr_min_total")
             min_tech_score = st.slider("最小テクニカルスコア (最大3点)", 0, 3, 1, key="scr_min_tech")
             min_fund_score = st.slider("最小ファンダメンタルスコア (最大7点)", 0, 7, 3, key="scr_min_fund")
-        with col_f2:
+            
             st.markdown("**💰 財務指標フィルタ**")
             filter_pbr = st.checkbox("PBR 1.0倍未満 (割安バリュー) のみ", key="scr_filter_pbr")
             filter_per = st.checkbox("PER 15倍未満 (低PER) のみ", key="scr_filter_per")
             filter_roe = st.checkbox("ROE 10%以上 (高PBR効率) のみ", key="scr_filter_roe")
             filter_dividend = st.checkbox("配当利回り 3%以上 のみ", key="scr_filter_dividend")
-        with col_f3:
-            st.markdown("**📈 テクニカル指標フィルタ**")
+            
+            st.markdown("**📈 テクニナル指標フィルタ**")
             filter_golden_cross = st.checkbox("5日/25日ゴールデンクロス", key="scr_filter_gc")
             filter_macd_cross = st.checkbox("MACDゴールデンクロス", key="scr_filter_macd")
             filter_rsi_oversold = st.checkbox("RSI 30以下 (売られすぎ/割安)", key="scr_filter_rsi_os")
@@ -3263,6 +3398,32 @@ with tab_screen:
                 similarity_threshold_pct = st.slider("   ↳ 必要上昇率 (%)", 0.0, 15.0, 5.0, step=0.5, key="scr_similarity_pct")
             else:
                 similarity_threshold_pct = 5.0
+        else:
+            col_f1, col_f2, col_f3 = st.columns([1.3, 1.3, 1.4])
+            with col_f1:
+                st.markdown("**🎯 最小スコア設定**")
+                min_total_score = st.slider("最小総合スコア (最大10点)", 0, 10, 5, key="scr_min_total")
+                min_tech_score = st.slider("最小テクニカルスコア (最大3点)", 0, 3, 1, key="scr_min_tech")
+                min_fund_score = st.slider("最小ファンダメンタルスコア (最大7点)", 0, 7, 3, key="scr_min_fund")
+            with col_f2:
+                st.markdown("**💰 財務指標フィルタ**")
+                filter_pbr = st.checkbox("PBR 1.0倍未満 (割安バリュー) のみ", key="scr_filter_pbr")
+                filter_per = st.checkbox("PER 15倍未満 (低PER) のみ", key="scr_filter_per")
+                filter_roe = st.checkbox("ROE 10%以上 (高PBR効率) のみ", key="scr_filter_roe")
+                filter_dividend = st.checkbox("配当利回り 3%以上 のみ", key="scr_filter_dividend")
+            with col_f3:
+                st.markdown("**📈 テクニカル指標フィルタ**")
+                filter_golden_cross = st.checkbox("5日/25日ゴールデンクロス", key="scr_filter_gc")
+                filter_macd_cross = st.checkbox("MACDゴールデンクロス", key="scr_filter_macd")
+                filter_rsi_oversold = st.checkbox("RSI 30以下 (売られすぎ/割安)", key="scr_filter_rsi_os")
+                filter_rsi_overbought = st.checkbox("RSI 70以上 (買われすぎ/過熱)", key="scr_filter_rsi_ob")
+                filter_bb_rebound = st.checkbox("ボリンジャーバンド -2σ以下", key="scr_filter_bb_re")
+                filter_volume_surge = st.checkbox("出来高急増 (5日平均 > 25日平均*1.2)", key="scr_filter_vol_su")
+                filter_similarity_pattern = st.checkbox("🔍 類似連動 (過去類似3局面の20日後上昇率フィルタ)", key="scr_filter_similarity", help="直近20日間のチャート形状に類似する過去 of 局面を直近5年間の歴史データから3つ抽出し、そのすべての局面において20営業日後の上昇率が指定値以上となった銘柄のみを抽出します。他フィルタで絞り込んだ後、最後に実行されます。")
+                if filter_similarity_pattern:
+                    similarity_threshold_pct = st.slider("   ↳ 必要上昇率 (%)", 0.0, 15.0, 5.0, step=0.5, key="scr_similarity_pct")
+                else:
+                    similarity_threshold_pct = 5.0
                 
             filter_shape_match = st.checkbox("📈 チャート形状パターン指定", key="scr_filter_shape_match", help="直近30日間のチャート形状が、指定した特定のパターン（上昇傾向、下降減衰、上昇反転）に類似する銘柄のみを抽出します。")
             if filter_shape_match:
@@ -3678,8 +3839,15 @@ with tab_screen:
                 df_display = df_display.sort_values(by='sort_val', ascending=False).drop(columns=['sort_val']).reset_index(drop=True)
                 
                 # Show dataframe (Enable row selection)
+                if is_mobile:
+                    cols_to_show = ['ティッカー', '銘柄名', '総合スコア (10点)', '株価', '前日比 (%)', '保有状況']
+                    existing_cols = [c for c in cols_to_show if c in df_display.columns]
+                    df_display_table = df_display[existing_cols]
+                else:
+                    df_display_table = df_display
+
                 selected_rows = st.dataframe(
-                    df_display, 
+                    df_display_table, 
                     use_container_width=True,
                     column_config={
                         "ティッカー": st.column_config.TextColumn("ティッカー", width="small"),
@@ -3773,36 +3941,49 @@ with tab_favorite:
     if not all_tickers:
         st.info("保有銘柄、またはお気に入り登録された銘柄がありません。🔍「スクリーニング実行と結果分析」タブの銘柄詳細ダッシュボードから「☆ お気に入り追加」または「仮想購入する」をクリックして登録してください。")
     else:
-        # Display the simple lists of owned and watchlisted stocks as clickable buttons
-        col_list_owned, col_list_fav = st.columns(2)
-        with col_list_owned:
-            st.markdown("##### 💼 保有銘柄一覧 (クリックして選択)")
-            if purchase_records:
-                for rec in purchase_records:
-                    qty_str = f"{int(rec['quantity']):,}株" if not is_us_stock(rec['ticker']) else f"{rec['quantity']:,.2f}株" if int(rec['quantity']) != rec['quantity'] else f"{int(rec['quantity']):,}株"
-                    btn_label = f"💼 {rec['name']} ({rec['ticker']}) | {qty_str} (平均取得: {format_price(rec['purchase_price'], rec['ticker'])})"
-                    is_active = (rec['ticker'] == st.session_state.get("selected_fav_ticker"))
-                    btn_type = "primary" if is_active else "secondary"
-                    if st.button(btn_label, key=f"btn_owned_{rec['ticker']}", use_container_width=True, type=btn_type):
-                        st.session_state["selected_fav_ticker"] = rec['ticker']
-                        st.session_state["scroll_fav"] = True
-                        st.rerun()
-            else:
-                st.caption("保有している銘柄はありません。")
-                
-        with col_list_fav:
-            st.markdown("##### ⭐ お気に入り銘柄一覧 (クリックして選択)")
-            if watchlist:
-                for t, n in watchlist.items():
-                    btn_label = f"⭐ {n} ({t})"
-                    is_active = (t == st.session_state.get("selected_fav_ticker"))
-                    btn_type = "primary" if is_active else "secondary"
-                    if st.button(btn_label, key=f"btn_fav_{t}", use_container_width=True, type=btn_type):
-                        st.session_state["selected_fav_ticker"] = t
-                        st.session_state["scroll_fav"] = True
-                        st.rerun()
-            else:
-                st.caption("お気に入り登録されている銘柄はありません。")
+        if is_mobile:
+            # Compact dropdown selector on mobile
+            selected_option = st.selectbox(
+                "📈 分析する銘柄を選択してください",
+                options=all_tickers,
+                format_func=lambda x: ticker_display[x],
+                index=all_tickers.index(st.session_state["selected_fav_ticker"]) if st.session_state["selected_fav_ticker"] in all_tickers else 0,
+                key="mobile_fav_ticker_selectbox"
+            )
+            if selected_option != st.session_state["selected_fav_ticker"]:
+                st.session_state["selected_fav_ticker"] = selected_option
+                st.rerun()
+        else:
+            # Display the simple lists of owned and watchlisted stocks as clickable buttons
+            col_list_owned, col_list_fav = st.columns(2)
+            with col_list_owned:
+                st.markdown("##### 💼 保有銘柄一覧 (クリックして選択)")
+                if purchase_records:
+                    for rec in purchase_records:
+                        qty_str = f"{int(rec['quantity']):,}株" if not is_us_stock(rec['ticker']) else f"{rec['quantity']:,.2f}株" if int(rec['quantity']) != rec['quantity'] else f"{int(rec['quantity']):,}株"
+                        btn_label = f"💼 {rec['name']} ({rec['ticker']}) | {qty_str} (平均取得: {format_price(rec['purchase_price'], rec['ticker'])})"
+                        is_active = (rec['ticker'] == st.session_state.get("selected_fav_ticker"))
+                        btn_type = "primary" if is_active else "secondary"
+                        if st.button(btn_label, key=f"btn_owned_{rec['ticker']}", use_container_width=True, type=btn_type):
+                            st.session_state["selected_fav_ticker"] = rec['ticker']
+                            st.session_state["scroll_fav"] = True
+                            st.rerun()
+                else:
+                    st.caption("保有している銘柄はありません。")
+                    
+            with col_list_fav:
+                st.markdown("##### ⭐ お気に入り銘柄一覧 (クリックして選択)")
+                if watchlist:
+                    for t, n in watchlist.items():
+                        btn_label = f"⭐ {n} ({t})"
+                        is_active = (t == st.session_state.get("selected_fav_ticker"))
+                        btn_type = "primary" if is_active else "secondary"
+                        if st.button(btn_label, key=f"btn_fav_{t}", use_container_width=True, type=btn_type):
+                            st.session_state["selected_fav_ticker"] = t
+                            st.session_state["scroll_fav"] = True
+                            st.rerun()
+                else:
+                    st.caption("お気に入り登録されている銘柄はありません。")
                 
         st.markdown("<hr style='margin: 15px 0; border: none; border-top: 1px solid #e2e8f0;'>", unsafe_allow_html=True)
         
@@ -3830,14 +4011,21 @@ with tab_favorite:
         cache_key = f"fav_analysis_{selected_fav_ticker}"
         
         # Row with a small caption and refresh button
-        col_cap, col_ref = st.columns([3.8, 1.2])
-        with col_cap:
-            st.caption("💡 上記リストの銘柄ボタンをクリックすると、その銘柄の分析とチャートが以下に表示されます。")
-        with col_ref:
+        if is_mobile:
+            st.caption("💡 選択した銘柄の分析とチャートが以下に表示されます。")
             if st.button("🔄 最新データに更新", key=f"inline_ref_btn_{selected_fav_ticker}", use_container_width=True):
                 if cache_key in st.session_state:
                     del st.session_state[cache_key]
                 st.rerun()
+        else:
+            col_cap, col_ref = st.columns([3.8, 1.2])
+            with col_cap:
+                st.caption("💡 上記リストの銘柄ボタンをクリックすると、その銘柄の分析とチャートが以下に表示されます。")
+            with col_ref:
+                if st.button("🔄 最新データに更新", key=f"inline_ref_btn_{selected_fav_ticker}", use_container_width=True):
+                    if cache_key in st.session_state:
+                        del st.session_state[cache_key]
+                    st.rerun()
         
         if cache_key not in st.session_state:
             with st.spinner(f"{selected_fav_name} ({selected_fav_ticker}) のデータを取得・分析中..."):
@@ -3995,7 +4183,11 @@ with tab_simulation:
     # ----------------------------------------------------
     # Portfolio summary cards at the top
     # ----------------------------------------------------
-    sum_col1, sum_col2, sum_col3, sum_col4 = st.columns(4)
+    if is_mobile:
+        sum_col1, sum_col2 = st.columns(2)
+        sum_col3, sum_col4 = sum_col1, sum_col2 # stack vertically in 2x2 on mobile
+    else:
+        sum_col1, sum_col2, sum_col3, sum_col4 = st.columns(4)
     
     with sum_col1:
         st.markdown(f"""
@@ -4053,17 +4245,32 @@ with tab_simulation:
     # ----------------------------------------------------
     st.markdown("---")
     selected_portfolio_row_indices = []
-    col_left, col_right = st.columns([1.2, 0.8])
     
-    with col_left:
+    if is_mobile:
+        left_container = st.container()
+        right_container = st.container()
+    else:
+        col_left, col_right = st.columns([1.2, 0.8])
+        left_container = col_left
+        right_container = col_right
+        
+    with left_container:
         st.markdown("### 保有銘柄一覧")
         if not records:
             st.info("現在、仮想保有している銘柄はありません。上の『スクリーニング実行と結果分析』タブから評価レポートを表示し、購入ウィジェットから追加してください。")
         else:
-            st.caption("※ 保有銘柄の行をクリックして選択すると、右側のパネルから売却手続きが可能です。")
+            st.caption("※ 保有銘柄の行をクリックして選択すると、売却手続きが可能です。")
             df_display = df_show.drop(columns=["ID", "raw_pl", "raw_pl_pct"])
             
-            styled_df = df_display.style
+            # Mobile table column optimization
+            if is_mobile:
+                cols_to_show = ["ティッカー", "銘柄名", "現在値", "保有株数", "評価損益", "損益率"]
+                existing_cols = [c for c in cols_to_show if c in df_display.columns]
+                df_display_table = df_display[existing_cols]
+            else:
+                df_display_table = df_display
+                
+            styled_df = df_display_table.style
             try:
                 styled_df = styled_df.map(color_pl_cell, subset=["評価損益", "損益率"])
             except AttributeError:
@@ -4078,7 +4285,7 @@ with tab_simulation:
             )
             selected_portfolio_row_indices = selected_portfolio_rows.get("selection", {}).get("rows", [])
             
-    with col_right:
+    with right_container:
         st.markdown("### 仮想売却")
         
         if records and selected_portfolio_row_indices and len(selected_portfolio_row_indices) > 0:
@@ -4315,9 +4522,17 @@ with tab_simulation:
             st.plotly_chart(fig_total, use_container_width=True)
             
         with chart_tab_items:
+            is_mobile = st.session_state.get('ui_mode', 'PC') == 'スマホ'
             if realized_pl_list:
-                item_col1, item_col2 = st.columns(2)
-                with item_col1:
+                if is_mobile:
+                    item_container1 = st.container()
+                    item_container2 = st.container()
+                else:
+                    item_col1, item_col2 = st.columns(2)
+                    item_container1 = item_col1
+                    item_container2 = item_col2
+                    
+                with item_container1:
                     st.markdown("<h5 style='text-align: center; color: #1e293b; margin-bottom: 10px;'>保有銘柄の評価損益 (含み損益)</h5>", unsafe_allow_html=True)
                     if item_pl_list:
                         fig_bar_active = go.Figure()
@@ -4339,7 +4554,9 @@ with tab_simulation:
                         st.plotly_chart(fig_bar_active, use_container_width=True)
                     else:
                         st.info("現在保有している銘柄はありません。")
-                with item_col2:
+                with item_container2:
+                    if is_mobile:
+                        st.markdown("<hr style='margin: 20px 0; border: none; border-top: 1px solid #e2e8f0;'>", unsafe_allow_html=True)
                     st.markdown("<h5 style='text-align: center; color: #1e293b; margin-bottom: 10px;'>売却銘柄の累計確定損益 (実現損益)</h5>", unsafe_allow_html=True)
                     fig_bar_realized = go.Figure()
                     fig_bar_realized.add_trace(go.Bar(
