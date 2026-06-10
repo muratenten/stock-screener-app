@@ -141,7 +141,7 @@ st.set_page_config(
 # Inject premium custom CSS dynamically based on theme selection
 bg_color = "#0b0f19" if is_dark else "#f8fafc"
 card_bg = "#151d30" if is_dark else "#ffffff"
-text_color = "#f1f5f9" if is_dark else "#1e293b"
+text_color = "#e2e8f0" if is_dark else "#1e293b" # Softer text color for dark mode to prevent eye strain
 primary_color = "#3b82f6" if is_dark else "#2563eb"
 border_color = "#1e293b" if is_dark else "#e2e8f0"
 title_bg = "linear-gradient(135deg, #151d30 0%, #0b0f19 100%)" if is_dark else "linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%)"
@@ -158,6 +158,43 @@ st.markdown(f"""
         --text-color: {text_color};
         --primary-color: {primary_color};
         --border-color: {border_color};
+        
+        /* Streamlit Generic Theme Variable Overrides */
+        --theme-background-color: {bg_color};
+        --theme-secondary-background-color: {card_bg};
+        --theme-text-color: {text_color};
+        --theme-primary-color: {primary_color};
+        --theme-border-color: {border_color};
+        
+        /* Glide Data Grid (st.dataframe) overrides on root */
+        --gdg-bg-cell: {card_bg} !important;
+        --gdg-bg-header: {bg_color} !important;
+        --gdg-bg-cell-hover: {bg_color} !important;
+        --gdg-bg-header-hover: {card_bg} !important;
+        --gdg-text-dark: {text_color} !important;
+        --gdg-text-light: {text_color} !important;
+        --gdg-text-group-header: {text_color} !important;
+        --gdg-text-header: {text_color} !important;
+        --gdg-text-medium: {text_color} !important;
+        --gdg-border-color: {border_color} !important;
+        --gdg-accent-color: {primary_color} !important;
+        --gdg-accent-light: rgba(59, 130, 246, 0.12) !important;
+    }}
+    
+    /* Target Glide Data Grid elements specifically */
+    div.stDataFrame, div.stDataFrameGlideDataEditor, [data-testid="stDataFrame"] {{
+        --gdg-bg-cell: {card_bg} !important;
+        --gdg-bg-header: {bg_color} !important;
+        --gdg-bg-cell-hover: {bg_color} !important;
+        --gdg-bg-header-hover: {card_bg} !important;
+        --gdg-text-dark: {text_color} !important;
+        --gdg-text-light: {text_color} !important;
+        --gdg-text-group-header: {text_color} !important;
+        --gdg-text-header: {text_color} !important;
+        --gdg-text-medium: {text_color} !important;
+        --gdg-border-color: {border_color} !important;
+        --gdg-accent-color: {primary_color} !important;
+        --gdg-accent-light: rgba(59, 130, 246, 0.12) !important;
     }}
     
     /* Ensure Streamlit's native background matches our theme */
@@ -2313,23 +2350,23 @@ def generate_similar_pattern_explanation(ticker, name, m, N, future_days=20):
     news_html = ""
     if news_items:
         for item in news_items:
-            source_badge = f"""<span style="background-color: #e2e8f0; color: #475569; font-size: 0.72rem; padding: 2px 6px; border-radius: 4px; margin-left: 6px; font-weight: 500; display: inline-block; vertical-align: middle;">{item['source']}</span>""" if item['source'] else ""
+            source_badge = f"""<span style="background-color: var(--border-color, #e2e8f0); color: var(--text-color, #475569); opacity: 0.85; font-size: 0.72rem; padding: 2px 6px; border-radius: 4px; margin-left: 6px; font-weight: 500; display: inline-block; vertical-align: middle;">{item['source']}</span>""" if item['source'] else ""
             news_html += f"""
             <li style="margin-bottom: 6px; list-style-type: square; margin-left: 15px;">
-                <span style="color: #64748b; font-size: 0.85rem; font-family: monospace; margin-right: 6px;">[{item['date']}]</span>
-                <a href="{item['link']}" target="_blank" style="color: #2563eb; text-decoration: none; font-weight: 500; font-size: 0.88rem; border-bottom: 1px dashed #93c5fd;">{item['title']}</a>
+                <span style="color: var(--text-color, #64748b); opacity: 0.7; font-size: 0.85rem; font-family: monospace; margin-right: 6px;">[{item['date']}]</span>
+                <a href="{item['link']}" target="_blank" style="color: var(--primary-color, #2563eb); text-decoration: none; font-weight: 500; font-size: 0.88rem; border-bottom: 1px dashed var(--primary-color, #93c5fd);">{item['title']}</a>
                 {source_badge}
             </li>
             """
     else:
         news_html = """
-        <li style="margin-bottom: 6px; list-style-type: none; margin-left: 0px; color: #64748b; font-size: 0.88rem;">
+        <li style="margin-bottom: 6px; list-style-type: none; margin-left: 0px; color: var(--text-color, #64748b); opacity: 0.7; font-size: 0.88rem;">
             ℹ️ 当時のニュース履歴を取得できませんでした（期間外、またはインデックス未登録）。
         </li>
         """
 
     explanation = f"""
-    <div style="background-color: var(--secondary-background-color, #f8fafc); border-radius: 8px; padding: 16px; border-left: 4px solid {'#16a34a' if ret >= 0 else '#dc2626'}; margin-bottom: 12px; border-top: 1px solid var(--border-color, #e2e8f0); border-right: 1px solid var(--border-color, #e2e8f0); border-bottom: 1px solid var(--border-color, #e2e8f0);">
+    <div style="background-color: var(--secondary-background-color, #f8fafc); border-radius: 8px; padding: 16px; border-left: 4px solid {'#10b981' if ret >= 0 else '#ef4444'}; margin-bottom: 12px; border-top: 1px solid var(--border-color, #e2e8f0); border-right: 1px solid var(--border-color, #e2e8f0); border-bottom: 1px solid var(--border-color, #e2e8f0);">
         <div style="display: flex; justify-content: space-between; font-weight: bold; margin-bottom: 8px;">
             <span style="font-size: 0.95rem; color: var(--text-color, #1e293b);">🕒 類似期間: {start_dt.strftime('%Y-%m-%d')} 〜 {end_dt.strftime('%Y-%m-%d')} (類似度: {similarity:.1f}%)</span>
             <span style="font-size: 1rem; {ret_style}">その後の{future_days}営業日の動向: {ret:+.2f}% ({direction})</span>
@@ -2344,7 +2381,7 @@ def generate_similar_pattern_explanation(ticker, name, m, N, future_days=20):
                 {news_html}
             </ul>
         </div>
-        <div style="font-size: 0.9rem; color: var(--text-color, #1e3a8a); line-height: 1.6; border-top: 1px dashed var(--border-color, #cbd5e1); padding-top: 8px; background-color: rgba(37, 99, 235, 0.05); padding: 8px; border-radius: 6px; margin-top: 8px;">
+        <div style="font-size: 0.9rem; color: var(--text-color, #1e293b); line-height: 1.6; border-top: 1px dashed var(--border-color, #cbd5e1); padding-top: 8px; background-color: rgba(59, 130, 246, 0.08); padding: 8px; border-radius: 6px; margin-top: 8px;">
             <strong>🏢 当時の {name} に関係した主要出来事・材料（専門分析）</strong>:<br/>
             {corp_event}
         </div>
