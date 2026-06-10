@@ -21,6 +21,26 @@ PLOTLY_CONFIG = {
     'modeBarButtons': [['zoomIn2d', 'zoomOut2d', 'resetScale2d']]
 }
 
+# UI theme and mode settings
+st.sidebar.markdown("### 📱 表示・デザイン設定")
+ui_mode_label = st.sidebar.radio(
+    "レイアウトの最適化",
+    options=["PC版 (マルチカラム)", "スマホ版 (縦並び)"],
+    index=0 if st.session_state.get('ui_mode', 'PC') == 'PC' else 1,
+    key="sidebar_ui_mode_selector"
+)
+st.session_state['ui_mode'] = 'PC' if ui_mode_label == "PC版 (マルチカラム)" else 'スマホ'
+is_mobile = st.session_state.get('ui_mode', 'PC') == 'スマホ'
+
+theme_label = st.sidebar.radio(
+    "表示テーマ",
+    options=["ライトモード", "ダークモード"],
+    index=0 if st.session_state.get('color_theme', 'light') == 'light' else 1,
+    key="sidebar_color_theme_selector"
+)
+st.session_state['color_theme'] = 'light' if theme_label == "ライトモード" else 'dark'
+is_dark = st.session_state.get('color_theme', 'light') == 'dark'
+
 # Default Firebase configuration fallback
 DEFAULT_FIREBASE_PROJECT_ID = "zenstock-screener"
 if "firebase_project_id" in st.secrets:
@@ -118,62 +138,87 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Inject premium custom CSS for clean white base layout
-st.markdown("""
+# Inject premium custom CSS dynamically based on theme selection
+bg_color = "#0b0f19" if is_dark else "#f8fafc"
+card_bg = "#151d30" if is_dark else "#ffffff"
+text_color = "#f1f5f9" if is_dark else "#1e293b"
+primary_color = "#3b82f6" if is_dark else "#2563eb"
+border_color = "#1e293b" if is_dark else "#e2e8f0"
+title_bg = "linear-gradient(135deg, #151d30 0%, #0b0f19 100%)" if is_dark else "linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%)"
+title_border = "#1e293b" if is_dark else "#cbd5e1"
+title_text_color = "#3b82f6" if is_dark else "#1e3a8a"
+subtitle_text_color = "#94a3b8" if is_dark else "#475569"
+
+st.markdown(f"""
 <style>
+    /* CSS theme overrides on root */
+    :root, .stApp {{
+        --background-color: {bg_color};
+        --secondary-background-color: {card_bg};
+        --text-color: {text_color};
+        --primary-color: {primary_color};
+        --border-color: {border_color};
+    }}
+    
+    /* Ensure Streamlit's native background matches our theme */
+    .stApp, [data-testid="stApp"], [data-testid="stAppViewContainer"], [data-testid="stMainViewContainer"], [data-testid="stHeader"] {{
+        background-color: {bg_color} !important;
+        color: {text_color} !important;
+    }}
+    
     /* Styling headers and blocks */
-    .title-container {
-        background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+    .title-container {{
+        background: {title_bg};
         border-radius: 12px;
         padding: 25px;
         margin-bottom: 25px;
-        border: 1px solid #cbd5e1;
+        border: 1px solid {title_border};
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-    }
-    .title-text {
+    }}
+    .title-text {{
         font-family: 'Outfit', sans-serif;
-        color: #1e3a8a;
+        color: {title_text_color};
         font-weight: 800;
         font-size: 2.5rem;
         margin: 0;
-    }
-    .subtitle-text {
-        color: #475569;
+    }}
+    .subtitle-text {{
+        color: {subtitle_text_color};
         font-size: 1.1rem;
         margin-top: 10px;
         margin-bottom: 0;
-    }
-    .card {
-        background: #ffffff;
+    }}
+    .card {{
+        background: {card_bg};
         border-radius: 10px;
         padding: 20px;
-        border: 1px solid #e2e8f0;
+        border: 1px solid {border_color};
         margin-bottom: 20px;
         box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.03);
-        color: #1e293b;
-    }
-    .metric-title {
-        color: #64748b;
+        color: {text_color};
+    }}
+    .metric-title {{
+        color: {'#94a3b8' if is_dark else '#64748b'};
         font-size: 0.85rem;
         margin-bottom: 5px;
-    }
-    .metric-value {
+    }}
+    .metric-value {{
         font-size: 1.5rem;
         font-weight: bold;
-        color: #0f172a;
-    }
-    .metric-accent {
-        color: #16a34a;
-    }
+        color: {text_color};
+    }}
+    .metric-accent {{
+        color: {'#10b981' if is_dark else '#16a34a'};
+    }}
     /* Base style for premium list buttons */
-    button.premium-list-btn {
+    button.premium-list-btn {{
         display: flex !important;
         align-items: center !important;
         border-radius: 12px !important;
         font-weight: 600 !important;
-        border: 1px solid #e2e8f0 !important;
-        background: #ffffff !important;
-        color: #1e293b !important;
+        border: 1px solid {border_color} !important;
+        background: {card_bg} !important;
+        color: {text_color} !important;
         box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05) !important;
         transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
         margin-bottom: 8px !important;
@@ -181,43 +226,44 @@ st.markdown("""
         white-space: nowrap !important;
         overflow: hidden !important;
         text-overflow: ellipsis !important;
-    }
+    }}
     /* Centered styling for shape toggle buttons */
-    button.premium-list-btn.premium-center {
+    button.premium-list-btn.premium-center {{
         text-align: center !important;
         justify-content: center !important;
         padding: 8px 4px !important;
         font-size: 0.8rem !important;
-    }
+    }}
     /* Left-aligned styling for portfolio and watchlist buttons */
-    button.premium-list-btn.premium-left {
+    button.premium-list-btn.premium-left {{
         text-align: left !important;
         justify-content: flex-start !important;
         padding: 14px 18px !important;
         font-size: 0.92rem !important;
-    }
+    }}
     /* Hover effect */
-    button.premium-list-btn:hover {
-        border-color: #3b82f6 !important;
-        background-color: #f8fafc !important;
-        color: #2563eb !important;
+    button.premium-list-btn:hover {{
+        border-color: {primary_color} !important;
+        background-color: {'#1e293b' if is_dark else '#f8fafc'} !important;
+        color: {primary_color} !important;
         transform: translateY(-2px) !important;
         box-shadow: 0 4px 12px -2px rgba(37, 99, 235, 0.12) !important;
-    }
+    }}
     /* Active selected style (Primary button override) */
-    button.premium-list-btn.premium-active {
-        border-color: #2563eb !important;
-        background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%) !important;
+    button.premium-list-btn.premium-active {{
+        border-color: {primary_color} !important;
+        background: linear-gradient(135deg, {primary_color} 0%, {'#1d4ed8' if not is_dark else '#2563eb'} 100%) !important;
         color: #ffffff !important;
         box-shadow: 0 4px 14px 0 rgba(37, 99, 235, 0.3) !important;
-    }
-    button.premium-list-btn.premium-active:hover {
-        background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%) !important;
+    }}
+    button.premium-list-btn.premium-active:hover {{
+        background: linear-gradient(135deg, {'#1d4ed8' if not is_dark else '#2563eb'} 0%, {'#1e40af' if not is_dark else '#1d4ed8'} 100%) !important;
         color: #ffffff !important;
         transform: translateY(-2px) !important;
         box-shadow: 0 6px 18px 0 rgba(37, 99, 235, 0.4) !important;
-    }
+    }}
 </style>
+
 """, unsafe_allow_html=True)
 
 # Inject global Javascript for premium button styling
@@ -350,25 +396,25 @@ def show_purchase_success_dialog(name, ticker, qty, price, total_cost):
     
     仮想シミュレーションの保有ポートフォリオに正常に追加されました。
     
-    <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 15px; margin-top: 15px; margin-bottom: 20px; color: #1e293b;">
+    <div style="background-color: var(--secondary-background-color, #f8fafc); border: 1px solid var(--border-color, #e2e8f0); border-radius: 8px; padding: 15px; margin-top: 15px; margin-bottom: 20px; color: var(--text-color, #1e293b);">
         <!-- 購入銘柄 -->
-        <div style="display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 1px solid #e2e8f0; padding: 10px 0;">
-            <span style="color: #64748b; font-weight: bold; min-width: 100px; flex-shrink: 0; text-align: left;">購入銘柄</span>
-            <span style="text-align: right; font-weight: bold; color: #0f172a; word-break: break-all; margin-left: 10px;">{name} ({ticker})</span>
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 1px solid var(--border-color, #e2e8f0); padding: 10px 0;">
+            <span style="color: var(--text-color, #64748b); opacity: 0.8; font-weight: bold; min-width: 100px; flex-shrink: 0; text-align: left;">購入銘柄</span>
+            <span style="text-align: right; font-weight: bold; color: var(--text-color, #0f172a); word-break: break-all; margin-left: 10px;">{name} ({ticker})</span>
         </div>
         <!-- 購入株数 -->
-        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e2e8f0; padding: 10px 0;">
-            <span style="color: #64748b; min-width: 100px; flex-shrink: 0; text-align: left;">購入株数</span>
-            <span style="text-align: right; font-weight: bold; color: #0f172a;">{qty:,} 株</span>
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color, #e2e8f0); padding: 10px 0;">
+            <span style="color: var(--text-color, #64748b); opacity: 0.8; min-width: 100px; flex-shrink: 0; text-align: left;">購入株数</span>
+            <span style="text-align: right; font-weight: bold; color: var(--text-color, #0f172a);">{qty:,} 株</span>
         </div>
         <!-- 平均取得単価 -->
-        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e2e8f0; padding: 10px 0;">
-            <span style="color: #64748b; min-width: 100px; flex-shrink: 0; text-align: left;">平均取得単価</span>
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color, #e2e8f0); padding: 10px 0;">
+            <span style="color: var(--text-color, #64748b); opacity: 0.8; min-width: 100px; flex-shrink: 0; text-align: left;">平均取得単価</span>
             <span style="text-align: right; font-weight: bold; color: #16a34a;">{format_price(price, ticker)}</span>
         </div>
         <!-- 概算投資金額 -->
         <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 0;">
-            <span style="color: #64748b; font-weight: bold; min-width: 100px; flex-shrink: 0; text-align: left;">概算投資金額</span>
+            <span style="color: var(--text-color, #64748b); opacity: 0.8; font-weight: bold; min-width: 100px; flex-shrink: 0; text-align: left;">概算投資金額</span>
             <span style="text-align: right; font-weight: bold; color: #2563eb; font-size: 1.2rem;">{format_price(total_cost, ticker)}</span>
         </div>
     </div>
@@ -399,30 +445,30 @@ def show_sell_success_dialog(name, ticker, qty, price, total_return, realized_pl
     
     仮想シミュレーションの保有ポートフォリオから正常に売却されました。
     
-    <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 15px; margin-top: 15px; margin-bottom: 20px; color: #1e293b;">
+    <div style="background-color: var(--secondary-background-color, #f8fafc); border: 1px solid var(--border-color, #e2e8f0); border-radius: 8px; padding: 15px; margin-top: 15px; margin-bottom: 20px; color: var(--text-color, #1e293b);">
         <!-- 売却銘柄 -->
-        <div style="display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 1px solid #e2e8f0; padding: 10px 0;">
-            <span style="color: #64748b; font-weight: bold; min-width: 100px; flex-shrink: 0; text-align: left;">売却銘柄</span>
-            <span style="text-align: right; font-weight: bold; color: #0f172a; word-break: break-all; margin-left: 10px;">{name} ({ticker})</span>
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 1px solid var(--border-color, #e2e8f0); padding: 10px 0;">
+            <span style="color: var(--text-color, #64748b); opacity: 0.8; font-weight: bold; min-width: 100px; flex-shrink: 0; text-align: left;">売却銘柄</span>
+            <span style="text-align: right; font-weight: bold; color: var(--text-color, #0f172a); word-break: break-all; margin-left: 10px;">{name} ({ticker})</span>
         </div>
         <!-- 売却株数 -->
-        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e2e8f0; padding: 10px 0;">
-            <span style="color: #64748b; min-width: 100px; flex-shrink: 0; text-align: left;">売却株数</span>
-            <span style="text-align: right; font-weight: bold; color: #0f172a;">{qty:,} 株</span>
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color, #e2e8f0); padding: 10px 0;">
+            <span style="color: var(--text-color, #64748b); opacity: 0.8; min-width: 100px; flex-shrink: 0; text-align: left;">売却株数</span>
+            <span style="text-align: right; font-weight: bold; color: var(--text-color, #0f172a);">{qty:,} 株</span>
         </div>
         <!-- 売却単価 -->
-        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e2e8f0; padding: 10px 0;">
-            <span style="color: #64748b; min-width: 100px; flex-shrink: 0; text-align: left;">売却単価</span>
-            <span style="text-align: right; font-weight: bold; color: #0f172a;">{price_str}</span>
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color, #e2e8f0); padding: 10px 0;">
+            <span style="color: var(--text-color, #64748b); opacity: 0.8; min-width: 100px; flex-shrink: 0; text-align: left;">売却単価</span>
+            <span style="text-align: right; font-weight: bold; color: var(--text-color, #0f172a);">{price_str}</span>
         </div>
         <!-- 売却受取金額 -->
-        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e2e8f0; padding: 10px 0;">
-            <span style="color: #64748b; min-width: 100px; flex-shrink: 0; text-align: left;">売却受取金額</span>
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color, #e2e8f0); padding: 10px 0;">
+            <span style="color: var(--text-color, #64748b); opacity: 0.8; min-width: 100px; flex-shrink: 0; text-align: left;">売却受取金額</span>
             <span style="text-align: right; font-weight: bold; color: #2563eb;">{total_return_str}</span>
         </div>
         <!-- 確定実現損益 -->
         <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 0;">
-            <span style="color: #64748b; font-weight: bold; min-width: 100px; flex-shrink: 0; text-align: left;">確定実現損益</span>
+            <span style="color: var(--text-color, #64748b); font-weight: bold; min-width: 100px; flex-shrink: 0; text-align: left;">確定実現損益</span>
             <span style="text-align: right; font-weight: bold; color: {pl_color}; font-size: 1.2rem;">{realized_pl_str}</span>
         </div>
     </div>
@@ -552,9 +598,11 @@ def create_pattern_overlay_chart(target_prices, matches_data, N, ticker=None):
     fig = go.Figure()
     
     is_mobile = False
+    is_dark = False
     try:
         import streamlit as st
         is_mobile = st.session_state.get('ui_mode', 'PC') == 'スマホ'
+        is_dark = st.session_state.get('color_theme', 'light') == 'dark'
     except:
         pass
         
@@ -568,7 +616,7 @@ def create_pattern_overlay_chart(target_prices, matches_data, N, ticker=None):
         y=target_prices,
         mode='lines+markers',
         name='基準パターン (指定範囲)',
-        line=dict(color='#1e3a8a', width=4),
+        line=dict(color='#60a5fa' if is_dark else '#1e3a8a', width=4),
         marker=dict(size=6),
         hovertemplate=f"日目: %{{x}}<br>株価: {symbol}%{{y:,{fmt}}}<extra></extra>"
     ))
@@ -608,21 +656,28 @@ def create_pattern_overlay_chart(target_prices, matches_data, N, ticker=None):
             text=title_text,
             font=dict(size=13 if is_mobile else 15)
         ),
-        template="plotly_white",
+        template="plotly_dark" if is_dark else "plotly_white",
         height=450,
         margin=dict(l=10, r=10, t=50, b=50),
         legend=dict(orientation="h", yanchor="top", y=-0.15, xanchor="center", x=0.5),
         dragmode=False if is_mobile else "pan"
     )
+    
+    gridcolor = '#1e293b' if is_dark else '#f1f5f9'
+    zerolinecolor = '#334155' if is_dark else '#cbd5e1'
+    fig.update_yaxes(gridcolor=gridcolor, zerolinecolor=zerolinecolor)
+    fig.update_xaxes(gridcolor=gridcolor)
     return fig
 
 def create_selection_chart(df, ticker, name, start_date, end_date):
     fig = go.Figure()
     
     is_mobile = False
+    is_dark = False
     try:
         import streamlit as st
         is_mobile = st.session_state.get('ui_mode', 'PC') == 'スマホ'
+        is_dark = st.session_state.get('color_theme', 'light') == 'dark'
     except:
         pass
         
@@ -636,7 +691,7 @@ def create_selection_chart(df, ticker, name, start_date, end_date):
         y=df['Close'],
         mode='lines',
         name='株価 (終値)',
-        line=dict(color='#2563eb', width=2),
+        line=dict(color='#3b82f6' if is_dark else '#2563eb', width=2),
         hovertemplate=f"日付: %{{x|%Y-%m-%d}}<br>株価: {symbol}%{{y:,{fmt}}}<extra></extra>"
     ))
     
@@ -658,7 +713,7 @@ def create_selection_chart(df, ticker, name, start_date, end_date):
             text=title_text,
             font=dict(size=13 if is_mobile else 15)
         ),
-        template="plotly_white",
+        template="plotly_dark" if is_dark else "plotly_white",
         height=320,
         margin=dict(l=10, r=10, t=40, b=10),
         showlegend=False,
@@ -669,6 +724,10 @@ def create_selection_chart(df, ticker, name, start_date, end_date):
         ),
         uirevision="constant" # Prevent zoom/selection from resetting on rerun
     )
+    gridcolor = '#1e293b' if is_dark else '#f1f5f9'
+    zerolinecolor = '#334155' if is_dark else '#cbd5e1'
+    fig.update_yaxes(gridcolor=gridcolor, zerolinecolor=zerolinecolor)
+    fig.update_xaxes(gridcolor=gridcolor)
     return fig
 
 @st.cache_data(ttl=3600)
@@ -1680,9 +1739,11 @@ def calculate_indicators_for_df(df, interval="1d"):
 # Create Plotly interactive chart
 def create_chart(df, ticker, name, interval="1d"):
     is_mobile = False
+    is_dark = False
     try:
         import streamlit as st
         is_mobile = st.session_state.get('ui_mode', 'PC') == 'スマホ'
+        is_dark = st.session_state.get('color_theme', 'light') == 'dark'
     except:
         pass
 
@@ -1770,7 +1831,7 @@ def create_chart(df, ticker, name, interval="1d"):
     fig.update_layout(
         xaxis_rangeslider_visible=False,
         height=chart_height,
-        template="plotly_white", # White template for clean charting
+        template="plotly_dark" if is_dark else "plotly_white", # Dynamic template
         plot_bgcolor='rgba(0,0,0,0)',
         paper_bgcolor='rgba(0,0,0,0)',
         margin=dict(l=10, r=10, t=40, b=50),
@@ -1779,8 +1840,10 @@ def create_chart(df, ticker, name, interval="1d"):
     )
     
     # Clean grids and adjust tick/font sizes for mobile
-    fig.update_yaxes(gridcolor='#f1f5f9', zerolinecolor='#cbd5e1', tickfont=dict(size=9 if is_mobile else 11))
-    fig.update_xaxes(gridcolor='#f1f5f9', tickfont=dict(size=9 if is_mobile else 11))
+    gridcolor = '#1e293b' if is_dark else '#f1f5f9'
+    zerolinecolor = '#334155' if is_dark else '#cbd5e1'
+    fig.update_yaxes(gridcolor=gridcolor, zerolinecolor=zerolinecolor, tickfont=dict(size=9 if is_mobile else 11))
+    fig.update_xaxes(gridcolor=gridcolor, tickfont=dict(size=9 if is_mobile else 11))
     fig.update_annotations(font_size=10 if is_mobile else 12)
     
     # Adjust y-axis range of Row 1 (candlestick chart) to fit the stock price nicely
@@ -2164,22 +2227,22 @@ def generate_similar_pattern_explanation(ticker, name, m, N, future_days=20):
         """
 
     explanation = f"""
-    <div style="background-color: #f8fafc; border-radius: 8px; padding: 16px; border-left: 4px solid {'#16a34a' if ret >= 0 else '#dc2626'}; margin-bottom: 12px; border-top: 1px solid #e2e8f0; border-right: 1px solid #e2e8f0; border-bottom: 1px solid #e2e8f0;">
+    <div style="background-color: var(--secondary-background-color, #f8fafc); border-radius: 8px; padding: 16px; border-left: 4px solid {'#16a34a' if ret >= 0 else '#dc2626'}; margin-bottom: 12px; border-top: 1px solid var(--border-color, #e2e8f0); border-right: 1px solid var(--border-color, #e2e8f0); border-bottom: 1px solid var(--border-color, #e2e8f0);">
         <div style="display: flex; justify-content: space-between; font-weight: bold; margin-bottom: 8px;">
-            <span style="font-size: 0.95rem; color: #1e293b;">🕒 類似期間: {start_dt.strftime('%Y-%m-%d')} 〜 {end_dt.strftime('%Y-%m-%d')} (類似度: {similarity:.1f}%)</span>
+            <span style="font-size: 0.95rem; color: var(--text-color, #1e293b);">🕒 類似期間: {start_dt.strftime('%Y-%m-%d')} 〜 {end_dt.strftime('%Y-%m-%d')} (類似度: {similarity:.1f}%)</span>
             <span style="font-size: 1rem; {ret_style}">その後の{future_days}営業日の動向: {ret:+.2f}% ({direction})</span>
         </div>
-        <div style="font-size: 0.9rem; color: #334155; line-height: 1.6; margin-bottom: 8px;">
+        <div style="font-size: 0.9rem; color: var(--text-color, #334155); opacity: 0.9; line-height: 1.6; margin-bottom: 8px;">
             <strong>【当時の主要な時事・市況イベント】：{macro_title}</strong><br/>
             {macro_desc}
         </div>
-        <div style="font-size: 0.9rem; color: #334155; line-height: 1.6; border-top: 1px dashed #cbd5e1; padding-top: 8px; margin-bottom: 8px;">
+        <div style="font-size: 0.9rem; color: var(--text-color, #334155); opacity: 0.9; line-height: 1.6; border-top: 1px dashed var(--border-color, #cbd5e1); padding-top: 8px; margin-bottom: 8px;">
             <strong>📰 当時（同日〜同月内）に報道された主要ニュース（リアルタイム取得）</strong>:<br/>
             <ul style="margin: 6px 0 0 0; padding-left: 5px; line-height: 1.5;">
                 {news_html}
             </ul>
         </div>
-        <div style="font-size: 0.9rem; color: #1e3a8a; line-height: 1.6; border-top: 1px dashed #cbd5e1; padding-top: 8px; background-color: #f0f5ff; padding: 8px; border-radius: 6px; margin-top: 8px;">
+        <div style="font-size: 0.9rem; color: var(--text-color, #1e3a8a); line-height: 1.6; border-top: 1px dashed var(--border-color, #cbd5e1); padding-top: 8px; background-color: rgba(37, 99, 235, 0.05); padding: 8px; border-radius: 6px; margin-top: 8px;">
             <strong>🏢 当時の {name} に関係した主要出来事・材料（専門分析）</strong>:<br/>
             {corp_event}
         </div>
@@ -2210,14 +2273,14 @@ def generate_final_pattern_implication(name, matches_data, avg_ret, future_days=
         strategy = f"過去の類似局面における上昇率は二極化しており、方向感は中立です。チャート形状単体でのエントリー判断は避け、直近の出来高やファンダメンタルズの動向、決算発表スケジュール等を併せて考慮すべき局面です。"
 
     text = f"""
-    <div style="background-color: #f8fafc; border-left: 5px solid {avg_color}; border-radius: 8px; padding: 20px; margin-top: 20px; box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05); border-top: 1px solid #e2e8f0; border-right: 1px solid #e2e8f0; border-bottom: 1px solid #e2e8f0;">
-        <h5 style="margin: 0 0 10px 0; color: #1e293b; font-size: 1.05rem;">💡 歴史的パターンから導かれる総合考察</h5>
-        <div style="font-size: 0.95rem; color: #334155; line-height: 1.6; margin-bottom: 12px;">
+    <div style="background-color: var(--secondary-background-color, #f8fafc); border-left: 5px solid {avg_color}; border-radius: 8px; padding: 20px; margin-top: 20px; box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05); border-top: 1px solid var(--border-color, #e2e8f0); border-right: 1px solid var(--border-color, #e2e8f0); border-bottom: 1px solid var(--border-color, #e2e8f0);">
+        <h5 style="margin: 0 0 10px 0; color: var(--text-color, #1e293b); font-size: 1.05rem;">💡 歴史的パターンから導かれる総合考察</h5>
+        <div style="font-size: 0.95rem; color: var(--text-color, #334155); opacity: 0.9; line-height: 1.6; margin-bottom: 12px;">
             過去5年間のデータから抽出された類似パターン上位3例において、形状終了から{future_days}営業日後の平均騰落率は 
             <strong style="color: {avg_color}; font-size: 1.2rem;">{avg_sign}{avg_ret:.2f}%</strong> となり、
             過去の統計上は<strong>{direction_text}</strong>が見られます。（3回中 {up_count} 回で上昇）
         </div>
-        <div style="font-size: 0.92rem; color: #475569; line-height: 1.6; border-top: 1px dashed #cbd5e1; padding-top: 12px;">
+        <div style="font-size: 0.92rem; color: var(--text-color, #475569); opacity: 0.8; line-height: 1.6; border-top: 1px dashed var(--border-color, #cbd5e1); padding-top: 12px;">
             <strong>🎯 推奨される投資戦略のアプローチ：</strong><br/>
             {strategy}
         </div>
@@ -2974,17 +3037,8 @@ def color_pl_cell(val):
             return 'color: #dc2626; font-weight: bold;'
     return ''
 
-# UI Mode selector (Placed here so it works on both login page and main app)
-st.sidebar.markdown("### 📱 表示モード")
-ui_mode_label = st.sidebar.radio(
-    "レイアウトの最適化",
-    options=["PC版 (マルチカラム)", "スマホ版 (縦並び)"],
-    index=0 if st.session_state.get('ui_mode', 'PC') == 'PC' else 1,
-    label_visibility="collapsed",
-    key="sidebar_ui_mode_selector"
-)
-st.session_state['ui_mode'] = 'PC' if ui_mode_label == "PC版 (マルチカラム)" else 'スマホ'
-is_mobile = st.session_state.get('ui_mode', 'PC') == 'スマホ'
+# UI Mode selector (Already configured at top, commented out here to preserve structure)
+# is_mobile = st.session_state.get('ui_mode', 'PC') == 'スマホ'
 
 # Sidebar setup for personalizing portfolios
 query_user = st.query_params.get("user", "default")
@@ -2993,7 +3047,8 @@ if query_user == "default":
     # ---------------------------------------------------------
     # WELCOME PORTAL PAGE (Shown when no user ID is set)
     # ---------------------------------------------------------
-    st.markdown("""
+    portal_bg = "#0b0f19" if is_dark else "#f8fafc"
+    st.markdown(("""
     <div class="portal-bg-container">
         <div class="portal-blob portal-blob-1"></div>
         <div class="portal-blob portal-blob-2"></div>
@@ -3001,7 +3056,7 @@ if query_user == "default":
     </div>
     <style>
     html, body {
-        background-color: #f8fafc !important;
+        background-color: {portal_bg} !important;
     }
     .stApp, 
     [data-testid="stApp"], 
@@ -3141,7 +3196,7 @@ if query_user == "default":
         display: block;
     }
     </style>
-    """,unsafe_allow_html=True)
+    """).replace("{portal_bg}", portal_bg), unsafe_allow_html=True)
     
     if is_mobile:
         col_w1, col_w2, col_w3 = st.columns([0.02, 0.96, 0.02])
@@ -4335,17 +4390,17 @@ with tab_simulation:
     
     with sum_col1:
         st.markdown(f"""
-        <div class="card" style="border-left: 5px solid #2563eb; padding: 15px; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); background-color: #ffffff; margin-bottom: 10px;">
+        <div class="card" style="border-left: 5px solid #2563eb; padding: 15px; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); background-color: var(--secondary-background-color); color: var(--text-color); margin-bottom: 10px;">
             <div style="font-size: 0.85rem; color: #64748b; font-weight: 600;">初期総投資額</div>
-            <div style="font-size: 1.5rem; font-weight: bold; margin-top: 5px; color: #1e293b;">{format_price(total_invest_jpy)}</div>
+            <div style="font-size: 1.5rem; font-weight: bold; margin-top: 5px; color: var(--text-color);">{format_price(total_invest_jpy)}</div>
         </div>
         """, unsafe_allow_html=True)
         
     with sum_col2:
         st.markdown(f"""
-        <div class="card" style="border-left: 5px solid #475569; padding: 15px; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); background-color: #ffffff; margin-bottom: 10px;">
+        <div class="card" style="border-left: 5px solid #475569; padding: 15px; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); background-color: var(--secondary-background-color); color: var(--text-color); margin-bottom: 10px;">
             <div style="font-size: 0.85rem; color: #64748b; font-weight: 600;">現在合計評価額</div>
-            <div style="font-size: 1.5rem; font-weight: bold; margin-top: 5px; color: #1e293b;">{format_price(total_curr_jpy)}</div>
+            <div style="font-size: 1.5rem; font-weight: bold; margin-top: 5px; color: var(--text-color);">{format_price(total_curr_jpy)}</div>
         </div>
         """, unsafe_allow_html=True)
 
@@ -4353,12 +4408,12 @@ with tab_simulation:
         total_pl = total_curr_jpy - total_invest_jpy
         total_pl_pct = (total_pl / total_invest_jpy * 100) if total_invest_jpy > 0 else 0.0
         
-        pl_color = "#16a34a" if total_pl >= 0 else "#dc2626"
-        pl_border = "#16a34a" if total_pl >= 0 else "#dc2626"
+        pl_color = "#10b981" if total_pl >= 0 else "#ef4444"
+        pl_border = "#10b981" if total_pl >= 0 else "#ef4444"
         pl_sign = "+" if total_pl >= 0 else ""
         
         st.markdown(f"""
-        <div class="card" style="border-left: 5px solid {pl_border}; padding: 15px; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); background-color: #ffffff; margin-bottom: 10px;">
+        <div class="card" style="border-left: 5px solid {pl_border}; padding: 15px; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); background-color: var(--secondary-background-color); color: var(--text-color); margin-bottom: 10px;">
             <div style="font-size: 0.85rem; color: #64748b; font-weight: 600;">評価損益 (含み損益)</div>
             <div style="font-size: 1.5rem; font-weight: bold; margin-top: 5px; color: {pl_color};">
                 {pl_sign}¥{int(total_pl):,}<br>
@@ -4371,12 +4426,12 @@ with tab_simulation:
         
     with sum_col4:
         realized_jpy = portfolio_data.get("total_realized_pl_jpy", 0.0)
-        real_color = "#16a34a" if realized_jpy >= 0 else "#dc2626"
-        real_border = "#16a34a" if realized_jpy >= 0 else "#dc2626"
+        real_color = "#10b981" if realized_jpy >= 0 else "#ef4444"
+        real_border = "#10b981" if realized_jpy >= 0 else "#ef4444"
         real_sign = "+" if realized_jpy >= 0 else ""
         
         st.markdown(f"""
-        <div class="card" style="border-left: 5px solid {real_border}; padding: 15px; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); background-color: #ffffff; margin-bottom: 10px;">
+        <div class="card" style="border-left: 5px solid {real_border}; padding: 15px; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); background-color: var(--secondary-background-color); color: var(--text-color); margin-bottom: 10px;">
             <div style="font-size: 0.85rem; color: #64748b; font-weight: 600;">確定損益 (累計実益)</div>
             <div style="font-size: 1.5rem; font-weight: bold; margin-top: 5px; color: {real_color};">
                 {real_sign}¥{int(realized_jpy):,}
@@ -4442,18 +4497,18 @@ with tab_simulation:
                 curr_price = st.session_state['last_valid_prices'].get(selected_rec["ticker"], selected_rec["purchase_price"])
             
             st.markdown(f"""
-            <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 12px; margin-bottom: 10px; color: #1e293b;">
+            <div style="background-color: var(--secondary-background-color); border: 1px solid var(--border-color); border-radius: 6px; padding: 12px; margin-bottom: 10px; color: var(--text-color);">
                 <div style="display: flex; justify-content: space-between;">
-                    <span style="color: #64748b;">売却対象:</span>
-                    <span style="font-weight: bold; color: #0f172a;">{selected_rec['name']} ({selected_rec['ticker']})</span>
+                    <span style="color: var(--text-color); opacity: 0.75;">売却対象:</span>
+                    <span style="font-weight: bold; color: var(--text-color);">{selected_rec['name']} ({selected_rec['ticker']})</span>
                 </div>
                 <div style="display: flex; justify-content: space-between; margin-top: 5px;">
-                    <span style="color: #64748b;">保有数量:</span>
-                    <span style="font-weight: bold; color: #0f172a;">{total_qty:,} 株</span>
+                    <span style="color: var(--text-color); opacity: 0.75;">保有数量:</span>
+                    <span style="font-weight: bold; color: var(--text-color);">{total_qty:,} 株</span>
                 </div>
                 <div style="display: flex; justify-content: space-between; margin-top: 5px;">
-                    <span style="color: #64748b;">現在価格:</span>
-                    <span style="font-weight: bold; color: #1e293b;">{format_price(curr_price, selected_rec['ticker'])}</span>
+                    <span style="color: var(--text-color); opacity: 0.75;">現在価格:</span>
+                    <span style="font-weight: bold; color: var(--text-color);">{format_price(curr_price, selected_rec['ticker'])}</span>
                 </div>
             </div>
             """, unsafe_allow_html=True)
@@ -4474,7 +4529,7 @@ with tab_simulation:
             original_cost = sell_qty * selected_rec["purchase_price"]
             realized_pl = expected_return - original_cost
             
-            pl_color_style = "color: #16a34a;" if realized_pl >= 0 else "color: #dc2626;"
+            pl_color_style = "color: #10b981;" if realized_pl >= 0 else "color: #ef4444;"
             pl_sign = "+" if realized_pl >= 0 else ""
             
             ticker = selected_rec["ticker"]
@@ -4488,13 +4543,13 @@ with tab_simulation:
                 realized_pl_str = f"{pl_sign}{format_price(realized_pl, ticker)}"
             
             st.markdown(f"""
-            <div style="background-color: #f1f5f9; border-radius: 6px; padding: 10px 12px; margin-bottom: 15px; font-size: 0.9rem;">
+            <div style="background-color: var(--secondary-background-color); border: 1px solid var(--border-color); border-radius: 6px; padding: 10px 12px; margin-bottom: 15px; font-size: 0.9rem; color: var(--text-color);">
                 <div style="display: flex; justify-content: space-between;">
-                    <span style="color: #475569;">売却予定金額:</span>
-                    <span style="font-weight: bold; color: #0f172a;">{expected_return_str}</span>
+                    <span style="color: var(--text-color); opacity: 0.75;">売却予定金額:</span>
+                    <span style="font-weight: bold; color: var(--text-color);">{expected_return_str}</span>
                 </div>
                 <div style="display: flex; justify-content: space-between; margin-top: 5px;">
-                    <span style="color: #475569;">確定実現損益:</span>
+                    <span style="color: var(--text-color); opacity: 0.75;">確定実現損益:</span>
                     <span style="font-weight: bold; {pl_color_style}">{realized_pl_str}</span>
                 </div>
             </div>
@@ -4645,7 +4700,7 @@ with tab_simulation:
                 y=df_total['pl'],
                 name="総合評価損益",
                 mode='lines+markers',
-                line=dict(color='#1e3a8a', width=2.5),
+                line=dict(color='#60a5fa' if is_dark else '#1e3a8a', width=2.5),
                 marker=dict(size=4),
                 hovertemplate="日付: %{x|%Y-%m-%d}<br>総合損益: ¥%{y:,.0f}<extra></extra>"
             ))
@@ -4659,13 +4714,18 @@ with tab_simulation:
                 title=None,
                 xaxis_title="日付",
                 yaxis_title="評価損益 (円)",
-                template="plotly_white",
+                template="plotly_dark" if is_dark else "plotly_white",
                 height=380,
                 margin=dict(l=10, r=10, t=20, b=10),
                 legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
                 dragmode=False if is_mobile else "pan",
                 showlegend=not is_mobile
             )
+            gridcolor = '#1e293b' if is_dark else '#f1f5f9'
+            zerolinecolor = '#334155' if is_dark else '#cbd5e1'
+            fig_total.update_yaxes(gridcolor=gridcolor, zerolinecolor=zerolinecolor)
+            fig_total.update_xaxes(gridcolor=gridcolor)
+            
             with st.container(border=True):
                 st.plotly_chart(fig_total, use_container_width=True, config=PLOTLY_CONFIG)
             
@@ -4681,7 +4741,7 @@ with tab_simulation:
                     item_container2 = item_col2
                     
                 with item_container1:
-                    st.markdown("<h5 style='text-align: center; color: #1e293b; margin-bottom: 10px;'>保有銘柄の評価損益 (含み損益)</h5>", unsafe_allow_html=True)
+                    st.markdown("<h5 style='text-align: center; color: var(--text-color, #1e293b); margin-bottom: 10px;'>保有銘柄の評価損益 (含み損益)</h5>", unsafe_allow_html=True)
                     if item_pl_list:
                         fig_bar_active = go.Figure()
                         fig_bar_active.add_trace(go.Bar(
@@ -4695,19 +4755,23 @@ with tab_simulation:
                         fig_bar_active.update_layout(
                             xaxis_title="評価損益 (円)",
                             yaxis_title=None,
-                            template="plotly_white",
+                            template="plotly_dark" if is_dark else "plotly_white",
                             height=320,
                             margin=dict(l=10, r=10, t=10, b=10),
                             dragmode=False if is_mobile else "pan"
                         )
+                        gridcolor = '#1e293b' if is_dark else '#f1f5f9'
+                        zerolinecolor = '#334155' if is_dark else '#cbd5e1'
+                        fig_bar_active.update_xaxes(gridcolor=gridcolor, zerolinecolor=zerolinecolor)
+                        
                         with st.container(border=True):
                             st.plotly_chart(fig_bar_active, use_container_width=True, config=PLOTLY_CONFIG)
                     else:
                         st.info("現在保有している銘柄はありません。")
                 with item_container2:
                     if is_mobile:
-                        st.markdown("<hr style='margin: 20px 0; border: none; border-top: 1px solid #e2e8f0;'>", unsafe_allow_html=True)
-                    st.markdown("<h5 style='text-align: center; color: #1e293b; margin-bottom: 10px;'>売却銘柄の累計確定損益 (実現損益)</h5>", unsafe_allow_html=True)
+                        st.markdown("<hr style='margin: 20px 0; border: none; border-top: 1px solid var(--border-color, #e2e8f0);'>", unsafe_allow_html=True)
+                    st.markdown("<h5 style='text-align: center; color: var(--text-color, #1e293b); margin-bottom: 10px;'>売却銘柄の累計確定損益 (実現損益)</h5>", unsafe_allow_html=True)
                     fig_bar_realized = go.Figure()
                     fig_bar_realized.add_trace(go.Bar(
                         y=[x["label"] for x in realized_pl_list],
@@ -4720,15 +4784,19 @@ with tab_simulation:
                     fig_bar_realized.update_layout(
                         xaxis_title="実現損益 (円)",
                         yaxis_title=None,
-                        template="plotly_white",
+                        template="plotly_dark" if is_dark else "plotly_white",
                         height=320,
                         margin=dict(l=10, r=10, t=10, b=10),
                         dragmode=False if is_mobile else "pan"
                     )
+                    gridcolor = '#1e293b' if is_dark else '#f1f5f9'
+                    zerolinecolor = '#334155' if is_dark else '#cbd5e1'
+                    fig_bar_realized.update_xaxes(gridcolor=gridcolor, zerolinecolor=zerolinecolor)
+                    
                     with st.container(border=True):
                         st.plotly_chart(fig_bar_realized, use_container_width=True, config=PLOTLY_CONFIG)
             else:
-                st.markdown("<h5 style='text-align: center; color: #1e293b; margin-bottom: 10px;'>保有銘柄の評価損益 (含み損益)</h5>", unsafe_allow_html=True)
+                st.markdown("<h5 style='text-align: center; color: var(--text-color, #1e293b); margin-bottom: 10px;'>保有銘柄の評価損益 (含み損益)</h5>", unsafe_allow_html=True)
                 if item_pl_list:
                     fig_bar_active = go.Figure()
                     fig_bar_active.add_trace(go.Bar(
@@ -4742,11 +4810,15 @@ with tab_simulation:
                     fig_bar_active.update_layout(
                         xaxis_title="評価損益 (円)",
                         yaxis_title=None,
-                        template="plotly_white",
+                        template="plotly_dark" if is_dark else "plotly_white",
                         height=320,
                         margin=dict(l=10, r=10, t=10, b=10),
                         dragmode=False if is_mobile else "pan"
                     )
+                    gridcolor = '#1e293b' if is_dark else '#f1f5f9'
+                    zerolinecolor = '#334155' if is_dark else '#cbd5e1'
+                    fig_bar_active.update_xaxes(gridcolor=gridcolor, zerolinecolor=zerolinecolor)
+                    
                     with st.container(border=True):
                         st.plotly_chart(fig_bar_active, use_container_width=True, config=PLOTLY_CONFIG)
                 else:
