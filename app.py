@@ -371,12 +371,21 @@ st.markdown(f"""
         color: var(--text-color) !important;
         border-bottom-width: 2px !important;
         transition: all 0.2s ease !important;
+        opacity: 0.55 !important;
     }}
     button[data-baseweb="tab"] div {{
         color: var(--text-color) !important;
     }}
+    button[data-baseweb="tab"]:hover {{
+        opacity: 0.85 !important;
+    }}
     button[data-baseweb="tab"][aria-selected="true"] {{
         border-bottom-color: var(--primary-color) !important;
+        opacity: 1 !important;
+    }}
+    button[data-baseweb="tab"][aria-selected="true"] div {{
+        color: var(--primary-color) !important;
+        font-weight: 600 !important;
     }}
     div[role="tablist"] {{
         border-bottom-color: var(--border-color) !important;
@@ -413,12 +422,14 @@ st.markdown(f"""
     div[data-testid="stSegmentedControl"] button {{
         background-color: var(--unselected-button-bg) !important;
         color: var(--text-color) !important;
+        opacity: 0.6 !important;
         border: 1px solid var(--border-color) !important;
         transition: all 0.2s ease !important;
     }}
     div[data-testid="stSegmentedControl"] button:hover {{
         border-color: var(--primary-color) !important;
         color: var(--primary-color) !important;
+        opacity: 0.9 !important;
         background-color: var(--background-color) !important;
     }}
     /* Selected segment */
@@ -426,6 +437,7 @@ st.markdown(f"""
     div[data-testid="stSegmentedControl"] button[aria-selected="true"] {{
         background-color: var(--primary-color) !important;
         color: #ffffff !important;
+        opacity: 1 !important;
         border-color: var(--primary-color) !important;
     }}
 </style>
