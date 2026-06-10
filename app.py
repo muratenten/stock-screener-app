@@ -426,31 +426,30 @@ def show_sell_success_dialog(name, ticker, qty, price, total_return, realized_pl
 def patch_history_with_fast_info(ticker, df, skip_fast_info=False):
     if df.empty:
         return df
-    # Drop rows where Close is NaN first (especially weekend trailing empty rows)
+        
+    if not skip_fast_info:
+        # Check if the last row has NaN for Close (typical yfinance weekend bug for JPY stocks)
+        last_idx = df.index[-1]
+        if pd.isna(df.loc[last_idx, 'Close']):
+            try:
+                tk = yf.Ticker(ticker)
+                f_info = tk.fast_info
+                last_price = f_info.get('lastPrice')
+                if last_price is not None and not pd.isna(last_price):
+                    df.loc[last_idx, 'Close'] = last_price
+                    if 'Open' in df.columns and f_info.get('open') is not None:
+                        df.loc[last_idx, 'Open'] = f_info.get('open')
+                    if 'High' in df.columns and f_info.get('dayHigh') is not None:
+                        df.loc[last_idx, 'High'] = f_info.get('dayHigh')
+                    if 'Low' in df.columns and f_info.get('dayLow') is not None:
+                        df.loc[last_idx, 'Low'] = f_info.get('dayLow')
+                    if 'Volume' in df.columns and f_info.get('lastVolume') is not None:
+                        df.loc[last_idx, 'Volume'] = f_info.get('lastVolume')
+            except Exception:
+                pass
+                
+    # Drop rows where Close is NaN (especially weekend trailing empty rows or if patching failed)
     df = df.dropna(subset=['Close'])
-    if df.empty:
-        return df
-    if skip_fast_info:
-        return df
-    # Check if the last row has NaN for Close (typical yfinance weekend bug for JPY stocks)
-    last_idx = df.index[-1]
-    if pd.isna(df.loc[last_idx, 'Close']):
-        try:
-            tk = yf.Ticker(ticker)
-            f_info = tk.fast_info
-            last_price = f_info.get('lastPrice')
-            if last_price is not None and not pd.isna(last_price):
-                df.loc[last_idx, 'Close'] = last_price
-                if 'Open' in df.columns and f_info.get('open') is not None:
-                    df.loc[last_idx, 'Open'] = f_info.get('open')
-                if 'High' in df.columns and f_info.get('dayHigh') is not None:
-                    df.loc[last_idx, 'High'] = f_info.get('dayHigh')
-                if 'Low' in df.columns and f_info.get('dayLow') is not None:
-                    df.loc[last_idx, 'Low'] = f_info.get('dayLow')
-                if 'Volume' in df.columns and f_info.get('lastVolume') is not None:
-                    df.loc[last_idx, 'Volume'] = f_info.get('lastVolume')
-        except Exception:
-            pass
     return df
 
 def z_normalize(seq):
@@ -4149,34 +4148,21 @@ with tab_simulation:
         
         # Download latest prices
         with st.spinner("保有銘柄の最新株価・履歴を読み込み中..."):
+            # Use batch download to fetch all tickers in one go (fast and robust!)
+            histories = batch_download_histories(unique_tickers, period="1y")
             for t in unique_tickers:
-                try:
-                    tk = yf.Ticker(t)
-                    df_h = tk.history(start=start_fetch_date)
-                    df_h = patch_history_with_fast_info(t, df_h)
-                    if not df_h.empty:
-                        histories[t] = df_h
-                        closes = df_h['Close'].dropna()
-                        if not closes.empty:
-                            price_val = float(closes.iloc[-1])
-                            latest_prices[t] = price_val
-                            # Update session state cache & local record dictionary
-                            st.session_state['last_valid_prices'][t] = price_val
-                            portfolio_data['last_valid_prices'][t] = price_val
-                    else:
-                        df_h = tk.history(period="1mo")
-                        df_h = patch_history_with_fast_info(t, df_h)
-                        if not df_h.empty:
-                            histories[t] = df_h
-                            closes = df_h['Close'].dropna()
-                            if not closes.empty:
-                                price_val = float(closes.iloc[-1])
-                                latest_prices[t] = price_val
-                                st.session_state['last_valid_prices'][t] = price_val
-                                portfolio_data['last_valid_prices'][t] = price_val
-                except Exception as e:
-                    # Silence warnings and rely on cache fallback
-                    pass
+                df_h = histories.get(t)
+                if df_h is not None and not df_h.empty:
+                    # Try to patch with fast_info individually since portfolio size is very small
+                    df_h = patch_history_with_fast_info(t, df_h, skip_fast_info=False)
+                    histories[t] = df_h
+                    closes = df_h['Close'].dropna()
+                    if not closes.empty:
+                        price_val = float(closes.iloc[-1])
+                        latest_prices[t] = price_val
+                        # Update session state cache & local record dictionary
+                        st.session_state['last_valid_prices'][t] = price_val
+                        portfolio_data['last_valid_prices'][t] = price_val
             
             # Save updated price cache back to portfolio file without triggering localStorage sync
             save_portfolio_cache_only(portfolio_data)
