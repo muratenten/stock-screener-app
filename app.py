@@ -144,6 +144,7 @@ card_bg = "#151d30" if is_dark else "#ffffff"
 text_color = "#e2e8f0" if is_dark else "#1e293b" # Softer text color for dark mode to prevent eye strain
 primary_color = "#3b82f6" if is_dark else "#2563eb"
 border_color = "#1e293b" if is_dark else "#e2e8f0"
+unselected_btn_bg = "#151d30" if is_dark else "#e2e8f0" # Softer, distinct background for unselected buttons in light mode
 title_bg = "linear-gradient(135deg, #151d30 0%, #0b0f19 100%)" if is_dark else "linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%)"
 title_border = "#1e293b" if is_dark else "#cbd5e1"
 title_text_color = "#3b82f6" if is_dark else "#1e3a8a"
@@ -158,6 +159,7 @@ st.markdown(f"""
         --text-color: {text_color};
         --primary-color: {primary_color};
         --border-color: {border_color};
+        --unselected-button-bg: {unselected_btn_bg};
         
         /* Streamlit Generic Theme Variable Overrides */
         --theme-background-color: {bg_color};
@@ -304,7 +306,7 @@ st.markdown(f"""
     
     /* Native Streamlit Base Buttons (Secondary) */
     div.stButton > button, div.stDownloadButton > button, [data-testid="stBaseButton-secondary"] button {{
-        background-color: var(--secondary-background-color) !important;
+        background-color: var(--unselected-button-bg) !important;
         color: var(--text-color) !important;
         border: 1px solid var(--border-color) !important;
         transition: all 0.2s ease !important;
@@ -409,7 +411,7 @@ st.markdown(f"""
         background-color: transparent !important;
     }}
     div[data-testid="stSegmentedControl"] button {{
-        background-color: var(--secondary-background-color) !important;
+        background-color: var(--unselected-button-bg) !important;
         color: var(--text-color) !important;
         border: 1px solid var(--border-color) !important;
         transition: all 0.2s ease !important;
