@@ -14,7 +14,7 @@ from tickers import JP_TICKERS, US_TICKERS
 
 # Plotly config for scroll/pinch-to-zoom and permanently visible modebar
 PLOTLY_CONFIG = {
-    'scrollZoom': True,
+    'scrollZoom': False,
     'displayModeBar': True,
     'displaylogo': False,
     'responsive': True,
