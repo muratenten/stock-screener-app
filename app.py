@@ -262,6 +262,108 @@ st.markdown(f"""
         transform: translateY(-2px) !important;
         box-shadow: 0 6px 18px 0 rgba(37, 99, 235, 0.4) !important;
     }}
+    
+    /* Native Streamlit Base Buttons (Secondary) */
+    div.stButton > button, div.stDownloadButton > button, [data-testid="stBaseButton-secondary"] button {{
+        background-color: var(--secondary-background-color) !important;
+        color: var(--text-color) !important;
+        border: 1px solid var(--border-color) !important;
+        transition: all 0.2s ease !important;
+    }}
+    div.stButton > button:hover, div.stDownloadButton > button:hover, [data-testid="stBaseButton-secondary"] button:hover {{
+        border-color: var(--primary-color) !important;
+        color: var(--primary-color) !important;
+        background-color: var(--background-color) !important;
+    }}
+    
+    /* Native Streamlit Primary Buttons */
+    [data-testid="stBaseButton-primary"] button, div.stButton > button[type="primary"] {{
+        background: var(--primary-color) !important;
+        color: #ffffff !important;
+        border: 1px solid var(--primary-color) !important;
+        transition: all 0.2s ease !important;
+    }}
+    [data-testid="stBaseButton-primary"] button:hover, div.stButton > button[type="primary"]:hover {{
+        background: var(--primary-color) !important;
+        opacity: 0.9 !important;
+        box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25) !important;
+    }}
+    
+    /* Text Inputs, Number Inputs, Date Inputs, Textareas */
+    div[data-testid="stTextInput"] input, div[data-testid="stNumberInput"] input, div[data-testid="stDateInput"] input, textarea {{
+        background-color: var(--secondary-background-color) !important;
+        color: var(--text-color) !important;
+        border: 1px solid var(--border-color) !important;
+    }}
+    div[data-testid="stTextInput"] input:focus, div[data-testid="stNumberInput"] input:focus, div[data-testid="stDateInput"] input:focus, textarea:focus {{
+        border-color: var(--primary-color) !important;
+        box-shadow: 0 0 0 1px var(--primary-color) !important;
+    }}
+    
+    /* Selectbox (BaseWeb dropdown select) */
+    div[data-baseweb="select"] > div {{
+        background-color: var(--secondary-background-color) !important;
+        color: var(--text-color) !important;
+        border: 1px solid var(--border-color) !important;
+    }}
+    div[data-baseweb="select"] * {{
+        color: var(--text-color) !important;
+    }}
+    
+    /* Dropdown menu list styling */
+    ul[role="listbox"] {{
+        background-color: var(--secondary-background-color) !important;
+        border: 1px solid var(--border-color) !important;
+    }}
+    li[role="option"] {{
+        background-color: var(--secondary-background-color) !important;
+        color: var(--text-color) !important;
+        transition: all 0.15s ease !important;
+    }}
+    li[role="option"]:hover, li[role="option"][aria-selected="true"] {{
+        background-color: var(--background-color) !important;
+        color: var(--primary-color) !important;
+    }}
+    
+    /* Tabs styling */
+    button[data-baseweb="tab"] {{
+        color: var(--text-color) !important;
+        border-bottom-width: 2px !important;
+        transition: all 0.2s ease !important;
+    }}
+    button[data-baseweb="tab"] div {{
+        color: var(--text-color) !important;
+    }}
+    button[data-baseweb="tab"][aria-selected="true"] {{
+        border-bottom-color: var(--primary-color) !important;
+    }}
+    div[role="tablist"] {{
+        border-bottom-color: var(--border-color) !important;
+    }}
+    
+    /* Expanders styling */
+    [data-testid="stExpander"] {{
+        background-color: var(--secondary-background-color) !important;
+        border: 1px solid var(--border-color) !important;
+        border-radius: 8px !important;
+    }}
+    [data-testid="stExpander"] * {{
+        color: var(--text-color) !important;
+    }}
+    
+    /* Sidebar styling overrides */
+    [data-testid="stSidebar"] {{
+        background-color: var(--secondary-background-color) !important;
+        border-right: 1px solid var(--border-color) !important;
+    }}
+    [data-testid="stSidebar"] * {{
+        color: var(--text-color) !important;
+    }}
+    /* Ensure radio label text etc doesn't get messed up */
+    [data-testid="stSidebar"] div[data-testid="stWidgetLabel"] p {{
+        color: var(--text-color) !important;
+        opacity: 0.95;
+    }}
 </style>
 
 """, unsafe_allow_html=True)
