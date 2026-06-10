@@ -3144,26 +3144,18 @@ if user_key not in st.session_state['ls_loaded_keys']:
                 try:
                     browser_portfolio_data = json.loads(val_str)
                     if isinstance(browser_portfolio_data, dict) and ("purchase_records" in browser_portfolio_data or "watchlist" in browser_portfolio_data):
-                        local_time = local_portfolio_data.get("last_updated", "1970-01-01T00:00:00")
-                        cloud_time = browser_portfolio_data.get("last_updated", "1970-01-01T00:00:00")
+                        # Always prioritize cloud/browser data if it exists.
+                        # The local file on the server is just a static template from Git and should never overwrite user's actual database.
+                        filename = get_portfolio_filename()
+                        with open(filename, "w", encoding="utf-8") as f:
+                            json.dump(browser_portfolio_data, f, indent=4, ensure_ascii=False)
                         
-                        # Only restore if cloud data is newer or local file is empty
-                        if local_is_empty or cloud_time >= local_time:
-                            filename = get_portfolio_filename()
-                            with open(filename, "w", encoding="utf-8") as f:
-                                json.dump(browser_portfolio_data, f, indent=4, ensure_ascii=False)
-                            
-                            if data_source == "Firebase":
-                                st.toast("🔥 Firebaseから最新データを同期しました。")
-                            elif data_source == "Google Sheets":
-                                st.toast("☁️ Googleスプレッドシートからデータを復元しました。")
-                            else:
-                                st.toast("🔄 ブラウザ保存のデータを復元しました。")
+                        if data_source == "Firebase":
+                            st.toast("🔥 Firebaseから最新データを同期しました。")
+                        elif data_source == "Google Sheets":
+                            st.toast("☁️ Googleスプレッドシートからデータを復元しました。")
                         else:
-                            # Local file is newer! Sync local file back to cloud
-                            st.session_state['ls_needs_sync'] = True
-                            st.session_state['ls_sync_counter'] = st.session_state.get('ls_sync_counter', 0) + 1
-                            st.toast("📤 ローカルの最新データをクラウド・ブラウザに保存しています...")
+                            st.toast("🔄 ブラウザ保存のデータを復元しました。")
                 except Exception as e:
                     pass
             else:
