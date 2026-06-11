@@ -155,6 +155,7 @@ gdg_bg_cell = "#0b0f19" if is_dark else "#ffffff"
 gdg_bg_header = "#05070c" if is_dark else "#f8fafc"
 gdg_bg_cell_hover = "#151d30" if is_dark else "#f8fafc"
 gdg_bg_header_hover = "#151d30" if is_dark else "#ffffff"
+dataframe_filter = "invert(0.94) hue-rotate(180deg)" if is_dark else "none"
 
 st.markdown(f"""
 <style>
@@ -190,7 +191,7 @@ st.markdown(f"""
     }}
     
     /* Target Glide Data Grid elements specifically */
-    div.stDataFrame, div.stDataFrameGlideDataEditor, [data-testid="stDataFrame"] {{
+    div.stDataFrame, div.stDataFrameGlideDataEditor, [data-testid="stDataFrame"], [data-testid="stDataFrameResizable"] {{
         --gdg-bg-cell: {gdg_bg_cell} !important;
         --gdg-bg-header: {gdg_bg_header} !important;
         --gdg-bg-cell-hover: {gdg_bg_cell_hover} !important;
@@ -203,6 +204,7 @@ st.markdown(f"""
         --gdg-border-color: {border_color} !important;
         --gdg-accent-color: {primary_color} !important;
         --gdg-accent-light: rgba(59, 130, 246, 0.12) !important;
+        filter: {dataframe_filter} !important;
     }}
     
     /* Ensure Streamlit's native background matches our theme */
