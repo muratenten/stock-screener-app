@@ -2582,51 +2582,75 @@ def render_detail_dashboard(selected_ticker, selected_name, raw_analysis, key_su
                  <div style="font-size: 0.8rem; color: #64748b; margin-top: 2px;">{owned_sub}</div>
              </div>""", unsafe_allow_html=True)
     
+    # Hardcoded theme colors for segmented control styling
+    local_is_dark = st.session_state.get('color_theme', 'light') == 'dark'
+    local_unselected_bg = "#0b0f19" if local_is_dark else "#e2e8f0"
+    local_text_color = "#e2e8f0" if local_is_dark else "#1e293b"
+    local_border_color = "#1e293b" if local_is_dark else "#cbd5e1"
+    local_primary_color = "#3b82f6" if local_is_dark else "#2563eb"
+    local_bg_color = "#0b0f19" if local_is_dark else "#f8fafc"
+
     # CSS styling to stretch st.segmented_control to full width and make buttons equal width
-    st.markdown("""
+    st.markdown(f"""
     <style>
-    div[data-testid="stSegmentedControl"] {
+    div[data-testid="stSegmentedControl"] {{
         width: 100% !important;
         background: transparent !important;
-    }
-    div[data-testid="stSegmentedControl"] > div {
+    }}
+    div[data-testid="stSegmentedControl"] > div {{
         display: flex !important;
         width: 100% !important;
         flex-direction: row !important;
         gap: 8px !important;
         background: transparent !important;
-    }
-    div[data-testid="stSegmentedControl"] button {
+    }}
+    div[data-testid="stSegmentedControl"] button,
+    div[data-testid="stSegmentedControl"] button[data-testid="stSegmentedControlOption"],
+    div[class*="st-key-det_tab_select"] button,
+    div[class*="st-key-chart_interval"] button {{
         flex: 1 1 0% !important;
         text-align: center !important;
         font-size: 0.95rem !important;
         padding: 10px 16px !important;
         white-space: nowrap !important;
         font-weight: 600 !important;
-        background: var(--unselected-button-bg) !important;
-        color: var(--text-color) !important;
-        opacity: 0.6 !important;
-        border: 1px solid var(--border-color) !important;
+        background: {local_unselected_bg} !important;
+        background-color: {local_unselected_bg} !important;
+        background-image: none !important;
+        color: {local_text_color} !important;
+        opacity: 0.65 !important;
+        border: 1px solid {local_border_color} !important;
         transition: all 0.2s ease !important;
-    }
-    div[data-testid="stSegmentedControl"] button:hover {
-        border-color: var(--primary-color) !important;
-        color: var(--primary-color) !important;
+        box-shadow: none !important;
+    }}
+    div[data-testid="stSegmentedControl"] button:hover,
+    div[class*="st-key-det_tab_select"] button:hover,
+    div[class*="st-key-chart_interval"] button:hover {{
+        border-color: {local_primary_color} !important;
+        color: {local_primary_color} !important;
         opacity: 0.9 !important;
-        background: var(--background-color) !important;
-    }
+        background: {local_bg_color} !important;
+        background-color: {local_bg_color} !important;
+    }}
     /* Selected segment */
     div[data-testid="stSegmentedControl"] button[aria-checked="true"], 
-    div[data-testid="stSegmentedControl"] button[aria-selected="true"] {
-        background: var(--primary-color) !important;
+    div[data-testid="stSegmentedControl"] button[aria-selected="true"],
+    div[class*="st-key-det_tab_select"] button[aria-checked="true"],
+    div[class*="st-key-det_tab_select"] button[aria-selected="true"],
+    div[class*="st-key-chart_interval"] button[aria-checked="true"],
+    div[class*="st-key-chart_interval"] button[aria-selected="true"] {{
+        background: {local_primary_color} !important;
+        background-color: {local_primary_color} !important;
         color: #ffffff !important;
         opacity: 1 !important;
-        border-color: var(--primary-color) !important;
-    }
+        border-color: {local_primary_color} !important;
+    }}
     /* Style child elements (text) of buttons to inherit color */
-    div[data-testid="stSegmentedControl"] button * {
+    div[data-testid="stSegmentedControl"] button *,
+    div[class*="st-key-det_tab_select"] button *,
+    div[class*="st-key-chart_interval"] button * {{
         color: inherit !important;
-    }
+    }}
     </style>
     """, unsafe_allow_html=True)
 
