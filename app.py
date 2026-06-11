@@ -150,6 +150,12 @@ title_border = "#1e293b" if is_dark else "#cbd5e1"
 title_text_color = "#3b82f6" if is_dark else "#1e3a8a"
 subtitle_text_color = "#94a3b8" if is_dark else "#475569"
 
+# Specific colors for Glide Data Grid (st.dataframe) to make it black-based in dark mode
+gdg_bg_cell = "#0b0f19" if is_dark else "#ffffff"
+gdg_bg_header = "#05070c" if is_dark else "#f8fafc"
+gdg_bg_cell_hover = "#151d30" if is_dark else "#f8fafc"
+gdg_bg_header_hover = "#151d30" if is_dark else "#ffffff"
+
 st.markdown(f"""
 <style>
     /* CSS theme overrides on root */
@@ -169,10 +175,10 @@ st.markdown(f"""
         --theme-border-color: {border_color};
         
         /* Glide Data Grid (st.dataframe) overrides on root */
-        --gdg-bg-cell: {card_bg} !important;
-        --gdg-bg-header: {bg_color} !important;
-        --gdg-bg-cell-hover: {bg_color} !important;
-        --gdg-bg-header-hover: {card_bg} !important;
+        --gdg-bg-cell: {gdg_bg_cell} !important;
+        --gdg-bg-header: {gdg_bg_header} !important;
+        --gdg-bg-cell-hover: {gdg_bg_cell_hover} !important;
+        --gdg-bg-header-hover: {gdg_bg_header_hover} !important;
         --gdg-text-dark: {text_color} !important;
         --gdg-text-light: {text_color} !important;
         --gdg-text-group-header: {text_color} !important;
@@ -185,10 +191,10 @@ st.markdown(f"""
     
     /* Target Glide Data Grid elements specifically */
     div.stDataFrame, div.stDataFrameGlideDataEditor, [data-testid="stDataFrame"] {{
-        --gdg-bg-cell: {card_bg} !important;
-        --gdg-bg-header: {bg_color} !important;
-        --gdg-bg-cell-hover: {bg_color} !important;
-        --gdg-bg-header-hover: {card_bg} !important;
+        --gdg-bg-cell: {gdg_bg_cell} !important;
+        --gdg-bg-header: {gdg_bg_header} !important;
+        --gdg-bg-cell-hover: {gdg_bg_cell_hover} !important;
+        --gdg-bg-header-hover: {gdg_bg_header_hover} !important;
         --gdg-text-dark: {text_color} !important;
         --gdg-text-light: {text_color} !important;
         --gdg-text-group-header: {text_color} !important;
