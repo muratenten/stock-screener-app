@@ -306,7 +306,7 @@ st.markdown(f"""
     
     /* Native Streamlit Base Buttons (Secondary) */
     div.stButton > button, div.stDownloadButton > button, [data-testid="stBaseButton-secondary"] button {{
-        background-color: var(--unselected-button-bg) !important;
+        background: var(--unselected-button-bg) !important;
         color: var(--text-color) !important;
         border: 1px solid var(--border-color) !important;
         transition: all 0.2s ease !important;
@@ -314,7 +314,7 @@ st.markdown(f"""
     div.stButton > button:hover, div.stDownloadButton > button:hover, [data-testid="stBaseButton-secondary"] button:hover {{
         border-color: var(--primary-color) !important;
         color: var(--primary-color) !important;
-        background-color: var(--background-color) !important;
+        background: var(--background-color) !important;
     }}
     
     /* Native Streamlit Primary Buttons */
@@ -417,10 +417,10 @@ st.markdown(f"""
     
     /* Segmented Control Styling */
     div[data-testid="stSegmentedControl"] {{
-        background-color: transparent !important;
+        background: transparent !important;
     }}
     div[data-testid="stSegmentedControl"] button {{
-        background-color: var(--unselected-button-bg) !important;
+        background: var(--unselected-button-bg) !important;
         color: var(--text-color) !important;
         opacity: 0.6 !important;
         border: 1px solid var(--border-color) !important;
@@ -430,15 +430,19 @@ st.markdown(f"""
         border-color: var(--primary-color) !important;
         color: var(--primary-color) !important;
         opacity: 0.9 !important;
-        background-color: var(--background-color) !important;
+        background: var(--background-color) !important;
     }}
     /* Selected segment */
     div[data-testid="stSegmentedControl"] button[aria-checked="true"], 
     div[data-testid="stSegmentedControl"] button[aria-selected="true"] {{
-        background-color: var(--primary-color) !important;
+        background: var(--primary-color) !important;
         color: #ffffff !important;
         opacity: 1 !important;
         border-color: var(--primary-color) !important;
+    }}
+    /* Ensure inner text of buttons inherit the custom color */
+    div[data-testid="stSegmentedControl"] button * {{
+        color: inherit !important;
     }}
 </style>
 
@@ -2583,12 +2587,14 @@ def render_detail_dashboard(selected_ticker, selected_name, raw_analysis, key_su
     <style>
     div[data-testid="stSegmentedControl"] {
         width: 100% !important;
+        background: transparent !important;
     }
     div[data-testid="stSegmentedControl"] > div {
         display: flex !important;
         width: 100% !important;
         flex-direction: row !important;
         gap: 8px !important;
+        background: transparent !important;
     }
     div[data-testid="stSegmentedControl"] button {
         flex: 1 1 0% !important;
@@ -2597,6 +2603,29 @@ def render_detail_dashboard(selected_ticker, selected_name, raw_analysis, key_su
         padding: 10px 16px !important;
         white-space: nowrap !important;
         font-weight: 600 !important;
+        background: var(--unselected-button-bg) !important;
+        color: var(--text-color) !important;
+        opacity: 0.6 !important;
+        border: 1px solid var(--border-color) !important;
+        transition: all 0.2s ease !important;
+    }
+    div[data-testid="stSegmentedControl"] button:hover {
+        border-color: var(--primary-color) !important;
+        color: var(--primary-color) !important;
+        opacity: 0.9 !important;
+        background: var(--background-color) !important;
+    }
+    /* Selected segment */
+    div[data-testid="stSegmentedControl"] button[aria-checked="true"], 
+    div[data-testid="stSegmentedControl"] button[aria-selected="true"] {
+        background: var(--primary-color) !important;
+        color: #ffffff !important;
+        opacity: 1 !important;
+        border-color: var(--primary-color) !important;
+    }
+    /* Style child elements (text) of buttons to inherit color */
+    div[data-testid="stSegmentedControl"] button * {
+        color: inherit !important;
     }
     </style>
     """, unsafe_allow_html=True)
