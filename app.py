@@ -417,10 +417,14 @@ st.markdown(f"""
     [data-testid="stSidebar"] * {{
         color: var(--text-color) !important;
     }}
-    /* Ensure radio label text etc doesn't get messed up */
-    [data-testid="stSidebar"] div[data-testid="stWidgetLabel"] p {{
+    /* Ensure all widget labels (Selectbox, Slider, Radio, etc.) have readable colors matching the theme */
+    [data-testid="stWidgetLabel"], 
+    [data-testid="stWidgetLabel"] p, 
+    [data-testid="stWidgetLabel"] span,
+    [data-testid="stWidgetLabel"] label,
+    div[data-testid="stWidgetLabel"] {{
         color: var(--text-color) !important;
-        opacity: 0.95;
+        opacity: 0.95 !important;
     }}
     
     /* Segmented Control Styling */
@@ -442,7 +446,8 @@ st.markdown(f"""
     }}
     /* Selected segment */
     div[data-testid="stSegmentedControl"] button[aria-checked="true"], 
-    div[data-testid="stSegmentedControl"] button[aria-selected="true"] {{
+    div[data-testid="stSegmentedControl"] button[aria-selected="true"],
+    div[data-testid="stSegmentedControl"] button[aria-pressed="true"] {{
         background: var(--primary-color) !important;
         color: #ffffff !important;
         opacity: 1 !important;
@@ -841,15 +846,24 @@ def create_pattern_overlay_chart(target_prices, matches_data, N, ticker=None):
     )
     
     title_text = "類似パターンの重ね合わせ" if is_mobile else "類似パターンの株価値動き重ね合わせ (現在値基準でスケール調整)"
+    plotly_font_color = '#e2e8f0' if is_dark else '#1e293b'
     fig.update_layout(
         title=dict(
             text=title_text,
-            font=dict(size=13 if is_mobile else 15)
+            font=dict(size=13 if is_mobile else 15, color=plotly_font_color)
         ),
         template="plotly_dark" if is_dark else "plotly_white",
         height=450,
         margin=dict(l=10, r=10, t=50, b=50),
-        legend=dict(orientation="h", yanchor="top", y=-0.15, xanchor="center", x=0.5),
+        legend=dict(
+            orientation="h", 
+            yanchor="top", 
+            y=-0.15, 
+            xanchor="center", 
+            x=0.5,
+            font=dict(color=plotly_font_color)
+        ),
+        font=dict(color=plotly_font_color),
         dragmode=False if is_mobile else "pan"
     )
     
@@ -898,15 +912,17 @@ def create_selection_chart(df, ticker, name, start_date, end_date):
     )
     
     title_text = f"{ticker} - 期間選択" if is_mobile else f"{name} ({ticker}) - パターン範囲選択（ドラッグして期間を調整）"
+    plotly_font_color = '#e2e8f0' if is_dark else '#1e293b'
     fig.update_layout(
         title=dict(
             text=title_text,
-            font=dict(size=13 if is_mobile else 15)
+            font=dict(size=13 if is_mobile else 15, color=plotly_font_color)
         ),
         template="plotly_dark" if is_dark else "plotly_white",
         height=320,
         margin=dict(l=10, r=10, t=40, b=10),
         showlegend=False,
+        font=dict(color=plotly_font_color),
         # 2. Style the active Box Select shape to match our red selection theme
         activeshape=dict(
             fillcolor="#ef4444",
@@ -2009,12 +2025,14 @@ def create_chart(df, ticker, name, interval="1d"):
         pass
 
     chart_height = 600 if is_mobile else 750
+    plotly_font_color = '#e2e8f0' if is_dark else '#1e293b'
     legend_cfg = dict(
         orientation="h",
         yanchor="top",
         y=-0.12,
         xanchor="center",
-        x=0.5
+        x=0.5,
+        font=dict(color=plotly_font_color)
     )
 
     # Formatting layout
@@ -2026,15 +2044,16 @@ def create_chart(df, ticker, name, interval="1d"):
         paper_bgcolor='rgba(0,0,0,0)',
         margin=dict(l=10, r=10, t=40, b=50),
         legend=legend_cfg,
+        font=dict(color=plotly_font_color),
         dragmode=False if is_mobile else "pan"
     )
     
     # Clean grids and adjust tick/font sizes for mobile
     gridcolor = '#1e293b' if is_dark else '#f1f5f9'
     zerolinecolor = '#334155' if is_dark else '#cbd5e1'
-    fig.update_yaxes(gridcolor=gridcolor, zerolinecolor=zerolinecolor, tickfont=dict(size=9 if is_mobile else 11))
-    fig.update_xaxes(gridcolor=gridcolor, tickfont=dict(size=9 if is_mobile else 11))
-    fig.update_annotations(font_size=10 if is_mobile else 12)
+    fig.update_yaxes(gridcolor=gridcolor, zerolinecolor=zerolinecolor, tickfont=dict(size=9 if is_mobile else 11, color=plotly_font_color))
+    fig.update_xaxes(gridcolor=gridcolor, tickfont=dict(size=9 if is_mobile else 11, color=plotly_font_color))
+    fig.update_annotations(font=dict(color=plotly_font_color, size=10 if is_mobile else 12))
     
     # Adjust y-axis range of Row 1 (candlestick chart) to fit the stock price nicely
     # and prevent extreme BB values from compressing the candles.
@@ -2643,10 +2662,13 @@ def render_detail_dashboard(selected_ticker, selected_name, raw_analysis, key_su
     /* Selected segment */
     div[data-testid="stSegmentedControl"] button[aria-checked="true"], 
     div[data-testid="stSegmentedControl"] button[aria-selected="true"],
+    div[data-testid="stSegmentedControl"] button[aria-pressed="true"],
     div[class*="st-key-det_tab_select"] button[aria-checked="true"],
     div[class*="st-key-det_tab_select"] button[aria-selected="true"],
+    div[class*="st-key-det_tab_select"] button[aria-pressed="true"],
     div[class*="st-key-chart_interval"] button[aria-checked="true"],
-    div[class*="st-key-chart_interval"] button[aria-selected="true"] {{
+    div[class*="st-key-chart_interval"] button[aria-selected="true"],
+    div[class*="st-key-chart_interval"] button[aria-pressed="true"] {{
         background: {local_primary_color} !important;
         background-color: {local_primary_color} !important;
         color: #ffffff !important;
@@ -4951,14 +4973,23 @@ with tab_simulation:
                 x1=timeline[-1], y1=0,
                 line=dict(color="#94a3b8", width=1.5, dash="dash")
             )
+            plotly_font_color = '#e2e8f0' if is_dark else '#1e293b'
             fig_total.update_layout(
                 title=None,
                 xaxis_title="日付",
                 yaxis_title="評価損益 (円)",
                 template="plotly_dark" if is_dark else "plotly_white",
+                font=dict(color=plotly_font_color),
                 height=380,
                 margin=dict(l=10, r=10, t=20, b=10),
-                legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
+                legend=dict(
+                    orientation="h", 
+                    yanchor="bottom", 
+                    y=1.02, 
+                    xanchor="right", 
+                    x=1,
+                    font=dict(color=plotly_font_color)
+                ),
                 dragmode=False if is_mobile else "pan",
                 showlegend=not is_mobile
             )
@@ -4993,10 +5024,12 @@ with tab_simulation:
                             hovertemplate="銘柄: %{y}<br>評価損益: ¥%{x:,.0f}<extra></extra>"
                         ))
                         fig_bar_active.add_vline(x=0, line_width=1.5, line_dash="dash", line_color="#94a3b8")
+                        plotly_font_color = '#e2e8f0' if is_dark else '#1e293b'
                         fig_bar_active.update_layout(
                             xaxis_title="評価損益 (円)",
                             yaxis_title=None,
                             template="plotly_dark" if is_dark else "plotly_white",
+                            font=dict(color=plotly_font_color),
                             height=320,
                             margin=dict(l=10, r=10, t=10, b=10),
                             dragmode=False if is_mobile else "pan"
@@ -5022,10 +5055,12 @@ with tab_simulation:
                         hovertemplate="銘柄: %{y}<br>累計確定損益: ¥%{x:,.0f}<extra></extra>"
                     ))
                     fig_bar_realized.add_vline(x=0, line_width=1.5, line_dash="dash", line_color="#94a3b8")
+                    plotly_font_color = '#e2e8f0' if is_dark else '#1e293b'
                     fig_bar_realized.update_layout(
                         xaxis_title="実現損益 (円)",
                         yaxis_title=None,
                         template="plotly_dark" if is_dark else "plotly_white",
+                        font=dict(color=plotly_font_color),
                         height=320,
                         margin=dict(l=10, r=10, t=10, b=10),
                         dragmode=False if is_mobile else "pan"
@@ -5048,10 +5083,12 @@ with tab_simulation:
                         hovertemplate="銘柄: %{y}<br>評価損益: ¥%{x:,.0f}<extra></extra>"
                     ))
                     fig_bar_active.add_vline(x=0, line_width=1.5, line_dash="dash", line_color="#94a3b8")
+                    plotly_font_color = '#e2e8f0' if is_dark else '#1e293b'
                     fig_bar_active.update_layout(
                         xaxis_title="評価損益 (円)",
                         yaxis_title=None,
                         template="plotly_dark" if is_dark else "plotly_white",
+                        font=dict(color=plotly_font_color),
                         height=320,
                         margin=dict(l=10, r=10, t=10, b=10),
                         dragmode=False if is_mobile else "pan"
