@@ -2688,6 +2688,7 @@ def render_detail_dashboard(selected_ticker, selected_name, raw_analysis, key_su
     tab_options = [
         "📈 チャート・指標", 
         "💡 事業カタリスト",
+        "💬 ネット注目度・バズ",
         "📊 財務データ分析",
         "🔍 類似パターン検索"
     ]
@@ -2758,6 +2759,82 @@ def render_detail_dashboard(selected_ticker, selected_name, raw_analysis, key_su
             info=raw_analysis.get('info_raw', {})
         )
         st.markdown(f'<div class="card" style="padding: 25px; max-height: 720px; overflow-y: auto;">{ir_md}</div>', unsafe_allow_html=True)
+        
+    elif selected_tab == "💬 ネット注目度・バズ":
+        st.markdown("### 💬 リアルタイムネット注目度・ニュースバズ分析")
+        
+        # Calculate Buzz Metrics
+        vol_surge = metrics.get('vol_surge_ratio', 1.0)
+        
+        # Fetch recent Google News (last 7 days)
+        import datetime
+        today = datetime.date.today()
+        seven_days_ago = today - datetime.timedelta(days=7)
+        
+        with st.spinner("最新のニュースおよびバズ状況を取得中..."):
+            query_name = selected_name.split('(')[0].split('（')[0].strip()
+            recent_news = fetch_historical_google_news(query_name, seven_days_ago, today)
+        
+        news_count = len(recent_news)
+        
+        # Determine Buzz Level
+        if news_count >= 3 and vol_surge >= 1.3:
+            buzz_level = "🔥 超高（大バズ発生中・出来高急増！）"
+            buzz_color = "#dc2626" # Red
+            buzz_desc = "SNSやニュース等で極めて高い話題性を獲得しており、出来高も伴った急激な買いが入っています。短期的なトレンド転換や急騰の可能性が非常に高い局面です。"
+        elif news_count >= 1 or vol_surge >= 1.15:
+            buzz_level = "📈 中（注目度上昇・出来高微増）"
+            buzz_color = "#ea580c" # Orange
+            buzz_desc = "ニュースやSNS上での口コミが緩やかに増加しており、出来高も平均より増加しています。市場の関心が徐々に集まりつつある注目株です。"
+        else:
+            buzz_level = "💬 低（通常運転・市場関心安定）"
+            buzz_color = "#64748b" # Grey
+            buzz_desc = "直近のネット上の言及数や出来高は平年並みの推移を示しています。突発的な動きは少なく、安定した需給環境にあります。"
+            
+        # Display buzz analysis cards
+        st.markdown(f"""
+        <div class="card" style="padding: 25px;">
+            <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 20px;">
+                <div style="font-size: 2.2rem;">💬</div>
+                <div>
+                    <h4 style="margin: 0; font-size: 1.15rem; color: var(--text-color);">ネット話題性・バズ判定</h4>
+                    <span style="font-size: 1.4rem; font-weight: 800; color: {buzz_color};">{buzz_level}</span>
+                </div>
+            </div>
+            <p style="color: var(--text-color); line-height: 1.6; margin-bottom: 20px; font-size: 0.95rem;">
+                {buzz_desc}
+            </p>
+            
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 25px;">
+                <div style="background: rgba(100, 116, 139, 0.05); border: 1px solid var(--border-color); border-radius: 8px; padding: 15px; text-align: center;">
+                    <div style="font-size: 0.8rem; color: #94a3b8; margin-bottom: 5px;">直近7日間のニュース件数</div>
+                    <div style="font-size: 1.8rem; font-weight: bold; color: var(--text-color);">{news_count} 件</div>
+                </div>
+                <div style="background: rgba(100, 116, 139, 0.05); border: 1px solid var(--border-color); border-radius: 8px; padding: 15px; text-align: center;">
+                    <div style="font-size: 0.8rem; color: #94a3b8; margin-bottom: 5px;">出来高急増比率 (5日均/25日均)</div>
+                    <div style="font-size: 1.8rem; font-weight: bold; color: { '#16a34a' if vol_surge >= 1.2 else '#dc2626' if vol_surge < 0.8 else 'var(--text-color)' };">{vol_surge:.2f}倍</div>
+                </div>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        st.markdown(f"#### 📰 直近7日間の主要ニュース・口コミ材料 ({news_count}件)")
+        if recent_news:
+            for n in recent_news[:5]:
+                link_html = f'<a href="{n["link"]}" target="_blank" style="color: #3b82f6; text-decoration: none; font-weight: 600;">記事を開く ↗</a>' if n.get("link") else ''
+                st.markdown(f"""
+                <div class="card" style="padding: 15px; margin-bottom: 12px; border-left: 4px solid var(--primary-color);">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 5px; flex-wrap: wrap; gap: 8px;">
+                        <span style="font-size: 0.8rem; color: #94a3b8;">📅 {n.get('date', '不明')} | 配信元: {n.get('source', 'Google News')}</span>
+                        {link_html}
+                    </div>
+                    <div style="font-size: 0.95rem; font-weight: bold; color: var(--text-color); line-height: 1.4;">
+                        {n.get('title', '')}
+                    </div>
+                </div>
+                """, unsafe_allow_html=True)
+        else:
+            st.info("直近7日間に大手ニュースメディアやSNSで話題となった公開情報は検出されませんでした。市場の関心が低い、あるいは安定して静観されている状態です。")
         
     elif selected_tab == "📊 財務データ分析":
         # Fundamental details formatted vertically
