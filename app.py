@@ -417,45 +417,48 @@ st.markdown(f"""
     [data-testid="stSidebar"] * {{
         color: var(--text-color) !important;
     }}
-    /* Ensure all widget labels (Selectbox, Slider, Radio, etc.) have readable colors matching the theme */
-    [data-testid="stWidgetLabel"], 
-    [data-testid="stWidgetLabel"] p, 
-    [data-testid="stWidgetLabel"] span,
-    [data-testid="stWidgetLabel"] label,
-    div[data-testid="stWidgetLabel"] {{
+    /* Ensure radio label text etc doesn't get messed up */
+    [data-testid="stSidebar"] div[data-testid="stWidgetLabel"] p {{
         color: var(--text-color) !important;
-        opacity: 0.95 !important;
+        opacity: 0.95;
     }}
     
     /* Segmented Control Styling */
-    div[data-testid="stSegmentedControl"] {{
+    div[data-testid="stButtonGroup"] {{
         background: transparent !important;
     }}
-    div[data-testid="stSegmentedControl"] button {{
+    div[data-testid="stButtonGroup"] button[data-testid^="stBaseButton-segmented_control"] {{
         background: var(--unselected-button-bg) !important;
         color: var(--text-color) !important;
         opacity: 0.6 !important;
         border: 1px solid var(--border-color) !important;
         transition: all 0.2s ease !important;
     }}
-    div[data-testid="stSegmentedControl"] button:hover {{
+    div[data-testid="stButtonGroup"] button[data-testid^="stBaseButton-segmented_control"]:hover {{
         border-color: var(--primary-color) !important;
         color: var(--primary-color) !important;
         opacity: 0.9 !important;
         background: var(--background-color) !important;
     }}
     /* Selected segment */
-    div[data-testid="stSegmentedControl"] button[aria-checked="true"], 
-    div[data-testid="stSegmentedControl"] button[aria-selected="true"],
-    div[data-testid="stSegmentedControl"] button[aria-pressed="true"] {{
+    div[data-testid="stButtonGroup"] button[data-testid="stBaseButton-segmented_controlActive"],
+    div[data-testid="stButtonGroup"] button[aria-checked="true"],
+    div[data-testid="stButtonGroup"] button[aria-selected="true"],
+    div[data-testid="stButtonGroup"] button[aria-pressed="true"] {{
         background: var(--primary-color) !important;
+        background-color: var(--primary-color) !important;
         color: #ffffff !important;
         opacity: 1 !important;
         border-color: var(--primary-color) !important;
     }}
-    /* Ensure inner text of buttons inherit the custom color */
-    div[data-testid="stSegmentedControl"] button * {{
-        color: inherit !important;
+    div[data-testid="stButtonGroup"] button[data-testid^="stBaseButton-segmented_control"] * {{
+        color: var(--text-color) !important;
+    }}
+    div[data-testid="stButtonGroup"] button[data-testid="stBaseButton-segmented_controlActive"] *,
+    div[data-testid="stButtonGroup"] button[aria-checked="true"] *,
+    div[data-testid="stButtonGroup"] button[aria-selected="true"] *,
+    div[data-testid="stButtonGroup"] button[aria-pressed="true"] * {{
+        color: #ffffff !important;
     }}
 </style>
 
@@ -469,7 +472,7 @@ st.components.v1.html("""
         const buttons = parentDoc.querySelectorAll('button');
         buttons.forEach(btn => {
             const txt = btn.textContent || "";
-            if (btn.closest('[data-testid="stSegmentedControl"]') || btn.closest('[data-testid="stTabs"]') || btn.getAttribute('role') === 'tab') {
+            if (btn.closest('[data-testid="stSegmentedControl"]') || btn.closest('[data-testid="stButtonGroup"]') || btn.closest('[data-testid="stTabs"]') || btn.getAttribute('role') === 'tab') {
                 if (btn.classList.contains('premium-list-btn')) {
                     btn.classList.remove('premium-list-btn');
                     btn.classList.remove('premium-active');
@@ -846,24 +849,15 @@ def create_pattern_overlay_chart(target_prices, matches_data, N, ticker=None):
     )
     
     title_text = "類似パターンの重ね合わせ" if is_mobile else "類似パターンの株価値動き重ね合わせ (現在値基準でスケール調整)"
-    plotly_font_color = '#e2e8f0' if is_dark else '#1e293b'
     fig.update_layout(
         title=dict(
             text=title_text,
-            font=dict(size=13 if is_mobile else 15, color=plotly_font_color)
+            font=dict(size=13 if is_mobile else 15)
         ),
         template="plotly_dark" if is_dark else "plotly_white",
         height=450,
         margin=dict(l=10, r=10, t=50, b=50),
-        legend=dict(
-            orientation="h", 
-            yanchor="top", 
-            y=-0.15, 
-            xanchor="center", 
-            x=0.5,
-            font=dict(color=plotly_font_color)
-        ),
-        font=dict(color=plotly_font_color),
+        legend=dict(orientation="h", yanchor="top", y=-0.15, xanchor="center", x=0.5),
         dragmode=False if is_mobile else "pan"
     )
     
@@ -912,17 +906,15 @@ def create_selection_chart(df, ticker, name, start_date, end_date):
     )
     
     title_text = f"{ticker} - 期間選択" if is_mobile else f"{name} ({ticker}) - パターン範囲選択（ドラッグして期間を調整）"
-    plotly_font_color = '#e2e8f0' if is_dark else '#1e293b'
     fig.update_layout(
         title=dict(
             text=title_text,
-            font=dict(size=13 if is_mobile else 15, color=plotly_font_color)
+            font=dict(size=13 if is_mobile else 15)
         ),
         template="plotly_dark" if is_dark else "plotly_white",
         height=320,
         margin=dict(l=10, r=10, t=40, b=10),
         showlegend=False,
-        font=dict(color=plotly_font_color),
         # 2. Style the active Box Select shape to match our red selection theme
         activeshape=dict(
             fillcolor="#ef4444",
@@ -2025,14 +2017,12 @@ def create_chart(df, ticker, name, interval="1d"):
         pass
 
     chart_height = 600 if is_mobile else 750
-    plotly_font_color = '#e2e8f0' if is_dark else '#1e293b'
     legend_cfg = dict(
         orientation="h",
         yanchor="top",
         y=-0.12,
         xanchor="center",
-        x=0.5,
-        font=dict(color=plotly_font_color)
+        x=0.5
     )
 
     # Formatting layout
@@ -2044,16 +2034,15 @@ def create_chart(df, ticker, name, interval="1d"):
         paper_bgcolor='rgba(0,0,0,0)',
         margin=dict(l=10, r=10, t=40, b=50),
         legend=legend_cfg,
-        font=dict(color=plotly_font_color),
         dragmode=False if is_mobile else "pan"
     )
     
     # Clean grids and adjust tick/font sizes for mobile
     gridcolor = '#1e293b' if is_dark else '#f1f5f9'
     zerolinecolor = '#334155' if is_dark else '#cbd5e1'
-    fig.update_yaxes(gridcolor=gridcolor, zerolinecolor=zerolinecolor, tickfont=dict(size=9 if is_mobile else 11, color=plotly_font_color))
-    fig.update_xaxes(gridcolor=gridcolor, tickfont=dict(size=9 if is_mobile else 11, color=plotly_font_color))
-    fig.update_annotations(font=dict(color=plotly_font_color, size=10 if is_mobile else 12))
+    fig.update_yaxes(gridcolor=gridcolor, zerolinecolor=zerolinecolor, tickfont=dict(size=9 if is_mobile else 11))
+    fig.update_xaxes(gridcolor=gridcolor, tickfont=dict(size=9 if is_mobile else 11))
+    fig.update_annotations(font_size=10 if is_mobile else 12)
     
     # Adjust y-axis range of Row 1 (candlestick chart) to fit the stock price nicely
     # and prevent extreme BB values from compressing the candles.
@@ -2620,19 +2609,18 @@ def render_detail_dashboard(selected_ticker, selected_name, raw_analysis, key_su
     # CSS styling to stretch st.segmented_control to full width and make buttons equal width
     st.markdown(f"""
     <style>
-    div[data-testid="stSegmentedControl"] {{
+    div[data-testid="stButtonGroup"] {{
         width: 100% !important;
         background: transparent !important;
     }}
-    div[data-testid="stSegmentedControl"] > div {{
+    div[data-testid="stButtonGroup"] > div {{
         display: flex !important;
         width: 100% !important;
         flex-direction: row !important;
         gap: 8px !important;
         background: transparent !important;
     }}
-    div[data-testid="stSegmentedControl"] button,
-    div[data-testid="stSegmentedControl"] button[data-testid="stSegmentedControlOption"],
+    div[data-testid="stButtonGroup"] button[data-testid^="stBaseButton-segmented_control"],
     div[class*="st-key-det_tab_select"] button,
     div[class*="st-key-chart_interval"] button {{
         flex: 1 1 0% !important;
@@ -2650,7 +2638,7 @@ def render_detail_dashboard(selected_ticker, selected_name, raw_analysis, key_su
         transition: all 0.2s ease !important;
         box-shadow: none !important;
     }}
-    div[data-testid="stSegmentedControl"] button:hover,
+    div[data-testid="stButtonGroup"] button[data-testid^="stBaseButton-segmented_control"]:hover,
     div[class*="st-key-det_tab_select"] button:hover,
     div[class*="st-key-chart_interval"] button:hover {{
         border-color: {local_primary_color} !important;
@@ -2660,12 +2648,15 @@ def render_detail_dashboard(selected_ticker, selected_name, raw_analysis, key_su
         background-color: {local_bg_color} !important;
     }}
     /* Selected segment */
-    div[data-testid="stSegmentedControl"] button[aria-checked="true"], 
-    div[data-testid="stSegmentedControl"] button[aria-selected="true"],
-    div[data-testid="stSegmentedControl"] button[aria-pressed="true"],
+    div[data-testid="stButtonGroup"] button[data-testid="stBaseButton-segmented_controlActive"],
+    div[data-testid="stButtonGroup"] button[aria-checked="true"], 
+    div[data-testid="stButtonGroup"] button[aria-selected="true"],
+    div[data-testid="stButtonGroup"] button[aria-pressed="true"],
+    div[class*="st-key-det_tab_select"] button[data-testid="stBaseButton-segmented_controlActive"],
     div[class*="st-key-det_tab_select"] button[aria-checked="true"],
     div[class*="st-key-det_tab_select"] button[aria-selected="true"],
     div[class*="st-key-det_tab_select"] button[aria-pressed="true"],
+    div[class*="st-key-chart_interval"] button[data-testid="stBaseButton-segmented_controlActive"],
     div[class*="st-key-chart_interval"] button[aria-checked="true"],
     div[class*="st-key-chart_interval"] button[aria-selected="true"],
     div[class*="st-key-chart_interval"] button[aria-pressed="true"] {{
@@ -2675,11 +2666,25 @@ def render_detail_dashboard(selected_ticker, selected_name, raw_analysis, key_su
         opacity: 1 !important;
         border-color: {local_primary_color} !important;
     }}
-    /* Style child elements (text) of buttons to inherit color */
-    div[data-testid="stSegmentedControl"] button *,
+    /* Style child elements (text) of buttons explicitly */
+    div[data-testid="stButtonGroup"] button[data-testid^="stBaseButton-segmented_control"] *,
     div[class*="st-key-det_tab_select"] button *,
     div[class*="st-key-chart_interval"] button * {{
-        color: inherit !important;
+        color: {local_text_color} !important;
+    }}
+    div[data-testid="stButtonGroup"] button[data-testid="stBaseButton-segmented_controlActive"] *,
+    div[data-testid="stButtonGroup"] button[aria-checked="true"] *,
+    div[data-testid="stButtonGroup"] button[aria-selected="true"] *,
+    div[data-testid="stButtonGroup"] button[aria-pressed="true"] *,
+    div[class*="st-key-det_tab_select"] button[data-testid="stBaseButton-segmented_controlActive"] *,
+    div[class*="st-key-det_tab_select"] button[aria-checked="true"] *,
+    div[class*="st-key-det_tab_select"] button[aria-selected="true"] *,
+    div[class*="st-key-det_tab_select"] button[aria-pressed="true"] *,
+    div[class*="st-key-chart_interval"] button[data-testid="stBaseButton-segmented_controlActive"] *,
+    div[class*="st-key-chart_interval"] button[aria-checked="true"] *,
+    div[class*="st-key-chart_interval"] button[aria-selected="true"] *,
+    div[class*="st-key-chart_interval"] button[aria-pressed="true"] * {{
+        color: #ffffff !important;
     }}
     </style>
     """, unsafe_allow_html=True)
@@ -2688,7 +2693,6 @@ def render_detail_dashboard(selected_ticker, selected_name, raw_analysis, key_su
     tab_options = [
         "📈 チャート・指標", 
         "💡 事業カタリスト",
-        "💬 ネット注目度・バズ",
         "📊 財務データ分析",
         "🔍 類似パターン検索"
     ]
@@ -2759,82 +2763,6 @@ def render_detail_dashboard(selected_ticker, selected_name, raw_analysis, key_su
             info=raw_analysis.get('info_raw', {})
         )
         st.markdown(f'<div class="card" style="padding: 25px; max-height: 720px; overflow-y: auto;">{ir_md}</div>', unsafe_allow_html=True)
-        
-    elif selected_tab == "💬 ネット注目度・バズ":
-        st.markdown("### 💬 リアルタイムネット注目度・ニュースバズ分析")
-        
-        # Calculate Buzz Metrics
-        vol_surge = metrics.get('vol_surge_ratio', 1.0)
-        
-        # Fetch recent Google News (last 7 days)
-        import datetime
-        today = datetime.date.today()
-        seven_days_ago = today - datetime.timedelta(days=7)
-        
-        with st.spinner("最新のニュースおよびバズ状況を取得中..."):
-            query_name = selected_name.split('(')[0].split('（')[0].strip()
-            recent_news = fetch_historical_google_news(query_name, seven_days_ago, today)
-        
-        news_count = len(recent_news)
-        
-        # Determine Buzz Level
-        if news_count >= 3 and vol_surge >= 1.3:
-            buzz_level = "🔥 超高（大バズ発生中・出来高急増！）"
-            buzz_color = "#dc2626" # Red
-            buzz_desc = "SNSやニュース等で極めて高い話題性を獲得しており、出来高も伴った急激な買いが入っています。短期的なトレンド転換や急騰の可能性が非常に高い局面です。"
-        elif news_count >= 1 or vol_surge >= 1.15:
-            buzz_level = "📈 中（注目度上昇・出来高微増）"
-            buzz_color = "#ea580c" # Orange
-            buzz_desc = "ニュースやSNS上での口コミが緩やかに増加しており、出来高も平均より増加しています。市場の関心が徐々に集まりつつある注目株です。"
-        else:
-            buzz_level = "💬 低（通常運転・市場関心安定）"
-            buzz_color = "#64748b" # Grey
-            buzz_desc = "直近のネット上の言及数や出来高は平年並みの推移を示しています。突発的な動きは少なく、安定した需給環境にあります。"
-            
-        # Display buzz analysis cards
-        st.markdown(f"""
-        <div class="card" style="padding: 25px;">
-            <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 20px;">
-                <div style="font-size: 2.2rem;">💬</div>
-                <div>
-                    <h4 style="margin: 0; font-size: 1.15rem; color: var(--text-color);">ネット話題性・バズ判定</h4>
-                    <span style="font-size: 1.4rem; font-weight: 800; color: {buzz_color};">{buzz_level}</span>
-                </div>
-            </div>
-            <p style="color: var(--text-color); line-height: 1.6; margin-bottom: 20px; font-size: 0.95rem;">
-                {buzz_desc}
-            </p>
-            
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 25px;">
-                <div style="background: rgba(100, 116, 139, 0.05); border: 1px solid var(--border-color); border-radius: 8px; padding: 15px; text-align: center;">
-                    <div style="font-size: 0.8rem; color: #94a3b8; margin-bottom: 5px;">直近7日間のニュース件数</div>
-                    <div style="font-size: 1.8rem; font-weight: bold; color: var(--text-color);">{news_count} 件</div>
-                </div>
-                <div style="background: rgba(100, 116, 139, 0.05); border: 1px solid var(--border-color); border-radius: 8px; padding: 15px; text-align: center;">
-                    <div style="font-size: 0.8rem; color: #94a3b8; margin-bottom: 5px;">出来高急増比率 (5日均/25日均)</div>
-                    <div style="font-size: 1.8rem; font-weight: bold; color: { '#16a34a' if vol_surge >= 1.2 else '#dc2626' if vol_surge < 0.8 else 'var(--text-color)' };">{vol_surge:.2f}倍</div>
-                </div>
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
-        
-        st.markdown(f"#### 📰 直近7日間の主要ニュース・口コミ材料 ({news_count}件)")
-        if recent_news:
-            for n in recent_news[:5]:
-                link_html = f'<a href="{n["link"]}" target="_blank" style="color: #3b82f6; text-decoration: none; font-weight: 600;">記事を開く ↗</a>' if n.get("link") else ''
-                st.markdown(f"""
-                <div class="card" style="padding: 15px; margin-bottom: 12px; border-left: 4px solid var(--primary-color);">
-                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 5px; flex-wrap: wrap; gap: 8px;">
-                        <span style="font-size: 0.8rem; color: #94a3b8;">📅 {n.get('date', '不明')} | 配信元: {n.get('source', 'Google News')}</span>
-                        {link_html}
-                    </div>
-                    <div style="font-size: 0.95rem; font-weight: bold; color: var(--text-color); line-height: 1.4;">
-                        {n.get('title', '')}
-                    </div>
-                </div>
-                """, unsafe_allow_html=True)
-        else:
-            st.info("直近7日間に大手ニュースメディアやSNSで話題となった公開情報は検出されませんでした。市場の関心が低い、あるいは安定して静観されている状態です。")
         
     elif selected_tab == "📊 財務データ分析":
         # Fundamental details formatted vertically
@@ -3983,52 +3911,52 @@ with tab_screen:
                 else:
                     similarity_threshold_pct = 5.0
                 
-            filter_shape_match = st.checkbox("📈 チャート形状パターン指定", key="scr_filter_shape_match", help="直近30日間のチャート形状が、指定した特定のパターン（上昇傾向、下降減衰、上昇反転）に類似する銘柄のみを抽出します。")
-            if filter_shape_match:
-                # Store selected shapes in session state to enable toggle buttons
-                if "selected_shapes" not in st.session_state:
-                    st.session_state["selected_shapes"] = ["上昇傾向", "下降減衰", "上昇反転"]
-                
-                st.markdown('<div style="margin-top: 5px; margin-bottom: 5px; font-size: 0.9rem; font-weight: 600; color: #475569;">   ↳ 対象形状を選択 (クリックして切替):</div>', unsafe_allow_html=True)
-                
-                # Render 3 toggle buttons in columns
-                col_s1, col_s2, col_s3 = st.columns(3)
-                with col_s1:
-                    s_name = "上昇傾向"
-                    is_active = s_name in st.session_state["selected_shapes"]
-                    if st.button(f"📈 {s_name}", key="btn_shape_up", use_container_width=True, type="primary" if is_active else "secondary"):
-                        if is_active:
-                            if len(st.session_state["selected_shapes"]) > 1:
-                                st.session_state["selected_shapes"].remove(s_name)
-                        else:
-                            st.session_state["selected_shapes"].append(s_name)
-                        st.rerun()
-                with col_s2:
-                    s_name = "下降減衰"
-                    is_active = s_name in st.session_state["selected_shapes"]
-                    if st.button(f"📉 {s_name}", key="btn_shape_down", use_container_width=True, type="primary" if is_active else "secondary"):
-                        if is_active:
-                            if len(st.session_state["selected_shapes"]) > 1:
-                                st.session_state["selected_shapes"].remove(s_name)
-                        else:
-                            st.session_state["selected_shapes"].append(s_name)
-                        st.rerun()
-                with col_s3:
-                    s_name = "上昇反転"
-                    is_active = s_name in st.session_state["selected_shapes"]
-                    if st.button(f"🔄 {s_name}", key="btn_shape_rev", use_container_width=True, type="primary" if is_active else "secondary"):
-                        if is_active:
-                            if len(st.session_state["selected_shapes"]) > 1:
-                                st.session_state["selected_shapes"].remove(s_name)
-                        else:
-                            st.session_state["selected_shapes"].append(s_name)
-                        st.rerun()
-                
-                selected_shapes = st.session_state["selected_shapes"]
-                shape_threshold = st.slider("   ↳ 形状類似度しきい値", 0.70, 0.95, 0.80, step=0.02, key="scr_shape_threshold", help="しきい値が高いほど、理想的な形状に近い銘柄のみが抽出されます（0.80推奨）。")
-            else:
-                selected_shapes = []
-                shape_threshold = 0.80
+                filter_shape_match = st.checkbox("📈 チャート形状パターン指定", key="scr_filter_shape_match", help="直近30日間のチャート形状が、指定した特定のパターン（上昇傾向、下降減衰、上昇反転）に類似する銘柄のみを抽出します。")
+                if filter_shape_match:
+                    # Store selected shapes in session state to enable toggle buttons
+                    if "selected_shapes" not in st.session_state:
+                        st.session_state["selected_shapes"] = ["上昇傾向", "下降減衰", "上昇反転"]
+                    
+                    st.markdown('<div style="margin-top: 5px; margin-bottom: 5px; font-size: 0.9rem; font-weight: 600; color: #475569;">   ↳ 対象形状を選択 (クリックして切替):</div>', unsafe_allow_html=True)
+                    
+                    # Render 3 toggle buttons in columns
+                    col_s1, col_s2, col_s3 = st.columns(3)
+                    with col_s1:
+                        s_name = "上昇傾向"
+                        is_active = s_name in st.session_state["selected_shapes"]
+                        if st.button(f"📈 {s_name}", key="btn_shape_up", use_container_width=True, type="primary" if is_active else "secondary"):
+                            if is_active:
+                                if len(st.session_state["selected_shapes"]) > 1:
+                                    st.session_state["selected_shapes"].remove(s_name)
+                            else:
+                                st.session_state["selected_shapes"].append(s_name)
+                            st.rerun()
+                    with col_s2:
+                        s_name = "下降減衰"
+                        is_active = s_name in st.session_state["selected_shapes"]
+                        if st.button(f"📉 {s_name}", key="btn_shape_down", use_container_width=True, type="primary" if is_active else "secondary"):
+                            if is_active:
+                                if len(st.session_state["selected_shapes"]) > 1:
+                                    st.session_state["selected_shapes"].remove(s_name)
+                            else:
+                                st.session_state["selected_shapes"].append(s_name)
+                            st.rerun()
+                    with col_s3:
+                        s_name = "上昇反転"
+                        is_active = s_name in st.session_state["selected_shapes"]
+                        if st.button(f"🔄 {s_name}", key="btn_shape_rev", use_container_width=True, type="primary" if is_active else "secondary"):
+                            if is_active:
+                                if len(st.session_state["selected_shapes"]) > 1:
+                                    st.session_state["selected_shapes"].remove(s_name)
+                            else:
+                                st.session_state["selected_shapes"].append(s_name)
+                            st.rerun()
+                    
+                    selected_shapes = st.session_state["selected_shapes"]
+                    shape_threshold = st.slider("   ↳ 形状類似度しきい値", 0.70, 0.95, 0.80, step=0.02, key="scr_shape_threshold", help="しきい値が高いほど、理想的な形状に近い銘柄のみが抽出されます（0.80推奨）。")
+                else:
+                    selected_shapes = []
+                    shape_threshold = 0.80
 
     tickers_pool = {}
     if market == f"日本株 厳選トレンド銘柄 ({len(JP_TICKERS)}件)":
@@ -5050,23 +4978,14 @@ with tab_simulation:
                 x1=timeline[-1], y1=0,
                 line=dict(color="#94a3b8", width=1.5, dash="dash")
             )
-            plotly_font_color = '#e2e8f0' if is_dark else '#1e293b'
             fig_total.update_layout(
                 title=None,
                 xaxis_title="日付",
                 yaxis_title="評価損益 (円)",
                 template="plotly_dark" if is_dark else "plotly_white",
-                font=dict(color=plotly_font_color),
                 height=380,
                 margin=dict(l=10, r=10, t=20, b=10),
-                legend=dict(
-                    orientation="h", 
-                    yanchor="bottom", 
-                    y=1.02, 
-                    xanchor="right", 
-                    x=1,
-                    font=dict(color=plotly_font_color)
-                ),
+                legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
                 dragmode=False if is_mobile else "pan",
                 showlegend=not is_mobile
             )
@@ -5101,12 +5020,10 @@ with tab_simulation:
                             hovertemplate="銘柄: %{y}<br>評価損益: ¥%{x:,.0f}<extra></extra>"
                         ))
                         fig_bar_active.add_vline(x=0, line_width=1.5, line_dash="dash", line_color="#94a3b8")
-                        plotly_font_color = '#e2e8f0' if is_dark else '#1e293b'
                         fig_bar_active.update_layout(
                             xaxis_title="評価損益 (円)",
                             yaxis_title=None,
                             template="plotly_dark" if is_dark else "plotly_white",
-                            font=dict(color=plotly_font_color),
                             height=320,
                             margin=dict(l=10, r=10, t=10, b=10),
                             dragmode=False if is_mobile else "pan"
@@ -5132,12 +5049,10 @@ with tab_simulation:
                         hovertemplate="銘柄: %{y}<br>累計確定損益: ¥%{x:,.0f}<extra></extra>"
                     ))
                     fig_bar_realized.add_vline(x=0, line_width=1.5, line_dash="dash", line_color="#94a3b8")
-                    plotly_font_color = '#e2e8f0' if is_dark else '#1e293b'
                     fig_bar_realized.update_layout(
                         xaxis_title="実現損益 (円)",
                         yaxis_title=None,
                         template="plotly_dark" if is_dark else "plotly_white",
-                        font=dict(color=plotly_font_color),
                         height=320,
                         margin=dict(l=10, r=10, t=10, b=10),
                         dragmode=False if is_mobile else "pan"
@@ -5160,12 +5075,10 @@ with tab_simulation:
                         hovertemplate="銘柄: %{y}<br>評価損益: ¥%{x:,.0f}<extra></extra>"
                     ))
                     fig_bar_active.add_vline(x=0, line_width=1.5, line_dash="dash", line_color="#94a3b8")
-                    plotly_font_color = '#e2e8f0' if is_dark else '#1e293b'
                     fig_bar_active.update_layout(
                         xaxis_title="評価損益 (円)",
                         yaxis_title=None,
                         template="plotly_dark" if is_dark else "plotly_white",
-                        font=dict(color=plotly_font_color),
                         height=320,
                         margin=dict(l=10, r=10, t=10, b=10),
                         dragmode=False if is_mobile else "pan"
