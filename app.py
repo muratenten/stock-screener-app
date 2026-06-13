@@ -1400,7 +1400,9 @@ def evaluate_stock(ticker, df, info=None):
             'metrics': {
                 'price': close.iloc[-1],
                 'change_pct': ((close.iloc[-1] - close.iloc[-2]) / close.iloc[-2]) * 100 if len(close) > 1 else 0.0,
-                'vol_surge_ratio': vol_5d / vol_25d if vol_25d > 0 else 1.0
+                'vol_surge_ratio': vol_5d / vol_25d if vol_25d > 0 else 1.0,
+                'rev_growth': None,
+                'eps_growth': None
             }
         }
         
@@ -1448,6 +1450,14 @@ def evaluate_stock(ticker, df, info=None):
     
     fund_score = sum([f_roe, f_op_margin, f_profitable, f_per, f_pbr, f_solvency, f_dividend])
     
+    rev_growth = safe_float(info.get('revenueGrowth'))
+    if rev_growth is not None:
+        rev_growth = rev_growth * 100.0
+        
+    eps_growth = safe_float(info.get('earningsGrowth'))
+    if eps_growth is not None:
+        eps_growth = eps_growth * 100.0
+        
     metrics = {
         'price': close.iloc[-1],
         'change_pct': ((close.iloc[-1] - close.iloc[-2]) / close.iloc[-2]) * 100 if len(close) > 1 else 0.0,
@@ -1462,7 +1472,9 @@ def evaluate_stock(ticker, df, info=None):
         'total_cash': info.get('totalCash'),
         'total_debt': info.get('totalDebt'),
         'debt_equity': de_ratio,
-        'vol_surge_ratio': vol_5d / vol_25d if vol_25d > 0 else 1.0
+        'vol_surge_ratio': vol_5d / vol_25d if vol_25d > 0 else 1.0,
+        'rev_growth': rev_growth,
+        'eps_growth': eps_growth
     }
     
     return {
@@ -2773,6 +2785,8 @@ def render_detail_dashboard(selected_ticker, selected_name, raw_analysis, key_su
         cash = metrics.get('total_cash')
         debt = metrics.get('total_debt')
         de_ratio = metrics.get('debt_equity')
+        rev_g = metrics.get('rev_growth')
+        eps_g = metrics.get('eps_growth')
         
         if net_inc is not None:
             finance_status = "黒字" if net_inc > 0 else "赤字"
@@ -2799,6 +2813,12 @@ def render_detail_dashboard(selected_ticker, selected_name, raw_analysis, key_su
                 </li>
                 <li style="border-bottom: 1px solid #f1f5f9; padding: 10px 0;">
                     <strong>有利子負債 / 自己資本比率 (D/E)</strong>: {f"{de_ratio:.2f}%" if de_ratio is not None else "N/A"}
+                </li>
+                <li style="border-bottom: 1px solid #f1f5f9; padding: 10px 0;">
+                    <strong>売上高成長率 (YoY)</strong>: {f"{rev_g:.1f}%" if rev_g is not None else "N/A"}
+                </li>
+                <li style="border-bottom: 1px solid #f1f5f9; padding: 10px 0;">
+                    <strong>EPS成長率 (YoY)</strong>: {f"{eps_g:.1f}%" if eps_g is not None else "N/A"}
                 </li>
                 <li style="padding: 10px 0 0 0;">
                     <strong>企業時価総額</strong>: {format_large_jpy(metrics.get('market_cap'))}
@@ -3647,6 +3667,142 @@ if 'purchase_success_msg' in st.session_state:
     st.success(st.session_state['purchase_success_msg'])
     del st.session_state['purchase_success_msg']
 
+# Initialize screening widget defaults in session state so they exist
+widget_defaults = {
+    "scr_min_total": 5,
+    "scr_min_tech": 1,
+    "scr_min_fund": 3,
+    "scr_filter_pbr": False,
+    "scr_filter_per": False,
+    "scr_filter_roe": False,
+    "scr_filter_dividend": False,
+    "scr_filter_rev_growth": False,
+    "scr_filter_eps_growth": False,
+    "scr_filter_gc": False,
+    "scr_filter_macd": False,
+    "scr_filter_rsi_os": False,
+    "scr_filter_rsi_ob": False,
+    "scr_filter_bb_re": False,
+    "scr_filter_vol_su": False,
+    "scr_filter_similarity": False,
+    "scr_filter_shape_match": False,
+    "scr_filter_shape_match_mobile": False,
+    "active_preset": "カスタム設定"
+}
+for k, v in widget_defaults.items():
+    if k not in st.session_state:
+        st.session_state[k] = v
+
+def apply_preset(preset_name):
+    st.session_state["scr_min_total"] = 0
+    st.session_state["scr_min_tech"] = 0
+    st.session_state["scr_min_fund"] = 0
+    st.session_state["scr_filter_pbr"] = False
+    st.session_state["scr_filter_per"] = False
+    st.session_state["scr_filter_roe"] = False
+    st.session_state["scr_filter_dividend"] = False
+    st.session_state["scr_filter_rev_growth"] = False
+    st.session_state["scr_filter_eps_growth"] = False
+    st.session_state["scr_filter_gc"] = False
+    st.session_state["scr_filter_macd"] = False
+    st.session_state["scr_filter_rsi_os"] = False
+    st.session_state["scr_filter_rsi_ob"] = False
+    st.session_state["scr_filter_bb_re"] = False
+    st.session_state["scr_filter_vol_su"] = False
+    st.session_state["scr_filter_similarity"] = False
+    st.session_state["scr_filter_shape_match"] = False
+    st.session_state["scr_filter_shape_match_mobile"] = False
+    
+    if preset_name == "大化け成長株":
+        st.session_state["scr_min_total"] = 7
+        st.session_state["scr_min_tech"] = 2
+        st.session_state["scr_min_fund"] = 4
+        st.session_state["scr_filter_roe"] = True
+        st.session_state["scr_filter_rev_growth"] = True
+        st.session_state["scr_filter_eps_growth"] = True
+        st.session_state["scr_filter_vol_su"] = True
+        st.session_state["scr_filter_shape_match"] = True
+        st.session_state["scr_filter_shape_match_mobile"] = True
+    elif preset_name == "高配当割安株":
+        st.session_state["scr_min_total"] = 6
+        st.session_state["scr_min_tech"] = 1
+        st.session_state["scr_min_fund"] = 5
+        st.session_state["scr_filter_pbr"] = True
+        st.session_state["scr_filter_per"] = True
+        st.session_state["scr_filter_dividend"] = True
+    elif preset_name == "逆張り・大底打ち":
+        st.session_state["scr_min_total"] = 4
+        st.session_state["scr_min_tech"] = 1
+        st.session_state["scr_min_fund"] = 2
+        st.session_state["scr_filter_rsi_os"] = True
+        st.session_state["scr_filter_bb_re"] = True
+        st.session_state["scr_filter_macd"] = True
+    elif preset_name == "急騰ブレイクアウト":
+        st.session_state["scr_min_total"] = 5
+        st.session_state["scr_min_tech"] = 2
+        st.session_state["scr_min_fund"] = 2
+        st.session_state["scr_filter_vol_su"] = True
+        st.session_state["scr_filter_gc"] = True
+        
+    st.session_state["active_preset"] = preset_name
+    presets_inv = {
+        "カスタム設定": "⚙️ カスタム設定",
+        "大化け成長株": "🚀 大化け成長株 (CANSLIM風)",
+        "高配当割安株": "💰 高配当割安株",
+        "逆張り・大底打ち": "🔄 逆張り・大底打ち狙い",
+        "急騰ブレイクアウト": "⚡ 急騰ブレイクアウト狙い"
+    }
+    if preset_name in presets_inv:
+        st.session_state["preset_select_mobile"] = presets_inv[preset_name]
+
+def check_preset_match():
+    curr = st.session_state.get("active_preset", "カスタム設定")
+    if curr == "カスタム設定":
+        return
+        
+    expected = {
+        "scr_min_total": 0, "scr_min_tech": 0, "scr_min_fund": 0,
+        "scr_filter_pbr": False, "scr_filter_per": False, "scr_filter_roe": False,
+        "scr_filter_dividend": False, "scr_filter_rev_growth": False, "scr_filter_eps_growth": False,
+        "scr_filter_gc": False, "scr_filter_macd": False, "scr_filter_rsi_os": False,
+        "scr_filter_rsi_ob": False, "scr_filter_bb_re": False, "scr_filter_vol_su": False,
+        "scr_filter_similarity": False,
+        "scr_filter_shape_match" if st.session_state.get('ui_mode', 'PC') != 'スマホ' else "scr_filter_shape_match_mobile": False
+    }
+    
+    if curr == "大化け成長株":
+        expected.update({
+            "scr_min_total": 7, "scr_min_tech": 2, "scr_min_fund": 4,
+            "scr_filter_roe": True, "scr_filter_rev_growth": True, "scr_filter_eps_growth": True,
+            "scr_filter_vol_su": True,
+            "scr_filter_shape_match" if st.session_state.get('ui_mode', 'PC') != 'スマホ' else "scr_filter_shape_match_mobile": True
+        })
+    elif curr == "高配当割安株":
+        expected.update({
+            "scr_min_total": 6, "scr_min_tech": 1, "scr_min_fund": 5,
+            "scr_filter_pbr": True, "scr_filter_per": True, "scr_filter_dividend": True
+        })
+    elif curr == "逆張り・大底打ち":
+        expected.update({
+            "scr_min_total": 4, "scr_min_tech": 1, "scr_min_fund": 2,
+            "scr_filter_rsi_os": True, "scr_filter_bb_re": True, "scr_filter_macd": True
+        })
+    elif curr == "急騰ブレイクアウト":
+        expected.update({
+            "scr_min_total": 5, "scr_min_tech": 2, "scr_min_fund": 2,
+            "scr_filter_vol_su": True, "scr_filter_gc": True
+        })
+        
+    mismatch = False
+    for k, expected_v in expected.items():
+        if k in st.session_state and st.session_state[k] != expected_v:
+            mismatch = True
+            break
+            
+    if mismatch:
+        st.session_state["active_preset"] = "カスタム設定"
+        st.session_state["preset_select_mobile"] = "⚙️ カスタム設定"
+
 # Main Navigation Tabs
 tab_screen, tab_favorite, tab_simulation, tab_explanation = st.tabs([
     "🔍 スクリーニング実行と結果分析", 
@@ -3816,7 +3972,38 @@ with tab_screen:
 
     # Details expander for score and financial criteria
     with st.expander("📊 詳細なスコア・財務条件フィルタ (クリックで開閉)", expanded=False):
+        check_preset_match()
+        
         if is_mobile:
+            st.markdown("**💡 スクリーニング・プリセット選択**")
+            presets = {
+                "⚙️ カスタム設定": "カスタム設定",
+                "🚀 大化け成長株 (CANSLIM風)": "大化け成長株",
+                "💰 高配当割安株": "高配当割安株",
+                "🔄 逆張り・大底打ち狙い": "逆張り・大底打ち",
+                "⚡ 急騰ブレイクアウト狙い": "急騰ブレイクアウト"
+            }
+            active_p_name = st.session_state.get("active_preset", "カスタム設定")
+            default_index = 0
+            for idx, (label, val) in enumerate(presets.items()):
+                if val == active_p_name:
+                    default_index = idx
+                    break
+                    
+            active_p_label = st.selectbox(
+                "プリセットを選択",
+                options=list(presets.keys()),
+                index=default_index,
+                key="preset_select_mobile",
+                label_visibility="collapsed"
+            )
+            active_p = presets[active_p_label]
+            if st.session_state.get("active_preset") != active_p:
+                apply_preset(active_p)
+                st.rerun()
+                
+            st.markdown('<hr style="margin: 10px 0; border: none; border-top: 1px solid var(--border-color); opacity: 0.5;">', unsafe_allow_html=True)
+            
             st.markdown("**🎯 最小スコア設定**")
             min_total_score = st.slider("最小総合スコア (最大10点)", 0, 10, 5, key="scr_min_total")
             min_tech_score = st.slider("最小テクニカルスコア (最大3点)", 0, 3, 1, key="scr_min_tech")
@@ -3827,6 +4014,8 @@ with tab_screen:
             filter_per = st.checkbox("PER 15倍未満 (低PER) のみ", key="scr_filter_per")
             filter_roe = st.checkbox("ROE 10%以上 (高PBR効率) のみ", key="scr_filter_roe")
             filter_dividend = st.checkbox("配当利回り 3%以上 のみ", key="scr_filter_dividend")
+            filter_rev_growth = st.checkbox("売上高成長率 10%以上 のみ", key="scr_filter_rev_growth")
+            filter_eps_growth = st.checkbox("EPS成長率 15%以上 のみ", key="scr_filter_eps_growth")
             
             st.markdown("**📈 テクニナル指標フィルタ**")
             filter_golden_cross = st.checkbox("5日/25日ゴールデンクロス", key="scr_filter_gc")
@@ -3885,6 +4074,33 @@ with tab_screen:
                 selected_shapes = []
                 shape_threshold = 0.80
         else:
+            st.markdown('<div style="font-weight: bold; font-size: 0.95rem; color: var(--text-color); margin-bottom: 8px;">💡 スクリーニング・プリセット選択:</div>', unsafe_allow_html=True)
+            col_p1, col_p2, col_p3, col_p4, col_p5 = st.columns(5)
+            curr_preset = st.session_state.get("active_preset", "カスタム設定")
+            
+            with col_p1:
+                if st.button("⚙️ カスタム設定", key="btn_preset_custom", use_container_width=True, type="primary" if curr_preset == "カスタム設定" else "secondary"):
+                    apply_preset("カスタム設定")
+                    st.rerun()
+            with col_p2:
+                if st.button("🚀 大化け成長株", key="btn_preset_growth", use_container_width=True, type="primary" if curr_preset == "大化け成長株" else "secondary"):
+                    apply_preset("大化け成長株")
+                    st.rerun()
+            with col_p3:
+                if st.button("💰 高配当割安株", key="btn_preset_dividend", use_container_width=True, type="primary" if curr_preset == "高配当割安株" else "secondary"):
+                    apply_preset("高配当割安株")
+                    st.rerun()
+            with col_p4:
+                if st.button("🔄 逆張り大底打ち", key="btn_preset_reversal", use_container_width=True, type="primary" if curr_preset == "逆張り・大底打ち" else "secondary"):
+                    apply_preset("逆張り・大底打ち")
+                    st.rerun()
+            with col_p5:
+                if st.button("⚡ 急騰ブレイク", key="btn_preset_breakout", use_container_width=True, type="primary" if curr_preset == "急騰ブレイクアウト" else "secondary"):
+                    apply_preset("急騰ブレイクアウト")
+                    st.rerun()
+            
+            st.markdown('<hr style="margin: 15px 0; border: none; border-top: 1px solid var(--border-color); opacity: 0.5;">', unsafe_allow_html=True)
+            
             col_f1, col_f2, col_f3 = st.columns([1.3, 1.3, 1.4])
             with col_f1:
                 st.markdown("**🎯 最小スコア設定**")
@@ -3897,6 +4113,8 @@ with tab_screen:
                 filter_per = st.checkbox("PER 15倍未満 (低PER) のみ", key="scr_filter_per")
                 filter_roe = st.checkbox("ROE 10%以上 (高PBR効率) のみ", key="scr_filter_roe")
                 filter_dividend = st.checkbox("配当利回り 3%以上 のみ", key="scr_filter_dividend")
+                filter_rev_growth = st.checkbox("売上高成長率 10%以上 のみ", key="scr_filter_rev_growth")
+                filter_eps_growth = st.checkbox("EPS成長率 15%以上 のみ", key="scr_filter_eps_growth")
             with col_f3:
                 st.markdown("**📈 テクニカル指標フィルタ**")
                 filter_golden_cross = st.checkbox("5日/25日ゴールデンクロス", key="scr_filter_gc")
@@ -4139,6 +4357,10 @@ with tab_screen:
                         continue
                     if filter_dividend and (metrics['dividend_yield'] is None or metrics['dividend_yield'] < 3.0):
                         continue
+                    if filter_rev_growth and (metrics['rev_growth'] is None or metrics['rev_growth'] < 10.0):
+                        continue
+                    if filter_eps_growth and (metrics['eps_growth'] is None or metrics['eps_growth'] < 15.0):
+                        continue
                         
                     # Advanced technical checks (Full)
                     if filter_golden_cross and not analysis['signals']['golden_cross']:
@@ -4276,6 +4498,8 @@ with tab_screen:
                         'ファンダスコア (7点)': f"{analysis['fund_score']} / 7",
                         '株価': format_price(metrics['price'], ticker),
                         '前日比 (%)': f"{metrics['change_pct']:.2f}%",
+                        '売上高成長率 (%)': f"{metrics['rev_growth']:.1f}%" if metrics['rev_growth'] is not None else "N/A",
+                        'EPS成長率 (%)': f"{metrics['eps_growth']:.1f}%" if metrics['eps_growth'] is not None else "N/A",
                         'PER (倍)': f"{metrics['per']:.1f}" if metrics['per'] is not None else "N/A",
                         'PBR (倍)': f"{metrics['pbr']:.2f}" if metrics['pbr'] is not None else "N/A",
                         'ROE (%)': f"{metrics['roe']:.1f}%" if metrics['roe'] is not None else "N/A",
