@@ -358,6 +358,17 @@ st.markdown(f"""
     div[data-baseweb="select"] * {{
         color: var(--text-color) !important;
     }}
+    /* Fix multiselect tag (pill) readability */
+    div[data-baseweb="tag"] {{
+        background-color: var(--primary-color) !important;
+        border: none !important;
+    }}
+    div[data-baseweb="tag"] * {{
+        color: #ffffff !important;
+    }}
+    div[data-baseweb="tag"] svg {{
+        fill: #ffffff !important;
+    }}
     
     /* Dropdown menu list styling */
     ul[role="listbox"] {{
