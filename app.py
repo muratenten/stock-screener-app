@@ -2684,16 +2684,17 @@ def render_detail_dashboard(selected_ticker, selected_name, raw_analysis, key_su
             with wl_col1:
                 st.markdown(f"#### {selected_name} ({selected_ticker}) の分析ダッシュボード")
             with wl_col2:
-                if is_favorite:
-                    if st.button("⭐ お気に入り解除", key=f"fav_btn_{selected_ticker}{key_suffix}", use_container_width=True):
-                        del watchlist[selected_ticker]
-                        save_watchlist(watchlist)
-                        st.rerun()
-                else:
-                    if st.button("☆ お気に入り追加", key=f"fav_btn_{selected_ticker}{key_suffix}", use_container_width=True):
-                        watchlist[selected_ticker] = selected_name
-                        save_watchlist(watchlist)
-                        st.rerun()
+                if not is_practice and key_suffix != "_prac":
+                    if is_favorite:
+                        if st.button("⭐ お気に入り解除", key=f"fav_btn_{selected_ticker}{key_suffix}", use_container_width=True):
+                            del watchlist[selected_ticker]
+                            save_watchlist(watchlist)
+                            st.rerun()
+                    else:
+                        if st.button("☆ お気に入り追加", key=f"fav_btn_{selected_ticker}{key_suffix}", use_container_width=True):
+                            watchlist[selected_ticker] = selected_name
+                            save_watchlist(watchlist)
+                            st.rerun()
 
             col1, col2, col3, col4, col5, col6 = st.columns(6)
             with col1:
@@ -3209,130 +3210,131 @@ def render_detail_dashboard(selected_ticker, selected_name, raw_analysis, key_su
                         st.markdown(implication_html, unsafe_allow_html=True)
         
     # Virtual simulated trading panel inside function
-    st.markdown("#### 💼 仮想シミュレーション（デモトレード）に追加 / 売却")
-    if is_mobile:
-        sim_container1 = st.container()
-        sim_container2 = st.container()
-    else:
-        sim_col1, sim_col2 = st.columns([3, 1])
-        sim_container1 = sim_col1
-        sim_container2 = sim_col2
-        
-    with sim_container1:
-        lot_size = 1 if is_us_stock(selected_ticker) else 100
-        lot_desc = "米国株は1株単位推奨" if is_us_stock(selected_ticker) else "日本株は100株単位推奨"
-        sim_qty = st.number_input(
-            f"購入・売却株数 ({lot_desc} / 1単元={format_price(metrics['price'] * lot_size, selected_ticker)})", 
-            min_value=1, 
-            value=lot_size, 
-            step=1, 
-            format="%d", 
-            key=f"purchase_qty_input_{selected_ticker}{key_suffix}"
-        )
-        
-        current_price_val = metrics['price']
-        total_cost = sim_qty * current_price_val
-        usdjpy_rate = get_usdjpy_rate()
-        if is_us_stock(selected_ticker):
-            st.write(f"概算売買金額: **{format_price(total_cost, selected_ticker)}** (約 ¥{int(total_cost * usdjpy_rate):,})")
+    if not is_practice and key_suffix != "_prac":
+        st.markdown("#### 💼 仮想シミュレーション（デモトレード）に追加 / 売却")
+        if is_mobile:
+            sim_container1 = st.container()
+            sim_container2 = st.container()
         else:
-            st.write(f"概算売買金額: **{format_price(total_cost, selected_ticker)}**")
+            sim_col1, sim_col2 = st.columns([3, 1])
+            sim_container1 = sim_col1
+            sim_container2 = sim_col2
             
-    with sim_container2:
-        if not is_mobile:
-            st.write("") # スペース調整
-            st.write("")
-        if st.button("仮想購入する", type="primary", use_container_width=True, key=f"sim_purchase_btn_{selected_ticker}{key_suffix}"):
-            portfolio = load_portfolio()
-            purchase_records = portfolio.get("purchase_records", [])
+        with sim_container1:
+            lot_size = 1 if is_us_stock(selected_ticker) else 100
+            lot_desc = "米国株は1株単位推奨" if is_us_stock(selected_ticker) else "日本株は100株単位推奨"
+            sim_qty = st.number_input(
+                f"購入・売却株数 ({lot_desc} / 1単元={format_price(metrics['price'] * lot_size, selected_ticker)})", 
+                min_value=1, 
+                value=lot_size, 
+                step=1, 
+                format="%d", 
+                key=f"purchase_qty_input_{selected_ticker}{key_suffix}"
+            )
             
-            existing_rec = next((r for r in purchase_records if r["ticker"] == selected_ticker), None)
-            if existing_rec:
-                old_qty = existing_rec["quantity"]
-                old_price = existing_rec["purchase_price"]
-                new_qty = old_qty + sim_qty
-                new_invest_amount = (old_qty * old_price) + (sim_qty * current_price_val)
-                new_price = new_invest_amount / new_qty
-                
-                existing_rec["quantity"] = float(new_qty)
-                existing_rec["purchase_price"] = float(new_price)
-                existing_rec["invest_amount"] = float(new_invest_amount)
-                existing_rec["purchase_date"] = datetime.date.today().strftime("%Y-%m-%d")
+            current_price_val = metrics['price']
+            total_cost = sim_qty * current_price_val
+            usdjpy_rate = get_usdjpy_rate()
+            if is_us_stock(selected_ticker):
+                st.write(f"概算売買金額: **{format_price(total_cost, selected_ticker)}** (約 ¥{int(total_cost * usdjpy_rate):,})")
             else:
-                purchase_records.append({
-                    "ticker": selected_ticker,
-                    "name": selected_name,
-                    "purchase_date": datetime.date.today().strftime("%Y-%m-%d"),
-                    "purchase_price": float(current_price_val),
-                    "invest_amount": float(total_cost),
-                    "quantity": float(sim_qty)
-                })
-            
-            portfolio["purchase_records"] = purchase_records
-            last_prices = portfolio.get("last_valid_prices", {})
-            last_prices[selected_ticker] = float(current_price_val)
-            portfolio["last_valid_prices"] = last_prices
-            
-            if save_portfolio(portfolio):
-                st.session_state['show_purchase_dialog'] = {
-                    'name': selected_name,
-                    'ticker': selected_ticker,
-                    'qty': int(sim_qty),
-                    'price': float(current_price_val),
-                    'total_cost': float(total_cost)
-                }
-                st.rerun()
-
-        # Add virtual sell button directly inside this dashboard!
-        if owned_rec and owned_rec["quantity"] > 0:
-            if st.button("仮想売却する", type="secondary", use_container_width=True, key=f"sim_sell_btn_{selected_ticker}{key_suffix}"):
-                if sim_qty > owned_rec["quantity"]:
-                    st.error(f"保有数量（{int(owned_rec['quantity']):,}株）を超える売却はできません。")
+                st.write(f"概算売買金額: **{format_price(total_cost, selected_ticker)}**")
+                
+        with sim_container2:
+            if not is_mobile:
+                st.write("") # スペース調整
+                st.write("")
+            if st.button("仮想購入する", type="primary", use_container_width=True, key=f"sim_purchase_btn_{selected_ticker}{key_suffix}"):
+                portfolio = load_portfolio()
+                purchase_records = portfolio.get("purchase_records", [])
+                
+                existing_rec = next((r for r in purchase_records if r["ticker"] == selected_ticker), None)
+                if existing_rec:
+                    old_qty = existing_rec["quantity"]
+                    old_price = existing_rec["purchase_price"]
+                    new_qty = old_qty + sim_qty
+                    new_invest_amount = (old_qty * old_price) + (sim_qty * current_price_val)
+                    new_price = new_invest_amount / new_qty
+                    
+                    existing_rec["quantity"] = float(new_qty)
+                    existing_rec["purchase_price"] = float(new_price)
+                    existing_rec["invest_amount"] = float(new_invest_amount)
+                    existing_rec["purchase_date"] = datetime.date.today().strftime("%Y-%m-%d")
                 else:
-                    portfolio = load_portfolio()
-                    purchase_records = portfolio.get("purchase_records", [])
-                    sales_records = portfolio.get("sales_records", [])
-                    
-                    target_rec = next((r for r in purchase_records if r["ticker"] == selected_ticker), None)
-                    p_price = target_rec["purchase_price"]
-                    
-                    pl = (current_price_val - p_price) * sim_qty
-                    
-                    # Convert USD PL to JPY for realized PL total calculation
-                    rate = get_usdjpy_rate() if is_us_stock(selected_ticker) else 1.0
-                    pl_jpy = pl * rate
-                    
-                    sales_records.append({
+                    purchase_records.append({
                         "ticker": selected_ticker,
                         "name": selected_name,
-                        "sell_date": datetime.date.today().strftime("%Y-%m-%d"),
-                        "purchase_price": float(p_price),
-                        "sell_price": float(current_price_val),
-                        "quantity": float(sim_qty),
-                        "realized_pl": float(pl),
-                        "currency": "USD" if is_us_stock(selected_ticker) else "JPY"
+                        "purchase_date": datetime.date.today().strftime("%Y-%m-%d"),
+                        "purchase_price": float(current_price_val),
+                        "invest_amount": float(total_cost),
+                        "quantity": float(sim_qty)
                     })
-                    
-                    target_rec["quantity"] -= float(sim_qty)
-                    target_rec["invest_amount"] -= float(sim_qty * p_price)
-                    
-                    if target_rec["quantity"] <= 0:
-                        purchase_records.remove(target_rec)
+                
+                portfolio["purchase_records"] = purchase_records
+                last_prices = portfolio.get("last_valid_prices", {})
+                last_prices[selected_ticker] = float(current_price_val)
+                portfolio["last_valid_prices"] = last_prices
+                
+                if save_portfolio(portfolio):
+                    st.session_state['show_purchase_dialog'] = {
+                        'name': selected_name,
+                        'ticker': selected_ticker,
+                        'qty': int(sim_qty),
+                        'price': float(current_price_val),
+                        'total_cost': float(total_cost)
+                    }
+                    st.rerun()
+     
+            # Add virtual sell button directly inside this dashboard!
+            if owned_rec and owned_rec["quantity"] > 0:
+                if st.button("仮想売却する", type="secondary", use_container_width=True, key=f"sim_sell_btn_{selected_ticker}{key_suffix}"):
+                    if sim_qty > owned_rec["quantity"]:
+                        st.error(f"保有数量（{int(owned_rec['quantity']):,}株）を超える売却はできません。")
+                    else:
+                        portfolio = load_portfolio()
+                        purchase_records = portfolio.get("purchase_records", [])
+                        sales_records = portfolio.get("sales_records", [])
                         
-                    portfolio["purchase_records"] = purchase_records
-                    portfolio["sales_records"] = sales_records
-                    portfolio["total_realized_pl_jpy"] += float(pl_jpy)
-                    
-                    if save_portfolio(portfolio):
-                        st.session_state['show_sell_dialog'] = {
-                            'name': selected_name,
-                            'ticker': selected_ticker,
-                            'qty': int(sim_qty),
-                            'price': float(current_price_val),
-                            'total_return': float(sim_qty * current_price_val),
-                            'realized_pl': float(pl)
-                        }
-                        st.rerun()
+                        target_rec = next((r for r in purchase_records if r["ticker"] == selected_ticker), None)
+                        p_price = target_rec["purchase_price"]
+                        
+                        pl = (current_price_val - p_price) * sim_qty
+                        
+                        # Convert USD PL to JPY for realized PL total calculation
+                        rate = get_usdjpy_rate() if is_us_stock(selected_ticker) else 1.0
+                        pl_jpy = pl * rate
+                        
+                        sales_records.append({
+                            "ticker": selected_ticker,
+                            "name": selected_name,
+                            "sell_date": datetime.date.today().strftime("%Y-%m-%d"),
+                            "purchase_price": float(p_price),
+                            "sell_price": float(current_price_val),
+                            "quantity": float(sim_qty),
+                            "realized_pl": float(pl),
+                            "currency": "USD" if is_us_stock(selected_ticker) else "JPY"
+                        })
+                        
+                        target_rec["quantity"] -= float(sim_qty)
+                        target_rec["invest_amount"] -= float(sim_qty * p_price)
+                        
+                        if target_rec["quantity"] <= 0:
+                            purchase_records.remove(target_rec)
+                            
+                        portfolio["purchase_records"] = purchase_records
+                        portfolio["sales_records"] = sales_records
+                        portfolio["total_realized_pl_jpy"] += float(pl_jpy)
+                        
+                        if save_portfolio(portfolio):
+                            st.session_state['show_sell_dialog'] = {
+                                'name': selected_name,
+                                'ticker': selected_ticker,
+                                'qty': int(sim_qty),
+                                'price': float(current_price_val),
+                                'total_return': float(sim_qty * current_price_val),
+                                'realized_pl': float(pl)
+                            }
+                            st.rerun()
 
 # Virtual Portfolio Data Persistence
 PORTFOLIO_FILE = "virtual_portfolio.json"
@@ -6167,7 +6169,7 @@ with tab_practice:
             
         selected_tickers = [lbl.split(" : ")[0] for lbl in selected_tickers_labels]
         
-        if st.button("📥 選択した銘柄をポートフォリオに追加", type="secondary", use_container_width=True):
+        if st.button("📥 選択した銘柄を練習用リストに追加", type="secondary", use_container_width=True):
             prac_portfolio = []
             for t in selected_tickers:
                 # Find ticker raw data
@@ -6183,13 +6185,13 @@ with tab_practice:
                     'full_history': match_r['full_history']
                 })
             st.session_state["prac_portfolio"] = prac_portfolio
-            st.toast(f"💼 ポートフォリオに {len(prac_portfolio)} 銘柄を追加しました！")
+            st.toast(f"💼 練習用リストに {len(prac_portfolio)} 銘柄を追加しました！")
             
     # 4. Display Portfolio and View Results
     if st.session_state.get("prac_portfolio"):
         portfolio = st.session_state["prac_portfolio"]
         st.markdown("---")
-        st.markdown("### 💼 練習用ポートフォリオ保有銘柄一覧")
+        st.markdown("### 💼 練習用キープ（保有）銘柄一覧")
         
         p_rows = []
         for p in portfolio:
@@ -6207,7 +6209,7 @@ with tab_practice:
         with col_res1:
             btn_results = st.button("🚀 タイムトラベル！指定期間後のトレード結果を見る", type="primary", use_container_width=True, key="btn_prac_results")
         with col_res2:
-            if st.button("🗑️ ポートフォリオをクリア", type="secondary", use_container_width=True):
+            if st.button("🗑️ 練習用リストをクリア", type="secondary", use_container_width=True):
                 st.session_state["prac_portfolio"] = []
                 st.session_state["prac_show_results"] = False
                 st.session_state["prac_selected_labels"] = []
