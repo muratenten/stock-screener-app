@@ -1585,7 +1585,54 @@ def generate_recommendation_text(ticker, name, tech_score, fund_score, signals, 
         else:
             text += "一部の買い材料が点灯していますが、モメンタム・ファンダメンタルズ共に決定打に欠けます。業界全体のトレンドや地合いの動向も見極めつつ、監視リストに入れてタイミングを待つのが無難です。"
     else:
-        text += "現在の上昇確度は低めです。焦って購入せず、よりスコアの高い他の推奨銘柄を選択するか、チャートの本格的なボトムアウトを確認するまで様子見を推奨します。"
+        text += "現在の上張確度は低めです。焦って購入せず、よりスコアの高い他の推奨銘柄を選択するか、チャートの本格的なボトムアウトを確認するまで様子見を推奨します。"
+        
+    return text
+
+def generate_practice_recommendation_text(ticker, name, tech_score, signals, metrics):
+    text = f"### **{name} ({ticker})** のAIスクリーニングレポート（練習モード・テクニカル特化）\n\n"
+    
+    if tech_score == 3:
+        rating = "**非常に強い上昇期待 (買モメンタム極大)**"
+    elif tech_score == 2:
+        rating = "**上昇期待シグナル (順張りエントリー適性高)**"
+    elif tech_score == 1:
+        rating = "**押し目・打診買い検討 (反発初期のシグナル点灯)**"
+    else:
+        rating = "**シグナル消灯 / トレンド弱気・様子見推奨**"
+        
+    text += f"**テクニカル判定**: {rating} (テクニカルスコア: **{tech_score}/3**)\n\n"
+    
+    text += "#### 📈 点灯している主要シグナル\n"
+    tech_bullets = []
+    if signals.get('perfect_order'):
+        tech_bullets.append("- **堅調な上昇トレンド (パーフェパーフェクトオーダー)**: 5日・25日・75日移動平均線が順並びの上昇トレンドを形成中。強いトレンドモメンタムを示しています。")
+    if signals.get('trend_reversal'):
+        tech_bullets.append("- **トレンド転換シグナル (GC/MACDクロス)**: 25日線と75日線のゴールデンクロス、またはMACDのシグナル線上抜けが発生。ボトムアウトから上昇トレンドへの転換初期フェーズです。")
+    if signals.get('volume_surge'):
+        tech_bullets.append("- **大口資金流入 (出来高急増)**: 直近5日の出来高が25日平均の1.2倍以上に急増。機関投資家等の大口資金が流入し、本物のトレンドが発生した兆候です。")
+    if signals.get('rsi_oversold'):
+        tech_bullets.append("- **RSI売られすぎ (RSI 30以下)**: オシレーターが強い売られすぎ水準を示しており、短期的な反発が強く期待されます。")
+    if signals.get('rsi_overbought'):
+        tech_bullets.append("- **RSI買われすぎ (RSI 70以上)**: 株価が短期的に買われすぎており、過熱状態にあります。追随買いは高値掴みのリスクがあります。")
+    if signals.get('bb_rebound'):
+        tech_bullets.append("- **ボリンジャーバンド下限到達 (-2σ以下)**: 統計的下限に達しており、バンド内への回帰（リバウンド）を狙った逆張りの好機です。")
+    if signals.get('bb_upper_breakout'):
+        tech_bullets.append("- **ボリンジャーバンド上限突破 (+2σ以上)**: バンドウォークによる強い上昇推進力が発生している局面です。")
+        
+    if not tech_bullets:
+        tech_bullets.append("- 基準日時点で特定の主要シグナルは点灯していません。")
+    text += "\n".join(tech_bullets) + "\n\n"
+    
+    text += "#### 🎯 トレードの戦略アドバイス\n"
+    if tech_score == 3:
+        text += "上昇トレンド、転換シグナル、大口資金流入（出来高）の3条件がすべて揃ったパーフェクトな状態です。トレンドの初期段階である可能性が高く、強い買い優勢を期待して積極的にエントリーが検討できる水準です。"
+    elif tech_score == 2:
+        text += "主要な上昇シグナルが複数点灯しており、順張りでの買いに適しています。出来高や移動平均線のサポートを確認しながら、押し目で丁寧に買っていく戦略が有効です。"
+    elif tech_score == 1:
+        text += "底打ちや反発の初期シグナル（RSI売られすぎやMACDゴールデンクロスなど）が一部確認されます。まだ全体トレンドは上を向いていないため、小ロットでの打診買い（試し買い）から開始し、上昇トレンドの形成を確認しながら買い増すのが安全です。"
+    else:
+        text += "上昇シグナルが点灯していません。下降トレンドの途中か、もみ合い局面である可能性が高いです。焦って手を出さず、明確なシグナル（ゴールデンクロスや出来高急増）が確認できるまで監視リストに留めて様子見を推奨します。"
         
     return text
 
@@ -2838,14 +2885,23 @@ def render_detail_dashboard(selected_ticker, selected_name, raw_analysis, key_su
         with st.container(border=True):
             st.plotly_chart(fig, use_container_width=True, config=PLOTLY_CONFIG)
         
-        report_md = generate_recommendation_text(
-            ticker=selected_ticker,
-            name=selected_name,
-            tech_score=raw_analysis['tech_score'],
-            fund_score=raw_analysis['fund_score'],
-            signals=raw_analysis['signals'],
-            metrics=raw_analysis['metrics']
-        )
+        if is_practice:
+            report_md = generate_practice_recommendation_text(
+                ticker=selected_ticker,
+                name=selected_name,
+                tech_score=raw_analysis['tech_score'],
+                signals=raw_analysis['signals'],
+                metrics=raw_analysis['metrics']
+            )
+        else:
+            report_md = generate_recommendation_text(
+                ticker=selected_ticker,
+                name=selected_name,
+                tech_score=raw_analysis['tech_score'],
+                fund_score=raw_analysis['fund_score'],
+                signals=raw_analysis['signals'],
+                metrics=raw_analysis['metrics']
+            )
         st.markdown(f'<div class="card" style="padding: 25px; margin-top: 15px;">{report_md}</div>', unsafe_allow_html=True)
             
     elif selected_tab == "💡 事業カタリスト":
