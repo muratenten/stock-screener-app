@@ -6196,23 +6196,34 @@ with tab_practice:
             
         selected_tickers = [lbl.split(" : ")[0] for lbl in selected_tickers_labels]
         
-        if st.button("📥 選択した銘柄を練習用リストに追加", type="secondary", use_container_width=True):
-            prac_portfolio = []
-            for t in selected_tickers:
-                # Find ticker raw data
-                match_r = next(r for r in results if r['ティッカー'] == t)
-                price = match_r['基準日株価']
-                qty = budget_per_stock / price if price > 0 else 0
-                prac_portfolio.append({
-                    'ticker': t,
-                    'name': match_r['銘柄名'],
-                    'entry_price': price,
-                    'quantity': qty,
-                    'budget': budget_per_stock,
-                    'full_history': match_r['full_history']
-                })
-            st.session_state["prac_portfolio"] = prac_portfolio
-            st.toast(f"💼 練習用リストに {len(prac_portfolio)} 銘柄を追加しました！")
+        col_btn1, col_btn2 = st.columns(2)
+        with col_btn1:
+            btn_add_selected = st.button("📥 選択した銘柄を練習用リストに追加", type="secondary", use_container_width=True)
+        with col_btn2:
+            btn_add_all = st.button("📥 すべてのスクリーニング結果を練習用リストに追加", type="primary", use_container_width=True)
+            
+        if btn_add_selected or btn_add_all:
+            tickers_to_add = selected_tickers if btn_add_selected else [r['ティッカー'] for r in results]
+            if not tickers_to_add:
+                st.warning("追加する銘柄がありません。")
+            else:
+                prac_portfolio = []
+                for t in tickers_to_add:
+                    # Find ticker raw data
+                    match_r = next(r for r in results if r['ティッカー'] == t)
+                    price = match_r['基準日株価']
+                    qty = budget_per_stock / price if price > 0 else 0
+                    prac_portfolio.append({
+                        'ticker': t,
+                        'name': match_r['銘柄名'],
+                        'entry_price': price,
+                        'quantity': qty,
+                        'budget': budget_per_stock,
+                        'full_history': match_r['full_history']
+                    })
+                st.session_state["prac_portfolio"] = prac_portfolio
+                st.toast(f"💼 練習用リストに {len(prac_portfolio)} 銘柄を追加しました！")
+                st.rerun()
             
     # 4. Display Portfolio and View Results
     if st.session_state.get("prac_portfolio"):
