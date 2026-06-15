@@ -3687,7 +3687,14 @@ widget_defaults = {
     "scr_filter_similarity": False,
     "scr_filter_shape_match": False,
     "scr_filter_shape_match_mobile": False,
-    "active_preset": "カスタム設定"
+    "active_preset": "カスタム設定",
+    "prac_market": f"日本株 厳選トレンド銘柄 ({len(JP_TICKERS)}件)",
+    "prac_start_date": pd.Timestamp.now().date() - pd.Timedelta(days=365),
+    "prac_duration": 60,
+    "prac_preset": "🚀 大化け成長株",
+    "prac_portfolio": [],
+    "prac_results": None,
+    "prac_show_results": False
 }
 for k, v in widget_defaults.items():
     if k not in st.session_state:
@@ -3804,10 +3811,11 @@ def check_preset_match():
         st.session_state["preset_select_mobile"] = "⚙️ カスタム設定"
 
 # Main Navigation Tabs
-tab_screen, tab_favorite, tab_simulation, tab_explanation = st.tabs([
+tab_screen, tab_favorite, tab_simulation, tab_practice, tab_explanation = st.tabs([
     "🔍 スクリーニング実行と結果分析", 
     "⭐ 保有・お気に入り銘柄の分析",
     "💼 仮想シミュレーション（デモトレード）", 
+    "🏋️ 過去チャート練習モード",
     "📚 指標とシグナルの解説"
 ])
 
@@ -5378,6 +5386,525 @@ with tab_simulation:
                 if save_portfolio(reset_data):
                     st.success("すべての取引データを正常に初期化しました。")
                     st.rerun()
+
+# -----------------------------------------------------------------------------
+# TAB 1.7: PRACTICE MODE (🏋️ 過去チャート練習モード)
+# -----------------------------------------------------------------------------
+with tab_practice:
+    st.markdown("### 🏋️ 過去チャート練習モード（タイムトラベルトレード）")
+    st.markdown("""
+    過去の特定の時点（基準日）にタイムトラベルし、その時点の株価・テクニカル指標をもとにスクリーニングと仮想購入を行い、
+    その後の実際の値動きを追跡してトレードの成果を測定（バックテスト）する練習機能です。
+    
+    * ※企業の財務データ（PER、PBR等）は現在の情報に基づきます。テクニカル指標と株価は基準日時点の正確な値にタイムトラベルします。
+    * 練習用データ取得のため、基準日は **2年前〜1ヶ月前** の範囲から選択してください。
+    """)
+    
+    # 1. Settings Columns
+    col_s1, col_s2, col_s3 = st.columns(3)
+    
+    with col_s1:
+        # Market pools
+        prac_markets = [
+            f"日本株 厳選トレンド銘柄 ({len(JP_TICKERS)}件)",
+            f"米国株 厳選トレンド銘柄 ({len(US_TICKERS)}件)",
+            "日経平均株価 (日経225全銘柄 - 動的取得)",
+            "東証プライム (全上場銘柄 - 動的取得)",
+            "東証グロース (全上場銘柄 - 動的取得)"
+        ]
+        prac_market = st.selectbox(
+            "練習対象の市場",
+            options=prac_markets,
+            key="prac_market_selectbox"
+        )
+        
+    with col_s2:
+        # Date Input (between 2 years ago and 30 days ago)
+        min_prac_date = pd.Timestamp.now().date() - pd.Timedelta(days=730)
+        max_prac_date = pd.Timestamp.now().date() - pd.Timedelta(days=30)
+        default_prac_date = pd.Timestamp.now().date() - pd.Timedelta(days=365)
+        
+        prac_start_date = st.date_input(
+            "基準日 (練習のスタート日)",
+            value=st.session_state.get("prac_start_date", default_prac_date),
+            min_value=min_prac_date,
+            max_value=max_prac_date,
+            key="prac_start_date_input"
+        )
+        st.session_state["prac_start_date"] = prac_start_date
+        
+    with col_s3:
+        # Holding Period
+        durations = {
+            "20営業日 (約1ヶ月)": 20,
+            "60営業日 (約3ヶ月)": 60,
+            "120営業日 (約6ヶ月)": 120,
+            "240営業日 (約1年)": 240
+        }
+        prac_duration_label = st.selectbox(
+            "トレード保有期間",
+            options=list(durations.keys()),
+            index=1, # Default 60 days
+            key="prac_duration_selectbox"
+        )
+        prac_duration = durations[prac_duration_label]
+        st.session_state["prac_duration"] = prac_duration
+        
+    # Presets & Custom filters expander
+    with st.expander("🔍 練習用スクリーニング条件の設定 (クリックで開閉)", expanded=True):
+        col_f1, col_f2 = st.columns([1, 1])
+        with col_f1:
+            prac_preset = st.selectbox(
+                "スクリーニング・プリセット",
+                options=["🚀 大化け成長株", "💰 高配当割安株", "🔄 逆張り大底打ち狙い", "⚡ 急騰ブレイクアウト狙い", "⚙️ カスタム設定"],
+                key="prac_preset_selectbox"
+            )
+        
+        # Determine active settings based on preset
+        if prac_preset == "🚀 大化け成長株":
+            p_min_total = 7; p_min_tech = 2; p_min_fund = 4
+            p_pbr = False; p_per = False; p_roe = True; p_div = False; p_rev = True; p_eps = True
+            p_gc = False; p_macd = False; p_rsi_os = False; p_rsi_ob = False; p_bb = False; p_vol = True; p_shape = True
+        elif prac_preset == "💰 高配当割安株":
+            p_min_total = 6; p_min_tech = 1; p_min_fund = 5
+            p_pbr = True; p_per = True; p_roe = False; p_div = True; p_rev = False; p_eps = False
+            p_gc = False; p_macd = False; p_rsi_os = False; p_rsi_ob = False; p_bb = False; p_vol = False; p_shape = False
+        elif prac_preset == "🔄 逆張り大底打ち狙い":
+            p_min_total = 4; p_min_tech = 1; p_min_fund = 2
+            p_pbr = False; p_per = False; p_roe = False; p_div = False; p_rev = False; p_eps = False
+            p_gc = False; p_macd = True; p_rsi_os = True; p_rsi_ob = False; p_bb = True; p_vol = False; p_shape = False
+        elif prac_preset == "⚡ 急騰ブレイクアウト狙い":
+            p_min_total = 5; p_min_tech = 2; p_min_fund = 2
+            p_pbr = False; p_per = False; p_roe = False; p_div = False; p_rev = False; p_eps = False
+            p_gc = True; p_macd = False; p_rsi_os = False; p_rsi_ob = False; p_bb = False; p_vol = True; p_shape = False
+        else: # Custom
+            p_min_total = 5; p_min_tech = 1; p_min_fund = 3
+            p_pbr = False; p_per = False; p_roe = False; p_div = False; p_rev = False; p_eps = False
+            p_gc = False; p_macd = False; p_rsi_os = False; p_rsi_ob = False; p_bb = False; p_vol = False; p_shape = False
+
+        if prac_preset == "⚙️ カスタム設定":
+            # Show sliders and checkboxes for Custom configuration
+            col_c1, col_c2, col_c3 = st.columns(3)
+            with col_c1:
+                st.markdown("**🎯 最小スコア設定**")
+                p_min_total = st.slider("最小総合スコア", 0, 10, p_min_total, key="prac_slider_total")
+                p_min_tech = st.slider("最小テクニカルスコア", 0, 3, p_min_tech, key="prac_slider_tech")
+                p_min_fund = st.slider("最小ファンダメンタルスコア", 0, 7, p_min_fund, key="prac_slider_fund")
+            with col_c2:
+                st.markdown("**💰 財務指標フィルタ**")
+                p_pbr = st.checkbox("PBR 1.0倍未満 のみ", value=p_pbr, key="prac_chk_pbr")
+                p_per = st.checkbox("PER 15倍未満 のみ", value=p_per, key="prac_chk_per")
+                p_roe = st.checkbox("ROE 10%以上 のみ", value=p_roe, key="prac_chk_roe")
+                p_div = st.checkbox("配当利回り 3%以上 のみ", value=p_div, key="prac_chk_div")
+                p_rev = st.checkbox("売上高成長率 10%以上 のみ", value=p_rev, key="prac_chk_rev")
+                p_eps = st.checkbox("EPS成長率 15%以上 のみ", value=p_eps, key="prac_chk_eps")
+            with col_c3:
+                st.markdown("**📈 テクニカル指標フィルタ**")
+                p_gc = st.checkbox("5日/25日GC", value=p_gc, key="prac_chk_gc")
+                p_macd = st.checkbox("MACD GC", value=p_macd, key="prac_chk_macd")
+                p_rsi_os = st.checkbox("RSI 30以下", value=p_rsi_os, key="prac_chk_rsi_os")
+                p_rsi_ob = st.checkbox("RSI 70以上", value=p_rsi_ob, key="prac_chk_rsi_ob")
+                p_bb = st.checkbox("ボリバン -2σ以下", value=p_bb, key="prac_chk_bb")
+                p_vol = st.checkbox("出来高急増", value=p_vol, key="prac_chk_vol")
+                p_shape = st.checkbox("チャート形状判定 (上昇傾向/上昇反転)", value=p_shape, key="prac_chk_shape")
+        else:
+            # Display current preset values as inactive info
+            st.markdown(f"**現在のプリセット設定**: 総合スコア: {p_min_total}点 / テクニカル: {p_min_tech}点 / ファンダメンタル: {p_min_fund}点")
+            badges = []
+            if p_pbr: badges.append("PBR<1.0")
+            if p_per: badges.append("PER<15")
+            if p_roe: badges.append("ROE>=10%")
+            if p_div: badges.append("配当>=3%")
+            if p_rev: badges.append("売上増>=10%")
+            if p_eps: badges.append("EPS増>=15%")
+            if p_gc: badges.append("5/25日GC")
+            if p_macd: badges.append("MACD GC")
+            if p_rsi_os: badges.append("RSI<=30")
+            if p_rsi_ob: badges.append("RSI>=70")
+            if p_bb: badges.append("ボリバン-2σ")
+            if p_vol: badges.append("出来高急増")
+            if p_shape: badges.append("上昇形状")
+            st.markdown("適用される個別フィルタ: " + (", ".join(badges) if badges else "なし"))
+            
+    # Trigger button
+    if st.button("🏋️ 練習用スクリーニングを実行", type="primary", use_container_width=True, key="btn_prac_screening"):
+        # Reset portfolio and result view when running a new screening
+        st.session_state["prac_portfolio"] = []
+        st.session_state["prac_results"] = None
+        st.session_state["prac_show_results"] = False
+        st.session_state["prac_selected_labels"] = []
+        
+        # Load tickers pool
+        prac_pool = {}
+        if prac_market.startswith("日本株"):
+            prac_pool = JP_TICKERS
+        elif prac_market.startswith("米国株"):
+            prac_pool = US_TICKERS
+        elif "日経平均" in prac_market:
+            prac_pool = fetch_nikkei225_tickers()
+        elif "プライム" in prac_market:
+            prac_pool = fetch_tse_prime_tickers()
+        elif "グロース" in prac_market:
+            prac_pool = fetch_tse_growth_tickers()
+            
+        if not prac_pool:
+            st.error("スクリーニング対象がありません。")
+        else:
+            with st.spinner("過去データの取得とタイムトラベル分析を実行中..."):
+                tickers_list = list(prac_pool.keys())
+                # Download 2 years of history for analysis + practice exit tracking
+                histories = batch_download_histories(tickers_list, period="2y")
+                
+                prac_results = []
+                p_start_ts = pd.Timestamp(prac_start_date)
+                
+                for ticker in tickers_list:
+                    df = histories.get(ticker)
+                    if df is None or df.empty:
+                        continue
+                        
+                    # Slice history up to start date
+                    df_sliced = df[df.index <= p_start_ts]
+                    if len(df_sliced) < 75:
+                        continue
+                        
+                    # Run technical analysis on sliced history (as of start date)
+                    tech_analysis = evaluate_stock(ticker, df_sliced, info=None)
+                    if tech_analysis is None:
+                        continue
+                        
+                    # Skip if technical score doesn't match
+                    if tech_analysis['tech_score'] < p_min_tech:
+                        continue
+                    if p_gc and not tech_analysis['signals']['golden_cross']:
+                        continue
+                    if p_macd and not tech_analysis['signals']['macd_cross']:
+                        continue
+                    if p_rsi_os and not tech_analysis['signals']['rsi_oversold']:
+                        continue
+                    if p_rsi_ob and not tech_analysis['signals']['rsi_overbought']:
+                        continue
+                    if p_bb and not tech_analysis['signals']['bb_rebound']:
+                        continue
+                    if p_vol and not tech_analysis['signals']['volume_surge']:
+                        continue
+                        
+                    # Get fundamentals info (use current as proxy)
+                    info = get_ticker_info(ticker)
+                    analysis = evaluate_stock(ticker, df_sliced, info)
+                    if analysis is None:
+                        continue
+                        
+                    metrics = analysis['metrics']
+                    
+                    # Apply fundamental scores and filters
+                    if analysis['total_score'] < p_min_total:
+                        continue
+                    if analysis['fund_score'] < p_min_fund:
+                        continue
+                        
+                    if p_pbr and (metrics['pbr'] is None or metrics['pbr'] >= 1.0):
+                        continue
+                    if p_per and (metrics['per'] is None or metrics['per'] >= 15.0):
+                        continue
+                    if p_roe and (metrics['roe'] is None or metrics['roe'] < 10.0):
+                        continue
+                    if p_div and (metrics['dividend_yield'] is None or metrics['dividend_yield'] < 3.0):
+                        continue
+                    if p_rev and (metrics['rev_growth'] is None or metrics['rev_growth'] < 10.0):
+                        continue
+                    if p_eps and (metrics['eps_growth'] is None or metrics['eps_growth'] < 15.0):
+                        continue
+                        
+                    # Shape match check
+                    matched_shape = "判定不可"
+                    prices_for_shape = df_sliced['Close'].values
+                    if len(prices_for_shape) >= 30:
+                        shape_lbl, shape_corr = check_shape_match(prices_for_shape, threshold=0.70)
+                        if shape_lbl:
+                            matched_shape = f"{shape_lbl} ({shape_corr*100:.0f}%)"
+                            
+                    if p_shape:
+                        if matched_shape == "判定不可" or not any(x in matched_shape for x in ["上昇傾向", "上昇反転"]):
+                            continue
+                            
+                    display_name = prac_pool[ticker].get('name', ticker)
+                    
+                    # Store candidate
+                    prac_results.append({
+                        'ティッカー': ticker,
+                        '銘柄名': display_name,
+                        '基準日株価': metrics['price'],
+                        '総合スコア': analysis['total_score'],
+                        'テクニカルスコア': analysis['tech_score'],
+                        'ファンダスコア': analysis['fund_score'],
+                        'PER (倍)': metrics['per'],
+                        'PBR (倍)': metrics['pbr'],
+                        'ROE (%)': metrics['roe'],
+                        '配当利回り (%)': metrics['dividend_yield'],
+                        '売上高成長率 (%)': metrics['rev_growth'],
+                        'EPS成長率 (%)': metrics['eps_growth'],
+                        'チャート形状': matched_shape,
+                        'full_history': df # Save full history for exit valuation
+                    })
+                
+                # Sort by score desc
+                prac_results = sorted(prac_results, key=lambda x: x['総合スコア'], reverse=True)
+                st.session_state["prac_results"] = prac_results
+                if prac_results:
+                    st.toast(f"✅ {len(prac_results)} 件の銘柄がスクリーニングされました！")
+                else:
+                    st.toast("⚠️ 条件に合致する銘柄が見つかりませんでした。")
+                    
+    # 2. Display Screening Results
+    if st.session_state.get("prac_results"):
+        results = st.session_state["prac_results"]
+        st.markdown(f"#### 🔍 基準日 **{prac_start_date}** 時点のスクリーニング結果 ({len(results)}件)")
+        
+        # Create display dataframe
+        df_display_list = []
+        for r in results:
+            df_display_list.append({
+                'ティッカー': r['ティッカー'],
+                '銘柄名': r['銘柄名'],
+                '総合スコア': f"{r['総合スコア']} / 10",
+                '基準日株価': f"{r['基準日株価']:,.1f} 円" if r['ティッカー'].endswith(('.T', 'T')) or '日経平均' in st.session_state.get("prac_market", "") or 'プライム' in st.session_state.get("prac_market", "") or 'グロース' in st.session_state.get("prac_market", "") else f"${r['基準日株価']:,.2f}",
+                'チャート形状': r['チャート形状'],
+                'PER (倍)': f"{r['PER (倍)']:.1f}" if r['PER (倍)'] is not None else "N/A",
+                'PBR (倍)': f"{r['PBR (倍)']:.2f}" if r['PBR (倍)'] is not None else "N/A",
+                'ROE (%)': f"{r['ROE (%)']:.1f}%" if r['ROE (%)'] is not None else "N/A",
+                '配当利回り (%)': f"{r['配当利回り (%)']:.2f}%" if r['配当利回り (%)'] is not None else "N/A",
+                '売上高成長率 (%)': f"{r['売上高成長率 (%)']:.1f}%" if r['売上高成長率 (%)'] is not None else "N/A",
+                'EPS成長率 (%)': f"{r['EPS成長率 (%)']:.1f}%" if r['EPS成長率 (%)'] is not None else "N/A",
+            })
+            
+        st.dataframe(pd.DataFrame(df_display_list), use_container_width=True)
+        
+        # 3. Buy Section
+        st.markdown("#### 🛍️ 練習用仮想購入（複数選択可）")
+        st.caption("※購入したい銘柄を選択し、各銘柄への投資金額（予算）を設定して購入してください。購入後、「結果を見る」ボタンを押すことで、将来のトレード結果を即座に計算できます。")
+        
+        col_b1, col_b2 = st.columns([2, 1])
+        with col_b1:
+            ticker_options = [f"{r['ティッカー']} : {r['銘柄名']}" for r in results]
+            selected_tickers_labels = st.multiselect(
+                "購入する銘柄を選択してください",
+                options=ticker_options,
+                default=st.session_state.get("prac_selected_labels", [])
+            )
+            st.session_state["prac_selected_labels"] = selected_tickers_labels
+            
+        with col_b2:
+            budget_per_stock = st.number_input(
+                "1銘柄あたりの投資額 (円またはUSD)",
+                min_value=1000,
+                max_value=10000000,
+                value=100000,
+                step=10000,
+                key="prac_budget_input"
+            )
+            
+        selected_tickers = [lbl.split(" : ")[0] for lbl in selected_tickers_labels]
+        
+        if st.button("📥 選択した銘柄をポートフォリオに追加", type="secondary", use_container_width=True):
+            prac_portfolio = []
+            for t in selected_tickers:
+                # Find ticker raw data
+                match_r = next(r for r in results if r['ティッカー'] == t)
+                price = match_r['基準日株価']
+                qty = budget_per_stock / price if price > 0 else 0
+                prac_portfolio.append({
+                    'ticker': t,
+                    'name': match_r['銘柄名'],
+                    'entry_price': price,
+                    'quantity': qty,
+                    'budget': budget_per_stock,
+                    'full_history': match_r['full_history']
+                })
+            st.session_state["prac_portfolio"] = prac_portfolio
+            st.toast(f"💼 ポートフォリオに {len(prac_portfolio)} 銘柄を追加しました！")
+            
+    # 4. Display Portfolio and View Results
+    if st.session_state.get("prac_portfolio"):
+        portfolio = st.session_state["prac_portfolio"]
+        st.markdown("---")
+        st.markdown("### 💼 練習用ポートフォリオ保有銘柄一覧")
+        
+        p_rows = []
+        for p in portfolio:
+            p_rows.append({
+                'ティッカー': p['ticker'],
+                '銘柄名': p['name'],
+                '購入日価格': f"{p['entry_price']:,.1f} 円" if p['ticker'].endswith(('.T', 'T')) or '日経平均' in st.session_state.get("prac_market", "") or 'プライム' in st.session_state.get("prac_market", "") or 'グロース' in st.session_state.get("prac_market", "") else f"${p['entry_price']:,.2f}",
+                '購入数量': f"{p['quantity']:,.2f} 株",
+                '投資金額': f"{p['budget']:,} 円" if p['ticker'].endswith(('.T', 'T')) or '日経平均' in st.session_state.get("prac_market", "") or 'プライム' in st.session_state.get("prac_market", "") or 'グロース' in st.session_state.get("prac_market", "") else f"${p['budget']:,}"
+            })
+        st.dataframe(pd.DataFrame(p_rows), use_container_width=True)
+        
+        # Result decision button
+        col_res1, col_res2 = st.columns([2, 1])
+        with col_res1:
+            btn_results = st.button("🚀 タイムトラベル！指定期間後のトレード結果を見る", type="primary", use_container_width=True, key="btn_prac_results")
+        with col_res2:
+            if st.button("🗑️ ポートフォリオをクリア", type="secondary", use_container_width=True):
+                st.session_state["prac_portfolio"] = []
+                st.session_state["prac_show_results"] = False
+                st.session_state["prac_selected_labels"] = []
+                st.rerun()
+                
+        if btn_results or st.session_state.get("prac_show_results"):
+            st.session_state["prac_show_results"] = True
+            
+            st.markdown("### 📊 トレード結果レポート")
+            
+            total_invested = 0
+            total_exit_value = 0
+            win_count = 0
+            loss_count = 0
+            
+            result_rows = []
+            normalized_histories = {} # For chart plotting
+            
+            is_dark = st.session_state.get('color_theme', 'light') == 'dark'
+            
+            for p in portfolio:
+                df = p['full_history']
+                ticker = p['ticker']
+                p_start_ts = pd.Timestamp(st.session_state["prac_start_date"])
+                
+                # Sliced history up to start date to locate the starting index
+                df_sliced = df[df.index <= p_start_ts]
+                start_idx = len(df_sliced) - 1
+                
+                # Target index in full history: start_idx + prac_duration
+                dur = st.session_state["prac_duration"]
+                exit_idx = start_idx + dur
+                
+                if exit_idx >= len(df):
+                    exit_idx = len(df) - 1
+                    is_future_limited = True
+                else:
+                    is_future_limited = False
+                    
+                entry_date = df.index[start_idx]
+                exit_date = df.index[exit_idx]
+                
+                entry_price = p['entry_price']
+                exit_price = df['Close'].iloc[exit_idx]
+                
+                ret_pct = ((exit_price - entry_price) / entry_price) * 100 if entry_price > 0 else 0
+                pl_amount = p['quantity'] * (exit_price - entry_price)
+                
+                total_invested += p['budget']
+                total_exit_value += p['budget'] + pl_amount
+                
+                if pl_amount > 0:
+                    win_count += 1
+                else:
+                    loss_count += 1
+                    
+                # Format prices for table display
+                is_jpy = ticker.endswith(('.T', 'T')) or '日経平均' in st.session_state.get("prac_market", "") or 'プライム' in st.session_state.get("prac_market", "") or 'グロース' in st.session_state.get("prac_market", "")
+                
+                result_rows.append({
+                    'ティッカー': ticker,
+                    '銘柄名': p['name'],
+                    '購入日 (価格)': f"{entry_date.strftime('%Y-%m-%d')} ({f'{entry_price:,.1f} 円' if is_jpy else f'${entry_price:,.2f}'})",
+                    '売却日 (価格)': f"{exit_date.strftime('%Y-%m-%d')} ({f'{exit_price:,.1f} 円' if is_jpy else f'${exit_price:,.2f}'}){' ⚠️(最終データ)' if is_future_limited else ''}",
+                    '損益率 (%)': f"{ret_pct:+.2f}%",
+                    '損益額': f"{pl_amount:+,.0f} 円" if is_jpy else f"${pl_amount:+,.2f}"
+                })
+                
+                # Fetch sub-series for returns chart
+                sub_df = df.iloc[start_idx : exit_idx + 1]
+                if not sub_df.empty:
+                    # Normalize to 100
+                    normalized_histories[ticker] = (sub_df['Close'] / entry_price) * 100
+            
+            # Display metrics cards
+            net_pl = total_exit_value - total_invested
+            net_pct = (net_pl / total_invested) * 100 if total_invested > 0 else 0
+            win_rate = (win_count / len(portfolio)) * 100 if portfolio else 0
+            
+            col_m1, col_m2, col_m3, col_m4 = st.columns(4)
+            is_jpy_market = any(p['ticker'].endswith(('.T', 'T')) for p in portfolio) or '日経平均' in st.session_state.get("prac_market", "") or 'プライム' in st.session_state.get("prac_market", "") or 'グロース' in st.session_state.get("prac_market", "")
+            
+            with col_m1:
+                st.metric("総投資金額", f"{total_invested:,.0f} 円" if is_jpy_market else f"${total_invested:,.2f}")
+            with col_m2:
+                # Color code green/red
+                color_class = "green-text" if net_pl >= 0 else "red-text"
+                prefix = "+" if net_pl >= 0 else ""
+                st.markdown(f"""
+                <div class="metric-container" style="background-color: var(--card-bg); border: 1px solid var(--border-color); padding: 12px; border-radius: 8px;">
+                    <div style="font-size: 0.85rem; color: var(--text-color); opacity: 0.8;">合計純損益</div>
+                    <div style="font-size: 1.4rem; font-weight: bold; color: {'#16a34a' if net_pl >= 0 else '#dc2626'}">{prefix}{net_pl:,.0f} 円</div>
+                </div>
+                """ if is_jpy_market else f"""
+                <div class="metric-container" style="background-color: var(--card-bg); border: 1px solid var(--border-color); padding: 12px; border-radius: 8px;">
+                    <div style="font-size: 0.85rem; color: var(--text-color); opacity: 0.8;">合計純損益</div>
+                    <div style="font-size: 1.4rem; font-weight: bold; color: {'#16a34a' if net_pl >= 0 else '#dc2626'}">{prefix}{net_pl:+,.2f}</div>
+                </div>
+                """, unsafe_allow_html=True)
+            with col_m3:
+                prefix = "+" if net_pct >= 0 else ""
+                st.markdown(f"""
+                <div class="metric-container" style="background-color: var(--card-bg); border: 1px solid var(--border-color); padding: 12px; border-radius: 8px;">
+                    <div style="font-size: 0.85rem; color: var(--text-color); opacity: 0.8;">トータル収益率</div>
+                    <div style="font-size: 1.4rem; font-weight: bold; color: {'#16a34a' if net_pct >= 0 else '#dc2626'}">{prefix}{net_pct:.2f}%</div>
+                </div>
+                """, unsafe_allow_html=True)
+            with col_m4:
+                st.metric("勝率", f"{win_rate:.1f}%", f"{win_count}勝 {loss_count}敗")
+                
+            # Results table
+            st.markdown("#### 📋 銘柄別の取引明細")
+            st.dataframe(pd.DataFrame(result_rows), use_container_width=True)
+            
+            # Plotly return path chart
+            if normalized_histories:
+                st.markdown("#### 📈 トレード期間中の収益推移 (元本を100%とした比較)")
+                
+                # Combine normalized histories into one DataFrame for plotting
+                combined_chart_df = pd.DataFrame(normalized_histories)
+                # Fill missing dates
+                combined_chart_df = combined_chart_df.ffill().interpolate()
+                
+                fig = go.Figure()
+                
+                for col in combined_chart_df.columns:
+                    # Find ticker name
+                    t_name = next(p['name'] for p in portfolio if p['ticker'] == col)
+                    fig.add_trace(go.Scatter(
+                        x=combined_chart_df.index,
+                        y=combined_chart_df[col],
+                        mode='lines',
+                        name=f"{t_name} ({col})",
+                        line=dict(width=2.5)
+                    ))
+                    
+                # Add 100% baseline
+                fig.add_shape(
+                    type="line",
+                    x0=combined_chart_df.index[0],
+                    y0=100,
+                    x1=combined_chart_df.index[-1],
+                    y1=100,
+                    line=dict(color="grey", width=1.5, dash="dash")
+                )
+                
+                # Style layout
+                fig.update_layout(
+                    paper_bgcolor="rgba(0,0,0,0)",
+                    plot_bgcolor="rgba(0,0,0,0)",
+                    template="plotly_dark" if is_dark else "plotly_white",
+                    font=dict(color="white" if is_dark else "black"),
+                    xaxis=dict(showgrid=True, gridcolor="rgba(128,128,128,0.2)"),
+                    yaxis=dict(title="パフォーマンス (%)", showgrid=True, gridcolor="rgba(128,128,128,0.2)"),
+                    legend=dict(x=0.01, y=0.99),
+                    margin=dict(l=20, r=20, t=30, b=20)
+                )
+                st.plotly_chart(fig, use_container_width=True, config=PLOTLY_CONFIG)
 
 # -----------------------------------------------------------------------------
 # -----------------------------------------------------------------------------
