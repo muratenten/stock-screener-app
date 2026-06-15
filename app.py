@@ -3856,6 +3856,8 @@ widget_defaults = {
     "prac_filter_bb_re": False,
     "prac_filter_vol_su": False,
     "prac_filter_similarity": False,
+    "prac_similarity_days": 20,
+    "prac_similarity_pct": 5.0,
     "prac_filter_shape_match": False,
     "prac_filter_shape_match_mobile": False,
     "prac_active_preset": "カスタム設定"
@@ -3983,6 +3985,8 @@ def apply_practice_preset(preset_name):
     st.session_state["prac_filter_bb_re"] = False
     st.session_state["prac_filter_vol_su"] = False
     st.session_state["prac_filter_similarity"] = False
+    st.session_state["prac_similarity_days"] = 20
+    st.session_state["prac_similarity_pct"] = 5.0
     st.session_state["prac_filter_shape_match"] = False
     st.session_state["prac_filter_shape_match_mobile"] = False
     
@@ -4020,6 +4024,8 @@ def check_practice_preset_match():
         "prac_filter_gc": False, "prac_filter_macd": False, "prac_filter_rsi_os": False,
         "prac_filter_rsi_ob": False, "prac_filter_bb_re": False, "prac_filter_vol_su": False,
         "prac_filter_similarity": False,
+        "prac_similarity_days": 20,
+        "prac_similarity_pct": 5.0,
         "prac_filter_shape_match" if st.session_state.get('ui_mode', 'PC') != 'スマホ' else "prac_filter_shape_match_mobile": False
     }
     
@@ -5732,10 +5738,12 @@ with tab_practice:
             prac_filter_rsi_ob = st.checkbox("RSI 70以上 (買われすぎ/過熱)", key="prac_filter_rsi_ob")
             prac_filter_bb_re = st.checkbox("ボリンジャーバンド -2σ以下", key="prac_filter_bb_re")
             prac_filter_vol_su = st.checkbox("出来高急増 (5日平均 > 25日平均*1.2)", key="prac_filter_vol_su")
-            prac_filter_similarity = st.checkbox("🔍 類似連動 (過去類似3局面の20日後上昇率フィルタ)", key="prac_filter_similarity", help="直近20日間のチャート形状に類似する過去の局面を直近5年間の歴史データから3つ抽出し、そのすべての局面において20営業日後の上昇率が指定値以上となった銘柄のみを抽出します。他フィルタで絞り込んだ後、最後に実行されます。")
+            prac_filter_similarity = st.checkbox("🔍 類似連動 (過去類似3局面の上昇率フィルタ)", key="prac_filter_similarity", help="直近20日間のチャート形状に類似する過去の局面を直近5年間の歴史データから3つ抽出し、そのすべての局面において指定した営業日後の上昇率が指定値以上となった銘柄のみを抽出します。他フィルタで絞り込んだ後、最後に実行されます。")
             if prac_filter_similarity:
+                prac_similarity_days = st.slider("   ↳ 参照する営業日後", 5, 60, 20, step=5, key="prac_similarity_days")
                 prac_similarity_pct = st.slider("   ↳ 必要上昇率 (%)", 0.0, 15.0, 5.0, step=0.5, key="prac_similarity_pct")
             else:
+                prac_similarity_days = 20
                 prac_similarity_pct = 5.0
                 
             prac_filter_shape_match = st.checkbox("📈 チャート形状パターン指定", key="prac_filter_shape_match_mobile", help="直近30日間のチャート形状が、指定した特定のパターン（上昇傾向、下降減衰、上昇反転）に類似する銘柄のみを抽出します。")
@@ -5816,10 +5824,12 @@ with tab_practice:
                 prac_filter_rsi_ob = st.checkbox("RSI 70以上 (買われすぎ/過熱)", key="prac_filter_rsi_ob")
                 prac_filter_bb_re = st.checkbox("ボリンジャーバンド -2σ以下", key="prac_filter_bb_re")
                 prac_filter_vol_su = st.checkbox("出来高急増 (5日平均 > 25日平均*1.2)", key="prac_filter_vol_su")
-                prac_filter_similarity = st.checkbox("🔍 類似連動 (過去類似3局面の20日後上昇率フィルタ)", key="prac_filter_similarity")
+                prac_filter_similarity = st.checkbox("🔍 類似連動 (過去類似3局面の上昇率フィルタ)", key="prac_filter_similarity")
                 if prac_filter_similarity:
+                    prac_similarity_days = st.slider("   ↳ 参照する営業日後", 5, 60, 20, step=5, key="prac_similarity_days")
                     prac_similarity_pct = st.slider("   ↳ 必要上昇率 (%)", 0.0, 15.0, 5.0, step=0.5, key="prac_similarity_pct")
                 else:
+                    prac_similarity_days = 20
                     prac_similarity_pct = 5.0
                     
                 prac_filter_shape_match = st.checkbox("📈 チャート形状パターン指定", key="prac_filter_shape_match")
@@ -5918,6 +5928,7 @@ with tab_practice:
                 p_vol = st.session_state.get("prac_filter_vol_su", False)
                 
                 p_similarity = st.session_state.get("prac_filter_similarity", False)
+                p_similarity_days = st.session_state.get("prac_similarity_days", 20) if p_similarity else 20
                 p_similarity_pct = st.session_state.get("prac_similarity_pct", 5.0) if p_similarity else 5.0
                 
                 is_mobile_mode = st.session_state.get('ui_mode', 'PC') == 'スマホ'
@@ -5962,14 +5973,14 @@ with tab_practice:
                     if p_similarity:
                         df_hist = df_sliced
                         N_len = 20
-                        if len(df_hist) < N_len + 20:
+                        if len(df_hist) < N_len + p_similarity_days:
                             continue
                             
                         target_prices = df_hist['Close'].iloc[-N_len:].values
                         Z_target = z_normalize(target_prices)
                         
                         matches = []
-                        for i in range(len(df_hist) - N_len - 20 - N_len + 1):
+                        for i in range(len(df_hist) - N_len - p_similarity_days - N_len + 1):
                             window_df = df_hist.iloc[i : i + N_len]
                             w_start = window_df.index[0]
                             w_end = window_df.index[-1]
@@ -5982,7 +5993,7 @@ with tab_practice:
                             r = np.dot(Z_target, Z_hist) / N_len
                             similarity = max(0.0, r * 100)
                             
-                            end_idx = i + N_len + 20
+                            end_idx = i + N_len + p_similarity_days
                             all_prices = df_hist['Close'].iloc[i : end_idx].values
                             
                             matches.append({
@@ -6012,7 +6023,7 @@ with tab_practice:
                         else:
                             for m in filtered_matches:
                                 all_prices = m['all_prices']
-                                if len(all_prices) < N_len + 20:
+                                if len(all_prices) < N_len + p_similarity_days:
                                     pass_similarity_filter = False
                                     break
                                 price_at_end = all_prices[N_len-1]
