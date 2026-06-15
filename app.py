@@ -3830,15 +3830,7 @@ def check_preset_match():
         st.session_state["preset_select_mobile"] = "⚙️ カスタム設定"
 
 def apply_practice_preset(preset_name):
-    st.session_state["prac_min_total"] = 0
     st.session_state["prac_min_tech"] = 0
-    st.session_state["prac_min_fund"] = 0
-    st.session_state["prac_filter_pbr"] = False
-    st.session_state["prac_filter_per"] = False
-    st.session_state["prac_filter_roe"] = False
-    st.session_state["prac_filter_dividend"] = False
-    st.session_state["prac_filter_rev_growth"] = False
-    st.session_state["prac_filter_eps_growth"] = False
     st.session_state["prac_filter_gc"] = False
     st.session_state["prac_filter_macd"] = False
     st.session_state["prac_filter_rsi_os"] = False
@@ -3849,44 +3841,26 @@ def apply_practice_preset(preset_name):
     st.session_state["prac_filter_shape_match"] = False
     st.session_state["prac_filter_shape_match_mobile"] = False
     
-    if preset_name == "大化け成長株":
-        st.session_state["prac_min_total"] = 7
+    if preset_name == "急騰ブレイクアウト":
         st.session_state["prac_min_tech"] = 2
-        st.session_state["prac_min_fund"] = 4
-        st.session_state["prac_filter_roe"] = True
-        st.session_state["prac_filter_rev_growth"] = True
-        st.session_state["prac_filter_eps_growth"] = True
         st.session_state["prac_filter_vol_su"] = True
-        st.session_state["prac_filter_shape_match"] = True
-        st.session_state["prac_filter_shape_match_mobile"] = True
-    elif preset_name == "高配当割安株":
-        st.session_state["prac_min_total"] = 6
-        st.session_state["prac_min_tech"] = 1
-        st.session_state["prac_min_fund"] = 5
-        st.session_state["prac_filter_pbr"] = True
-        st.session_state["prac_filter_per"] = True
-        st.session_state["prac_filter_dividend"] = True
+        st.session_state["prac_filter_gc"] = True
     elif preset_name == "逆張り・大底打ち":
-        st.session_state["prac_min_total"] = 4
         st.session_state["prac_min_tech"] = 1
-        st.session_state["prac_min_fund"] = 2
         st.session_state["prac_filter_rsi_os"] = True
         st.session_state["prac_filter_bb_re"] = True
         st.session_state["prac_filter_macd"] = True
-    elif preset_name == "急騰ブレイクアウト":
-        st.session_state["prac_min_total"] = 5
+    elif preset_name == "トレンド順張り":
         st.session_state["prac_min_tech"] = 2
-        st.session_state["prac_min_fund"] = 2
-        st.session_state["prac_filter_vol_su"] = True
-        st.session_state["prac_filter_gc"] = True
+        st.session_state["prac_filter_shape_match"] = True
+        st.session_state["prac_filter_shape_match_mobile"] = True
         
     st.session_state["prac_active_preset"] = preset_name
     presets_inv = {
         "カスタム設定": "⚙️ カスタム設定",
-        "大化け成長株": "🚀 大化け成長株 (CANSLIM風)",
-        "高配当割安株": "💰 高配当割安株",
+        "急騰ブレイクアウト": "⚡ 急騰ブレイクアウト狙い",
         "逆張り・大底打ち": "🔄 逆張り・大底打ち狙い",
-        "急騰ブレイクアウト": "⚡ 急騰ブレイクアウト狙い"
+        "トレンド順張り": "📈 トレンド順張り（強モメンタム）"
     }
     if preset_name in presets_inv:
         st.session_state["prac_preset_select_mobile"] = presets_inv[preset_name]
@@ -3897,36 +3871,27 @@ def check_practice_preset_match():
         return
         
     expected = {
-        "prac_min_total": 0, "prac_min_tech": 0, "prac_min_fund": 0,
-        "prac_filter_pbr": False, "prac_filter_per": False, "prac_filter_roe": False,
-        "prac_filter_dividend": False, "prac_filter_rev_growth": False, "prac_filter_eps_growth": False,
+        "prac_min_tech": 0,
         "prac_filter_gc": False, "prac_filter_macd": False, "prac_filter_rsi_os": False,
         "prac_filter_rsi_ob": False, "prac_filter_bb_re": False, "prac_filter_vol_su": False,
         "prac_filter_similarity": False,
         "prac_filter_shape_match" if st.session_state.get('ui_mode', 'PC') != 'スマホ' else "prac_filter_shape_match_mobile": False
     }
     
-    if curr == "大化け成長株":
+    if curr == "急騰ブレイクアウト":
         expected.update({
-            "prac_min_total": 7, "prac_min_tech": 2, "prac_min_fund": 4,
-            "prac_filter_roe": True, "prac_filter_rev_growth": True, "prac_filter_eps_growth": True,
-            "prac_filter_vol_su": True,
-            "prac_filter_shape_match" if st.session_state.get('ui_mode', 'PC') != 'スマホ' else "prac_filter_shape_match_mobile": True
-        })
-    elif curr == "高配当割安株":
-        expected.update({
-            "prac_min_total": 6, "prac_min_tech": 1, "prac_min_fund": 5,
-            "prac_filter_pbr": True, "prac_filter_per": True, "prac_filter_dividend": True
+            "prac_min_tech": 2,
+            "prac_filter_vol_su": True, "prac_filter_gc": True
         })
     elif curr == "逆張り・大底打ち":
         expected.update({
-            "prac_min_total": 4, "prac_min_tech": 1, "prac_min_fund": 2,
+            "prac_min_tech": 1,
             "prac_filter_rsi_os": True, "prac_filter_bb_re": True, "prac_filter_macd": True
         })
-    elif curr == "急騰ブレイクアウト":
+    elif curr == "トレンド順張り":
         expected.update({
-            "prac_min_total": 5, "prac_min_tech": 2, "prac_min_fund": 2,
-            "prac_filter_vol_su": True, "prac_filter_gc": True
+            "prac_min_tech": 2,
+            "prac_filter_shape_match" if st.session_state.get('ui_mode', 'PC') != 'スマホ' else "prac_filter_shape_match_mobile": True
         })
         
     mismatch = False
@@ -5525,7 +5490,7 @@ with tab_practice:
     過去の特定の時点（基準日）にタイムトラベルし、その時点の株価・テクニカル指標をもとにスクリーニングと仮想購入を行い、
     その後の実際の値動きを追跡してトレードの成果を測定（バックテスト）する練習機能です。
     
-    * ※企業の財務データ（PER、PBR等）は現在の情報に基づきます。テクニカル指標と株価は基準日時点の正確な値にタイムトラベルします。
+    * ※本練習モードでは、過去時点でのバックテストの正確性（先読みバイアスの排除）を担保するため、財務データ（PER、PBR、配当利回り等）は使用せず、純粋なテクニカル指標・株価・出来高およびチャート形状のみでスクリーニングを行います。
     * 練習用データ取得のため、基準日は **2年前〜1ヶ月前** の範囲から選択してください。
     """)
     
@@ -5587,10 +5552,9 @@ with tab_practice:
             st.markdown("**💡 練習用スクリーニング・プリセット選択**")
             prac_presets = {
                 "⚙️ カスタム設定": "カスタム設定",
-                "🚀 大化け成長株 (CANSLIM風)": "大化け成長株",
-                "💰 高配当割安株": "高配当割安株",
+                "⚡ 急騰ブレイクアウト狙い": "急騰ブレイクアウト",
                 "🔄 逆張り・大底打ち狙い": "逆張り・大底打ち",
-                "⚡ 急騰ブレイクアウト狙い": "急騰ブレイクアウト"
+                "📈 トレンド順張り（強モメンタム）": "トレンド順張り"
             }
             prac_active_p_name = st.session_state.get("prac_active_preset", "カスタム設定")
             default_index = 0
@@ -5614,17 +5578,7 @@ with tab_practice:
             st.markdown('<hr style="margin: 10px 0; border: none; border-top: 1px solid var(--border-color); opacity: 0.5;">', unsafe_allow_html=True)
             
             st.markdown("**🎯 最小スコア設定**")
-            prac_min_total = st.slider("最小総合スコア (最大10点)", 0, 10, key="prac_min_total")
             prac_min_tech = st.slider("最小テクニカルスコア (最大3点)", 0, 3, key="prac_min_tech")
-            prac_min_fund = st.slider("最小ファンダメンタルスコア (最大7点)", 0, 7, key="prac_min_fund")
-            
-            st.markdown("**💰 財務指標フィルタ**")
-            prac_filter_pbr = st.checkbox("PBR 1.0倍未満 (割安バリュー) のみ", key="prac_filter_pbr")
-            prac_filter_per = st.checkbox("PER 15倍未満 (低PER) のみ", key="prac_filter_per")
-            prac_filter_roe = st.checkbox("ROE 10%以上 (高PBR効率) のみ", key="prac_filter_roe")
-            prac_filter_dividend = st.checkbox("配当利回り 3%以上 のみ", key="prac_filter_dividend")
-            prac_filter_rev_growth = st.checkbox("売上高成長率 10%以上 のみ", key="prac_filter_rev_growth")
-            prac_filter_eps_growth = st.checkbox("EPS成長率 15%以上 のみ", key="prac_filter_eps_growth")
             
             st.markdown("**📈 テクニカル指標フィルタ**")
             prac_filter_gc = st.checkbox("5日/25日ゴールデンクロス", key="prac_filter_gc")
@@ -5683,7 +5637,7 @@ with tab_practice:
                 prac_shape_threshold = 0.80
         else:
             st.markdown('<div style="font-weight: bold; font-size: 0.95rem; color: var(--text-color); margin-bottom: 8px;">💡 練習用スクリーニング・プリセット選択:</div>', unsafe_allow_html=True)
-            col_p1, col_p2, col_p3, col_p4, col_p5 = st.columns(5)
+            col_p1, col_p2, col_p3, col_p4 = st.columns(4)
             prac_curr_preset = st.session_state.get("prac_active_preset", "カスタム設定")
             
             with col_p1:
@@ -5691,39 +5645,25 @@ with tab_practice:
                     apply_practice_preset("カスタム設定")
                     st.rerun()
             with col_p2:
-                if st.button("🚀 大化け成長株", key="btn_prac_preset_growth", use_container_width=True, type="primary" if prac_curr_preset == "大化け成長株" else "secondary"):
-                    apply_practice_preset("大化け成長株")
+                if st.button("⚡ 急騰ブレイク", key="btn_prac_preset_breakout", use_container_width=True, type="primary" if prac_curr_preset == "急騰ブレイクアウト" else "secondary"):
+                    apply_practice_preset("急騰ブレイクアウト")
                     st.rerun()
             with col_p3:
-                if st.button("💰 高配当割安株", key="btn_prac_preset_dividend", use_container_width=True, type="primary" if prac_curr_preset == "高配当割安株" else "secondary"):
-                    apply_practice_preset("高配当割安株")
-                    st.rerun()
-            with col_p4:
                 if st.button("🔄 逆張り大底打ち", key="btn_prac_preset_reversal", use_container_width=True, type="primary" if prac_curr_preset == "逆張り・大底打ち" else "secondary"):
                     apply_practice_preset("逆張り・大底打ち")
                     st.rerun()
-            with col_p5:
-                if st.button("⚡ 急騰ブレイク", key="btn_prac_preset_breakout", use_container_width=True, type="primary" if prac_curr_preset == "急騰ブレイクアウト" else "secondary"):
-                    apply_practice_preset("急騰ブレイクアウト")
+            with col_p4:
+                if st.button("📈 トレンド順張り", key="btn_prac_preset_trend", use_container_width=True, type="primary" if prac_curr_preset == "トレンド順張り" else "secondary"):
+                    apply_practice_preset("トレンド順張り")
                     st.rerun()
             
             st.markdown('<hr style="margin: 15px 0; border: none; border-top: 1px solid var(--border-color); opacity: 0.5;">', unsafe_allow_html=True)
             
-            col_f1, col_f2, col_f3 = st.columns([1.3, 1.3, 1.4])
+            col_f1, col_f2 = st.columns([1.0, 1.5])
             with col_f1:
                 st.markdown("**🎯 最小スコア設定**")
-                prac_min_total = st.slider("最小総合スコア (最大10点)", 0, 10, key="prac_min_total")
                 prac_min_tech = st.slider("最小テクニカルスコア (最大3点)", 0, 3, key="prac_min_tech")
-                prac_min_fund = st.slider("最小ファンダメンタルスコア (最大7点)", 0, 7, key="prac_min_fund")
             with col_f2:
-                st.markdown("**💰 財務指標フィルタ**")
-                prac_filter_pbr = st.checkbox("PBR 1.0倍未満 (割安バリュー) のみ", key="prac_filter_pbr")
-                prac_filter_per = st.checkbox("PER 15倍未満 (低PER) のみ", key="prac_filter_per")
-                prac_filter_roe = st.checkbox("ROE 10%以上 (高PBR効率) のみ", key="prac_filter_roe")
-                prac_filter_dividend = st.checkbox("配当利回り 3%以上 のみ", key="prac_filter_dividend")
-                prac_filter_rev_growth = st.checkbox("売上高成長率 10%以上 のみ", key="prac_filter_rev_growth")
-                prac_filter_eps_growth = st.checkbox("EPS成長率 15%以上 のみ", key="prac_filter_eps_growth")
-            with col_f3:
                 st.markdown("**📈 テクニカル指標フィルタ**")
                 prac_filter_gc = st.checkbox("5日/25日ゴールデンクロス", key="prac_filter_gc")
                 prac_filter_macd = st.checkbox("MACDゴールデンクロス", key="prac_filter_macd")
@@ -5871,33 +5811,8 @@ with tab_practice:
                     if p_vol and not tech_analysis['signals']['volume_surge']:
                         continue
                         
-                    # Get fundamentals info (use current as proxy)
-                    info = get_ticker_info(ticker)
-                    analysis = evaluate_stock(ticker, df_sliced, info)
-                    if analysis is None:
-                        continue
-                        
-                    metrics = analysis['metrics']
+                    metrics = tech_analysis['metrics']
                     
-                    # Apply fundamental scores and filters
-                    if analysis['total_score'] < p_min_total:
-                        continue
-                    if analysis['fund_score'] < p_min_fund:
-                        continue
-                        
-                    if p_pbr and (metrics['pbr'] is None or metrics['pbr'] >= 1.0):
-                        continue
-                    if p_per and (metrics['per'] is None or metrics['per'] >= 15.0):
-                        continue
-                    if p_roe and (metrics['roe'] is None or metrics['roe'] < 10.0):
-                        continue
-                    if p_div and (metrics['dividend_yield'] is None or metrics['dividend_yield'] < 3.0):
-                        continue
-                    if p_rev and (metrics['rev_growth'] is None or metrics['rev_growth'] < 10.0):
-                        continue
-                    if p_eps and (metrics['eps_growth'] is None or metrics['eps_growth'] < 15.0):
-                        continue
-                        
                     # Similarity pattern search filter
                     if p_similarity:
                         df_hist = df_sliced
@@ -6000,21 +5915,13 @@ with tab_practice:
                         'ティッカー': ticker,
                         '銘柄名': display_name,
                         '基準日株価': metrics['price'],
-                        '総合スコア': analysis['total_score'],
-                        'テクニカルスコア': analysis['tech_score'],
-                        'ファンダスコア': analysis['fund_score'],
-                        'PER (倍)': metrics['per'],
-                        'PBR (倍)': metrics['pbr'],
-                        'ROE (%)': metrics['roe'],
-                        '配当利回り (%)': metrics['dividend_yield'],
-                        '売上高成長率 (%)': metrics['rev_growth'],
-                        'EPS成長率 (%)': metrics['eps_growth'],
+                        'テクニカルスコア': tech_analysis['tech_score'],
                         'チャート形状': matched_shape,
                         'full_history': df
                     })
                 
                 # Sort by score desc
-                prac_results = sorted(prac_results, key=lambda x: x['総合スコア'], reverse=True)
+                prac_results = sorted(prac_results, key=lambda x: x['テクニカルスコア'], reverse=True)
                 st.session_state["prac_results"] = prac_results
                 if prac_results:
                     st.toast(f"✅ {len(prac_results)} 件の銘柄がスクリーニングされました！")
@@ -6032,15 +5939,9 @@ with tab_practice:
             df_display_list.append({
                 'ティッカー': r['ティッカー'],
                 '銘柄名': r['銘柄名'],
-                '総合スコア': f"{r['総合スコア']} / 10",
+                'テクニカルスコア': f"{r['テクニカルスコア']} / 3",
                 '基準日株価': f"{r['基準日株価']:,.1f} 円" if r['ティッカー'].endswith(('.T', 'T')) or '日経平均' in st.session_state.get("prac_market", "") or 'プライム' in st.session_state.get("prac_market", "") or 'グロース' in st.session_state.get("prac_market", "") else f"${r['基準日株価']:,.2f}",
                 'チャート形状': r['チャート形状'],
-                'PER (倍)': f"{r['PER (倍)']:.1f}" if r['PER (倍)'] is not None else "N/A",
-                'PBR (倍)': f"{r['PBR (倍)']:.2f}" if r['PBR (倍)'] is not None else "N/A",
-                'ROE (%)': f"{r['ROE (%)']:.1f}%" if r['ROE (%)'] is not None else "N/A",
-                '配当利回り (%)': f"{r['配当利回り (%)']:.2f}%" if r['配当利回り (%)'] is not None else "N/A",
-                '売上高成長率 (%)': f"{r['売上高成長率 (%)']:.1f}%" if r['売上高成長率 (%)'] is not None else "N/A",
-                'EPS成長率 (%)': f"{r['EPS成長率 (%)']:.1f}%" if r['EPS成長率 (%)'] is not None else "N/A",
             })
             
         st.dataframe(pd.DataFrame(df_display_list), use_container_width=True)
