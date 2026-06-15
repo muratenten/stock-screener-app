@@ -6050,31 +6050,40 @@ with tab_practice:
             selected_item = results[selected_idx]
             selected_ticker = selected_item['ティッカー']
             selected_name = selected_item['銘柄名']
-            raw_analysis = selected_item['raw_data']
             
-            st.markdown('<div id="prac-deep-analysis-section"></div>', unsafe_allow_html=True)
-            st.caption("上記の練習用スクリーニング結果リストの行をクリックすると、その銘柄の詳細チャート（基準日時点）が自動的に切り替わります（未選択時は1位の企業が表示されます）。")
-            
-            # Scroll detection logic based on selected row index list
-            if "prac_prev_selected_row_indices" not in st.session_state:
-                st.session_state["prac_prev_selected_row_indices"] = []
-            
-            if selected_row_indices != st.session_state["prac_prev_selected_row_indices"]:
-                if len(selected_row_indices) > 0:
-                    js_scroll = """
-                    <script>
-                        setTimeout(function() {
-                            var el = window.parent.document.getElementById('prac-deep-analysis-section');
-                            if (el) {
-                                el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                            }
-                        }, 100);
-                    </script>
-                    """
-                    st.components.v1.html(js_scroll, height=0, width=0)
-                st.session_state["prac_prev_selected_row_indices"] = selected_row_indices
+            # Safe recovery from old cached results that don't have 'raw_data' key
+            if 'raw_data' in selected_item:
+                raw_analysis = selected_item['raw_data']
+            else:
+                df = selected_item['full_history']
+                p_start_ts = pd.Timestamp(prac_start_date)
+                df_sliced = df[df.index <= p_start_ts]
+                raw_analysis = evaluate_stock(selected_ticker, df_sliced, info=None)
                 
-            render_detail_dashboard(selected_ticker, selected_name, raw_analysis, key_suffix="_prac", is_practice=True)
+            if raw_analysis is not None:
+                st.markdown('<div id="prac-deep-analysis-section"></div>', unsafe_allow_html=True)
+                st.caption("上記の練習用スクリーニング結果リストの行をクリックすると、その銘柄の詳細チャート（基準日時点）が自動的に切り替わります（未選択時は1位の企業が表示されます）。")
+                
+                # Scroll detection logic based on selected row index list
+                if "prac_prev_selected_row_indices" not in st.session_state:
+                    st.session_state["prac_prev_selected_row_indices"] = []
+                
+                if selected_row_indices != st.session_state["prac_prev_selected_row_indices"]:
+                    if len(selected_row_indices) > 0:
+                        js_scroll = """
+                        <script>
+                            setTimeout(function() {
+                                var el = window.parent.document.getElementById('prac-deep-analysis-section');
+                                if (el) {
+                                    el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                                }
+                            }, 100);
+                        </script>
+                        """
+                        st.components.v1.html(js_scroll, height=0, width=0)
+                    st.session_state["prac_prev_selected_row_indices"] = selected_row_indices
+                    
+                render_detail_dashboard(selected_ticker, selected_name, raw_analysis, key_suffix="_prac", is_practice=True)
         
         # 3. Buy Section
         st.markdown("#### 🛍️ 練習用仮想購入（複数選択可）")
