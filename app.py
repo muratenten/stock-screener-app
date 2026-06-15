@@ -3067,6 +3067,12 @@ def render_detail_dashboard(selected_ticker, selected_name, raw_analysis, key_su
                         if df_5y.empty:
                             st.error("直近5年の株価データを取得できませんでした。")
                         else:
+                            if is_practice:
+                                p_start_ts = pd.Timestamp(st.session_state["prac_start_date"])
+                                if df_5y.index.tz is not None:
+                                    p_start_ts = p_start_ts.tz_localize(df_5y.index.tz)
+                                df_5y = df_5y[df_5y.index <= p_start_ts]
+                            
                             target_prices = df_target['Close'].values
                             Z_target = z_normalize(target_prices)
                             
