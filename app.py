@@ -2517,19 +2517,32 @@ def generate_final_pattern_implication(name, matches_data, avg_ret, future_days=
     """
     return "\n".join([line.strip() for line in text.split("\n")])
 
-def render_detail_dashboard(selected_ticker, selected_name, raw_analysis, key_suffix=""):
+def render_detail_dashboard(selected_ticker, selected_name, raw_analysis, key_suffix="", is_practice=False):
     # Get owned stock details for the dashboard
-    portfolio = load_portfolio()
-    owned_rec = next((r for r in portfolio.get("purchase_records", []) if r["ticker"] == selected_ticker), None)
-    if owned_rec:
-        qty_str = f"{int(owned_rec['quantity']):,}株" if not is_us_stock(selected_ticker) else f"{owned_rec['quantity']:,.2f}株" if int(owned_rec['quantity']) != owned_rec['quantity'] else f"{int(owned_rec['quantity']):,}株"
-        owned_text = f"保有中: {qty_str}"
-        owned_sub = f"取得単価: {format_price(owned_rec['purchase_price'], selected_ticker)}"
-        owned_color = "#16a34a" # Green
+    if is_practice:
+        prac_portfolio = st.session_state.get("prac_portfolio", [])
+        owned_rec = next((r for r in prac_portfolio if r["ticker"] == selected_ticker), None)
+        if owned_rec:
+            qty_str = f"{owned_rec['quantity']:,.2f}株" if int(owned_rec['quantity']) != owned_rec['quantity'] else f"{int(owned_rec['quantity']):,}株"
+            owned_text = f"練習用保有中: {qty_str}"
+            owned_sub = f"購入価格: {format_price(owned_rec['entry_price'], selected_ticker)}"
+            owned_color = "#16a34a" # Green
+        else:
+            owned_text = "練習用未保有"
+            owned_sub = "練習用購入可能"
+            owned_color = "#64748b" # Grey
     else:
-        owned_text = "未保有"
-        owned_sub = "シミュレーション未登録"
-        owned_color = "#64748b" # Grey
+        portfolio = load_portfolio()
+        owned_rec = next((r for r in portfolio.get("purchase_records", []) if r["ticker"] == selected_ticker), None)
+        if owned_rec:
+            qty_str = f"{int(owned_rec['quantity']):,}株" if not is_us_stock(selected_ticker) else f"{owned_rec['quantity']:,.2f}株" if int(owned_rec['quantity']) != owned_rec['quantity'] else f"{int(owned_rec['quantity']):,}株"
+            owned_text = f"保有中: {qty_str}"
+            owned_sub = f"取得単価: {format_price(owned_rec['purchase_price'], selected_ticker)}"
+            owned_color = "#16a34a" # Green
+        else:
+            owned_text = "未保有"
+            owned_sub = "シミュレーション未登録"
+            owned_color = "#64748b" # Grey
 
     metrics = raw_analysis['metrics']
 
@@ -2541,50 +2554,7 @@ def render_detail_dashboard(selected_ticker, selected_name, raw_analysis, key_su
     
     if is_mobile:
         st.markdown(f"#### {selected_name} ({selected_ticker})")
-        if is_favorite:
-            if st.button("⭐ お気に入り解除", key=f"fav_btn_{selected_ticker}{key_suffix}", use_container_width=True):
-                del watchlist[selected_ticker]
-                save_watchlist(watchlist)
-                st.rerun()
-        else:
-            if st.button("☆ お気に入り追加", key=f"fav_btn_{selected_ticker}{key_suffix}", use_container_width=True):
-                watchlist[selected_ticker] = selected_name
-                save_watchlist(watchlist)
-                st.rerun()
-                
-        m_col1, m_col2 = st.columns(2)
-        with m_col1:
-            st.markdown(f"""<div class="card">
-                 <div class="metric-title">現在株価</div>
-                 <div class="metric-value metric-accent">{format_price(metrics['price'], selected_ticker)}</div>
-             </div>""", unsafe_allow_html=True)
-            st.markdown(f"""<div class="card">
-                 <div class="metric-title">PER (倍)</div>
-                 <div class="metric-value">{f"{metrics['per']:.1f}" if metrics['per'] is not None else "N/A"}</div>
-             </div>""", unsafe_allow_html=True)
-            st.markdown(f"""<div class="card">
-                 <div class="metric-title">配当利回り</div>
-                 <div class="metric-value">{f"{metrics['dividend_yield']:.2f}%" if metrics['dividend_yield'] is not None else "N/A"}</div>
-             </div>""", unsafe_allow_html=True)
-        with m_col2:
-            st.markdown(f"""<div class="card">
-                 <div class="metric-title">前日比</div>
-                 <div class="metric-value" style="color: {'#16a34a' if metrics['change_pct'] >= 0 else '#dc2626'}">{metrics['change_pct']:.2f}%</div>
-             </div>""", unsafe_allow_html=True)
-            st.markdown(f"""<div class="card">
-                 <div class="metric-title">PBR (倍)</div>
-                 <div class="metric-value">{f"{metrics['pbr']:.2f}" if metrics['pbr'] is not None else "N/A"}</div>
-             </div>""", unsafe_allow_html=True)
-            st.markdown(f"""<div class="card" style="border-left: 4px solid {owned_color};">
-                 <div class="metric-title">保有状況</div>
-                 <div class="metric-value" style="color: {owned_color};">{owned_text}</div>
-                 <div style="font-size: 0.8rem; color: #64748b; margin-top: 2px;">{owned_sub}</div>
-             </div>""", unsafe_allow_html=True)
-    else:
-        wl_col1, wl_col2 = st.columns([3.8, 1.2])
-        with wl_col1:
-            st.markdown(f"#### {selected_name} ({selected_ticker}) の分析ダッシュボード")
-        with wl_col2:
+        if not is_practice:
             if is_favorite:
                 if st.button("⭐ お気に入り解除", key=f"fav_btn_{selected_ticker}{key_suffix}", use_container_width=True):
                     del watchlist[selected_ticker]
@@ -2595,39 +2565,121 @@ def render_detail_dashboard(selected_ticker, selected_name, raw_analysis, key_su
                     watchlist[selected_ticker] = selected_name
                     save_watchlist(watchlist)
                     st.rerun()
+                
+        if is_practice:
+            m_col1, m_col2 = st.columns(2)
+            with m_col1:
+                st.markdown(f"""<div class="card">
+                     <div class="metric-title">基準日株価</div>
+                     <div class="metric-value metric-accent">{format_price(metrics['price'], selected_ticker)}</div>
+                 </div>""", unsafe_allow_html=True)
+                st.markdown(f"""<div class="card">
+                     <div class="metric-title">前日比</div>
+                     <div class="metric-value" style="color: {'#16a34a' if metrics['change_pct'] >= 0 else '#dc2626'}">{metrics['change_pct']:.2f}%</div>
+                 </div>""", unsafe_allow_html=True)
+            with m_col2:
+                st.markdown(f"""<div class="card" style="border-left: 4px solid {owned_color};">
+                     <div class="metric-title">練習用保有状況</div>
+                     <div class="metric-value" style="color: {owned_color};">{owned_text}</div>
+                     <div style="font-size: 0.8rem; color: #64748b; margin-top: 2px;">{owned_sub}</div>
+                 </div>""", unsafe_allow_html=True)
+        else:
+            m_col1, m_col2 = st.columns(2)
+            with m_col1:
+                st.markdown(f"""<div class="card">
+                     <div class="metric-title">現在株価</div>
+                     <div class="metric-value metric-accent">{format_price(metrics['price'], selected_ticker)}</div>
+                 </div>""", unsafe_allow_html=True)
+                st.markdown(f"""<div class="card">
+                     <div class="metric-title">PER (倍)</div>
+                     <div class="metric-value">{f"{metrics['per']:.1f}" if metrics['per'] is not None else "N/A"}</div>
+                 </div>""", unsafe_allow_html=True)
+                st.markdown(f"""<div class="card">
+                     <div class="metric-title">配当利回り</div>
+                     <div class="metric-value">{f"{metrics['dividend_yield']:.2f}%" if metrics['dividend_yield'] is not None else "N/A"}</div>
+                 </div>""", unsafe_allow_html=True)
+            with m_col2:
+                st.markdown(f"""<div class="card">
+                     <div class="metric-title">前日比</div>
+                     <div class="metric-value" style="color: {'#16a34a' if metrics['change_pct'] >= 0 else '#dc2626'}">{metrics['change_pct']:.2f}%</div>
+                 </div>""", unsafe_allow_html=True)
+                st.markdown(f"""<div class="card">
+                     <div class="metric-title">PBR (倍)</div>
+                     <div class="metric-value">{f"{metrics['pbr']:.2f}" if metrics['pbr'] is not None else "N/A"}</div>
+                 </div>""", unsafe_allow_html=True)
+                st.markdown(f"""<div class="card" style="border-left: 4px solid {owned_color};">
+                     <div class="metric-title">保有状況</div>
+                     <div class="metric-value" style="color: {owned_color};">{owned_text}</div>
+                     <div style="font-size: 0.8rem; color: #64748b; margin-top: 2px;">{owned_sub}</div>
+                 </div>""", unsafe_allow_html=True)
+    else:
+        if is_practice:
+            st.markdown(f"#### {selected_name} ({selected_ticker}) の練習用分析ダッシュボード")
+            col1, col2, col3 = st.columns(3)
+            with col1:
+                st.markdown(f"""<div class="card">
+                     <div class="metric-title">基準日株価</div>
+                     <div class="metric-value metric-accent">{format_price(metrics['price'], selected_ticker)}</div>
+                 </div>""", unsafe_allow_html=True)
+            with col2:
+                st.markdown(f"""<div class="card">
+                     <div class="metric-title">前日比</div>
+                     <div class="metric-value" style="color: {'#16a34a' if metrics['change_pct'] >= 0 else '#dc2626'}">{metrics['change_pct']:.2f}%</div>
+                 </div>""", unsafe_allow_html=True)
+            with col3:
+                st.markdown(f"""<div class="card" style="border-left: 4px solid {owned_color};">
+                     <div class="metric-title">練習用保有状況</div>
+                     <div class="metric-value" style="color: {owned_color};">{owned_text}</div>
+                     <div style="font-size: 0.8rem; color: #64748b; margin-top: 2px;">{owned_sub}</div>
+                 </div>""", unsafe_allow_html=True)
+        else:
+            wl_col1, wl_col2 = st.columns([3.8, 1.2])
+            with wl_col1:
+                st.markdown(f"#### {selected_name} ({selected_ticker}) の分析ダッシュボード")
+            with wl_col2:
+                if is_favorite:
+                    if st.button("⭐ お気に入り解除", key=f"fav_btn_{selected_ticker}{key_suffix}", use_container_width=True):
+                        del watchlist[selected_ticker]
+                        save_watchlist(watchlist)
+                        st.rerun()
+                else:
+                    if st.button("☆ お気に入り追加", key=f"fav_btn_{selected_ticker}{key_suffix}", use_container_width=True):
+                        watchlist[selected_ticker] = selected_name
+                        save_watchlist(watchlist)
+                        st.rerun()
 
-        col1, col2, col3, col4, col5, col6 = st.columns(6)
-        with col1:
-            st.markdown(f"""<div class="card">
-                 <div class="metric-title">現在株価</div>
-                 <div class="metric-value metric-accent">{format_price(metrics['price'], selected_ticker)}</div>
-             </div>""", unsafe_allow_html=True)
-        with col2:
-            st.markdown(f"""<div class="card">
-                 <div class="metric-title">前日比</div>
-                 <div class="metric-value" style="color: {'#16a34a' if metrics['change_pct'] >= 0 else '#dc2626'}">{metrics['change_pct']:.2f}%</div>
-             </div>""", unsafe_allow_html=True)
-        with col3:
-            st.markdown(f"""<div class="card">
-                 <div class="metric-title">PER (倍)</div>
-                 <div class="metric-value">{f"{metrics['per']:.1f}" if metrics['per'] is not None else "N/A"}</div>
-             </div>""", unsafe_allow_html=True)
-        with col4:
-            st.markdown(f"""<div class="card">
-                 <div class="metric-title">PBR (倍)</div>
-                 <div class="metric-value">{f"{metrics['pbr']:.2f}" if metrics['pbr'] is not None else "N/A"}</div>
-             </div>""", unsafe_allow_html=True)
-        with col5:
-            st.markdown(f"""<div class="card">
-                 <div class="metric-title">配当利回り</div>
-                 <div class="metric-value">{f"{metrics['dividend_yield']:.2f}%" if metrics['dividend_yield'] is not None else "N/A"}</div>
-             </div>""", unsafe_allow_html=True)
-        with col6:
-            st.markdown(f"""<div class="card" style="border-left: 4px solid {owned_color};">
-                 <div class="metric-title">保有状況</div>
-                 <div class="metric-value" style="color: {owned_color};">{owned_text}</div>
-                 <div style="font-size: 0.8rem; color: #64748b; margin-top: 2px;">{owned_sub}</div>
-             </div>""", unsafe_allow_html=True)
+            col1, col2, col3, col4, col5, col6 = st.columns(6)
+            with col1:
+                st.markdown(f"""<div class="card">
+                     <div class="metric-title">現在株価</div>
+                     <div class="metric-value metric-accent">{format_price(metrics['price'], selected_ticker)}</div>
+                 </div>""", unsafe_allow_html=True)
+            with col2:
+                st.markdown(f"""<div class="card">
+                     <div class="metric-title">前日比</div>
+                     <div class="metric-value" style="color: {'#16a34a' if metrics['change_pct'] >= 0 else '#dc2626'}">{metrics['change_pct']:.2f}%</div>
+                 </div>""", unsafe_allow_html=True)
+            with col3:
+                st.markdown(f"""<div class="card">
+                     <div class="metric-title">PER (倍)</div>
+                     <div class="metric-value">{f"{metrics['per']:.1f}" if metrics['per'] is not None else "N/A"}</div>
+                 </div>""", unsafe_allow_html=True)
+            with col4:
+                st.markdown(f"""<div class="card">
+                     <div class="metric-title">PBR (倍)</div>
+                     <div class="metric-value">{f"{metrics['pbr']:.2f}" if metrics['pbr'] is not None else "N/A"}</div>
+                 </div>""", unsafe_allow_html=True)
+            with col5:
+                st.markdown(f"""<div class="card">
+                     <div class="metric-title">配当利回り</div>
+                     <div class="metric-value">{f"{metrics['dividend_yield']:.2f}%" if metrics['dividend_yield'] is not None else "N/A"}</div>
+                 </div>""", unsafe_allow_html=True)
+            with col6:
+                st.markdown(f"""<div class="card" style="border-left: 4px solid {owned_color};">
+                     <div class="metric-title">保有状況</div>
+                     <div class="metric-value" style="color: {owned_color};">{owned_text}</div>
+                     <div style="font-size: 0.8rem; color: #64748b; margin-top: 2px;">{owned_sub}</div>
+                 </div>""", unsafe_allow_html=True)
     
     # Hardcoded theme colors for segmented control styling
     local_is_dark = st.session_state.get('color_theme', 'light') == 'dark'
@@ -2721,12 +2773,18 @@ def render_detail_dashboard(selected_ticker, selected_name, raw_analysis, key_su
     """, unsafe_allow_html=True)
 
     # Use st.segmented_control to completely avoid tab reset on rerun
-    tab_options = [
-        "📈 チャート・指標", 
-        "💡 事業カタリスト",
-        "📊 財務データ分析",
-        "🔍 類似パターン検索"
-    ]
+    if is_practice:
+        tab_options = [
+            "📈 チャート・指標", 
+            "🔍 類似パターン検索"
+        ]
+    else:
+        tab_options = [
+            "📈 チャート・指標", 
+            "💡 事業カタリスト",
+            "📊 財務データ分析",
+            "🔍 類似パターン検索"
+        ]
     selected_tab = st.segmented_control(
         "詳細分析メニュー",
         options=tab_options,
@@ -2738,39 +2796,43 @@ def render_detail_dashboard(selected_ticker, selected_name, raw_analysis, key_su
         selected_tab = tab_options[0]
     
     if selected_tab == "📈 チャート・指標":
-        # Add interval selector for chart: 5m, 1d, 1wk, 1mo
-        st.markdown('<div style="margin-top: 10px; margin-bottom: 6px; font-weight: 600; font-size: 0.9rem; color: var(--text-color, #1e293b);">📊 表示時間足の選択:</div>', unsafe_allow_html=True)
-        interval_options = {
-            "5分足": ("5m", "5d"),
-            "日足 (標準)": ("1d", "1y"),
-            "週足": ("1wk", "5y"),
-            "月足": ("1mo", "10y")
-        }
-        selected_interval_label = st.segmented_control(
-            "時間足",
-            options=list(interval_options.keys()),
-            default="日足 (標準)",
-            key=f"chart_interval_{selected_ticker}{key_suffix}",
-            label_visibility="collapsed"
-        )
-        if not selected_interval_label:
-            selected_interval_label = "日足 (標準)"
-            
-        interval, period = interval_options[selected_interval_label]
-        
-        # Load chart data based on interval
-        if interval == "1d":
+        if is_practice:
+            interval = "1d"
             chart_df = raw_analysis['df'].copy()
         else:
-            with st.spinner(f"{selected_interval_label}のデータを取得中..."):
-                chart_df = fetch_chart_data(selected_ticker, interval=interval, period=period)
-                if not chart_df.empty:
-                    chart_df = calculate_indicators_for_df(chart_df, interval=interval)
-                    
-        if chart_df.empty:
-            st.warning(f"{selected_interval_label}のデータを十分に取得できませんでした。")
-            chart_df = raw_analysis['df']
-            interval = "1d"
+            # Add interval selector for chart: 5m, 1d, 1wk, 1mo
+            st.markdown('<div style="margin-top: 10px; margin-bottom: 6px; font-weight: 600; font-size: 0.9rem; color: var(--text-color, #1e293b);">📊 表示時間足の選択:</div>', unsafe_allow_html=True)
+            interval_options = {
+                "5分足": ("5m", "5d"),
+                "日足 (標準)": ("1d", "1y"),
+                "週足": ("1wk", "5y"),
+                "月足": ("1mo", "10y")
+            }
+            selected_interval_label = st.segmented_control(
+                "時間足",
+                options=list(interval_options.keys()),
+                default="日足 (標準)",
+                key=f"chart_interval_{selected_ticker}{key_suffix}",
+                label_visibility="collapsed"
+            )
+            if not selected_interval_label:
+                selected_interval_label = "日足 (標準)"
+                
+            interval, period = interval_options[selected_interval_label]
+            
+            # Load chart data based on interval
+            if interval == "1d":
+                chart_df = raw_analysis['df'].copy()
+            else:
+                with st.spinner(f"{selected_interval_label}のデータを取得中..."):
+                    chart_df = fetch_chart_data(selected_ticker, interval=interval, period=period)
+                    if not chart_df.empty:
+                        chart_df = calculate_indicators_for_df(chart_df, interval=interval)
+                        
+            if chart_df.empty:
+                st.warning(f"{selected_interval_label}のデータを十分に取得できませんでした。")
+                chart_df = raw_analysis['df']
+                interval = "1d"
             
         fig = create_chart(chart_df, selected_ticker, selected_name, interval=interval)
         with st.container(border=True):
@@ -5936,7 +5998,8 @@ with tab_practice:
                         '基準日株価': metrics['price'],
                         'テクニカルスコア': tech_analysis['tech_score'],
                         'チャート形状': matched_shape,
-                        'full_history': df
+                        'full_history': df,
+                        'raw_data': tech_analysis
                     })
                 
                 # Sort by score desc
@@ -5963,7 +6026,55 @@ with tab_practice:
                 'チャート形状': r['チャート形状'],
             })
             
-        st.dataframe(pd.DataFrame(df_display_list), use_container_width=True)
+        # Show dataframe (Enable row selection)
+        selected_rows = st.dataframe(
+            pd.DataFrame(df_display_list), 
+            use_container_width=True,
+            on_select="rerun",
+            selection_mode="single-row",
+            key="practice_df_selection"
+        )
+        
+        # Select stock for detail chart based on selected row index
+        selected_row_indices = selected_rows.get("selection", {}).get("rows", [])
+        if selected_row_indices and len(selected_row_indices) > 0:
+            selected_idx = selected_row_indices[0]
+        else:
+            selected_idx = 0
+            
+        # Boundary check safety
+        if selected_idx >= len(results):
+            selected_idx = 0
+            
+        if results:
+            selected_item = results[selected_idx]
+            selected_ticker = selected_item['ティッカー']
+            selected_name = selected_item['銘柄名']
+            raw_analysis = selected_item['raw_data']
+            
+            st.markdown('<div id="prac-deep-analysis-section"></div>', unsafe_allow_html=True)
+            st.caption("上記の練習用スクリーニング結果リストの行をクリックすると、その銘柄の詳細チャート（基準日時点）が自動的に切り替わります（未選択時は1位の企業が表示されます）。")
+            
+            # Scroll detection logic based on selected row index list
+            if "prac_prev_selected_row_indices" not in st.session_state:
+                st.session_state["prac_prev_selected_row_indices"] = []
+            
+            if selected_row_indices != st.session_state["prac_prev_selected_row_indices"]:
+                if len(selected_row_indices) > 0:
+                    js_scroll = """
+                    <script>
+                        setTimeout(function() {
+                            var el = window.parent.document.getElementById('prac-deep-analysis-section');
+                            if (el) {
+                                el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                            }
+                        }, 100);
+                    </script>
+                    """
+                    st.components.v1.html(js_scroll, height=0, width=0)
+                st.session_state["prac_prev_selected_row_indices"] = selected_row_indices
+                
+            render_detail_dashboard(selected_ticker, selected_name, raw_analysis, key_suffix="_prac", is_practice=True)
         
         # 3. Buy Section
         st.markdown("#### 🛍️ 練習用仮想購入（複数選択可）")
