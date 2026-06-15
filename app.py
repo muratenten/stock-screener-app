@@ -3830,6 +3830,8 @@ widget_defaults = {
     "scr_filter_bb_re": False,
     "scr_filter_vol_su": False,
     "scr_filter_similarity": False,
+    "scr_similarity_days": 20,
+    "scr_similarity_pct": 5.0,
     "scr_filter_shape_match": False,
     "scr_filter_shape_match_mobile": False,
     "active_preset": "カスタム設定",
@@ -3883,6 +3885,8 @@ def apply_preset(preset_name):
     st.session_state["scr_filter_bb_re"] = False
     st.session_state["scr_filter_vol_su"] = False
     st.session_state["scr_filter_similarity"] = False
+    st.session_state["scr_similarity_days"] = 20
+    st.session_state["scr_similarity_pct"] = 5.0
     st.session_state["scr_filter_shape_match"] = False
     st.session_state["scr_filter_shape_match_mobile"] = False
     
@@ -3940,6 +3944,8 @@ def check_preset_match():
         "scr_filter_gc": False, "scr_filter_macd": False, "scr_filter_rsi_os": False,
         "scr_filter_rsi_ob": False, "scr_filter_bb_re": False, "scr_filter_vol_su": False,
         "scr_filter_similarity": False,
+        "scr_similarity_days": 20,
+        "scr_similarity_pct": 5.0,
         "scr_filter_shape_match" if st.session_state.get('ui_mode', 'PC') != 'スマホ' else "scr_filter_shape_match_mobile": False
     }
     
@@ -4277,10 +4283,12 @@ with tab_screen:
             filter_rsi_overbought = st.checkbox("RSI 70以上 (買われすぎ/過熱)", key="scr_filter_rsi_ob")
             filter_bb_rebound = st.checkbox("ボリンジャーバンド -2σ以下", key="scr_filter_bb_re")
             filter_volume_surge = st.checkbox("出来高急増 (5日平均 > 25日平均*1.2)", key="scr_filter_vol_su")
-            filter_similarity_pattern = st.checkbox("🔍 類似連動 (過去類似3局面の20日後上昇率フィルタ)", key="scr_filter_similarity", help="直近20日間のチャート形状に類似する過去 of 局面を直近5年間の歴史データから3つ抽出し、そのすべての局面において20営業日後の上昇率が指定値以上となった銘柄のみを抽出します。他フィルタで絞り込んだ後、最後に実行されます。")
+            filter_similarity_pattern = st.checkbox("🔍 類似連動 (過去類似3局面の上昇率フィルタ)", key="scr_filter_similarity", help="直近20日間のチャート形状に類似する過去の局面を直近5年間の歴史データから3つ抽出し、そのすべての局面において指定した営業日後の上昇率が指定値以上となった銘柄のみを抽出します。他フィルタで絞り込んだ後、最後に実行されます。")
             if filter_similarity_pattern:
+                similarity_threshold_days = st.slider("   ↳ 参照する営業日後", 5, 60, 20, step=5, key="scr_similarity_days")
                 similarity_threshold_pct = st.slider("   ↳ 必要上昇率 (%)", 0.0, 15.0, 5.0, step=0.5, key="scr_similarity_pct")
             else:
+                similarity_threshold_days = 20
                 similarity_threshold_pct = 5.0
                 
             # Define shape matching filter on mobile
@@ -4376,10 +4384,12 @@ with tab_screen:
                 filter_rsi_overbought = st.checkbox("RSI 70以上 (買われすぎ/過熱)", key="scr_filter_rsi_ob")
                 filter_bb_rebound = st.checkbox("ボリンジャーバンド -2σ以下", key="scr_filter_bb_re")
                 filter_volume_surge = st.checkbox("出来高急増 (5日平均 > 25日平均*1.2)", key="scr_filter_vol_su")
-                filter_similarity_pattern = st.checkbox("🔍 類似連動 (過去類似3局面の20日後上昇率フィルタ)", key="scr_filter_similarity", help="直近20日間のチャート形状に類似する過去 of 局面を直近5年間の歴史データから3つ抽出し、そのすべての局面において20営業日後の上昇率が指定値以上となった銘柄のみを抽出します。他フィルタで絞り込んだ後、最後に実行されます。")
+                filter_similarity_pattern = st.checkbox("🔍 類似連動 (過去類似3局面の上昇率フィルタ)", key="scr_filter_similarity", help="直近20日間のチャート形状に類似する過去の局面を直近5年間の歴史データから3つ抽出し、そのすべての局面において指定した営業日後の上昇率が指定値以上となった銘柄のみを抽出します。他フィルタで絞り込んだ後、最後に実行されます。")
                 if filter_similarity_pattern:
+                    similarity_threshold_days = st.slider("   ↳ 参照する営業日後", 5, 60, 20, step=5, key="scr_similarity_days")
                     similarity_threshold_pct = st.slider("   ↳ 必要上昇率 (%)", 0.0, 15.0, 5.0, step=0.5, key="scr_similarity_pct")
                 else:
+                    similarity_threshold_days = 20
                     similarity_threshold_pct = 5.0
                 
                 filter_shape_match = st.checkbox("📈 チャート形状パターン指定", key="scr_filter_shape_match", help="直近30日間のチャート形状が、指定した特定のパターン（上昇傾向、下降減衰、上昇反転）に類似する銘柄のみを抽出します。")
@@ -4643,7 +4653,7 @@ with tab_screen:
                         Z_target = z_normalize(target_prices)
                         
                         matches = []
-                        for i in range(len(df_5y) - N_len - 20 + 1):
+                        for i in range(len(df_5y) - N_len - similarity_threshold_days + 1):
                             window_df = df_5y.iloc[i : i + N_len]
                             w_start = window_df.index[0]
                             w_end = window_df.index[-1]
@@ -4660,7 +4670,7 @@ with tab_screen:
                             r = np.dot(Z_target, Z_hist) / N_len
                             similarity = max(0.0, r * 100)
                             
-                            end_idx = i + N_len + 20
+                            end_idx = i + N_len + similarity_threshold_days
                             all_prices = df_5y['Close'].iloc[i : end_idx].values
                             
                             matches.append({
@@ -4686,14 +4696,14 @@ with tab_screen:
                             if len(filtered_matches) >= 3:
                                 break
                                 
-                        # Check if for all 3 matches, 20-day return is >= 5%
+                        # Check if for all 3 matches, return is >= target %
                         pass_similarity_filter = True
                         if len(filtered_matches) < 3:
                             pass_similarity_filter = False
                         else:
                             for m in filtered_matches:
                                 all_prices = m['all_prices']
-                                if len(all_prices) < N_len + 20:
+                                if len(all_prices) < N_len + similarity_threshold_days:
                                     pass_similarity_filter = False
                                     break
                                 price_at_end = all_prices[N_len-1]
