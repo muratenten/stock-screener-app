@@ -3894,7 +3894,7 @@ if query_user == "default":
                 google_auth_url = "?demo_login=google"
                 
             google_btn_html = f"""
-            <a href="{google_auth_url}" target="_self" class="social-login-btn google-btn">
+            <a href="{google_auth_url}" target="_top" class="social-login-btn google-btn">
                 <svg class="social-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                     <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
                     <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
@@ -3905,7 +3905,7 @@ if query_user == "default":
             </a>
             """
             st.markdown(google_btn_html, unsafe_allow_html=True)
-                    
+                     
         with col_social2:
             if line_channel_id:
                 line_auth_url = (
@@ -3918,9 +3918,9 @@ if query_user == "default":
                 )
             else:
                 line_auth_url = "?demo_login=line"
-                
+                 
             line_btn_html = f"""
-            <a href="{line_auth_url}" target="_self" class="social-login-btn line-btn">
+            <a href="{line_auth_url}" target="_top" class="social-login-btn line-btn">
                 <svg class="social-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="currentColor">
                     <path d="M12 2C6.48 2 2 5.76 2 10.4c0 2.56 1.7 4.8 4.4 6.22-.17.58-.62 2.11-.7 2.42-.1.38-.05.27.23.08.28-.19 2.57-1.74 3.6-2.45h2.47c5.52 0 10-3.76 10-8.4S17.52 2 12 2zm-3.32 11.23h-.99c-.19 0-.35-.16-.35-.35V8.12c0-.19.16-.35.35-.35h.99c.19 0 .35.16.35.35v4.41c0 .19-.16.35-.35.35zm3.17 0h-.99c-.19 0-.35-.16-.35-.35V8.12c0-.19.16-.35.35-.35h.99c.19 0 .35.16.35.35v4.41c0 .19-.16.35-.35.35zm3.13-1.5c.14.14.14.36 0 .5l-.57.57a.35.35 0 01-.5 0l-2.07-2.07V12c0 .19-.16.35-.35.35h-.99c-.19 0-.35-.16-.35-.35V8.12c0-.19.16-.35.35-.35h.99c.19 0 .35.16.35.35v1.27l2.07-2.07c.14-.14.36-.14.5 0l.57.57c.14.14.14.36 0 .5l-1.5 1.5 1.5 1.5zm3.12-.51c0 .19-.16.35-.35.35h-1.92c-.19 0-.35-.16-.35-.35v-1.2h2.27c.19 0 .35-.16.35-.35v-.64c0-.19-.16-.35-.35-.35h-2.27V8.82h1.92c.19 0 .35-.16.35-.35V7.83c0-.19-.16-.35-.35-.35h-3.26c-.19 0-.35.16-.35.35v4.41c0 .19.16.35.35.35h3.26c.19 0 .35-.16.35-.35v-.64c0-.19-.16-.35-.35-.35h-.99c-.19 0-.35.16-.35.35v.2h-.93V9.87h1.92c.19 0 .35-.16.35-.35v-.64c0-.19-.16-.35-.35-.35h-1.92v-.2h1.92c.19 0 .35-.16.35-.35v-.5z" />
                 </svg>
