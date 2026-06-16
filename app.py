@@ -46,163 +46,6 @@ DEFAULT_FIREBASE_PROJECT_ID = "zenstock-screener"
 if "firebase_project_id" in st.secrets:
     DEFAULT_FIREBASE_PROJECT_ID = st.secrets["firebase_project_id"]
 
-# Check if user is authenticated
-if "auth_user" not in st.session_state:
-    st.session_state["auth_user"] = None
-
-def render_login_screen():
-    st.markdown("""
-    <style>
-    .auth-container {
-        max-width: 500px;
-        margin: 40px auto;
-        padding: 30px;
-        background: #ffffff;
-        border-radius: 16px;
-        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
-        border: 1px solid #e2e8f0;
-        text-align: center;
-    }
-    .dark .auth-container {
-        background: #1e293b !important;
-        border-color: #334155 !important;
-    }
-    .auth-title {
-        font-size: 2.2rem;
-        font-weight: 800;
-        background: linear-gradient(135deg, #2563eb 0%, #10b981 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        margin-bottom: 8px;
-        text-align: center;
-    }
-    .auth-subtitle {
-        font-size: 0.95rem;
-        color: #64748b;
-        margin-bottom: 24px;
-        text-align: center;
-    }
-    .dark .auth-subtitle {
-        color: #94a3b8;
-    }
-    .feature-list {
-        text-align: left;
-        margin-top: 20px;
-        padding-top: 20px;
-        border-top: 1px solid #e2e8f0;
-    }
-    .dark .feature-list {
-        border-top-color: #334155;
-    }
-    .feature-item {
-        font-size: 0.88rem;
-        color: #475569;
-        margin-bottom: 8px;
-        display: flex;
-        align-items: flex-start;
-    }
-    .dark .feature-item {
-        color: #cbd5e1;
-    }
-    .feature-icon {
-        color: #10b981;
-        margin-right: 8px;
-        font-weight: bold;
-    }
-    </style>
-    """, unsafe_allow_html=True)
-    
-    st.markdown('<div class="auth-title">ZenStock AI スクリーナー</div>', unsafe_allow_html=True)
-    st.markdown('<div class="auth-subtitle">AI銘柄解説・デモトレード・過去トラベル検証を搭載した次世代株式分析ツール</div>', unsafe_allow_html=True)
-    
-    col_l1, col_l2, col_l3 = st.columns([1, 4, 1])
-    with col_l2:
-        with st.container(border=True):
-            st.markdown("<h4 style='text-align: center; margin-bottom: 20px;'>🚀 アカウントを選択して始める</h4>", unsafe_allow_html=True)
-            
-            # LINE login button
-            btn_line = st.button("🟢 LINEでログイン (アプリ内ブラウザ推奨)", use_container_width=True, type="primary")
-            
-            # Google login button
-            btn_google = st.button("🔴 Googleアカウントでログイン", use_container_width=True)
-            
-            # Spacer line
-            st.markdown("<div style='margin: 15px 0; text-align: center; color: #94a3b8;'>または</div>", unsafe_allow_html=True)
-            
-            # Guest mode button
-            btn_guest = st.button("👤 ゲストモードとして始める (機能制限あり)", use_container_width=True)
-            
-            # Features description list
-            st.markdown("""
-            <div class="feature-list">
-                <div class="feature-item">
-                    <span class="feature-icon">✓</span>
-                    <div><b>LINE/Googleログイン (無料):</b> クラウドにお気に入りやポートフォリオを永続保存。AI解説・過去トラベル検証がすべて<b>無制限</b>。</div>
-                </div>
-                <div class="feature-item">
-                    <span class="feature-icon">✓</span>
-                    <div><b>ゲストモード:</b> お気に入り・キープ登録不可。AI解説および過去トラベル検証の実行が<b>1日3回まで</b>。</div>
-                </div>
-            </div>
-            """, unsafe_allow_html=True)
-            
-        if btn_line:
-            st.session_state["auth_user"] = {
-                "name": "テスト LINEユーザー",
-                "email": "line-test-user@line.me",
-                "provider": "LINE",
-                "status": "active"
-            }
-            st.toast("🟢 LINEログインに成功しました！(プロトタイプ)")
-            st.rerun()
-            
-        elif btn_google:
-            st.session_state["auth_user"] = {
-                "name": "テスト Googleユーザー",
-                "email": "google-test-user@gmail.com",
-                "provider": "Google",
-                "status": "active"
-            }
-            st.toast("🔴 Googleログインに成功しました！(プロトタイプ)")
-            st.rerun()
-            
-        elif btn_guest:
-            st.session_state["auth_user"] = {
-                "name": "ゲストユーザー",
-                "email": "guest@temp.local",
-                "provider": "Guest",
-                "status": "guest"
-            }
-            if "guest_ai_count" not in st.session_state:
-                st.session_state["guest_ai_count"] = 0
-            if "guest_prac_count" not in st.session_state:
-                st.session_state["guest_prac_count"] = 0
-            st.toast("👤 ゲストモードでログインしました！")
-            st.rerun()
-
-if st.session_state["auth_user"] is None:
-    render_login_screen()
-    st.stop()
-
-# Show user login status in sidebar
-user = st.session_state["auth_user"]
-st.sidebar.markdown("---")
-st.sidebar.markdown("### 👤 ユーザーアカウント")
-if user["provider"] == "Guest":
-    st.sidebar.markdown("**ステータス**: 👤 ゲスト会員 (制限あり)")
-    st.sidebar.caption(f"AI解説残り: {max(0, 3 - st.session_state.get('guest_ai_count', 0))}回")
-    st.sidebar.caption(f"時間旅行残り: {max(0, 3 - st.session_state.get('guest_prac_count', 0))}回")
-    if st.sidebar.button("✨ 正式会員登録 (ログインへ)", type="primary", use_container_width=True):
-        st.session_state["auth_user"] = None
-        st.rerun()
-else:
-    st.sidebar.markdown(f"**ステータス**: ✨ 正式会員 (無制限)")
-    st.sidebar.caption(f"連携: {user['provider']} ({user['email']})")
-    
-if st.sidebar.button("🚪 ログアウト", use_container_width=True):
-    st.session_state["auth_user"] = None
-    st.rerun()
-
 # Declare custom component for localStorage access
 _parent_dir = os.path.dirname(os.path.abspath(__file__))
 _build_dir = os.path.join(_parent_dir, "local_storage_component")
@@ -3043,64 +2886,24 @@ def render_detail_dashboard(selected_ticker, selected_name, raw_analysis, key_su
         with st.container(border=True):
             st.plotly_chart(fig, use_container_width=True, config=PLOTLY_CONFIG)
         
-        # Check if guest limit reached for AI advice
-        is_guest = st.session_state.get("auth_user", {}).get("provider") == "Guest"
-        if is_guest and st.session_state.get("guest_ai_count", 0) >= 3:
-            st.markdown("""
-            <div style="background: rgba(239, 68, 68, 0.08); border: 1px solid rgba(239, 68, 68, 0.2); padding: 25px; border-radius: 12px; margin-top: 15px; text-align: center;">
-                <h4 style="color: #ef4444; margin: 0 0 8px 0;">🔒 AI銘柄分析の無料枠（1日3回）を超えました</h4>
-                <p style="font-size: 0.95rem; color: #4b5563; margin-bottom: 15px;">
-                    LINEまたはGoogleアカウントで正式ログインすると、無制限にAI解説をご利用いただけます。
-                </p>
-            </div>
-            """, unsafe_allow_html=True)
-            col_ai_gl1, col_ai_gl2 = st.columns(2)
-            with col_ai_gl1:
-                if st.button("🟢 LINEでログインして無制限に", key=f"ai_upgrade_line_{selected_ticker}{key_suffix}", use_container_width=True, type="primary"):
-                    st.session_state["auth_user"] = {
-                        "name": "テスト LINEユーザー",
-                        "email": "line-test-user@line.me",
-                        "provider": "LINE",
-                        "status": "active"
-                    }
-                    st.rerun()
-            with col_ai_gl2:
-                if st.button("🔴 Googleでログインして無制限に", key=f"ai_upgrade_goog_{selected_ticker}{key_suffix}", use_container_width=True):
-                    st.session_state["auth_user"] = {
-                        "name": "テスト Googleユーザー",
-                        "email": "google-test-user@gmail.com",
-                        "provider": "Google",
-                        "status": "active"
-                    }
-                    st.rerun()
+        if is_practice:
+            report_md = generate_practice_recommendation_text(
+                ticker=selected_ticker,
+                name=selected_name,
+                tech_score=raw_analysis['tech_score'],
+                signals=raw_analysis['signals'],
+                metrics=raw_analysis['metrics']
+            )
         else:
-            if is_guest:
-                if "guest_ai_viewed" not in st.session_state:
-                    st.session_state["guest_ai_viewed"] = set()
-                if selected_ticker not in st.session_state["guest_ai_viewed"]:
-                    st.session_state["guest_ai_viewed"].add(selected_ticker)
-                    st.session_state["guest_ai_count"] += 1
-            
-            if is_practice:
-                report_md = generate_practice_recommendation_text(
-                    ticker=selected_ticker,
-                    name=selected_name,
-                    tech_score=raw_analysis['tech_score'],
-                    signals=raw_analysis['signals'],
-                    metrics=raw_analysis['metrics']
-                )
-            else:
-                report_md = generate_recommendation_text(
-                    ticker=selected_ticker,
-                    name=selected_name,
-                    tech_score=raw_analysis['tech_score'],
-                    fund_score=raw_analysis['fund_score'],
-                    signals=raw_analysis['signals'],
-                    metrics=raw_analysis['metrics']
-                )
-            st.markdown(f'<div class="card" style="padding: 25px; margin-top: 15px;">{report_md}</div>', unsafe_allow_html=True)
-            if is_guest:
-                st.caption(f"👤 ゲストユーザー残り無料AI解説枠: {max(0, 3 - st.session_state.get('guest_ai_count', 0))}回 / 3回")
+            report_md = generate_recommendation_text(
+                ticker=selected_ticker,
+                name=selected_name,
+                tech_score=raw_analysis['tech_score'],
+                fund_score=raw_analysis['fund_score'],
+                signals=raw_analysis['signals'],
+                metrics=raw_analysis['metrics']
+            )
+        st.markdown(f'<div class="card" style="padding: 25px; margin-top: 15px;">{report_md}</div>', unsafe_allow_html=True)
             
     elif selected_tab == "💡 事業カタリスト":
         # Business & IR analysis
@@ -3668,6 +3471,121 @@ def color_pl_cell(val):
 # UI Mode selector (Already configured at top, commented out here to preserve structure)
 # is_mobile = st.session_state.get('ui_mode', 'PC') == 'スマホ'
 
+# Check for OAuth Callback in query params
+code = st.query_params.get("code")
+state = st.query_params.get("state")
+
+if code and state:
+    redirect_uri = st.secrets.get("redirect_uri", "http://localhost:8501/")
+    if state == "google_auth":
+        google_client_id = st.secrets.get("google_client_id")
+        google_client_secret = st.secrets.get("google_client_secret")
+        if google_client_id and google_client_secret:
+            try:
+                # Exchange code for token
+                token_url = "https://oauth2.googleapis.com/token"
+                post_data = urllib.parse.urlencode({
+                    "code": code,
+                    "client_id": google_client_id,
+                    "client_secret": google_client_secret,
+                    "redirect_uri": redirect_uri,
+                    "grant_type": "authorization_code"
+                }).encode("utf-8")
+                
+                req = urllib.request.Request(token_url, data=post_data, method="POST")
+                with urllib.request.urlopen(req, timeout=5) as response:
+                    res_json = json.loads(response.read().decode("utf-8"))
+                    access_token = res_json.get("access_token")
+                    
+                    # Fetch User Info
+                    user_info_url = "https://www.googleapis.com/oauth2/v3/userinfo"
+                    req_user = urllib.request.Request(user_info_url, headers={
+                        "Authorization": f"Bearer {access_token}"
+                    }, method="GET")
+                    
+                    with urllib.request.urlopen(req_user, timeout=5) as resp_user:
+                        user_info = json.loads(resp_user.read().decode("utf-8"))
+                        google_id = user_info.get("sub")
+                        google_name = user_info.get("name", "Google User")
+                        google_picture = user_info.get("picture", "")
+                        
+                        # Set user key to be uniquely identified by google ID
+                        user_key = f"google_{google_id}"
+                        st.session_state["user_key"] = user_key
+                        st.session_state["user_display_name"] = google_name
+                        st.session_state["user_avatar"] = google_picture
+                        st.query_params["user"] = user_key
+                        
+                        # Clean up oauth parameters from URL
+                        st.query_params.pop("code", None)
+                        st.query_params.pop("state", None)
+                        
+                        st.session_state[f"ls_save_profile_{user_key}"] = {
+                            "display_name": google_name,
+                            "avatar": google_picture
+                        }
+                        st.toast(f"🔑 Googleアカウント ({google_name}) でログインしました！")
+                        st.rerun()
+            except Exception as e:
+                st.error(f"Googleログイン処理中にエラーが発生しました: {str(e)}")
+                
+    elif state == "line_auth":
+        line_channel_id = st.secrets.get("line_channel_id")
+        line_channel_secret = st.secrets.get("line_channel_secret")
+        if line_channel_id and line_channel_secret:
+            try:
+                # Exchange code for token
+                token_url = "https://api.line.me/oauth2/v2.1/token"
+                post_data = urllib.parse.urlencode({
+                    "code": code,
+                    "client_id": line_channel_id,
+                    "client_secret": line_channel_secret,
+                    "redirect_uri": redirect_uri,
+                    "grant_type": "authorization_code"
+                }).encode("utf-8")
+                
+                req = urllib.request.Request(
+                    token_url,
+                    data=post_data,
+                    headers={"Content-Type": "application/x-www-form-urlencoded"},
+                    method="POST"
+                )
+                with urllib.request.urlopen(req, timeout=5) as response:
+                    res_json = json.loads(response.read().decode("utf-8"))
+                    access_token = res_json.get("access_token")
+                    
+                    # Fetch User Info
+                    profile_url = "https://api.line.me/v2/profile"
+                    req_profile = urllib.request.Request(profile_url, headers={
+                        "Authorization": f"Bearer {access_token}"
+                    }, method="GET")
+                    
+                    with urllib.request.urlopen(req_profile, timeout=5) as resp_profile:
+                        profile_info = json.loads(resp_profile.read().decode("utf-8"))
+                        line_id = profile_info.get("userId")
+                        line_name = profile_info.get("displayName", "LINE User")
+                        line_picture = profile_info.get("pictureUrl", "")
+                        
+                        # Set user key to be uniquely identified by line ID
+                        user_key = f"line_{line_id}"
+                        st.session_state["user_key"] = user_key
+                        st.session_state["user_display_name"] = line_name
+                        st.session_state["user_avatar"] = line_picture
+                        st.query_params["user"] = user_key
+                        
+                        # Clean up oauth parameters from URL
+                        st.query_params.pop("code", None)
+                        st.query_params.pop("state", None)
+                        
+                        st.session_state[f"ls_save_profile_{user_key}"] = {
+                            "display_name": line_name,
+                            "avatar": line_picture
+                        }
+                        st.toast(f"🔑 LINEアカウント ({line_name}) でログインしました！")
+                        st.rerun()
+            except Exception as e:
+                st.error(f"LINEログイン処理中にエラーが発生しました: {str(e)}")
+
 # Sidebar setup for personalizing portfolios
 query_user = st.query_params.get("user", "default")
 
@@ -3837,15 +3755,102 @@ if query_user == "default":
         st.markdown('<div class="login-title-glow">ZenStockScreener</div>', unsafe_allow_html=True)
         st.markdown('<div class="login-subtitle-glow">AI・ファンダメンタルズ指標分析システム</div>', unsafe_allow_html=True)
         
+        # 1. Google & LINE OAuth Buttons
+        google_client_id = st.secrets.get("google_client_id")
+        line_channel_id = st.secrets.get("line_channel_id")
+        redirect_uri = st.secrets.get("redirect_uri", "http://localhost:8501/")
+        
+        st.markdown("""
+        <div style="background: rgba(255, 255, 255, 0.75) !important; padding: 25px 35px 15px 35px !important; border-radius: 20px !important; box-shadow: 0 10px 30px rgba(30, 41, 59, 0.04) !important; border: 1px solid rgba(255, 255, 255, 0.6) !important; backdrop-filter: blur(15px) !important; -webkit-backdrop-filter: blur(15px) !important; margin-bottom: 20px; position: relative; z-index: 1;">
+            <h3 class="login-section-title" style="margin-bottom: 15px; font-size: 1.15rem; color: #1e293b;">🔐 アカウントでログイン</h3>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        col_social1, col_social2 = st.columns(2)
+        with col_social1:
+            if google_client_id:
+                google_auth_url = (
+                    "https://accounts.google.com/o/oauth2/v2/auth?"
+                    f"client_id={google_client_id}&"
+                    f"redirect_uri={urllib.parse.quote(redirect_uri)}&"
+                    "response_type=code&"
+                    "scope=openid%20profile%20email&"
+                    "state=google_auth"
+                )
+                st.link_button("🔴 Googleでログイン", url=google_auth_url, use_container_width=True)
+            else:
+                if st.button("🔴 Googleでログイン (デモ)", use_container_width=True, key="demo_google_login"):
+                    st.query_params["user"] = "google_mock_user"
+                    st.session_state["user_key"] = "google_mock_user"
+                    st.session_state["user_display_name"] = "デモ Googleユーザー"
+                    st.session_state["user_avatar"] = "https://lh3.googleusercontent.com/a/default-user=s96-c"
+                    st.session_state["ls_save_profile_google_mock_user"] = {
+                        "display_name": "デモ Googleユーザー",
+                        "avatar": "https://lh3.googleusercontent.com/a/default-user=s96-c"
+                    }
+                    st.toast("🔑 デモGoogleアカウントでログインしました！")
+                    st.rerun()
+                    
+        with col_social2:
+            if line_channel_id:
+                line_auth_url = (
+                    "https://access.line.me/oauth2/v2.1/authorize?"
+                    f"client_id={line_channel_id}&"
+                    f"redirect_uri={urllib.parse.quote(redirect_uri)}&"
+                    "response_type=code&"
+                    "scope=openid%20profile&"
+                    "state=line_auth"
+                )
+                st.link_button("🟢 LINEでログイン", url=line_auth_url, use_container_width=True)
+            else:
+                if st.button("🟢 LINEでログイン (デモ)", use_container_width=True, key="demo_line_login"):
+                    st.query_params["user"] = "line_mock_user"
+                    st.session_state["user_key"] = "line_mock_user"
+                    st.session_state["user_display_name"] = "デモ LINEユーザー"
+                    st.session_state["user_avatar"] = "https://profile.line-scdn.net/default_profile_image"
+                    st.session_state["ls_save_profile_line_mock_user"] = {
+                        "display_name": "デモ LINEユーザー",
+                        "avatar": "https://profile.line-scdn.net/default_profile_image"
+                    }
+                    st.toast("🔑 デモLINEアカウントでログインしました！")
+                    st.rerun()
+                    
+        if not google_client_id and not line_channel_id:
+            with st.expander("⚙️ 本番用Google/LINEログインの設定手順 (開発者向け)"):
+                st.markdown("""
+                ### 1. Google OAuth の設定手順
+                1. [Google Cloud Console](https://console.cloud.google.com/) にアクセスします。
+                2. プロジェクトを作成し、「APIとサービス」 > 「OAuth同意画面」を設定します。
+                3. 「認証情報」 > 「OAuthクライアントIDを作成」を選択します。
+                   - アプリケーションの種類: **ウェブ アプリケーション**
+                   - 承認済みのリダイレクト URI: `http://localhost:8501/` (ローカル) または本番StreamlitアプリのURL
+                4. 発送された **クライアントID** と **クライアントシークレット** をコピーします。
+                
+                ### 2. LINE ログインの設定手順
+                1. [LINE Developers](https://developers.line.biz/) にログインします。
+                2. プロバイダーを作成し、「LINEログイン」チャネルを新規作成します。
+                3. チャネル基本設定の **チャネルID** と **チャネルシークレット** をコピーします。
+                4. 「LINEログイン設定」タブで「コールバックURL」に `http://localhost:8501/` または本番URLを登録します。
+                
+                ### 3. Streamlit Secrets への登録
+                アプリの `.streamlit/secrets.toml` ファイル (または Streamlit Cloudの Secrets管理画面) に以下のように設定を記述します：
+                ```toml
+                google_client_id = "YOUR_GOOGLE_CLIENT_ID"
+                google_client_secret = "YOUR_GOOGLE_CLIENT_SECRET"
+                line_channel_id = "YOUR_LINE_CHANNEL_ID"
+                line_channel_secret = "YOUR_LINE_CHANNEL_SECRET"
+                redirect_uri = "http://localhost:8501/" # または本番URL
+                ```
+                """)
+                
+        st.markdown('<div style="text-align: center; margin: 15px 0; font-size: 0.85rem; color: #64748b; font-weight: 500;">─── または、これまで通りID（ゲスト）でログイン ───</div>', unsafe_allow_html=True)
+        
         with st.form("login_form", clear_on_submit=False):
             st.markdown("""
-            <div class="login-header-section">
-                <h3 class="login-section-title">👤 マイページへのアクセス</h3>
-                <p class="login-intro-text">
-                    お気に入り銘柄、シミュレーション取引、ポートフォリオを個別に管理・保存できる専用領域をロードします。
-                </p>
+            <div class="login-header-section" style="padding-bottom: 10px; margin-bottom: 15px;">
+                <h4 style="margin: 0; font-size: 0.95rem; font-weight: 700; color: #334155; text-align: center;">👤 ID（ゲスト）でマイページを開く</h4>
             </div>
-            <div style="margin-bottom: 8px; font-weight: 600; font-size: 0.9rem; color: #334155;">マイページID（半角英数字）</div>
+            <div style="margin-bottom: 8px; font-weight: 600; font-size: 0.85rem; color: #475569;">マイページID（半角英数字）</div>
             """, unsafe_allow_html=True)
             
             entered_id = st.text_input(
@@ -3857,10 +3862,10 @@ if query_user == "default":
                 label_visibility="collapsed"
             )
             
-            submitted = st.form_submit_button("マイページを開く", type="primary", use_container_width=True)
+            submitted = st.form_submit_button("マイページを開く", type="secondary", use_container_width=True)
             
         st.markdown("""
-            <div class="login-info-box">
+            <div class="login-info-box" style="margin-top: 15px;">
                 <span class="login-info-title">ℹ️ IDについて</span>
                 <span class="login-info-text">
                     新規のIDを入力すると、自動的にそのID用の専用マイページが生成されます。<br>
@@ -3883,17 +3888,43 @@ if query_user == "default":
 # ---------------------------------------------------------
 # MAIN APP INTERFACE (Shown when user ID is set)
 # ---------------------------------------------------------
-st.sidebar.markdown(f"### 👤 ログイン中: **{query_user}**")
+# Retrieve user key and display name details
+user_key = query_user
+st.session_state['user_key'] = user_key
+st.query_params["user"] = user_key
+
+# Save pending profile details to local storage if requested
+save_profile_key = f"ls_save_profile_{user_key}"
+if save_profile_key in st.session_state:
+    profile_data = st.session_state.pop(save_profile_key)
+    local_storage(action="set", item_key=f"zen_profile_{user_key}", value=json.dumps(profile_data), key=f"ls_profile_set_{user_key}")
+
+# Render Sidebar profile
+avatar_url = st.session_state.get('user_avatar', '')
+display_name = st.session_state.get('user_display_name', user_key)
+
+if avatar_url:
+    st.sidebar.markdown(f"""
+    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px; background: rgba(255, 255, 255, 0.05); padding: 8px 12px; border-radius: 10px; border: 1px solid rgba(255, 255, 255, 0.1);">
+        <img src="{avatar_url}" style="width: 40px; height: 40px; border-radius: 50%; border: 1.5px solid #3b82f6; object-fit: cover;" />
+        <div style="min-width: 0;">
+            <div style="font-weight: bold; font-size: 0.95rem; text-overflow: ellipsis; overflow: hidden; white-space: nowrap; color: var(--text-color);">{display_name}</div>
+            <div style="font-size: 0.75rem; color: #888888; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">{user_key}</div>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+else:
+    st.sidebar.markdown(f"### 👤 ログイン中: **{display_name}**")
+    st.sidebar.caption(f"ID: {user_key}")
+    
 st.sidebar.caption("💡 別のIDに切り替える、または初期画面に戻るには下のボタンからログアウトしてください。")
 
 if st.sidebar.button("🚪 ログアウト (ログイン画面に戻る)", use_container_width=True, key="sidebar_logout_btn"):
     st.query_params["user"] = "default"
     st.session_state['user_key'] = "default"
+    st.session_state.pop('user_display_name', None)
+    st.session_state.pop('user_avatar', None)
     st.rerun()
-
-user_key = query_user
-st.session_state['user_key'] = user_key
-st.query_params["user"] = user_key
 
 # --- localStorage Auto-Restore & Sync Setup ---
 if 'ls_loaded_keys' not in st.session_state:
@@ -3902,6 +3933,14 @@ if 'ls_loaded_keys' not in st.session_state:
 if user_key not in st.session_state['ls_loaded_keys']:
     with st.spinner("📂 ブラウザの保存データを読み込んでいます..."):
         res = local_storage(action="get", item_key=f"zen_portfolio_{user_key}", key=f"ls_get_{user_key}")
+        profile_res = local_storage(action="get", item_key=f"zen_profile_{user_key}", key=f"ls_profile_get_{user_key}")
+        if profile_res is not None:
+            try:
+                p_data = json.loads(profile_res)
+                st.session_state["user_display_name"] = p_data.get("display_name")
+                st.session_state["user_avatar"] = p_data.get("avatar")
+            except:
+                pass
         if res is not None:
             # Mark as loaded for this user_key
             st.session_state['ls_loaded_keys'][user_key] = True
@@ -6450,55 +6489,8 @@ with tab_practice:
                 st.session_state["prac_selected_labels"] = []
                 st.rerun()
                 
-        # Check if guest limit reached for practice travel
-        is_guest = st.session_state.get("auth_user", {}).get("provider") == "Guest"
-        
-        if btn_results:
-            if is_guest and st.session_state.get("guest_prac_count", 0) >= 3:
-                st.session_state["prac_limit_exceeded"] = True
-                st.session_state["prac_show_results"] = False
-            else:
-                st.session_state["prac_limit_exceeded"] = False
-                st.session_state["prac_show_results"] = True
-                if is_guest:
-                    st.session_state["guest_prac_count"] += 1
-                    
-        if st.session_state.get("prac_limit_exceeded", False):
-            st.markdown("""
-            <div style="background: rgba(239, 68, 68, 0.08); border: 1px solid rgba(239, 68, 68, 0.2); padding: 25px; border-radius: 12px; margin-top: 20px; text-align: center;">
-                <h4 style="color: #ef4444; margin: 0 0 8px 0;">🔒 タイムトラベル練習の無料枠（1日3回）を超えました</h4>
-                <p style="font-size: 0.95rem; color: #4b5563; margin-bottom: 15px;">
-                    LINEまたはGoogleアカウントで正式ログインすると、無制限に時間旅行バックテストと練習結果レポートをご利用いただけます。
-                </p>
-            </div>
-            """, unsafe_allow_html=True)
-            col_pl1, col_pl2 = st.columns(2)
-            with col_pl1:
-                if st.button("🟢 LINEでログイン", key="prac_upgrade_line", use_container_width=True, type="primary"):
-                    st.session_state["auth_user"] = {
-                        "name": "テスト LINEユーザー",
-                        "email": "line-test-user@line.me",
-                        "provider": "LINE",
-                        "status": "active"
-                    }
-                    st.session_state["prac_limit_exceeded"] = False
-                    st.session_state["prac_show_results"] = True
-                    st.rerun()
-            with col_pl2:
-                if st.button("🔴 Googleでログイン", key="prac_upgrade_goog", use_container_width=True):
-                    st.session_state["auth_user"] = {
-                        "name": "テスト Googleユーザー",
-                        "email": "google-test-user@gmail.com",
-                        "provider": "Google",
-                        "status": "active"
-                    }
-                    st.session_state["prac_limit_exceeded"] = False
-                    st.session_state["prac_show_results"] = True
-                    st.rerun()
-        
-        elif st.session_state.get("prac_show_results"):
-            if is_guest:
-                st.caption(f"👤 ゲストユーザー残り無料タイムトラベル枠: {max(0, 3 - st.session_state.get('guest_prac_count', 0))}回 / 3回")
+        if btn_results or st.session_state.get("prac_show_results"):
+            st.session_state["prac_show_results"] = True
             
             st.markdown("### 📊 トレード結果レポート")
             
