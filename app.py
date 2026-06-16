@@ -46,6 +46,163 @@ DEFAULT_FIREBASE_PROJECT_ID = "zenstock-screener"
 if "firebase_project_id" in st.secrets:
     DEFAULT_FIREBASE_PROJECT_ID = st.secrets["firebase_project_id"]
 
+# Check if user is authenticated
+if "auth_user" not in st.session_state:
+    st.session_state["auth_user"] = None
+
+def render_login_screen():
+    st.markdown("""
+    <style>
+    .auth-container {
+        max-width: 500px;
+        margin: 40px auto;
+        padding: 30px;
+        background: #ffffff;
+        border-radius: 16px;
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
+        border: 1px solid #e2e8f0;
+        text-align: center;
+    }
+    .dark .auth-container {
+        background: #1e293b !important;
+        border-color: #334155 !important;
+    }
+    .auth-title {
+        font-size: 2.2rem;
+        font-weight: 800;
+        background: linear-gradient(135deg, #2563eb 0%, #10b981 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin-bottom: 8px;
+        text-align: center;
+    }
+    .auth-subtitle {
+        font-size: 0.95rem;
+        color: #64748b;
+        margin-bottom: 24px;
+        text-align: center;
+    }
+    .dark .auth-subtitle {
+        color: #94a3b8;
+    }
+    .feature-list {
+        text-align: left;
+        margin-top: 20px;
+        padding-top: 20px;
+        border-top: 1px solid #e2e8f0;
+    }
+    .dark .feature-list {
+        border-top-color: #334155;
+    }
+    .feature-item {
+        font-size: 0.88rem;
+        color: #475569;
+        margin-bottom: 8px;
+        display: flex;
+        align-items: flex-start;
+    }
+    .dark .feature-item {
+        color: #cbd5e1;
+    }
+    .feature-icon {
+        color: #10b981;
+        margin-right: 8px;
+        font-weight: bold;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+    
+    st.markdown('<div class="auth-title">ZenStock AI スクリーナー</div>', unsafe_allow_html=True)
+    st.markdown('<div class="auth-subtitle">AI銘柄解説・デモトレード・過去トラベル検証を搭載した次世代株式分析ツール</div>', unsafe_allow_html=True)
+    
+    col_l1, col_l2, col_l3 = st.columns([1, 4, 1])
+    with col_l2:
+        with st.container(border=True):
+            st.markdown("<h4 style='text-align: center; margin-bottom: 20px;'>🚀 アカウントを選択して始める</h4>", unsafe_allow_html=True)
+            
+            # LINE login button
+            btn_line = st.button("🟢 LINEでログイン (アプリ内ブラウザ推奨)", use_container_width=True, type="primary")
+            
+            # Google login button
+            btn_google = st.button("🔴 Googleアカウントでログイン", use_container_width=True)
+            
+            # Spacer line
+            st.markdown("<div style='margin: 15px 0; text-align: center; color: #94a3b8;'>または</div>", unsafe_allow_html=True)
+            
+            # Guest mode button
+            btn_guest = st.button("👤 ゲストモードとして始める (機能制限あり)", use_container_width=True)
+            
+            # Features description list
+            st.markdown("""
+            <div class="feature-list">
+                <div class="feature-item">
+                    <span class="feature-icon">✓</span>
+                    <div><b>LINE/Googleログイン (無料):</b> クラウドにお気に入りやポートフォリオを永続保存。AI解説・過去トラベル検証がすべて<b>無制限</b>。</div>
+                </div>
+                <div class="feature-item">
+                    <span class="feature-icon">✓</span>
+                    <div><b>ゲストモード:</b> お気に入り・キープ登録不可。AI解説および過去トラベル検証の実行が<b>1日3回まで</b>。</div>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+            
+        if btn_line:
+            st.session_state["auth_user"] = {
+                "name": "テスト LINEユーザー",
+                "email": "line-test-user@line.me",
+                "provider": "LINE",
+                "status": "active"
+            }
+            st.toast("🟢 LINEログインに成功しました！(プロトタイプ)")
+            st.rerun()
+            
+        elif btn_google:
+            st.session_state["auth_user"] = {
+                "name": "テスト Googleユーザー",
+                "email": "google-test-user@gmail.com",
+                "provider": "Google",
+                "status": "active"
+            }
+            st.toast("🔴 Googleログインに成功しました！(プロトタイプ)")
+            st.rerun()
+            
+        elif btn_guest:
+            st.session_state["auth_user"] = {
+                "name": "ゲストユーザー",
+                "email": "guest@temp.local",
+                "provider": "Guest",
+                "status": "guest"
+            }
+            if "guest_ai_count" not in st.session_state:
+                st.session_state["guest_ai_count"] = 0
+            if "guest_prac_count" not in st.session_state:
+                st.session_state["guest_prac_count"] = 0
+            st.toast("👤 ゲストモードでログインしました！")
+            st.rerun()
+
+if st.session_state["auth_user"] is None:
+    render_login_screen()
+    st.stop()
+
+# Show user login status in sidebar
+user = st.session_state["auth_user"]
+st.sidebar.markdown("---")
+st.sidebar.markdown("### 👤 ユーザーアカウント")
+if user["provider"] == "Guest":
+    st.sidebar.markdown("**ステータス**: 👤 ゲスト会員 (制限あり)")
+    st.sidebar.caption(f"AI解説残り: {max(0, 3 - st.session_state.get('guest_ai_count', 0))}回")
+    st.sidebar.caption(f"時間旅行残り: {max(0, 3 - st.session_state.get('guest_prac_count', 0))}回")
+    if st.sidebar.button("✨ 正式会員登録 (ログインへ)", type="primary", use_container_width=True):
+        st.session_state["auth_user"] = None
+        st.rerun()
+else:
+    st.sidebar.markdown(f"**ステータス**: ✨ 正式会員 (無制限)")
+    st.sidebar.caption(f"連携: {user['provider']} ({user['email']})")
+    
+if st.sidebar.button("🚪 ログアウト", use_container_width=True):
+    st.session_state["auth_user"] = None
+    st.rerun()
+
 # Declare custom component for localStorage access
 _parent_dir = os.path.dirname(os.path.abspath(__file__))
 _build_dir = os.path.join(_parent_dir, "local_storage_component")
@@ -2886,24 +3043,64 @@ def render_detail_dashboard(selected_ticker, selected_name, raw_analysis, key_su
         with st.container(border=True):
             st.plotly_chart(fig, use_container_width=True, config=PLOTLY_CONFIG)
         
-        if is_practice:
-            report_md = generate_practice_recommendation_text(
-                ticker=selected_ticker,
-                name=selected_name,
-                tech_score=raw_analysis['tech_score'],
-                signals=raw_analysis['signals'],
-                metrics=raw_analysis['metrics']
-            )
+        # Check if guest limit reached for AI advice
+        is_guest = st.session_state.get("auth_user", {}).get("provider") == "Guest"
+        if is_guest and st.session_state.get("guest_ai_count", 0) >= 3:
+            st.markdown("""
+            <div style="background: rgba(239, 68, 68, 0.08); border: 1px solid rgba(239, 68, 68, 0.2); padding: 25px; border-radius: 12px; margin-top: 15px; text-align: center;">
+                <h4 style="color: #ef4444; margin: 0 0 8px 0;">🔒 AI銘柄分析の無料枠（1日3回）を超えました</h4>
+                <p style="font-size: 0.95rem; color: #4b5563; margin-bottom: 15px;">
+                    LINEまたはGoogleアカウントで正式ログインすると、無制限にAI解説をご利用いただけます。
+                </p>
+            </div>
+            """, unsafe_allow_html=True)
+            col_ai_gl1, col_ai_gl2 = st.columns(2)
+            with col_ai_gl1:
+                if st.button("🟢 LINEでログインして無制限に", key=f"ai_upgrade_line_{selected_ticker}{key_suffix}", use_container_width=True, type="primary"):
+                    st.session_state["auth_user"] = {
+                        "name": "テスト LINEユーザー",
+                        "email": "line-test-user@line.me",
+                        "provider": "LINE",
+                        "status": "active"
+                    }
+                    st.rerun()
+            with col_ai_gl2:
+                if st.button("🔴 Googleでログインして無制限に", key=f"ai_upgrade_goog_{selected_ticker}{key_suffix}", use_container_width=True):
+                    st.session_state["auth_user"] = {
+                        "name": "テスト Googleユーザー",
+                        "email": "google-test-user@gmail.com",
+                        "provider": "Google",
+                        "status": "active"
+                    }
+                    st.rerun()
         else:
-            report_md = generate_recommendation_text(
-                ticker=selected_ticker,
-                name=selected_name,
-                tech_score=raw_analysis['tech_score'],
-                fund_score=raw_analysis['fund_score'],
-                signals=raw_analysis['signals'],
-                metrics=raw_analysis['metrics']
-            )
-        st.markdown(f'<div class="card" style="padding: 25px; margin-top: 15px;">{report_md}</div>', unsafe_allow_html=True)
+            if is_guest:
+                if "guest_ai_viewed" not in st.session_state:
+                    st.session_state["guest_ai_viewed"] = set()
+                if selected_ticker not in st.session_state["guest_ai_viewed"]:
+                    st.session_state["guest_ai_viewed"].add(selected_ticker)
+                    st.session_state["guest_ai_count"] += 1
+            
+            if is_practice:
+                report_md = generate_practice_recommendation_text(
+                    ticker=selected_ticker,
+                    name=selected_name,
+                    tech_score=raw_analysis['tech_score'],
+                    signals=raw_analysis['signals'],
+                    metrics=raw_analysis['metrics']
+                )
+            else:
+                report_md = generate_recommendation_text(
+                    ticker=selected_ticker,
+                    name=selected_name,
+                    tech_score=raw_analysis['tech_score'],
+                    fund_score=raw_analysis['fund_score'],
+                    signals=raw_analysis['signals'],
+                    metrics=raw_analysis['metrics']
+                )
+            st.markdown(f'<div class="card" style="padding: 25px; margin-top: 15px;">{report_md}</div>', unsafe_allow_html=True)
+            if is_guest:
+                st.caption(f"👤 ゲストユーザー残り無料AI解説枠: {max(0, 3 - st.session_state.get('guest_ai_count', 0))}回 / 3回")
             
     elif selected_tab == "💡 事業カタリスト":
         # Business & IR analysis
@@ -6253,8 +6450,55 @@ with tab_practice:
                 st.session_state["prac_selected_labels"] = []
                 st.rerun()
                 
-        if btn_results or st.session_state.get("prac_show_results"):
-            st.session_state["prac_show_results"] = True
+        # Check if guest limit reached for practice travel
+        is_guest = st.session_state.get("auth_user", {}).get("provider") == "Guest"
+        
+        if btn_results:
+            if is_guest and st.session_state.get("guest_prac_count", 0) >= 3:
+                st.session_state["prac_limit_exceeded"] = True
+                st.session_state["prac_show_results"] = False
+            else:
+                st.session_state["prac_limit_exceeded"] = False
+                st.session_state["prac_show_results"] = True
+                if is_guest:
+                    st.session_state["guest_prac_count"] += 1
+                    
+        if st.session_state.get("prac_limit_exceeded", False):
+            st.markdown("""
+            <div style="background: rgba(239, 68, 68, 0.08); border: 1px solid rgba(239, 68, 68, 0.2); padding: 25px; border-radius: 12px; margin-top: 20px; text-align: center;">
+                <h4 style="color: #ef4444; margin: 0 0 8px 0;">🔒 タイムトラベル練習の無料枠（1日3回）を超えました</h4>
+                <p style="font-size: 0.95rem; color: #4b5563; margin-bottom: 15px;">
+                    LINEまたはGoogleアカウントで正式ログインすると、無制限に時間旅行バックテストと練習結果レポートをご利用いただけます。
+                </p>
+            </div>
+            """, unsafe_allow_html=True)
+            col_pl1, col_pl2 = st.columns(2)
+            with col_pl1:
+                if st.button("🟢 LINEでログイン", key="prac_upgrade_line", use_container_width=True, type="primary"):
+                    st.session_state["auth_user"] = {
+                        "name": "テスト LINEユーザー",
+                        "email": "line-test-user@line.me",
+                        "provider": "LINE",
+                        "status": "active"
+                    }
+                    st.session_state["prac_limit_exceeded"] = False
+                    st.session_state["prac_show_results"] = True
+                    st.rerun()
+            with col_pl2:
+                if st.button("🔴 Googleでログイン", key="prac_upgrade_goog", use_container_width=True):
+                    st.session_state["auth_user"] = {
+                        "name": "テスト Googleユーザー",
+                        "email": "google-test-user@gmail.com",
+                        "provider": "Google",
+                        "status": "active"
+                    }
+                    st.session_state["prac_limit_exceeded"] = False
+                    st.session_state["prac_show_results"] = True
+                    st.rerun()
+        
+        elif st.session_state.get("prac_show_results"):
+            if is_guest:
+                st.caption(f"👤 ゲストユーザー残り無料タイムトラベル枠: {max(0, 3 - st.session_state.get('guest_prac_count', 0))}回 / 3回")
             
             st.markdown("### 📊 トレード結果レポート")
             
