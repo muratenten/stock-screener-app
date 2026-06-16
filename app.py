@@ -4045,13 +4045,11 @@ if avatar_url:
         <img src="{avatar_url}" style="width: 40px; height: 40px; border-radius: 50%; border: 1.5px solid #3b82f6; object-fit: cover;" />
         <div style="min-width: 0;">
             <div style="font-weight: bold; font-size: 0.95rem; text-overflow: ellipsis; overflow: hidden; white-space: nowrap; color: var(--text-color);">{display_name}</div>
-            <div style="font-size: 0.75rem; color: #888888; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">{user_key}</div>
         </div>
     </div>
     """, unsafe_allow_html=True)
 else:
     st.sidebar.markdown(f"### 👤 ログイン中: **{display_name}**")
-    st.sidebar.caption(f"ID: {user_key}")
     
 st.sidebar.caption("💡 別のIDに切り替える、または初期画面に戻るには下のボタンからログアウトしてください。")
 
