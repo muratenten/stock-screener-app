@@ -91,7 +91,11 @@ def load_portfolio_from_firebase(user_key, project_id, id_token=None):
     if not project_id:
         return None
     try:
+        api_key = st.secrets.get("firebase_api_key")
         url = f"https://firestore.googleapis.com/v1/projects/{project_id}/databases/(default)/documents/portfolios/{user_key}"
+        if api_key:
+            url += f"?key={api_key}"
+            
         headers = {}
         if id_token:
             headers["Authorization"] = f"Bearer {id_token}"
@@ -100,17 +104,40 @@ def load_portfolio_from_firebase(user_key, project_id, id_token=None):
             res_data = json.loads(response.read().decode("utf-8"))
             fields = res_data.get("fields", {})
             portfolio_str = fields.get("portfolio_data", {}).get("stringValue")
+            
+            # Read tier if present, store in session state
+            tier = fields.get("tier", {}).get("stringValue", "free")
+            st.session_state["user_tier"] = tier
+            
+            # Read display_name and avatar if present
+            display_name = fields.get("display_name", {}).get("stringValue")
+            if display_name:
+                st.session_state["user_display_name"] = display_name
+            avatar = fields.get("avatar", {}).get("stringValue")
+            if avatar:
+                st.session_state["user_avatar"] = avatar
+            
             return portfolio_str
-    except Exception:
+    except Exception as e:
         # Expected if document doesn't exist yet (returns 404)
-        pass
+        import traceback
+        print(f"[Firebase Load Error] user={user_key}: {e}")
+        if isinstance(e, urllib.error.HTTPError):
+            try:
+                print(f"  Response: {e.read().decode('utf-8')}")
+            except:
+                pass
     return None
 
 def save_portfolio_to_firebase(user_key, project_id, val_str, id_token=None):
     if not project_id:
         return False
     try:
+        api_key = st.secrets.get("firebase_api_key")
         url = f"https://firestore.googleapis.com/v1/projects/{project_id}/databases/(default)/documents/portfolios/{user_key}?updateMask.fieldPaths=portfolio_data"
+        if api_key:
+            url += f"&key={api_key}"
+            
         body = {
             "fields": {
                 "portfolio_data": {
@@ -132,9 +159,145 @@ def save_portfolio_to_firebase(user_key, project_id, val_str, id_token=None):
             res_content = response.read().decode("utf-8")
             if "portfolio_data" in res_content:
                 return True
-    except Exception:
-        pass
+    except Exception as e:
+        print(f"[Firebase Save Error] user={user_key}: {e}")
+        if isinstance(e, urllib.error.HTTPError):
+            try:
+                print(f"  Response: {e.read().decode('utf-8')}")
+            except:
+                pass
     return True
+
+def save_profile_to_firebase(user_key, project_id, display_name, avatar, id_token=None):
+    if not project_id:
+        return False
+    try:
+        api_key = st.secrets.get("firebase_api_key")
+        url = f"https://firestore.googleapis.com/v1/projects/{project_id}/databases/(default)/documents/portfolios/{user_key}?updateMask.fieldPaths=display_name&updateMask.fieldPaths=avatar"
+        if api_key:
+            url += f"&key={api_key}"
+            
+        body = {
+            "fields": {
+                "display_name": {"stringValue": display_name},
+                "avatar": {"stringValue": avatar}
+            }
+        }
+        data = json.dumps(body).encode("utf-8")
+        headers = {"Content-Type": "application/json"}
+        if id_token:
+            headers["Authorization"] = f"Bearer {id_token}"
+        req = urllib.request.Request(
+            url,
+            data=data,
+            headers=headers,
+            method="PATCH"
+        )
+        try:
+            with urllib.request.urlopen(req, timeout=5) as response:
+                return True
+        except urllib.error.HTTPError as http_err:
+            if http_err.code == 404:
+                # Document doesn't exist, create it with all fields initialized
+                url_create = f"https://firestore.googleapis.com/v1/projects/{project_id}/databases/(default)/documents/portfolios/{user_key}"
+                if api_key:
+                    url_create += f"?key={api_key}"
+                body_create = {
+                    "fields": {
+                        "display_name": {"stringValue": display_name},
+                        "avatar": {"stringValue": avatar},
+                        "portfolio_data": {"stringValue": "{}"},
+                        "tier": {"stringValue": "free"}
+                    }
+                }
+                data_create = json.dumps(body_create).encode("utf-8")
+                req_create = urllib.request.Request(
+                    url_create,
+                    data=data_create,
+                    headers=headers,
+                    method="PATCH"
+                )
+                with urllib.request.urlopen(req_create, timeout=5) as resp_c:
+                    return True
+            else:
+                raise http_err
+    except Exception as e:
+        print(f"[Firebase Profile Save Error] user={user_key}: {e}")
+        if isinstance(e, urllib.error.HTTPError):
+            try:
+                print(f"  Response: {e.read().decode('utf-8')}")
+            except:
+                pass
+    return False
+
+def get_user_tier():
+    user_key = st.session_state.get('user_key', 'default')
+    if user_key in ("google_111998389463136687256", "takkun") or "google_111998389463136687256" in user_key:
+        return "premium"
+    return st.session_state.get("user_tier", "free")
+
+def render_upgrade_banner(reason_text):
+    is_dark = st.session_state.get('color_theme', 'light') == 'dark'
+    card_style = """
+        background: linear-gradient(135deg, #1e1b4b 0%, #311042 100%);
+        border: 1px solid #c084fc;
+        color: #f1f5f9;
+    """ if is_dark else """
+        background: linear-gradient(135deg, #f5f3ff 0%, #fae8ff 100%);
+        border: 1px solid #d8b4fe;
+        color: #1e1b4b;
+    """
+    
+    st.markdown(f"""
+    <div style="padding: 24px; border-radius: 16px; {card_style} margin: 20px 0; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);">
+        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+            <span style="font-size: 2rem;">👑</span>
+            <h4 style="margin: 0; font-size: 1.25rem; font-weight: 700; background: linear-gradient(90deg, #a855f7, #ec4899); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+                プレミアムプランで機能制限を解除
+            </h4>
+        </div>
+        <p style="font-size: 0.95rem; line-height: 1.6; margin-bottom: 16px; opacity: 0.9;">
+            {reason_text}<br>
+            プレミアムプランに加入すると、制限なしにすべての機能をご利用いただけます。
+        </p>
+        <div style="background: rgba(255, 255, 255, 0.05); padding: 12px 16px; border-radius: 8px; margin-bottom: 20px; border: 1px solid rgba(255, 255, 255, 0.1);">
+            <div style="font-weight: 600; font-size: 0.9rem; margin-bottom: 8px; color: #d8b4fe;">🎁 プレミアム特典：</div>
+            <ul style="margin: 0; padding-left: 20px; font-size: 0.85rem; line-height: 1.5; opacity: 0.85;">
+                <li>過去練習モード（タイムトラベル）の結果表示：<b>無制限</b></li>
+                <li>類似連動フィルタ・類似パターン検索：<b>すべて解放</b></li>
+                <li>保有銘柄（シミュレーション購入）：<b>無制限（無料版は10個まで）</b></li>
+                <li>AIによるチャート類似度分析・予測アドバイス：<b>解放</b></li>
+            </ul>
+        </div>
+        <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+            <a href="https://buy.stripe.com/mock_premium_upgrade" target="_top" style="text-decoration: none; display: inline-flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #a855f7 0%, #ec4899 100%); color: white; font-weight: bold; padding: 12px 24px; border-radius: 9999px; font-size: 0.95rem; box-shadow: 0 4px 6px -1px rgba(168, 85, 247, 0.4); transition: transform 0.2s;">
+                👑 プレミアムプランにアップグレード (月額 980円〜)
+            </a>
+            <span style="font-size: 0.8rem; opacity: 0.7;">※決済完了後、自動的に制限が解除されます。</span>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+def check_and_increment_practice_runs(increment=False):
+    if get_user_tier() == "premium":
+        return True, 0
+    portfolio = load_portfolio()
+    today_str = datetime.date.today().isoformat()
+    runs_data = portfolio.get("practice_runs", {})
+    if not isinstance(runs_data, dict):
+        runs_data = {}
+    run_date = runs_data.get("date")
+    run_count = runs_data.get("count", 0)
+    if run_date != today_str:
+        run_date = today_str
+        run_count = 0
+    if increment:
+        run_count += 1
+        portfolio["practice_runs"] = {"date": run_date, "count": run_count}
+        save_portfolio(portfolio)
+    if run_count >= 3:
+        return False, run_count
+    return True, run_count
 
 # Page config
 st.set_page_config(
@@ -2973,13 +3136,18 @@ def render_detail_dashboard(selected_ticker, selected_name, raw_analysis, key_su
         
     elif selected_tab == "🔍 類似パターン検索":
         st.markdown("### 🔍 類似パターン検索 (直近5年履歴対比)")
-        st.markdown("""
-        株価チャート上の任意の範囲（日付範囲）を指定し、その期間の値動き（形状）と最も類似した局面を直近5年間の歴史的データから検索します。
-        過去に同じような値動きをした後、株価がどのように動いたかを分析することで、今後の投資戦略の参考にできます。
-        """)
+        if get_user_tier() == "free":
+            render_upgrade_banner("類似パターン検索はプレミアムプラン専用機能です。")
+        else:
+            st.markdown("""
+            株価チャート上の任意の範囲（日付範囲）を指定し、その期間の値動き（形状）と最も類似した局面を直近5年間の歴史的データから検索します。
+            過去に同じような値動きをした後、株価がどのように動いたかを分析することで、今後の投資戦略の参考にできます。
+            """)
         
         df_current = raw_analysis['df']
-        if df_current.empty:
+        if get_user_tier() == "free":
+            pass
+        elif df_current.empty:
             st.info("データが読み込めません。")
         else:
             min_date = df_current.index[0].date()
@@ -3256,10 +3424,16 @@ def render_detail_dashboard(selected_ticker, selected_name, raw_analysis, key_su
             if not is_mobile:
                 st.write("") # スペース調整
                 st.write("")
-            if st.button("仮想購入する", type="primary", use_container_width=True, key=f"sim_purchase_btn_{selected_ticker}{key_suffix}"):
-                portfolio = load_portfolio()
-                purchase_records = portfolio.get("purchase_records", [])
-                
+            portfolio = load_portfolio()
+            purchase_records = portfolio.get("purchase_records", [])
+            existing_rec = next((r for r in purchase_records if r["ticker"] == selected_ticker), None)
+            limit_hit = (not existing_rec and len(purchase_records) >= 10 and get_user_tier() == "free")
+            
+            if limit_hit:
+                st.button("🔒 仮想購入 (最大10銘柄制限)", type="primary", use_container_width=True, disabled=True, key=f"sim_purchase_btn_disabled_{selected_ticker}{key_suffix}")
+                st.caption("⚠️ 無料プラン制限：同時保有は最大10銘柄までです。")
+                render_upgrade_banner("デモトレード保有銘柄数の制限（最大10銘柄）に達しました。")
+            elif st.button("仮想購入する", type="primary", use_container_width=True, key=f"sim_purchase_btn_{selected_ticker}{key_suffix}"):
                 existing_rec = next((r for r in purchase_records if r["ticker"] == selected_ticker), None)
                 if existing_rec:
                     old_qty = existing_rec["quantity"]
@@ -3389,6 +3563,7 @@ def load_portfolio():
             "total_realized_pl_jpy": 0.0,
             "last_valid_prices": {},
             "watchlist": {},
+            "practice_runs": {},
             "last_updated": "1970-01-01T00:00:00"
         }
     try:
@@ -3405,6 +3580,8 @@ def load_portfolio():
                 data["last_valid_prices"] = {}
             if "watchlist" not in data:
                 data["watchlist"] = {}
+            if "practice_runs" not in data:
+                data["practice_runs"] = {}
             if "last_updated" not in data:
                 data["last_updated"] = "1970-01-01T00:00:00"
             return data
@@ -3416,6 +3593,7 @@ def load_portfolio():
             "total_realized_pl_jpy": 0.0,
             "last_valid_prices": {},
             "watchlist": {},
+            "practice_runs": {},
             "last_updated": "1970-01-01T00:00:00"
         }
 
@@ -3577,6 +3755,14 @@ if code and state:
                                         st.session_state["firebase_local_id"] = firebase_local_id
                                         google_name = fb_res.get("displayName", google_name)
                                         google_picture = fb_res.get("photoUrl", google_picture)
+                            except urllib.error.HTTPError as fb_http_err:
+                                err_body = fb_http_err.read().decode("utf-8")
+                                try:
+                                    err_json = json.loads(err_body)
+                                    detailed_msg = err_json.get("error", {}).get("message", err_body)
+                                except:
+                                    detailed_msg = err_body
+                                st.warning(f"Firebase Auth連携に失敗しました。ローカル保存のみで続行します: {detailed_msg}")
                             except Exception as fb_err:
                                 st.warning(f"Firebase Auth連携に失敗しました。ローカル保存のみで続行します: {str(fb_err)}")
                         
@@ -3584,6 +3770,11 @@ if code and state:
                         st.session_state["user_display_name"] = google_name
                         st.session_state["user_avatar"] = google_picture
                         st.query_params["user"] = user_key
+                        
+                        firebase_project_id = st.session_state.get('firebase_project_id', DEFAULT_FIREBASE_PROJECT_ID)
+                        if firebase_project_id:
+                            id_token = st.session_state.get("firebase_id_token")
+                            save_profile_to_firebase(user_key, firebase_project_id, google_name, google_picture, id_token)
                         
                         # Clean up oauth parameters from URL
                         st.query_params.pop("code", None)
@@ -3593,6 +3784,9 @@ if code and state:
                             "display_name": google_name,
                             "avatar": google_picture
                         }
+                        id_token = st.session_state.get("firebase_id_token")
+                        if id_token:
+                            st.session_state[f"ls_save_token_{user_key}"] = id_token
                         st.toast(f"🔑 Googleアカウント ({google_name}) でログインしました！")
                         st.rerun()
             except Exception as e:
@@ -3641,6 +3835,10 @@ if code and state:
                         st.session_state["user_display_name"] = line_name
                         st.session_state["user_avatar"] = line_picture
                         st.query_params["user"] = user_key
+                        
+                        firebase_project_id = st.session_state.get('firebase_project_id', DEFAULT_FIREBASE_PROJECT_ID)
+                        if firebase_project_id:
+                            save_profile_to_firebase(user_key, firebase_project_id, line_name, line_picture)
                         
                         # Clean up oauth parameters from URL
                         st.query_params.pop("code", None)
@@ -3979,47 +4177,7 @@ if query_user == "default":
                 ```
                 """)
                 
-        st.markdown('<div style="text-align: center; margin: 15px 0; font-size: 0.85rem; color: #64748b; font-weight: 500;">─── または、これまで通りID（ゲスト）でログイン ───</div>', unsafe_allow_html=True)
-        
-        with st.form("login_form", clear_on_submit=False):
-            st.markdown("""
-            <div class="login-header-section" style="padding-bottom: 10px; margin-bottom: 15px;">
-                <h4 style="margin: 0; font-size: 0.95rem; font-weight: 700; color: #334155; text-align: center;">👤 ID（ゲスト）でマイページを開く</h4>
-            </div>
-            <div style="margin-bottom: 8px; font-weight: 600; font-size: 0.85rem; color: #475569;">マイページID（半角英数字）</div>
-            """, unsafe_allow_html=True)
-            
-            entered_id = st.text_input(
-                "名前・専用IDを入力してください（半角英数字のみ）",
-                value="",
-                placeholder="例: guest_user, user_abc",
-                autocomplete="off",
-                key="portal_user_id_input",
-                label_visibility="collapsed"
-            )
-            
-            submitted = st.form_submit_button("マイページを開く", type="secondary", use_container_width=True)
-            
-        st.markdown("""
-            <div class="login-info-box" style="margin-top: 15px;">
-                <span class="login-info-title">ℹ️ IDについて</span>
-                <span class="login-info-text">
-                    新規のIDを入力すると、自動的にそのID用の専用マイページが生成されます。<br>
-                    IDはデータのアクセス・復元キーとなります。ログイン後は<b>このURLをブックマークして保存</b>することをお勧めします。
-                </span>
-            </div>
-        """, unsafe_allow_html=True)
-            
-        if submitted:
-            safe_id = "".join([c for c in str(entered_id) if c.isalnum() or c in ('-', '_')]).strip()
-            if safe_id:
-                st.query_params["user"] = safe_id
-                st.session_state['user_key'] = safe_id
-                st.rerun()
-            else:
-                st.error("有効な名前（英数字のみ）を入力してください。")
-    # Stop execution of the remaining script
-    st.stop()
+        st.stop()
 
 # ---------------------------------------------------------
 # MAIN APP INTERFACE (Shown when user ID is set)
@@ -4034,6 +4192,11 @@ save_profile_key = f"ls_save_profile_{user_key}"
 if save_profile_key in st.session_state:
     profile_data = st.session_state.pop(save_profile_key)
     local_storage(action="set", item_key=f"zen_profile_{user_key}", value=json.dumps(profile_data), key=f"ls_profile_set_{user_key}")
+
+save_token_key = f"ls_save_token_{user_key}"
+if save_token_key in st.session_state:
+    token_val = st.session_state.pop(save_token_key)
+    local_storage(action="set", item_key=f"zen_token_{user_key}", value=token_val, key=f"ls_token_set_{user_key}")
 
 # Render Sidebar profile
 avatar_url = st.session_state.get('user_avatar', '')
@@ -4058,6 +4221,8 @@ if st.sidebar.button("🚪 ログアウト (ログイン画面に戻る)", use_c
     st.session_state['user_key'] = "default"
     st.session_state.pop('user_display_name', None)
     st.session_state.pop('user_avatar', None)
+    st.session_state.pop('firebase_id_token', None)
+    st.session_state.pop('firebase_local_id', None)
     st.rerun()
 
 # --- localStorage Auto-Restore & Sync Setup ---
@@ -4068,6 +4233,7 @@ if user_key not in st.session_state['ls_loaded_keys']:
     with st.spinner("📂 ブラウザの保存データを読み込んでいます..."):
         res = local_storage(action="get", item_key=f"zen_portfolio_{user_key}", key=f"ls_get_{user_key}")
         profile_res = local_storage(action="get", item_key=f"zen_profile_{user_key}", key=f"ls_profile_get_{user_key}")
+        token_res = local_storage(action="get", item_key=f"zen_token_{user_key}", key=f"ls_token_get_{user_key}")
         if profile_res is not None:
             try:
                 p_data = json.loads(profile_res)
@@ -4075,6 +4241,8 @@ if user_key not in st.session_state['ls_loaded_keys']:
                 st.session_state["user_avatar"] = p_data.get("avatar")
             except:
                 pass
+        if token_res is not None:
+            st.session_state["firebase_id_token"] = token_res.get("value")
         if res is not None:
             # Mark as loaded for this user_key
             st.session_state['ls_loaded_keys'][user_key] = True
@@ -4085,7 +4253,8 @@ if user_key not in st.session_state['ls_loaded_keys']:
             # 1. Try loading from Firebase first if configured (extremely fast!)
             firebase_project_id = st.session_state.get('firebase_project_id', DEFAULT_FIREBASE_PROJECT_ID)
             if firebase_project_id:
-                val_str = load_portfolio_from_firebase(user_key, firebase_project_id)
+                id_token = st.session_state.get("firebase_id_token")
+                val_str = load_portfolio_from_firebase(user_key, firebase_project_id, id_token)
                 if val_str:
                     data_source = "Firebase"
                 
@@ -4134,6 +4303,7 @@ if user_key not in st.session_state['ls_loaded_keys']:
                 if not local_is_empty:
                     st.session_state['ls_needs_sync'] = True
                     st.session_state['ls_sync_counter'] = st.session_state.get('ls_sync_counter', 0) + 1
+            st.rerun()
         else:
             st.stop()
 
@@ -4170,10 +4340,20 @@ if 'show_sell_dialog' in st.session_state:
     del st.session_state['show_sell_dialog']
 
 # Header
-st.markdown("""
-<div class="title-container">
-    <div class="title-text">ZenStockScreener</div>
-    <div class="subtitle-text">AI分析とファンダメンタルズ指標による日本株上昇期待銘柄の選定システム</div>
+tier_label = "無料版" if get_user_tier() == "free" else "プレミアム"
+badge_color = "#94a3b8" if get_user_tier() == "free" else "#facc15"
+badge_bg = "rgba(148, 163, 184, 0.1)" if get_user_tier() == "free" else "rgba(250, 204, 21, 0.15)"
+badge_border = "1px solid rgba(148, 163, 184, 0.2)" if get_user_tier() == "free" else "1px solid rgba(250, 204, 21, 0.3)"
+
+st.markdown(f"""
+<div class="title-container" style="display: flex; flex-direction: column; gap: 6px;">
+    <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+        <div class="title-text" style="margin: 0; line-height: 1;">ZenStockScreener</div>
+        <span style="font-size: 0.8rem; font-weight: 700; color: {badge_color}; background: {badge_bg}; border: {badge_border}; padding: 4px 12px; border-radius: 9999px; letter-spacing: 0.05em; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
+            {"🆓" if get_user_tier() == "free" else "👑"} {tier_label}
+        </span>
+    </div>
+    <div class="subtitle-text" style="margin-top: 4px;">AI分析とファンダメンタルズ指標による日本株上昇期待銘柄の選定システム</div>
 </div>
 """, unsafe_allow_html=True)
 
@@ -4653,7 +4833,12 @@ with tab_screen:
             filter_rsi_overbought = st.checkbox("RSI 70以上 (買われすぎ/過熱)", key="scr_filter_rsi_ob")
             filter_bb_rebound = st.checkbox("ボリンジャーバンド -2σ以下", key="scr_filter_bb_re")
             filter_volume_surge = st.checkbox("出来高急増 (5日平均 > 25日平均*1.2)", key="scr_filter_vol_su")
-            filter_similarity_pattern = st.checkbox("🔍 類似連動 (過去類似3局面の上昇率フィルタ)", key="scr_filter_similarity", help="直近20日間のチャート形状に類似する過去の局面を直近5年間の歴史データから3つ抽出し、そのすべての局面において指定した営業日後の上昇率が指定値以上となった銘柄のみを抽出します。他フィルタで絞り込んだ後、最後に実行されます。")
+            if get_user_tier() == "free":
+                st.checkbox("🔒 類似連動 (プレミアム専用)", value=False, disabled=True, key="scr_filter_similarity_disabled_mobile", help="過去類似3局面の上昇率フィルタ（類似連動）はプレミアムプラン専用機能です。")
+                st.session_state["scr_filter_similarity"] = False
+                filter_similarity_pattern = False
+            else:
+                filter_similarity_pattern = st.checkbox("🔍 類似連動 (過去類似3局面の上昇率フィルタ)", key="scr_filter_similarity", help="直近20日間のチャート形状に類似する過去の局面を直近5年間の歴史データから3つ抽出し、そのすべての局面において指定した営業日後の上昇率が指定値以上となった銘柄のみを抽出します。他フィルタで絞り込んだ後、最後に実行されます。")
             if filter_similarity_pattern:
                 similarity_threshold_days = st.slider("   ↳ 参照する営業日後", 5, 60, 20, step=5, key="scr_similarity_days")
                 similarity_threshold_pct = st.slider("   ↳ 必要上昇率 (%)", 0.0, 15.0, 5.0, step=0.5, key="scr_similarity_pct")
@@ -4754,7 +4939,12 @@ with tab_screen:
                 filter_rsi_overbought = st.checkbox("RSI 70以上 (買われすぎ/過熱)", key="scr_filter_rsi_ob")
                 filter_bb_rebound = st.checkbox("ボリンジャーバンド -2σ以下", key="scr_filter_bb_re")
                 filter_volume_surge = st.checkbox("出来高急増 (5日平均 > 25日平均*1.2)", key="scr_filter_vol_su")
-                filter_similarity_pattern = st.checkbox("🔍 類似連動 (過去類似3局面の上昇率フィルタ)", key="scr_filter_similarity", help="直近20日間のチャート形状に類似する過去の局面を直近5年間の歴史データから3つ抽出し、そのすべての局面において指定した営業日後の上昇率が指定値以上となった銘柄のみを抽出します。他フィルタで絞り込んだ後、最後に実行されます。")
+                if get_user_tier() == "free":
+                    st.checkbox("🔒 類似連動 (プレミアム専用)", value=False, disabled=True, key="scr_filter_similarity_disabled_pc", help="過去類似3局面の上昇率フィルタ（類似連動）はプレミアムプラン専用機能です。")
+                    st.session_state["scr_filter_similarity"] = False
+                    filter_similarity_pattern = False
+                else:
+                    filter_similarity_pattern = st.checkbox("🔍 類似連動 (過去類似3局面の上昇率フィルタ)", key="scr_filter_similarity", help="直近20日間のチャート形状に類似する過去の局面を直近5年間の歴史データから3つ抽出し、そのすべての局面において指定した営業日後の上昇率が指定値以上となった銘柄のみを抽出します。他フィルタで絞り込んだ後、最後に実行されます。")
                 if filter_similarity_pattern:
                     similarity_threshold_days = st.slider("   ↳ 参照する営業日後", 5, 60, 20, step=5, key="scr_similarity_days")
                     similarity_threshold_pct = st.slider("   ↳ 必要上昇率 (%)", 0.0, 15.0, 5.0, step=0.5, key="scr_similarity_pct")
@@ -6118,7 +6308,12 @@ with tab_practice:
             prac_filter_rsi_ob = st.checkbox("RSI 70以上 (買われすぎ/過熱)", key="prac_filter_rsi_ob")
             prac_filter_bb_re = st.checkbox("ボリンジャーバンド -2σ以下", key="prac_filter_bb_re")
             prac_filter_vol_su = st.checkbox("出来高急増 (5日平均 > 25日平均*1.2)", key="prac_filter_vol_su")
-            prac_filter_similarity = st.checkbox("🔍 類似連動 (過去類似3局面の上昇率フィルタ)", key="prac_filter_similarity", help="直近20日間のチャート形状に類似する過去の局面を直近5年間の歴史データから3つ抽出し、そのすべての局面において指定した営業日後の上昇率が指定値以上となった銘柄のみを抽出します。他フィルタで絞り込んだ後、最後に実行されます。")
+            if get_user_tier() == "free":
+                st.checkbox("🔒 類似連動 (プレミアム専用)", value=False, disabled=True, key="prac_filter_similarity_disabled_mobile", help="過去類似3局面の上昇率フィルタ（類似連動）はプレミアムプラン専用機能です。")
+                st.session_state["prac_filter_similarity"] = False
+                prac_filter_similarity = False
+            else:
+                prac_filter_similarity = st.checkbox("🔍 類似連動 (過去類似3局面の上昇率フィルタ)", key="prac_filter_similarity", help="直近20日間のチャート形状に類似する過去の局面を直近5年間の歴史データから3つ抽出し、そのすべての局面において指定した営業日後の上昇率が指定値以上となった銘柄のみを抽出します。他フィルタで絞り込んだ後、最後に実行されます。")
             if prac_filter_similarity:
                 prac_similarity_days = st.slider("   ↳ 参照する営業日後", 5, 60, 20, step=5, key="prac_similarity_days")
                 prac_similarity_pct = st.slider("   ↳ 必要上昇率 (%)", 0.0, 15.0, 5.0, step=0.5, key="prac_similarity_pct")
@@ -6204,7 +6399,12 @@ with tab_practice:
                 prac_filter_rsi_ob = st.checkbox("RSI 70以上 (買われすぎ/過熱)", key="prac_filter_rsi_ob")
                 prac_filter_bb_re = st.checkbox("ボリンジャーバンド -2σ以下", key="prac_filter_bb_re")
                 prac_filter_vol_su = st.checkbox("出来高急増 (5日平均 > 25日平均*1.2)", key="prac_filter_vol_su")
-                prac_filter_similarity = st.checkbox("🔍 類似連動 (過去類似3局面の上昇率フィルタ)", key="prac_filter_similarity")
+                if get_user_tier() == "free":
+                    st.checkbox("🔒 類似連動 (プレミアム専用)", value=False, disabled=True, key="prac_filter_similarity_disabled_pc", help="過去類似3局面の上昇率フィルタ（類似連動）はプレミアムプラン専用機能です。")
+                    st.session_state["prac_filter_similarity"] = False
+                    prac_filter_similarity = False
+                else:
+                    prac_filter_similarity = st.checkbox("🔍 類似連動 (過去類似3局面の上昇率フィルタ)", key="prac_filter_similarity")
                 if prac_filter_similarity:
                     prac_similarity_days = st.slider("   ↳ 参照する営業日後", 5, 60, 20, step=5, key="prac_similarity_days")
                     prac_similarity_pct = st.slider("   ↳ 必要上昇率 (%)", 0.0, 15.0, 5.0, step=0.5, key="prac_similarity_pct")
@@ -6577,10 +6777,17 @@ with tab_practice:
             if not tickers_to_add:
                 st.warning("追加する銘柄がありません。")
             else:
+                is_limited = False
+                if get_user_tier() == "free" and len(tickers_to_add) > 10:
+                    tickers_to_add = tickers_to_add[:10]
+                    is_limited = True
+                
                 prac_portfolio = []
                 for t in tickers_to_add:
                     # Find ticker raw data
-                    match_r = next(r for r in results if r['ティッカー'] == t)
+                    match_r = next((r for r in results if r['ティッカー'] == t), None)
+                    if not match_r:
+                        continue
                     price = match_r['基準日株価']
                     qty = budget_per_stock / price if price > 0 else 0
                     prac_portfolio.append({
@@ -6592,13 +6799,22 @@ with tab_practice:
                         'full_history': match_r['full_history']
                     })
                 st.session_state["prac_portfolio"] = prac_portfolio
-                st.toast(f"💼 練習用リストに {len(prac_portfolio)} 銘柄を追加しました！")
+                if is_limited:
+                    st.session_state["prac_portfolio_limit_exceeded"] = True
+                else:
+                    st.session_state["prac_portfolio_limit_exceeded"] = False
+                    st.toast(f"💼 練習用リストに {len(prac_portfolio)} 銘柄を追加しました！")
                 st.rerun()
             
     # 4. Display Portfolio and View Results
     if st.session_state.get("prac_portfolio"):
         portfolio = st.session_state["prac_portfolio"]
         st.markdown("---")
+        
+        if st.session_state.get("prac_portfolio_limit_exceeded", False):
+            st.warning("⚠️ 無料プラン制限：練習用キープ銘柄は同時に最大10個までに制限されているため、最初の10銘柄のみ追加されました。")
+            render_upgrade_banner("練習用キープ銘柄の制限（最大10個）に達しました。")
+            
         st.markdown("### 💼 練習用キープ（保有）銘柄一覧")
         
         p_rows = []
@@ -6616,14 +6832,36 @@ with tab_practice:
         col_res1, col_res2 = st.columns([2, 1])
         with col_res1:
             btn_results = st.button("🚀 タイムトラベル！指定期間後のトレード結果を見る", type="primary", use_container_width=True, key="btn_prac_results")
+            if get_user_tier() == "free":
+                _, current_runs = check_and_increment_practice_runs(increment=False)
+                remaining = max(0, 3 - current_runs)
+                st.caption(f"💡 無料プラン：本日の残り結果表示回数: **{remaining}回** / 3回")
         with col_res2:
             if st.button("🗑️ 練習用リストをクリア", type="secondary", use_container_width=True):
                 st.session_state["prac_portfolio"] = []
                 st.session_state["prac_show_results"] = False
+                st.session_state["prac_limit_exceeded"] = False
                 st.session_state["prac_selected_labels"] = []
                 st.rerun()
                 
-        if btn_results or st.session_state.get("prac_show_results"):
+        show_prac_results = st.session_state.get("prac_show_results", False)
+        if btn_results:
+            allowed, current_runs = check_and_increment_practice_runs(increment=False)
+            if not allowed:
+                st.session_state["prac_limit_exceeded"] = True
+                st.session_state["prac_show_results"] = False
+                show_prac_results = False
+                st.rerun()
+            else:
+                check_and_increment_practice_runs(increment=True)
+                st.session_state["prac_limit_exceeded"] = False
+                st.session_state["prac_show_results"] = True
+                show_prac_results = True
+                st.rerun()
+                
+        if st.session_state.get("prac_limit_exceeded", False):
+            render_upgrade_banner("本日の練習モード結果表示制限（1日3回）に達しました。")
+        elif show_prac_results:
             st.session_state["prac_show_results"] = True
             
             st.markdown("### 📊 トレード結果レポート")
