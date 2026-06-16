@@ -3992,7 +3992,7 @@ if query_user == "default":
             entered_id = st.text_input(
                 "名前・専用IDを入力してください（半角英数字のみ）",
                 value="",
-                placeholder="例: takkun, user_abc",
+                placeholder="例: guest_user, user_abc",
                 autocomplete="off",
                 key="portal_user_id_input",
                 label_visibility="collapsed"
