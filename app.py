@@ -87,12 +87,15 @@ def save_portfolio_to_gsheet(user_key, gas_url, val_str):
         pass
     return True
 
-def load_portfolio_from_firebase(user_key, project_id):
+def load_portfolio_from_firebase(user_key, project_id, id_token=None):
     if not project_id:
         return None
     try:
         url = f"https://firestore.googleapis.com/v1/projects/{project_id}/databases/(default)/documents/portfolios/{user_key}"
-        req = urllib.request.Request(url, method="GET")
+        headers = {}
+        if id_token:
+            headers["Authorization"] = f"Bearer {id_token}"
+        req = urllib.request.Request(url, headers=headers, method="GET")
         with urllib.request.urlopen(req, timeout=5) as response:
             res_data = json.loads(response.read().decode("utf-8"))
             fields = res_data.get("fields", {})
@@ -103,7 +106,7 @@ def load_portfolio_from_firebase(user_key, project_id):
         pass
     return None
 
-def save_portfolio_to_firebase(user_key, project_id, val_str):
+def save_portfolio_to_firebase(user_key, project_id, val_str, id_token=None):
     if not project_id:
         return False
     try:
@@ -116,10 +119,13 @@ def save_portfolio_to_firebase(user_key, project_id, val_str):
             }
         }
         data = json.dumps(body).encode("utf-8")
+        headers = {"Content-Type": "application/json"}
+        if id_token:
+            headers["Authorization"] = f"Bearer {id_token}"
         req = urllib.request.Request(
             url,
             data=data,
-            headers={"Content-Type": "application/json"},
+            headers=headers,
             method="PATCH" # Creates document if it doesn't exist, updates if it does
         )
         with urllib.request.urlopen(req, timeout=5) as response:
@@ -3437,7 +3443,8 @@ def save_portfolio(data):
         # 1. Sync to Firebase Firestore if configured (extremely fast!)
         firebase_project_id = st.session_state.get('firebase_project_id', DEFAULT_FIREBASE_PROJECT_ID)
         if firebase_project_id:
-            save_portfolio_to_firebase(user_key, firebase_project_id, val_str)
+            id_token = st.session_state.get("firebase_id_token")
+            save_portfolio_to_firebase(user_key, firebase_project_id, val_str, id_token)
         
         # 2. Sync to Google Sheets if configured (simulating the write latency/lag)
         gas_url = st.session_state.get('gas_url', '')
@@ -3524,8 +3531,9 @@ if code and state:
                 with urllib.request.urlopen(req, timeout=5) as response:
                     res_json = json.loads(response.read().decode("utf-8"))
                     access_token = res_json.get("access_token")
+                    google_id_token = res_json.get("id_token")
                     
-                    # Fetch User Info
+                    # Fetch User Info from Google
                     user_info_url = "https://www.googleapis.com/oauth2/v3/userinfo"
                     req_user = urllib.request.Request(user_info_url, headers={
                         "Authorization": f"Bearer {access_token}"
@@ -3537,8 +3545,41 @@ if code and state:
                         google_name = user_info.get("name", "Google User")
                         google_picture = user_info.get("picture", "")
                         
-                        # Set user key to be uniquely identified by google ID
+                        # Set default user key
                         user_key = f"google_{google_id}"
+                        
+                        # 2. Exchange Google ID Token for Firebase Auth ID Token if configured
+                        firebase_api_key = st.secrets.get("firebase_api_key")
+                        if google_id_token and firebase_api_key:
+                            try:
+                                firebase_auth_url = f"https://identitytoolkit.googleapis.com/v1/accounts:signInWithIdp?key={firebase_api_key}"
+                                firebase_post_data = json.dumps({
+                                    "postBody": f"id_token={google_id_token}&providerId=google.com",
+                                    "requestUri": redirect_uri,
+                                    "returnIdpCredential": True,
+                                    "returnSecureToken": True
+                                }).encode("utf-8")
+                                
+                                req_firebase = urllib.request.Request(
+                                    firebase_auth_url,
+                                    data=firebase_post_data,
+                                    headers={"Content-Type": "application/json"},
+                                    method="POST"
+                                )
+                                with urllib.request.urlopen(req_firebase, timeout=5) as resp_fb:
+                                    fb_res = json.loads(resp_fb.read().decode("utf-8"))
+                                    firebase_id_token = fb_res.get("idToken")
+                                    firebase_local_id = fb_res.get("localId")
+                                    
+                                    if firebase_id_token and firebase_local_id:
+                                        user_key = f"firebase_{firebase_local_id}"
+                                        st.session_state["firebase_id_token"] = firebase_id_token
+                                        st.session_state["firebase_local_id"] = firebase_local_id
+                                        google_name = fb_res.get("displayName", google_name)
+                                        google_picture = fb_res.get("photoUrl", google_picture)
+                            except Exception as fb_err:
+                                st.warning(f"Firebase Auth連携に失敗しました。ローカル保存のみで続行します: {str(fb_err)}")
+                        
                         st.session_state["user_key"] = user_key
                         st.session_state["user_display_name"] = google_name
                         st.session_state["user_avatar"] = google_picture
@@ -3889,7 +3930,7 @@ if query_user == "default":
             st.markdown(line_btn_html, unsafe_allow_html=True)
                     
         if not google_client_id and not line_channel_id:
-            with st.expander("⚙️ 本番用Google/LINEログインの設定手順 (開発者向け)"):
+            with st.expander("⚙️ 本番用Google/LINEログインおよびFirebaseの設定手順 (開発者向け)"):
                 st.markdown("""
                 ### 1. Google OAuth の設定手順
                 1. [Google Cloud Console](https://console.cloud.google.com/) にアクセスします。
@@ -3897,7 +3938,7 @@ if query_user == "default":
                 3. 「認証情報」 > 「OAuthクライアントIDを作成」を選択します。
                    - アプリケーションの種類: **ウェブ アプリケーション**
                    - 承認済みのリダイレクト URI: `http://localhost:8501/` (ローカル) または本番StreamlitアプリのURL
-                4. 発送された **クライアントID** と **クライアントシークレット** をコピーします。
+                4. 発行された **クライアントID** と **クライアントシークレット** をコピーします。
                 
                 ### 2. LINE ログインの設定手順
                 1. [LINE Developers](https://developers.line.biz/) にログインします。
@@ -3905,7 +3946,25 @@ if query_user == "default":
                 3. チャネル基本設定の **チャネルID** と **チャネルシークレット** をコピーします。
                 4. 「LINEログイン設定」タブで「コールバックURL」に `http://localhost:8501/` または本番URLを登録します。
                 
-                ### 3. Streamlit Secrets への登録
+                ### 3. Firebase Authentication & Firestore の設定手順
+                1. [Firebase Console](https://console.firebase.google.com/) にアクセスし、プロジェクトを新規作成します。
+                2. 「Authentication」を開き、「始める」を押した後、「Google」をログインプロバイダとして有効化します。
+                3. 「プロジェクトの設定」 (歯車マーク) にアクセスし、以下をコピーします。
+                   - **プロジェクト ID** (これが `firebase_project_id` になります)
+                   - **ウェブ API キー** (これが `firebase_api_key` になります)
+                4. 「Firestore Database」を作成し、以下のルールを設定してデプロイします（各ユーザーが自分のフォルダーのみ書き込み可能になります）：
+                   ```javascript
+                   rules_version = '2';
+                   service cloud.firestore {
+                     match /databases/{database}/documents {
+                       match /portfolios/{userId} {
+                         allow read, write: if request.auth != null && (userId == 'firebase_' + request.auth.uid || userId == request.auth.uid);
+                       }
+                     }
+                   }
+                   ```
+                
+                ### 4. Streamlit Secrets への登録
                 アプリの `.streamlit/secrets.toml` ファイル (または Streamlit Cloudの Secrets管理画面) に以下のように設定を記述します：
                 ```toml
                 google_client_id = "YOUR_GOOGLE_CLIENT_ID"
@@ -3913,6 +3972,10 @@ if query_user == "default":
                 line_channel_id = "YOUR_LINE_CHANNEL_ID"
                 line_channel_secret = "YOUR_LINE_CHANNEL_SECRET"
                 redirect_uri = "http://localhost:8501/" # または本番URL
+                
+                # Firebase設定
+                firebase_project_id = "YOUR_FIREBASE_PROJECT_ID"
+                firebase_api_key = "YOUR_FIREBASE_WEB_API_KEY"
                 ```
                 """)
                 
