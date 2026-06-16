@@ -3958,7 +3958,7 @@ if query_user == "default":
                    service cloud.firestore {
                      match /databases/{database}/documents {
                        match /portfolios/{userId} {
-                         allow read, write: if request.auth != null && (userId == 'firebase_' + request.auth.uid || userId == request.auth.uid);
+                         allow read, write: if (request.auth != null && (userId == 'firebase_' + request.auth.uid || userId == request.auth.uid)) || userId.startsWith('line_');
                        }
                      }
                    }
