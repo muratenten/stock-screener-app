@@ -3471,6 +3471,34 @@ def color_pl_cell(val):
 # UI Mode selector (Already configured at top, commented out here to preserve structure)
 # is_mobile = st.session_state.get('ui_mode', 'PC') == 'スマホ'
 
+# Check for Demo Login from HTML anchor click
+demo_login = st.query_params.get("demo_login")
+if demo_login:
+    if demo_login == "google":
+        st.query_params["user"] = "google_mock_user"
+        st.session_state["user_key"] = "google_mock_user"
+        st.session_state["user_display_name"] = "デモ Googleユーザー"
+        st.session_state["user_avatar"] = "https://lh3.googleusercontent.com/a/default-user=s96-c"
+        st.session_state["ls_save_profile_google_mock_user"] = {
+            "display_name": "デモ Googleユーザー",
+            "avatar": "https://lh3.googleusercontent.com/a/default-user=s96-c"
+        }
+        st.query_params.pop("demo_login", None)
+        st.toast("🔑 デモGoogleアカウントでログインしました！")
+        st.rerun()
+    elif demo_login == "line":
+        st.query_params["user"] = "line_mock_user"
+        st.session_state["user_key"] = "line_mock_user"
+        st.session_state["user_display_name"] = "デモ LINEユーザー"
+        st.session_state["user_avatar"] = "https://profile.line-scdn.net/default_profile_image"
+        st.session_state["ls_save_profile_line_mock_user"] = {
+            "display_name": "デモ LINEユーザー",
+            "avatar": "https://profile.line-scdn.net/default_profile_image"
+        }
+        st.query_params.pop("demo_login", None)
+        st.toast("🔑 デモLINEアカウントでログインしました！")
+        st.rerun()
+
 # Check for OAuth Callback in query params
 code = st.query_params.get("code")
 state = st.query_params.get("state")
@@ -3743,6 +3771,50 @@ if query_user == "default":
         line-height: 1.5;
         display: block;
     }
+    .social-login-btn {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        gap: 10px !important;
+        width: 100% !important;
+        padding: 10px 15px !important;
+        border-radius: 10px !important;
+        font-size: 0.9rem !important;
+        font-weight: 600 !important;
+        text-decoration: none !important;
+        transition: all 0.2s ease !important;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.04) !important;
+        border: 1px solid transparent !important;
+        cursor: pointer !important;
+        box-sizing: border-box !important;
+        margin-bottom: 10px !important;
+        text-align: center !important;
+    }
+    .google-btn {
+        background-color: #ffffff !important;
+        color: #374151 !important;
+        border: 1.5px solid #e5e7eb !important;
+    }
+    .google-btn:hover {
+        background-color: #f9fafb !important;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.07) !important;
+        transform: translateY(-1px) !important;
+    }
+    .line-btn {
+        background-color: #06c755 !important;
+        color: #ffffff !important;
+    }
+    .line-btn:hover {
+        background-color: #05b34c !important;
+        box-shadow: 0 4px 12px rgba(6, 199, 85, 0.2) !important;
+        transform: translateY(-1px) !important;
+    }
+    .social-icon {
+        width: 18px !important;
+        height: 18px !important;
+        flex-shrink: 0 !important;
+        vertical-align: middle !important;
+    }
     </style>
     """).replace("{portal_bg}", portal_bg), unsafe_allow_html=True)
     
@@ -3777,19 +3849,21 @@ if query_user == "default":
                     "scope=openid%20profile%20email&"
                     "state=google_auth"
                 )
-                st.link_button("🔴 Googleでログイン", url=google_auth_url, use_container_width=True)
             else:
-                if st.button("🔴 Googleでログイン (デモ)", use_container_width=True, key="demo_google_login"):
-                    st.query_params["user"] = "google_mock_user"
-                    st.session_state["user_key"] = "google_mock_user"
-                    st.session_state["user_display_name"] = "デモ Googleユーザー"
-                    st.session_state["user_avatar"] = "https://lh3.googleusercontent.com/a/default-user=s96-c"
-                    st.session_state["ls_save_profile_google_mock_user"] = {
-                        "display_name": "デモ Googleユーザー",
-                        "avatar": "https://lh3.googleusercontent.com/a/default-user=s96-c"
-                    }
-                    st.toast("🔑 デモGoogleアカウントでログインしました！")
-                    st.rerun()
+                google_auth_url = "?demo_login=google"
+                
+            google_btn_html = f"""
+            <a href="{google_auth_url}" target="_self" class="social-login-btn google-btn">
+                <svg class="social-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+                    <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+                    <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" fill="#FBBC05"/>
+                    <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+                </svg>
+                <span>Googleでログイン{" (デモ)" if not google_client_id else ""}</span>
+            </a>
+            """
+            st.markdown(google_btn_html, unsafe_allow_html=True)
                     
         with col_social2:
             if line_channel_id:
@@ -3801,19 +3875,18 @@ if query_user == "default":
                     "scope=openid%20profile&"
                     "state=line_auth"
                 )
-                st.link_button("🟢 LINEでログイン", url=line_auth_url, use_container_width=True)
             else:
-                if st.button("🟢 LINEでログイン (デモ)", use_container_width=True, key="demo_line_login"):
-                    st.query_params["user"] = "line_mock_user"
-                    st.session_state["user_key"] = "line_mock_user"
-                    st.session_state["user_display_name"] = "デモ LINEユーザー"
-                    st.session_state["user_avatar"] = "https://profile.line-scdn.net/default_profile_image"
-                    st.session_state["ls_save_profile_line_mock_user"] = {
-                        "display_name": "デモ LINEユーザー",
-                        "avatar": "https://profile.line-scdn.net/default_profile_image"
-                    }
-                    st.toast("🔑 デモLINEアカウントでログインしました！")
-                    st.rerun()
+                line_auth_url = "?demo_login=line"
+                
+            line_btn_html = f"""
+            <a href="{line_auth_url}" target="_self" class="social-login-btn line-btn">
+                <svg class="social-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="currentColor">
+                    <path d="M12 2C6.48 2 2 5.76 2 10.4c0 2.56 1.7 4.8 4.4 6.22-.17.58-.62 2.11-.7 2.42-.1.38-.05.27.23.08.28-.19 2.57-1.74 3.6-2.45h2.47c5.52 0 10-3.76 10-8.4S17.52 2 12 2zm-3.32 11.23h-.99c-.19 0-.35-.16-.35-.35V8.12c0-.19.16-.35.35-.35h.99c.19 0 .35.16.35.35v4.41c0 .19-.16.35-.35.35zm3.17 0h-.99c-.19 0-.35-.16-.35-.35V8.12c0-.19.16-.35.35-.35h.99c.19 0 .35.16.35.35v4.41c0 .19-.16.35-.35.35zm3.13-1.5c.14.14.14.36 0 .5l-.57.57a.35.35 0 01-.5 0l-2.07-2.07V12c0 .19-.16.35-.35.35h-.99c-.19 0-.35-.16-.35-.35V8.12c0-.19.16-.35.35-.35h.99c.19 0 .35.16.35.35v1.27l2.07-2.07c.14-.14.36-.14.5 0l.57.57c.14.14.14.36 0 .5l-1.5 1.5 1.5 1.5zm3.12-.51c0 .19-.16.35-.35.35h-1.92c-.19 0-.35-.16-.35-.35v-1.2h2.27c.19 0 .35-.16.35-.35v-.64c0-.19-.16-.35-.35-.35h-2.27V8.82h1.92c.19 0 .35-.16.35-.35V7.83c0-.19-.16-.35-.35-.35h-3.26c-.19 0-.35.16-.35.35v4.41c0 .19.16.35.35.35h3.26c.19 0 .35-.16.35-.35v-.64c0-.19-.16-.35-.35-.35h-.99c-.19 0-.35.16-.35.35v.2h-.93V9.87h1.92c.19 0 .35-.16.35-.35v-.64c0-.19-.16-.35-.35-.35h-1.92v-.2h1.92c.19 0 .35-.16.35-.35v-.5z" />
+                </svg>
+                <span>LINEでログイン{" (デモ)" if not line_channel_id else ""}</span>
+            </a>
+            """
+            st.markdown(line_btn_html, unsafe_allow_html=True)
                     
         if not google_client_id and not line_channel_id:
             with st.expander("⚙️ 本番用Google/LINEログインの設定手順 (開発者向け)"):
