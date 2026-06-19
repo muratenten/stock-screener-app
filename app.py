@@ -3656,48 +3656,6 @@ def color_pl_cell(val):
 # UI Mode selector (Already configured at top, commented out here to preserve structure)
 # is_mobile = st.session_state.get('ui_mode', 'PC') == 'スマホ'
 
-# Check for Login Redirect (used to escape mobile WebView)
-login_redirect = st.query_params.get("login_redirect")
-if login_redirect:
-    google_client_id = st.secrets.get("google_client_id")
-    line_channel_id = st.secrets.get("line_channel_id")
-    redirect_uri = st.secrets.get("redirect_uri", "http://localhost:8501/")
-    
-    if login_redirect == "google" and google_client_id:
-        google_auth_url = (
-            "https://accounts.google.com/o/oauth2/v2/auth?"
-            f"client_id={google_client_id}&"
-            f"redirect_uri={urllib.parse.quote(redirect_uri)}&"
-            "response_type=code&"
-            "scope=openid%20profile%20email&"
-            "state=google_auth"
-        )
-        st.query_params.pop("login_redirect", None)
-        import streamlit.components.v1 as components
-        components.html(f"""
-        <script>
-            window.top.location.href = "{google_auth_url}";
-        </script>
-        """, height=0)
-        st.stop()
-    elif login_redirect == "line" and line_channel_id:
-        line_auth_url = (
-            "https://access.line.me/oauth2/v2.1/authorize?"
-            f"client_id={line_channel_id}&"
-            f"redirect_uri={urllib.parse.quote(redirect_uri)}&"
-            "response_type=code&"
-            "scope=openid%20profile&"
-            "state=line_auth"
-        )
-        st.query_params.pop("login_redirect", None)
-        import streamlit.components.v1 as components
-        components.html(f"""
-        <script>
-            window.top.location.href = "{line_auth_url}";
-        </script>
-        """, height=0)
-        st.stop()
-
 # Check for Demo Login from HTML anchor click
 demo_login = st.query_params.get("demo_login")
 if demo_login:
@@ -4113,28 +4071,7 @@ if query_user == "default":
         line_channel_id = st.secrets.get("line_channel_id")
         redirect_uri = st.secrets.get("redirect_uri", "http://localhost:8501/")
         
-        target_frame = "_top"
-        
-        # Construct redirect-to-auth URLs
-        app_url = redirect_uri
-        google_redirect_url = f"{app_url}?login_redirect=google&openExternalBrowser=1"
-        line_redirect_url = f"{app_url}?login_redirect=line&openExternalBrowser=1"
-        
-        is_line_browser = False
-        try:
-            from streamlit.web.server.websocket_headers import _get_websocket_headers
-            headers = _get_websocket_headers()
-            if headers:
-                ua = headers.get("User-Agent", "")
-                is_line_browser = "Line/" in ua
-        except Exception:
-            pass
-            
-        if is_line_browser:
-            st.warning("⚠️ **LINEアプリ内ブラウザをご利用中の方へ**\n\n"
-                       "Googleのセキュリティ仕様により、LINEアプリ内からは直接Googleログインが行えません。\n\n"
-                       "お手数ですが、**画面右上または右下のメニューボタン（コンパスや三点リーダー）**をタップし、"
-                       "**「デフォルトのブラウザで開く」** または **「Safari/Chromeで開く」** を選択してブラウザを切り替えてからログインしてください。")
+        target_frame = "_blank"
         
         st.markdown("""
         <div style="background: rgba(255, 255, 255, 0.75) !important; padding: 25px 35px 15px 35px !important; border-radius: 20px !important; box-shadow: 0 10px 30px rgba(30, 41, 59, 0.04) !important; border: 1px solid rgba(255, 255, 255, 0.6) !important; backdrop-filter: blur(15px) !important; -webkit-backdrop-filter: blur(15px) !important; margin-bottom: 20px; position: relative; z-index: 1;">
@@ -4145,12 +4082,19 @@ if query_user == "default":
         col_social1, col_social2 = st.columns(2)
         with col_social1:
             if google_client_id:
-                google_btn_url = google_redirect_url
+                google_auth_url = (
+                    "https://accounts.google.com/o/oauth2/v2/auth?"
+                    f"client_id={google_client_id}&"
+                    f"redirect_uri={urllib.parse.quote(redirect_uri)}&"
+                    "response_type=code&"
+                    "scope=openid%20profile%20email&"
+                    "state=google_auth"
+                )
             else:
-                google_btn_url = "?demo_login=google"
+                google_auth_url = "?demo_login=google"
                 
             google_btn_html = f"""
-            <a href="{google_btn_url}" target="{target_frame}" class="social-login-btn google-btn">
+            <a href="{google_auth_url}" target="{target_frame}" class="social-login-btn google-btn">
                 <svg class="social-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                     <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
                     <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
@@ -4164,12 +4108,19 @@ if query_user == "default":
                      
         with col_social2:
             if line_channel_id:
-                line_btn_url = line_redirect_url
+                line_auth_url = (
+                    "https://access.line.me/oauth2/v2.1/authorize?"
+                    f"client_id={line_channel_id}&"
+                    f"redirect_uri={urllib.parse.quote(redirect_uri)}&"
+                    "response_type=code&"
+                    "scope=openid%20profile&"
+                    "state=line_auth"
+                )
             else:
-                line_btn_url = "?demo_login=line"
+                line_auth_url = "?demo_login=line"
                  
             line_btn_html = f"""
-            <a href="{line_btn_url}" target="{target_frame}" class="social-login-btn line-btn">
+            <a href="{line_auth_url}" target="{target_frame}" class="social-login-btn line-btn">
                 <svg class="social-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="currentColor">
                     <path d="M19.365 9.863c.349 0 .63.285.63.631 0 .345-.281.63-.63.63H17.61v1.125h1.755c.349 0 .63.283.63.63 0 .344-.281.629-.63.629h-2.386c-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63h2.386c.346 0 .627.285.627.63 0 .349-.281.63-.63.63H17.61v1.125h1.755zm-3.855 3.016c0 .27-.174.51-.432.596-.064.021-.133.031-.199.031-.211 0-.391-.09-.51-.25l-2.443-3.317v2.94c0 .344-.279.629-.631.629-.346 0-.626-.285-.626-.629V8.108c0-.27.173-.51.43-.595.06-.023.136-.033.194-.033.195 0 .375.104.495.254l2.462 3.33V8.108c0-.345.282-.63.63-.63.345 0 .63.285.63.63v4.771zm-5.741 0c0 .344-.282.629-.631.629-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63.346 0 .628.285.628.63v4.771zm-2.466.629H4.917c-.345 0-.63-.285-.63-.629V8.108c0-.345.285-.63.63-.63.348 0 .63.285.63.63v4.141h1.756c.348 0 .629.283.629.63 0 .344-.282.629-.629.629M24 10.314C24 4.943 18.615.572 12 .572S0 4.943 0 10.314c0 4.811 4.27 8.842 10.035 9.608.391.082.923.258 1.058.59.12.301.079.766.038 1.08l-.164 1.02c-.045.301-.24 1.186 1.049.645 1.291-.539 6.916-4.078 9.436-6.975C23.176 14.393 24 12.458 24 10.314" />
                 </svg>
@@ -4177,6 +4128,13 @@ if query_user == "default":
             </a>
             """
             st.markdown(line_btn_html, unsafe_allow_html=True)
+            
+        st.markdown('<div style="margin-top: 15px; margin-bottom: 15px; text-align: center; color: #6b7280; font-size: 0.85rem;">⚠️ スマホで上のボタンが反応しない場合は、以下をお試しください：</div>', unsafe_allow_html=True)
+        col_native1, col_native2 = st.columns(2)
+        with col_native1:
+            st.link_button("🔑 Googleでログイン (予備)", google_auth_url, use_container_width=True)
+        with col_native2:
+            st.link_button("💬 LINEでログイン (予備)", line_auth_url, use_container_width=True)
                     
         if not google_client_id and not line_channel_id:
             with st.expander("⚙️ 本番用Google/LINEログインおよびFirebaseの設定手順 (開発者向け)"):
