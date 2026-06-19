@@ -4521,7 +4521,7 @@ badge_border = "1px solid rgba(148, 163, 184, 0.2)" if get_user_tier() == "free"
 
 u_key = st.session_state.get('user_key', 'default')
 if get_user_tier() == "free":
-    badge_html = ""
+    badge_html = f'<span style="font-size: 0.8rem; font-weight: 700; color: {badge_color}; background: {badge_bg}; border: {badge_border}; padding: 4px 12px; border-radius: 9999px; letter-spacing: 0.05em; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">🆓 {tier_label}</span>'
 else:
     badge_html = f'<span style="font-size: 0.8rem; font-weight: 700; color: {badge_color}; background: {badge_bg}; border: {badge_border}; padding: 4px 12px; border-radius: 9999px; letter-spacing: 0.05em; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">👑 {tier_label}</span>'
 
