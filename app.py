@@ -4073,6 +4073,22 @@ if query_user == "default":
         
         target_frame = "_blank"
         
+        is_line_browser = False
+        try:
+            from streamlit.web.server.websocket_headers import _get_websocket_headers
+            headers = _get_websocket_headers()
+            if headers:
+                ua = headers.get("User-Agent", "")
+                is_line_browser = "Line/" in ua
+        except Exception:
+            pass
+            
+        if is_line_browser:
+            st.warning("⚠️ **LINEアプリ内ブラウザをご利用中の方へ**\n\n"
+                       "Googleのセキュリティ仕様により、LINEアプリ内からは直接Googleログインが行えません。\n\n"
+                       "お手数ですが、**画面右上または右下のメニューボタン（コンパスや三点リーダー）**をタップし、"
+                       "**「デフォルトのブラウザで開く」** または **「Safari/Chromeで開く」** を選択してブラウザを切り替えてからログインしてください。")
+        
         st.markdown("""
         <div style="background: rgba(255, 255, 255, 0.75) !important; padding: 25px 35px 15px 35px !important; border-radius: 20px !important; box-shadow: 0 10px 30px rgba(30, 41, 59, 0.04) !important; border: 1px solid rgba(255, 255, 255, 0.6) !important; backdrop-filter: blur(15px) !important; -webkit-backdrop-filter: blur(15px) !important; margin-bottom: 20px; position: relative; z-index: 1;">
             <h3 class="login-section-title" style="margin-bottom: 15px; font-size: 1.15rem; color: #1e293b;">🔐 アカウントでログイン</h3>
