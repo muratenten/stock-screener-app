@@ -258,6 +258,11 @@ def render_upgrade_banner(reason_text):
         color: #1e1b4b;
     """
     
+    # Generate dynamic Stripe Payment Link with client_reference_id
+    stripe_link_base = st.secrets.get("stripe_payment_link", "https://buy.stripe.com/mock_premium_upgrade")
+    user_key = st.session_state.get('user_key', 'default')
+    stripe_link = f"{stripe_link_base}?client_reference_id={user_key}"
+    
     st.markdown(f"""
     <div style="padding: 24px; border-radius: 16px; {card_style} margin: 20px 0; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);">
         <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
@@ -280,7 +285,7 @@ def render_upgrade_banner(reason_text):
             </ul>
         </div>
         <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
-            <a href="https://buy.stripe.com/mock_premium_upgrade" target="_top" style="text-decoration: none; display: inline-flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #a855f7 0%, #ec4899 100%); color: white; font-weight: bold; padding: 12px 24px; border-radius: 9999px; font-size: 0.95rem; box-shadow: 0 4px 6px -1px rgba(168, 85, 247, 0.4); transition: transform 0.2s;">
+            <a href="{stripe_link}" target="_top" style="text-decoration: none; display: inline-flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #a855f7 0%, #ec4899 100%); color: white; font-weight: bold; padding: 12px 24px; border-radius: 9999px; font-size: 0.95rem; box-shadow: 0 4px 6px -1px rgba(168, 85, 247, 0.4); transition: transform 0.2s;">
                 👑 プレミアムプランにアップグレード (月額 980円〜)
             </a>
             <span style="font-size: 0.8rem; opacity: 0.7;">※決済完了後、自動的に制限が解除されます。</span>
