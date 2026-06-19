@@ -4263,14 +4263,6 @@ else:
     
 st.sidebar.caption("💡 別のIDに切り替える、または初期画面に戻るには下のボタンからログアウトしてください。")
 
-st.sidebar.markdown(f"""
-<div style="font-size: 0.8rem; background: rgba(0,0,0,0.05); padding: 8px 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); margin-top: 10px; margin-bottom: 10px;">
-🌐 <b>[DEBUG INFO]</b><br/>
-• <b>Data Source:</b> {st.session_state.get('data_source', 'Loading...')}<br/>
-• <b>User Tier:</b> {st.session_state.get('user_tier', 'free')}<br/>
-• <b>User Key:</b> <code style="font-size:0.75rem;">{user_key}</code>
-</div>
-""", unsafe_allow_html=True)
 
 if st.sidebar.button("🚪 ログアウト (ログイン画面に戻る)", use_container_width=True, key="sidebar_logout_btn"):
     st.query_params["user"] = "default"
