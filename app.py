@@ -4071,17 +4071,7 @@ if query_user == "default":
         line_channel_id = st.secrets.get("line_channel_id")
         redirect_uri = st.secrets.get("redirect_uri", "http://localhost:8501/")
         
-        is_mobile_user = False
-        try:
-            from streamlit.web.server.websocket_headers import _get_websocket_headers
-            headers = _get_websocket_headers()
-            if headers:
-                ua = headers.get("User-Agent", "")
-                is_mobile_user = any(x in ua for x in ["Mobi", "Android", "iPhone", "iPad"])
-        except Exception:
-            pass
-            
-        target_frame = "_blank" if is_mobile_user else "_top"
+        target_frame = "_blank"
         
         st.markdown("""
         <div style="background: rgba(255, 255, 255, 0.75) !important; padding: 25px 35px 15px 35px !important; border-radius: 20px !important; box-shadow: 0 10px 30px rgba(30, 41, 59, 0.04) !important; border: 1px solid rgba(255, 255, 255, 0.6) !important; backdrop-filter: blur(15px) !important; -webkit-backdrop-filter: blur(15px) !important; margin-bottom: 20px; position: relative; z-index: 1;">
