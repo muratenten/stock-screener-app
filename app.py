@@ -4155,32 +4155,6 @@ if query_user == "default":
             """
             st.markdown(line_btn_html, unsafe_allow_html=True)
             
-        st.markdown('<div style="margin-top: 15px; margin-bottom: 15px; text-align: center; color: #6b7280; font-size: 0.85rem;">⚠️ スマホで上のボタンが反応しない場合は、以下をお試しください：</div>', unsafe_allow_html=True)
-        col_native1, col_native2 = st.columns(2)
-        with col_native1:
-            st.link_button("🔑 Googleでログイン (予備)", google_auth_url, use_container_width=True)
-        with col_native2:
-            st.link_button("💬 LINEでログイン (予備)", line_auth_url, use_container_width=True)
-                    
-        # DEBUG BLOCKS for identifying WebView headers
-        try:
-            st.info(f"DEBUG: hasattr(st, 'context') = {hasattr(st, 'context')}")
-            if hasattr(st, "context"):
-                st.info(f"DEBUG: hasattr(st.context, 'headers') = {hasattr(st.context, 'headers')}")
-                if hasattr(st.context, "headers"):
-                    ua_context = st.context.headers.get("user-agent", st.context.headers.get("User-Agent", ""))
-                    st.info(f"DEBUG User-Agent (st.context): {ua_context}")
-            
-            # Show if legacy works
-            try:
-                from streamlit.web.server.websocket_headers import _get_websocket_headers
-                hdrs = _get_websocket_headers()
-                st.info(f"DEBUG Legacy Headers: {list(hdrs.keys()) if hdrs else 'None'}")
-            except Exception as legacy_err:
-                st.warning(f"DEBUG Legacy Error: {legacy_err}")
-        except Exception as e:
-            st.warning(f"DEBUG Error: {e}")
-            
         if not google_client_id and not line_channel_id:
             with st.expander("⚙️ 本番用Google/LINEログインおよびFirebaseの設定手順 (開発者向け)"):
                 st.markdown("""
