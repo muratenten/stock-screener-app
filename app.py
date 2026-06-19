@@ -4262,6 +4262,7 @@ if user_key not in st.session_state['ls_loaded_keys']:
         res = local_storage(action="get", item_key=f"zen_portfolio_{user_key}", key=f"ls_get_{user_key}")
         profile_res = local_storage(action="get", item_key=f"zen_profile_{user_key}", key=f"ls_profile_get_{user_key}")
         token_res = local_storage(action="get", item_key=f"zen_token_{user_key}", key=f"ls_token_get_{user_key}")
+        tier_res = local_storage(action="get", item_key=f"zen_tier_{user_key}", key=f"ls_tier_get_{user_key}")
         if profile_res is not None:
             try:
                 p_data = json.loads(profile_res)
@@ -4271,6 +4272,10 @@ if user_key not in st.session_state['ls_loaded_keys']:
                 pass
         if token_res is not None:
             st.session_state["firebase_id_token"] = token_res.get("value")
+        if tier_res is not None:
+            val_tier = tier_res.get("value") if isinstance(tier_res, dict) else tier_res
+            if val_tier:
+                st.session_state["user_tier"] = val_tier
         if res is not None:
             # Mark as loaded for this user_key
             st.session_state['ls_loaded_keys'][user_key] = True
@@ -4285,6 +4290,9 @@ if user_key not in st.session_state['ls_loaded_keys']:
                 val_str = load_portfolio_from_firebase(user_key, firebase_project_id, id_token)
                 if val_str:
                     data_source = "Firebase"
+                    # Cache the fetched user_tier
+                    fetched_tier = st.session_state.get("user_tier", "free")
+                    local_storage(action="set", item_key=f"zen_tier_{user_key}", value=fetched_tier, key=f"ls_tier_set_{user_key}")
                 
             # 2. Try loading from Google Sheets next if configured and Firebase was empty
             if not val_str:
