@@ -286,9 +286,42 @@ def render_upgrade_banner(reason_text):
         </div>
         <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
             <a href="{stripe_link}" target="_top" style="text-decoration: none; display: inline-flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #a855f7 0%, #ec4899 100%); color: white; font-weight: bold; padding: 12px 24px; border-radius: 9999px; font-size: 0.95rem; box-shadow: 0 4px 6px -1px rgba(168, 85, 247, 0.4); transition: transform 0.2s;">
-                👑 プレミアムプランにアップグレード (月額 980円〜)
+                👑 プレミアムプランにアップグレード (月額 980円)
             </a>
             <span style="font-size: 0.8rem; opacity: 0.7;">※決済完了後、自動的に制限が解除されます。</span>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+@st.dialog("👑 プレミアムプランのご案内", width="medium")
+def show_upgrade_dialog():
+    stripe_link = st.secrets.get("stripe_payment_link", "https://buy.stripe.com/mock_premium_upgrade")
+    if "user_key" in st.session_state:
+        user_key = st.session_state["user_key"]
+        if "?" in stripe_link:
+            stripe_link += f"&client_reference_id={user_key}"
+        else:
+            stripe_link += f"?client_reference_id={user_key}"
+            
+    st.markdown(f"""
+    <div style="padding: 10px 0; font-family: sans-serif;">
+        <p style="font-size: 1.05rem; font-weight: bold; margin-bottom: 12px; color: #a855f7;">
+            プレミアムプラン（月額 980円）にアップグレードすると、すべての制限が解除されます！
+        </p>
+        <div style="background: rgba(168, 85, 247, 0.05); border-left: 4px solid #a855f7; padding: 15px; border-radius: 4px; margin-bottom: 20px;">
+            <p style="font-weight: bold; margin-top: 0; font-size: 0.95rem; color: var(--text-color);">👑 プレミアムプラン限定特典：</p>
+            <ul style="margin: 0; padding-left: 20px; font-size: 0.88rem; line-height: 1.6; opacity: 0.9; color: var(--text-color);">
+                <li>過去練習モード（タイムトラベル）の結果表示：<b>無制限</b></li>
+                <li>類似連動フィルタ・類似パターン検索：<b>すべて解放</b></li>
+                <li>保有銘柄（シミュレーション購入）：<b>無制限（無料版は10個まで）</b></li>
+                <li>AIによるチャート類似度分析・予測アドバイス：<b>解放</b></li>
+            </ul>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 8px; align-items: center; margin-top: 15px;">
+            <a href="{stripe_link}" target="_top" style="text-decoration: none; width: 100%; display: inline-flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #a855f7 0%, #ec4899 100%); color: white; font-weight: bold; padding: 14px 20px; border-radius: 9999px; font-size: 1rem; box-shadow: 0 4px 6px -1px rgba(168, 85, 247, 0.4); text-align: center;">
+                👑 プレミアムプランにアップグレード (月額 980円)
+            </a>
+            <span style="font-size: 0.8rem; opacity: 0.7; margin-top: 5px; color: var(--text-color);">※決済完了後、自動的に制限が解除されます。</span>
         </div>
     </div>
     """, unsafe_allow_html=True)
@@ -3880,6 +3913,12 @@ if code and state:
 # Sidebar setup for personalizing portfolios
 query_user = st.query_params.get("user", "default")
 
+# Check action query param for upgrade modal
+if st.query_params.get("action") == "upgrade":
+    st.query_params.pop("action", None)
+    st.session_state["show_upgrade_dialog_flag"] = True
+    st.rerun()
+
 if query_user == "default":
     # ---------------------------------------------------------
     # WELCOME PORTAL PAGE (Shown when no user ID is set)
@@ -4265,7 +4304,12 @@ if avatar_url:
     """, unsafe_allow_html=True)
 else:
     st.sidebar.markdown(f"### 👤 ログイン中: **{display_name}**")
-    
+
+if get_user_tier() == "free":
+    st.sidebar.markdown("<div style='margin-bottom: 5px;'></div>", unsafe_allow_html=True)
+    if st.sidebar.button("👑 プレミアムにアップグレード", use_container_width=True, key="sidebar_upgrade_btn"):
+        show_upgrade_dialog()
+
 st.sidebar.caption("💡 別のIDに切り替える、または初期画面に戻るには下のボタンからログアウトしてください。")
 
 
@@ -4452,18 +4496,34 @@ if 'show_sell_dialog' in st.session_state:
     del st.session_state['show_sell_dialog']
 
 # Header
+if st.session_state.get("show_upgrade_dialog_flag"):
+    del st.session_state["show_upgrade_dialog_flag"]
+    show_upgrade_dialog()
+
 tier_label = "無料版" if get_user_tier() == "free" else "プレミアム"
 badge_color = "#94a3b8" if get_user_tier() == "free" else "#facc15"
 badge_bg = "rgba(148, 163, 184, 0.1)" if get_user_tier() == "free" else "rgba(250, 204, 21, 0.15)"
 badge_border = "1px solid rgba(148, 163, 184, 0.2)" if get_user_tier() == "free" else "1px solid rgba(250, 204, 21, 0.3)"
 
+u_key = st.session_state.get('user_key', 'default')
+if get_user_tier() == "free":
+    badge_html = f"""
+    <a href="?user={u_key}&action=upgrade" target="_self" style="text-decoration: none; font-size: 0.8rem; font-weight: 700; color: {badge_color}; background: {badge_bg}; border: {badge_border}; padding: 4px 12px; border-radius: 9999px; letter-spacing: 0.05em; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); cursor: pointer; transition: opacity 0.2s;" onmouseover="this.style.opacity=0.8" onmouseout="this.style.opacity=1" title="クリックして詳細を表示">
+        🆓 {tier_label} (クリックで詳細)
+    </a>
+    """
+else:
+    badge_html = f"""
+    <span style="font-size: 0.8rem; font-weight: 700; color: {badge_color}; background: {badge_bg}; border: {badge_border}; padding: 4px 12px; border-radius: 9999px; letter-spacing: 0.05em; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
+        👑 {tier_label}
+    </span>
+    """
+
 st.markdown(f"""
 <div class="title-container" style="display: flex; flex-direction: column; gap: 6px;">
     <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
         <div class="title-text" style="margin: 0; line-height: 1;">ZenStockScreener</div>
-        <span style="font-size: 0.8rem; font-weight: 700; color: {badge_color}; background: {badge_bg}; border: {badge_border}; padding: 4px 12px; border-radius: 9999px; letter-spacing: 0.05em; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
-            {"🆓" if get_user_tier() == "free" else "👑"} {tier_label}
-        </span>
+        {badge_html}
     </div>
     <div class="subtitle-text" style="margin-top: 4px;">AI分析とファンダメンタルズ指標による日本株上昇期待銘柄の選定システム</div>
 </div>
