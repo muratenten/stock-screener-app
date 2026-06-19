@@ -4069,12 +4069,16 @@ if query_user == "default":
         # Check if the user is using LINE in-app browser
         is_line_browser = False
         try:
-            from streamlit.web.server.websocket_headers import _get_websocket_headers
-            headers = _get_websocket_headers()
-            if headers:
-                headers_lower = {k.lower(): v for k, v in headers.items()}
-                ua = headers_lower.get("user-agent", "")
+            if hasattr(st, "context") and hasattr(st.context, "headers"):
+                ua = st.context.headers.get("user-agent", st.context.headers.get("User-Agent", ""))
                 is_line_browser = "line/" in ua.lower()
+            else:
+                from streamlit.web.server.websocket_headers import _get_websocket_headers
+                headers = _get_websocket_headers()
+                if headers:
+                    headers_lower = {k.lower(): v for k, v in headers.items()}
+                    ua = headers_lower.get("user-agent", "")
+                    is_line_browser = "line/" in ua.lower()
         except Exception:
             pass
             
@@ -4160,14 +4164,20 @@ if query_user == "default":
                     
         # DEBUG BLOCKS for identifying WebView headers
         try:
-            from streamlit.web.server.websocket_headers import _get_websocket_headers
-            hdrs = _get_websocket_headers()
-            if hdrs:
-                hdrs_lower = {k.lower(): v for k, v in hdrs.items()}
-                ua = hdrs_lower.get("user-agent", "")
-                st.info(f"DEBUG User-Agent: {ua}")
-            else:
-                st.warning("DEBUG: websocket headers is None")
+            st.info(f"DEBUG: hasattr(st, 'context') = {hasattr(st, 'context')}")
+            if hasattr(st, "context"):
+                st.info(f"DEBUG: hasattr(st.context, 'headers') = {hasattr(st.context, 'headers')}")
+                if hasattr(st.context, "headers"):
+                    ua_context = st.context.headers.get("user-agent", st.context.headers.get("User-Agent", ""))
+                    st.info(f"DEBUG User-Agent (st.context): {ua_context}")
+            
+            # Show if legacy works
+            try:
+                from streamlit.web.server.websocket_headers import _get_websocket_headers
+                hdrs = _get_websocket_headers()
+                st.info(f"DEBUG Legacy Headers: {list(hdrs.keys()) if hdrs else 'None'}")
+            except Exception as legacy_err:
+                st.warning(f"DEBUG Legacy Error: {legacy_err}")
         except Exception as e:
             st.warning(f"DEBUG Error: {e}")
             
