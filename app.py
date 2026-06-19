@@ -4158,6 +4158,19 @@ if query_user == "default":
         with col_native2:
             st.link_button("💬 LINEでログイン (予備)", line_auth_url, use_container_width=True)
                     
+        # DEBUG BLOCKS for identifying WebView headers
+        try:
+            from streamlit.web.server.websocket_headers import _get_websocket_headers
+            hdrs = _get_websocket_headers()
+            if hdrs:
+                hdrs_lower = {k.lower(): v for k, v in hdrs.items()}
+                ua = hdrs_lower.get("user-agent", "")
+                st.info(f"DEBUG User-Agent: {ua}")
+            else:
+                st.warning("DEBUG: websocket headers is None")
+        except Exception as e:
+            st.warning(f"DEBUG Error: {e}")
+            
         if not google_client_id and not line_channel_id:
             with st.expander("⚙️ 本番用Google/LINEログインおよびFirebaseの設定手順 (開発者向け)"):
                 st.markdown("""
