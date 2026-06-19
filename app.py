@@ -318,7 +318,7 @@ def show_upgrade_dialog():
             </ul>
         </div>
         <div style="display: flex; flex-direction: column; gap: 8px; align-items: center; margin-top: 15px;">
-            <a href="{stripe_link}" target="_top" style="text-decoration: none; width: 100%; display: inline-flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #a855f7 0%, #ec4899 100%); color: white; font-weight: bold; padding: 14px 20px; border-radius: 9999px; font-size: 1rem; box-shadow: 0 4px 6px -1px rgba(168, 85, 247, 0.4); text-align: center;">
+            <a href="{stripe_link}" target="_top" style="box-sizing: border-box !important; text-decoration: none; width: 100%; display: inline-flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #a855f7 0%, #ec4899 100%); color: white; font-weight: bold; padding: 14px 20px; border-radius: 9999px; font-size: 1rem; box-shadow: 0 4px 6px -1px rgba(168, 85, 247, 0.4); text-align: center;">
                 👑 プレミアムプランにアップグレード (月額 980円)
             </a>
             <span style="font-size: 0.8rem; opacity: 0.7; margin-top: 5px; color: var(--text-color);">※決済完了後、自動的に制限が解除されます。</span>
@@ -382,6 +382,8 @@ st.markdown(f"""
 <style>
     /* Header upgrade button custom badge styling */
     div.st-key-header_upgrade_btn button {{
+        box-sizing: border-box !important;
+        max-width: 100% !important;
         font-size: 0.8rem !important;
         font-weight: 700 !important;
         color: #94a3b8 !important;
@@ -4516,7 +4518,7 @@ if 'show_sell_dialog' in st.session_state:
     del st.session_state['show_sell_dialog']
 
 # Header
-col1, col2 = st.columns([8, 2])
+col1, col2 = st.columns([75, 25])
 with col1:
     st.markdown(f'<div class="title-container" style="display: flex; flex-direction: column; gap: 6px;"><div class="title-text" style="margin: 0; line-height: 1;">ZenStockScreener</div><div class="subtitle-text" style="margin-top: 4px;">AI分析とファンダメンタルズ指標による日本株上昇期待銘柄の選定システム</div></div>', unsafe_allow_html=True)
 
@@ -4528,7 +4530,7 @@ badge_border = "1px solid rgba(148, 163, 184, 0.2)" if get_user_tier() == "free"
 with col2:
     if get_user_tier() == "free":
         st.markdown("<div style='margin-top: 4px;'></div>", unsafe_allow_html=True)
-        if st.button("🆓 無料版 (詳細)", key="header_upgrade_btn"):
+        if st.button("🆓 無料版", key="header_upgrade_btn"):
             show_upgrade_dialog()
     else:
         st.markdown(f'<div style="margin-top: 4px;"><span style="font-size: 0.8rem; font-weight: 700; color: {badge_color}; background: {badge_bg}; border: {badge_border}; padding: 4px 12px; border-radius: 9999px; letter-spacing: 0.05em; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">👑 {tier_label}</span></div>', unsafe_allow_html=True)
