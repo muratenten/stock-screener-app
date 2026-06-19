@@ -381,13 +381,13 @@ dataframe_filter = "invert(0.94) hue-rotate(180deg)" if is_dark else "none"
 st.markdown(f"""
 <style>
     /* Header layout inline styling for title and badge */
-    div.element-container:has(.title-container) {{
+    div[data-testid="element-container"]:has(.title-container) {{
         display: inline-block !important;
         width: auto !important;
         vertical-align: middle !important;
     }}
-    div.element-container:has(.st-key-header_upgrade_btn),
-    div.element-container:has(.st-key-header_upgrade_badge) {{
+    div[data-testid="element-container"]:has(.st-key-header_upgrade_btn),
+    div[data-testid="element-container"]:has(.st-key-header_upgrade_badge) {{
         display: inline-block !important;
         width: auto !important;
         vertical-align: middle !important;
