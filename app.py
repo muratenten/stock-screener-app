@@ -4285,6 +4285,44 @@ if st.sidebar.button("🚪 ログアウト (ログイン画面に戻る)", use_c
 if 'ls_loaded_keys' not in st.session_state:
     st.session_state['ls_loaded_keys'] = {}
 
+# Check if this is a mobile device via User-Agent to completely bypass the iframe localStorage component if blocked
+is_mobile_device = False
+try:
+    if hasattr(st, "context") and hasattr(st.context, "headers"):
+        ua = st.context.headers.get("user-agent", st.context.headers.get("User-Agent", ""))
+        is_mobile_device = any(m in ua.lower() for m in ["iphone", "ipad", "android", "mobile"])
+except Exception:
+    pass
+
+if is_mobile_device and user_key not in st.session_state['ls_loaded_keys']:
+    # On mobile, completely bypass browser localStorage retrieval to prevent Safari/Chrome iframe blocks
+    st.session_state['ls_loaded_keys'][user_key] = True
+    
+    val_str = None
+    data_source = None
+    
+    firebase_project_id = st.session_state.get('firebase_project_id', DEFAULT_FIREBASE_PROJECT_ID)
+    if firebase_project_id:
+        id_token = st.session_state.get("firebase_id_token")
+        val_str = load_portfolio_from_firebase(user_key, firebase_project_id, id_token)
+        if val_str:
+            data_source = "Firebase"
+            
+    if not val_str:
+        # Fallback to local server disk file directly
+        local_portfolio_data = load_portfolio()
+        local_is_empty = (
+            not local_portfolio_data.get("purchase_records") and 
+            not local_portfolio_data.get("sales_records") and 
+            not local_portfolio_data.get("watchlist")
+        )
+        if not local_is_empty:
+            data_source = "Local Portfolio File (Server Disk)"
+        else:
+            data_source = "Empty / New Session"
+            
+    st.session_state["data_source"] = data_source
+
 if user_key not in st.session_state['ls_loaded_keys']:
     with st.spinner("📂 ブラウザの保存データを読み込んでいます..."):
         res = local_storage(action="get", item_key=f"zen_portfolio_{user_key}", key=f"ls_get_{user_key}")
