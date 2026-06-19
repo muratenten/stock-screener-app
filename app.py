@@ -109,6 +109,16 @@ def load_portfolio_from_firebase(user_key, project_id, id_token=None):
             tier = fields.get("tier", {}).get("stringValue", "free")
             st.session_state["user_tier"] = tier
             
+            # Inject tier into the portfolio JSON string so it gets written to local server disk cache
+            if portfolio_str:
+                try:
+                    portfolio_dict = json.loads(portfolio_str)
+                    if isinstance(portfolio_dict, dict):
+                        portfolio_dict["user_tier"] = tier
+                        portfolio_str = json.dumps(portfolio_dict, indent=4, ensure_ascii=False)
+                except Exception:
+                    pass
+            
             # Read display_name and avatar if present
             display_name = fields.get("display_name", {}).get("stringValue")
             if display_name:
@@ -3582,8 +3592,15 @@ def load_portfolio():
                 data["watchlist"] = {}
             if "practice_runs" not in data:
                 data["practice_runs"] = {}
+            if "user_tier" not in data:
+                data["user_tier"] = "free"
             if "last_updated" not in data:
                 data["last_updated"] = "1970-01-01T00:00:00"
+                
+            # Restore user_tier to session state if the file has premium privilege
+            if data.get("user_tier") == "premium":
+                st.session_state["user_tier"] = "premium"
+                
             return data
     except Exception as e:
         st.error(f"ポートフォリオデータの読み込みエラー ({filename}): {e}")
@@ -3608,6 +3625,8 @@ def save_watchlist(watchlist):
 
 def save_portfolio(data):
     data["last_updated"] = datetime.datetime.now().isoformat()
+    # Save the current session's user tier to the file
+    data["user_tier"] = st.session_state.get("user_tier", "free")
     filename = get_portfolio_filename()
     try:
         with open(filename, "w", encoding="utf-8") as f:
