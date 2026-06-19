@@ -4244,6 +4244,15 @@ else:
     
 st.sidebar.caption("💡 別のIDに切り替える、または初期画面に戻るには下のボタンからログアウトしてください。")
 
+st.sidebar.markdown(f"""
+<div style="font-size: 0.8rem; background: rgba(0,0,0,0.05); padding: 8px 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); margin-top: 10px; margin-bottom: 10px;">
+🌐 <b>[DEBUG INFO]</b><br/>
+• <b>Data Source:</b> {st.session_state.get('data_source', 'Loading...')}<br/>
+• <b>User Tier:</b> {st.session_state.get('user_tier', 'free')}<br/>
+• <b>User Key:</b> <code style="font-size:0.75rem;">{user_key}</code>
+</div>
+""", unsafe_allow_html=True)
+
 if st.sidebar.button("🚪 ログアウト (ログイン画面に戻る)", use_container_width=True, key="sidebar_logout_btn"):
     st.query_params["user"] = "default"
     st.session_state['user_key'] = "default"
@@ -4262,7 +4271,6 @@ if user_key not in st.session_state['ls_loaded_keys']:
         res = local_storage(action="get", item_key=f"zen_portfolio_{user_key}", key=f"ls_get_{user_key}")
         profile_res = local_storage(action="get", item_key=f"zen_profile_{user_key}", key=f"ls_profile_get_{user_key}")
         token_res = local_storage(action="get", item_key=f"zen_token_{user_key}", key=f"ls_token_get_{user_key}")
-        tier_res = local_storage(action="get", item_key=f"zen_tier_{user_key}", key=f"ls_tier_get_{user_key}")
         if profile_res is not None:
             try:
                 p_data = json.loads(profile_res)
@@ -4272,10 +4280,6 @@ if user_key not in st.session_state['ls_loaded_keys']:
                 pass
         if token_res is not None:
             st.session_state["firebase_id_token"] = token_res.get("value")
-        if tier_res is not None:
-            val_tier = tier_res.get("value") if isinstance(tier_res, dict) else tier_res
-            if val_tier:
-                st.session_state["user_tier"] = val_tier
         if res is not None:
             # Mark as loaded for this user_key
             st.session_state['ls_loaded_keys'][user_key] = True
@@ -4290,9 +4294,6 @@ if user_key not in st.session_state['ls_loaded_keys']:
                 val_str = load_portfolio_from_firebase(user_key, firebase_project_id, id_token)
                 if val_str:
                     data_source = "Firebase"
-                    # Cache the fetched user_tier
-                    fetched_tier = st.session_state.get("user_tier", "free")
-                    local_storage(action="set", item_key=f"zen_tier_{user_key}", value=fetched_tier, key=f"ls_tier_set_{user_key}")
                 
             # 2. Try loading from Google Sheets next if configured and Firebase was empty
             if not val_str:
@@ -4326,6 +4327,7 @@ if user_key not in st.session_state['ls_loaded_keys']:
                         with open(filename, "w", encoding="utf-8") as f:
                             json.dump(browser_portfolio_data, f, indent=4, ensure_ascii=False)
                         
+                        st.session_state["data_source"] = data_source
                         if data_source == "Firebase":
                             st.toast("🔥 Firebaseから最新データを同期しました。")
                         elif data_source == "Google Sheets":
