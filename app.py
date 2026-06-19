@@ -4271,19 +4271,34 @@ if user_key not in st.session_state['ls_loaded_keys']:
         res = local_storage(action="get", item_key=f"zen_portfolio_{user_key}", key=f"ls_get_{user_key}")
         profile_res = local_storage(action="get", item_key=f"zen_profile_{user_key}", key=f"ls_profile_get_{user_key}")
         token_res = local_storage(action="get", item_key=f"zen_token_{user_key}", key=f"ls_token_get_{user_key}")
-        if profile_res is not None:
-            try:
-                p_data = json.loads(profile_res)
-                st.session_state["user_display_name"] = p_data.get("display_name")
-                st.session_state["user_avatar"] = p_data.get("avatar")
-            except:
-                pass
-        if token_res is not None:
-            st.session_state["firebase_id_token"] = token_res.get("value")
+        # Check if the components have returned a dictionary with success/error status
+        is_ready = False
         if res is not None:
-            # Mark as loaded for this user_key
+            is_ready = True
+            
+        if is_ready:
+            # Mark as loaded for this user_key to prevent entering this block again
             st.session_state['ls_loaded_keys'][user_key] = True
             
+            # Extract profile details safely if successful
+            if profile_res is not None and isinstance(profile_res, dict) and profile_res.get("status") == "success":
+                val_profile = profile_res.get("value")
+                if val_profile:
+                    try:
+                        p_data = json.loads(val_profile)
+                        st.session_state["user_display_name"] = p_data.get("display_name")
+                        st.session_state["user_avatar"] = p_data.get("avatar")
+                    except:
+                        pass
+                        
+            # Only read the token if the browser successfully returned it.
+            # Do NOT overwrite a valid st.session_state["firebase_id_token"] (which might have been set during active login redirects)
+            # if the browser returned an error status (e.g. because localStorage is blocked inside the iframe on iOS/Safari).
+            if token_res is not None and isinstance(token_res, dict) and token_res.get("status") == "success":
+                val = token_res.get("value")
+                if val:
+                    st.session_state["firebase_id_token"] = val
+                    
             val_str = None
             data_source = None
             
@@ -4294,7 +4309,7 @@ if user_key not in st.session_state['ls_loaded_keys']:
                 val_str = load_portfolio_from_firebase(user_key, firebase_project_id, id_token)
                 if val_str:
                     data_source = "Firebase"
-                
+                    
             # 2. Try loading from Google Sheets next if configured and Firebase was empty
             if not val_str:
                 gas_url = st.session_state.get('gas_url', '')
@@ -4302,13 +4317,14 @@ if user_key not in st.session_state['ls_loaded_keys']:
                     val_str = load_portfolio_from_gsheet(user_key, gas_url)
                     if val_str:
                         data_source = "Google Sheets"
-            
+                        
             # 3. Fallback to browser localStorage if not found on cloud
             if not val_str:
-                val_str = res.get("value")
-                if val_str:
-                    data_source = "Browser LocalStorage"
-            
+                if isinstance(res, dict) and res.get("status") == "success":
+                    val_str = res.get("value")
+                    if val_str:
+                        data_source = "Browser LocalStorage"
+                        
             # Load local portfolio file to check if it's empty
             local_portfolio_data = load_portfolio()
             local_is_empty = (
@@ -4341,6 +4357,10 @@ if user_key not in st.session_state['ls_loaded_keys']:
                 if not local_is_empty:
                     st.session_state['ls_needs_sync'] = True
                     st.session_state['ls_sync_counter'] = st.session_state.get('ls_sync_counter', 0) + 1
+                    st.session_state["data_source"] = "Local Portfolio File (Server Disk)"
+                else:
+                    st.session_state["data_source"] = "Empty / New Session"
+                    
             st.rerun()
         else:
             st.stop()
