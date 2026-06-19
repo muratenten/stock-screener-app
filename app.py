@@ -4496,7 +4496,8 @@ if 'show_sell_dialog' in st.session_state:
     del st.session_state['show_sell_dialog']
 
 # Header
-if st.session_state.get("show_upgrade_dialog_flag"):
+u_key = st.session_state.get('user_key', 'default')
+if st.session_state.get("show_upgrade_dialog_flag") and st.session_state.get('ls_loaded_keys', {}).get(u_key):
     del st.session_state["show_upgrade_dialog_flag"]
     show_upgrade_dialog()
 
