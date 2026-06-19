@@ -318,7 +318,7 @@ def show_upgrade_dialog():
             </ul>
         </div>
         <div style="display: flex; flex-direction: column; gap: 8px; align-items: center; margin-top: 15px;">
-            <a href="{stripe_link}" target="_top" style="box-sizing: border-box !important; text-decoration: none; width: 100%; display: inline-flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #a855f7 0%, #ec4899 100%); color: white; font-weight: bold; padding: 14px 20px; border-radius: 9999px; font-size: 1rem; box-shadow: 0 4px 6px -1px rgba(168, 85, 247, 0.4); text-align: center;">
+            <a href="{stripe_link}" target="_top" style="text-decoration: none; width: 100%; display: inline-flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #a855f7 0%, #ec4899 100%); color: white; font-weight: bold; padding: 14px 20px; border-radius: 9999px; font-size: 1rem; box-shadow: 0 4px 6px -1px rgba(168, 85, 247, 0.4); text-align: center;">
                 👑 プレミアムプランにアップグレード (月額 980円)
             </a>
             <span style="font-size: 0.8rem; opacity: 0.7; margin-top: 5px; color: var(--text-color);">※決済完了後、自動的に制限が解除されます。</span>
@@ -380,46 +380,6 @@ dataframe_filter = "invert(0.94) hue-rotate(180deg)" if is_dark else "none"
 
 st.markdown(f"""
 <style>
-    /* Header layout inline styling for title and badge */
-    div[data-testid="element-container"]:has(.title-container) {{
-        display: inline-block !important;
-        width: auto !important;
-        vertical-align: middle !important;
-    }}
-    div[data-testid="element-container"]:has(.st-key-header_upgrade_btn),
-    div[data-testid="element-container"]:has(.st-key-header_upgrade_badge) {{
-        display: inline-block !important;
-        width: auto !important;
-        vertical-align: middle !important;
-        margin-left: 12px !important;
-        margin-top: 6px !important;
-    }}
-
-    /* Header upgrade button custom badge styling */
-    div.st-key-header_upgrade_btn button {{
-        font-size: 0.8rem !important;
-        font-weight: 700 !important;
-        color: #94a3b8 !important;
-        background: rgba(148, 163, 184, 0.1) !important;
-        border: 1px solid rgba(148, 163, 184, 0.2) !important;
-        padding: 4px 12px !important;
-        border-radius: 9999px !important;
-        letter-spacing: 0.05em !important;
-        display: inline-flex !important;
-        align-items: center !important;
-        gap: 4px !important;
-        box-shadow: 0 1px 2px rgba(0,0,0,0.05) !important;
-        height: auto !important;
-        min-height: 0 !important;
-        line-height: 1 !important;
-        cursor: pointer !important;
-        transition: opacity 0.2s !important;
-    }}
-    div.st-key-header_upgrade_btn button:hover {{
-        opacity: 0.8 !important;
-        background: rgba(148, 163, 184, 0.15) !important;
-    }}
-
     /* CSS theme overrides on root */
     :root, .stApp {{
         --background-color: {bg_color};
@@ -3953,6 +3913,26 @@ if code and state:
 # Sidebar setup for personalizing portfolios
 query_user = st.query_params.get("user", "default")
 
+# Check action query param for upgrade modal
+if st.query_params.get("action") == "upgrade":
+    st.query_params.pop("action", None)
+    st.session_state["show_upgrade_dialog_flag"] = True
+    st.rerun()
+
+# Check if a free user tried to activate a premium-locked feature
+premium_check_keys = [
+    "scr_filter_similarity_disabled_mobile",
+    "scr_filter_similarity_disabled_pc",
+    "prac_filter_similarity_disabled_mobile",
+    "prac_filter_similarity_disabled_pc"
+]
+for k in premium_check_keys:
+    if st.session_state.get(k, False):
+        st.session_state[k] = False
+        st.session_state["show_upgrade_dialog_flag"] = True
+        st.rerun()
+
+
 if query_user == "default":
     # ---------------------------------------------------------
     # WELCOME PORTAL PAGE (Shown when no user ID is set)
@@ -4530,20 +4510,22 @@ if 'show_sell_dialog' in st.session_state:
     del st.session_state['show_sell_dialog']
 
 # Header
+if st.session_state.get("show_upgrade_dialog_flag"):
+    del st.session_state["show_upgrade_dialog_flag"]
+    show_upgrade_dialog()
+
 tier_label = "無料版" if get_user_tier() == "free" else "プレミアム"
 badge_color = "#94a3b8" if get_user_tier() == "free" else "#facc15"
 badge_bg = "rgba(148, 163, 184, 0.1)" if get_user_tier() == "free" else "rgba(250, 204, 21, 0.15)"
 badge_border = "1px solid rgba(148, 163, 184, 0.2)" if get_user_tier() == "free" else "1px solid rgba(250, 204, 21, 0.3)"
 
-# Title markup (without the badge inline, it will be placed next to it via CSS inline-block)
-st.markdown(f'<div class="title-container" style="display: flex; flex-direction: column; gap: 4px;"><div class="title-text" style="margin: 0; line-height: 1;">ZenStockScreener</div><div class="subtitle-text" style="margin-top: 4px;">AI分析とファンダメンタルズ指標による日本株上昇期待銘柄の選定システム</div></div>', unsafe_allow_html=True)
-
-# Badge button (st.button triggers dialog cleanly without reloads)
+u_key = st.session_state.get('user_key', 'default')
 if get_user_tier() == "free":
-    if st.button("🆓 無料版", key="header_upgrade_btn"):
-        show_upgrade_dialog()
+    badge_html = ""
 else:
-    st.markdown(f'<span class="st-key-header_upgrade_badge" style="font-size: 0.8rem; font-weight: 700; color: {badge_color}; background: {badge_bg}; border: {badge_border}; padding: 4px 12px; border-radius: 9999px; letter-spacing: 0.05em; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); margin-top: 6px; vertical-align: middle;">👑 {tier_label}</span>', unsafe_allow_html=True)
+    badge_html = f'<span style="font-size: 0.8rem; font-weight: 700; color: {badge_color}; background: {badge_bg}; border: {badge_border}; padding: 4px 12px; border-radius: 9999px; letter-spacing: 0.05em; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">👑 {tier_label}</span>'
+
+st.markdown(f'<div class="title-container" style="display: flex; flex-direction: column; gap: 6px;"><div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;"><div class="title-text" style="margin: 0; line-height: 1;">ZenStockScreener</div>{badge_html}</div><div class="subtitle-text" style="margin-top: 4px;">AI分析とファンダメンタルズ指標による日本株上昇期待銘柄の選定システム</div></div>', unsafe_allow_html=True)
 
 # Persistent purchase success alert
 if 'purchase_success_msg' in st.session_state:
@@ -5022,7 +5004,7 @@ with tab_screen:
             filter_bb_rebound = st.checkbox("ボリンジャーバンド -2σ以下", key="scr_filter_bb_re")
             filter_volume_surge = st.checkbox("出来高急増 (5日平均 > 25日平均*1.2)", key="scr_filter_vol_su")
             if get_user_tier() == "free":
-                st.checkbox("🔒 類似連動 (プレミアム専用)", value=False, disabled=True, key="scr_filter_similarity_disabled_mobile", help="過去類似3局面の上昇率フィルタ（類似連動）はプレミアムプラン専用機能です。")
+                st.checkbox("🔒 類似連動 (プレミアム専用)", value=False, disabled=False, key="scr_filter_similarity_disabled_mobile", help="過去類似3局面の上昇率フィルタ（類似連動）はプレミアムプラン専用機能です。")
                 st.session_state["scr_filter_similarity"] = False
                 filter_similarity_pattern = False
             else:
@@ -5128,7 +5110,7 @@ with tab_screen:
                 filter_bb_rebound = st.checkbox("ボリンジャーバンド -2σ以下", key="scr_filter_bb_re")
                 filter_volume_surge = st.checkbox("出来高急増 (5日平均 > 25日平均*1.2)", key="scr_filter_vol_su")
                 if get_user_tier() == "free":
-                    st.checkbox("🔒 類似連動 (プレミアム専用)", value=False, disabled=True, key="scr_filter_similarity_disabled_pc", help="過去類似3局面の上昇率フィルタ（類似連動）はプレミアムプラン専用機能です。")
+                    st.checkbox("🔒 類似連動 (プレミアム専用)", value=False, disabled=False, key="scr_filter_similarity_disabled_pc", help="過去類似3局面の上昇率フィルタ（類似連動）はプレミアムプラン専用機能です。")
                     st.session_state["scr_filter_similarity"] = False
                     filter_similarity_pattern = False
                 else:
@@ -6497,7 +6479,7 @@ with tab_practice:
             prac_filter_bb_re = st.checkbox("ボリンジャーバンド -2σ以下", key="prac_filter_bb_re")
             prac_filter_vol_su = st.checkbox("出来高急増 (5日平均 > 25日平均*1.2)", key="prac_filter_vol_su")
             if get_user_tier() == "free":
-                st.checkbox("🔒 類似連動 (プレミアム専用)", value=False, disabled=True, key="prac_filter_similarity_disabled_mobile", help="過去類似3局面の上昇率フィルタ（類似連動）はプレミアムプラン専用機能です。")
+                st.checkbox("🔒 類似連動 (プレミアム専用)", value=False, disabled=False, key="prac_filter_similarity_disabled_mobile", help="過去類似3局面の上昇率フィルタ（類似連動）はプレミアムプラン専用機能です。")
                 st.session_state["prac_filter_similarity"] = False
                 prac_filter_similarity = False
             else:
@@ -6588,7 +6570,7 @@ with tab_practice:
                 prac_filter_bb_re = st.checkbox("ボリンジャーバンド -2σ以下", key="prac_filter_bb_re")
                 prac_filter_vol_su = st.checkbox("出来高急増 (5日平均 > 25日平均*1.2)", key="prac_filter_vol_su")
                 if get_user_tier() == "free":
-                    st.checkbox("🔒 類似連動 (プレミアム専用)", value=False, disabled=True, key="prac_filter_similarity_disabled_pc", help="過去類似3局面の上昇率フィルタ（類似連動）はプレミアムプラン専用機能です。")
+                    st.checkbox("🔒 類似連動 (プレミアム専用)", value=False, disabled=False, key="prac_filter_similarity_disabled_pc", help="過去類似3局面の上昇率フィルタ（類似連動）はプレミアムプラン専用機能です。")
                     st.session_state["prac_filter_similarity"] = False
                     prac_filter_similarity = False
                 else:
