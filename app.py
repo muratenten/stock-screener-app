@@ -4066,6 +4066,27 @@ if query_user == "default":
         st.markdown('<div class="login-title-glow">ZenStockScreener</div>', unsafe_allow_html=True)
         st.markdown('<div class="login-subtitle-glow">AI・ファンダメンタルズ指標分析システム</div>', unsafe_allow_html=True)
         
+        # Check if the user is using LINE in-app browser
+        is_line_browser = False
+        try:
+            from streamlit.web.server.websocket_headers import _get_websocket_headers
+            headers = _get_websocket_headers()
+            if headers:
+                ua = headers.get("User-Agent", "")
+                is_line_browser = "Line/" in ua or "LINE/" in ua
+        except Exception:
+            pass
+            
+        if is_line_browser:
+            st.error("""
+            🚨 **LINEアプリでご覧の方へ**
+            
+            LINEアプリの仕様（内蔵ブラウザの制限）により、ログインボタンが動作しません。
+            
+            画面右上（または右下）にある **「︙（メニュー）」** または **「コンパスのマーク」** をタップし、
+            **「デフォルトのブラウザで開く」** または **「Safari/Chromeで開く」** を選択してブラウザを切り替えてからログインしてください。
+            """)
+
         # 1. Google & LINE OAuth Buttons
         google_client_id = st.secrets.get("google_client_id")
         line_channel_id = st.secrets.get("line_channel_id")
