@@ -4507,27 +4507,11 @@ badge_border = "1px solid rgba(148, 163, 184, 0.2)" if get_user_tier() == "free"
 
 u_key = st.session_state.get('user_key', 'default')
 if get_user_tier() == "free":
-    badge_html = f"""
-    <a href="?user={u_key}&action=upgrade" target="_self" style="text-decoration: none; font-size: 0.8rem; font-weight: 700; color: {badge_color}; background: {badge_bg}; border: {badge_border}; padding: 4px 12px; border-radius: 9999px; letter-spacing: 0.05em; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); cursor: pointer; transition: opacity 0.2s;" onmouseover="this.style.opacity=0.8" onmouseout="this.style.opacity=1" title="クリックして詳細を表示">
-        🆓 {tier_label} (クリックで詳細)
-    </a>
-    """
+    badge_html = f'<a href="?user={u_key}&action=upgrade" target="_self" style="text-decoration: none; font-size: 0.8rem; font-weight: 700; color: {badge_color}; background: {badge_bg}; border: {badge_border}; padding: 4px 12px; border-radius: 9999px; letter-spacing: 0.05em; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); cursor: pointer; transition: opacity 0.2s;" onmouseover="this.style.opacity=0.8" onmouseout="this.style.opacity=1" title="クリックして詳細を表示">🆓 {tier_label} (クリックで詳細)</a>'
 else:
-    badge_html = f"""
-    <span style="font-size: 0.8rem; font-weight: 700; color: {badge_color}; background: {badge_bg}; border: {badge_border}; padding: 4px 12px; border-radius: 9999px; letter-spacing: 0.05em; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
-        👑 {tier_label}
-    </span>
-    """
+    badge_html = f'<span style="font-size: 0.8rem; font-weight: 700; color: {badge_color}; background: {badge_bg}; border: {badge_border}; padding: 4px 12px; border-radius: 9999px; letter-spacing: 0.05em; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">👑 {tier_label}</span>'
 
-st.markdown(f"""
-<div class="title-container" style="display: flex; flex-direction: column; gap: 6px;">
-    <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
-        <div class="title-text" style="margin: 0; line-height: 1;">ZenStockScreener</div>
-        {badge_html}
-    </div>
-    <div class="subtitle-text" style="margin-top: 4px;">AI分析とファンダメンタルズ指標による日本株上昇期待銘柄の選定システム</div>
-</div>
-""", unsafe_allow_html=True)
+st.markdown(f'<div class="title-container" style="display: flex; flex-direction: column; gap: 6px;"><div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;"><div class="title-text" style="margin: 0; line-height: 1;">ZenStockScreener</div>{badge_html}</div><div class="subtitle-text" style="margin-top: 4px;">AI分析とファンダメンタルズ指標による日本株上昇期待銘柄の選定システム</div></div>', unsafe_allow_html=True)
 
 # Persistent purchase success alert
 if 'purchase_success_msg' in st.session_state:
