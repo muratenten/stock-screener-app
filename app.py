@@ -380,20 +380,12 @@ dataframe_filter = "invert(0.94) hue-rotate(180deg)" if is_dark else "none"
 
 st.markdown(f"""
 <style>
-    /* Hidden upgrade button helper styling */
+    /* Hidden upgrade button helper styling (positioned far off-screen) */
     div.st-key-hidden_upgrade_btn {{
         position: absolute !important;
         left: -9999px !important;
-        opacity: 0 !important;
-        width: 0 !important;
-        height: 0 !important;
-        overflow: hidden !important;
-    }}
-    div.st-key-hidden_upgrade_btn button {{
-        width: 0 !important;
-        height: 0 !important;
-        padding: 0 !important;
-        border: none !important;
+        top: -9999px !important;
+        z-index: -9999 !important;
     }}
 
     /* CSS theme overrides on root */
@@ -4516,7 +4508,7 @@ badge_bg = "rgba(148, 163, 184, 0.1)" if get_user_tier() == "free" else "rgba(25
 badge_border = "1px solid rgba(148, 163, 184, 0.2)" if get_user_tier() == "free" else "1px solid rgba(250, 204, 21, 0.3)"
 
 if get_user_tier() == "free":
-    badge_html = f'<a href="javascript:void(0)" onclick="const btn = document.querySelector(\'div.st-key-hidden_upgrade_btn button\'); if(btn) btn.click();" style="text-decoration: none; font-size: 0.8rem; font-weight: 700; color: {badge_color}; background: {badge_bg}; border: {badge_border}; padding: 4px 12px; border-radius: 9999px; letter-spacing: 0.05em; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); cursor: pointer; transition: opacity 0.2s;" onmouseover="this.style.opacity=0.8" onmouseout="this.style.opacity=1" title="クリックして詳細を表示">🆓 {tier_label}</a>'
+    badge_html = f'<a href="javascript:void(0)" onclick="const btn = document.querySelector(\'div.st-key-hidden_upgrade_btn button\') || Array.from(document.querySelectorAll(\'button\')).find(el => el.textContent.includes(\'hidden_upgrade\')); if(btn) btn.click();" style="text-decoration: none; font-size: 0.8rem; font-weight: 700; color: {badge_color}; background: {badge_bg}; border: {badge_border}; padding: 4px 12px; border-radius: 9999px; letter-spacing: 0.05em; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); cursor: pointer; transition: opacity 0.2s;" onmouseover="this.style.opacity=0.8" onmouseout="this.style.opacity=1" title="クリックして詳細を表示">🆓 {tier_label}</a>'
 else:
     badge_html = f'<span style="font-size: 0.8rem; font-weight: 700; color: {badge_color}; background: {badge_bg}; border: {badge_border}; padding: 4px 12px; border-radius: 9999px; letter-spacing: 0.05em; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">👑 {tier_label}</span>'
 
