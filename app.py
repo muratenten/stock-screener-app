@@ -4072,8 +4072,9 @@ if query_user == "default":
             from streamlit.web.server.websocket_headers import _get_websocket_headers
             headers = _get_websocket_headers()
             if headers:
-                ua = headers.get("User-Agent", "")
-                is_line_browser = "Line/" in ua or "LINE/" in ua
+                headers_lower = {k.lower(): v for k, v in headers.items()}
+                ua = headers_lower.get("user-agent", "")
+                is_line_browser = "line/" in ua.lower()
         except Exception:
             pass
             
