@@ -380,32 +380,20 @@ dataframe_filter = "invert(0.94) hue-rotate(180deg)" if is_dark else "none"
 
 st.markdown(f"""
 <style>
-    /* Header upgrade button custom badge styling */
-    div.st-key-header_upgrade_btn button {{
-        box-sizing: border-box !important;
-        max-width: 100% !important;
-        font-size: 0.8rem !important;
-        font-weight: 700 !important;
-        color: #94a3b8 !important;
-        background: rgba(148, 163, 184, 0.1) !important;
-        border: 1px solid rgba(148, 163, 184, 0.2) !important;
-        padding: 4px 12px !important;
-        border-radius: 9999px !important;
-        letter-spacing: 0.05em !important;
-        display: inline-flex !important;
-        align-items: center !important;
-        gap: 4px !important;
-        box-shadow: 0 1px 2px rgba(0,0,0,0.05) !important;
-        height: auto !important;
-        min-height: 0 !important;
-        line-height: 1 !important;
-        cursor: pointer !important;
-        transition: opacity 0.2s !important;
-        margin-top: 4px !important;
+    /* Hidden upgrade button helper styling */
+    div.st-key-hidden_upgrade_btn {{
+        position: absolute !important;
+        left: -9999px !important;
+        opacity: 0 !important;
+        width: 0 !important;
+        height: 0 !important;
+        overflow: hidden !important;
     }}
-    div.st-key-header_upgrade_btn button:hover {{
-        opacity: 0.8 !important;
-        background: rgba(148, 163, 184, 0.15) !important;
+    div.st-key-hidden_upgrade_btn button {{
+        width: 0 !important;
+        height: 0 !important;
+        padding: 0 !important;
+        border: none !important;
     }}
 
     /* CSS theme overrides on root */
@@ -4518,22 +4506,21 @@ if 'show_sell_dialog' in st.session_state:
     del st.session_state['show_sell_dialog']
 
 # Header
-col1, col2 = st.columns([75, 25])
-with col1:
-    st.markdown(f'<div class="title-container" style="display: flex; flex-direction: column; gap: 6px;"><div class="title-text" style="margin: 0; line-height: 1;">ZenStockScreener</div><div class="subtitle-text" style="margin-top: 4px;">AI分析とファンダメンタルズ指標による日本株上昇期待銘柄の選定システム</div></div>', unsafe_allow_html=True)
+# Define invisible button for triggering dialog from JavaScript without any reload
+if st.button("hidden_upgrade", key="hidden_upgrade_btn"):
+    show_upgrade_dialog()
 
 tier_label = "無料版" if get_user_tier() == "free" else "プレミアム"
 badge_color = "#94a3b8" if get_user_tier() == "free" else "#facc15"
 badge_bg = "rgba(148, 163, 184, 0.1)" if get_user_tier() == "free" else "rgba(250, 204, 21, 0.15)"
 badge_border = "1px solid rgba(148, 163, 184, 0.2)" if get_user_tier() == "free" else "1px solid rgba(250, 204, 21, 0.3)"
 
-with col2:
-    if get_user_tier() == "free":
-        st.markdown("<div style='margin-top: 4px;'></div>", unsafe_allow_html=True)
-        if st.button("🆓 無料版", key="header_upgrade_btn"):
-            show_upgrade_dialog()
-    else:
-        st.markdown(f'<div style="margin-top: 4px;"><span style="font-size: 0.8rem; font-weight: 700; color: {badge_color}; background: {badge_bg}; border: {badge_border}; padding: 4px 12px; border-radius: 9999px; letter-spacing: 0.05em; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">👑 {tier_label}</span></div>', unsafe_allow_html=True)
+if get_user_tier() == "free":
+    badge_html = f'<a href="javascript:void(0)" onclick="const btn = document.querySelector(\'div.st-key-hidden_upgrade_btn button\'); if(btn) btn.click();" style="text-decoration: none; font-size: 0.8rem; font-weight: 700; color: {badge_color}; background: {badge_bg}; border: {badge_border}; padding: 4px 12px; border-radius: 9999px; letter-spacing: 0.05em; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); cursor: pointer; transition: opacity 0.2s;" onmouseover="this.style.opacity=0.8" onmouseout="this.style.opacity=1" title="クリックして詳細を表示">🆓 {tier_label}</a>'
+else:
+    badge_html = f'<span style="font-size: 0.8rem; font-weight: 700; color: {badge_color}; background: {badge_bg}; border: {badge_border}; padding: 4px 12px; border-radius: 9999px; letter-spacing: 0.05em; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">👑 {tier_label}</span>'
+
+st.markdown(f'<div class="title-container" style="display: flex; flex-direction: column; gap: 6px;"><div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;"><div class="title-text" style="margin: 0; line-height: 1;">ZenStockScreener</div>{badge_html}</div><div class="subtitle-text" style="margin-top: 4px;">AI分析とファンダメンタルズ指標による日本株上昇期待銘柄の選定システム</div></div>', unsafe_allow_html=True)
 
 # Persistent purchase success alert
 if 'purchase_success_msg' in st.session_state:
