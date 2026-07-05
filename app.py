@@ -4341,6 +4341,15 @@ if get_user_tier() == "free":
     st.sidebar.markdown("<div style='margin-bottom: 5px;'></div>", unsafe_allow_html=True)
     if st.sidebar.button("👑 プレミアムにアップグレード", use_container_width=True, key="sidebar_upgrade_btn"):
         show_upgrade_dialog()
+else:
+    portal_link = "https://billing.stripe.com/p/login/fZu7sN6Re8Wt8Wkfqzc3m00"
+    st.sidebar.markdown(f"""
+    <div style="margin-top: 5px; margin-bottom: 10px;">
+        <a href="{portal_link}" target="_blank" style="text-decoration: none; display: inline-flex; align-items: center; justify-content: center; width: 100%; padding: 8px 12px; background: rgba(250, 204, 21, 0.1); border: 1px solid rgba(250, 204, 21, 0.3); border-radius: 8px; font-size: 0.85rem; font-weight: bold; color: #facc15; text-align: center; gap: 6px; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
+            ⚙️ サブスクリプションの管理・解約
+        </a>
+    </div>
+    """, unsafe_allow_html=True)
 
 st.sidebar.caption("💡 別のIDに切り替える、または初期画面に戻るには下のボタンからログアウトしてください。")
 
