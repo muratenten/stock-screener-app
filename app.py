@@ -317,7 +317,7 @@ def show_upgrade_dialog():
                 <li>AIによるチャート類似度分析・予測アドバイス：<b>解放</b></li>
             </ul>
         </div>
-        <div style="display: flex; flex-direction: column; gap: 8px; align-items: center; margin-top: 15px;">
+        <div style="display: flex; flex-direction: column; gap: 8px; align-items: center; margin-top: 15px; margin-bottom: 15px;">
             <a href="{stripe_link}" target="_top" style="text-decoration: none; width: 100%; display: inline-flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #a855f7 0%, #ec4899 100%); color: white; font-weight: bold; padding: 14px 20px; border-radius: 9999px; font-size: 1rem; box-shadow: 0 4px 6px -1px rgba(168, 85, 247, 0.4); text-align: center;">
                 👑 プレミアムプランにアップグレード (月額 980円)
             </a>
@@ -325,6 +325,24 @@ def show_upgrade_dialog():
         </div>
     </div>
     """, unsafe_allow_html=True)
+    
+    st.write("---")
+    if st.button("🔄 決済後に手動でステータスを同期する", use_container_width=True):
+        if "user_key" in st.session_state:
+            user_key = st.session_state["user_key"]
+            with st.spinner("⏳ 最新の決済ステータスを確認しています..."):
+                firebase_project_id = st.session_state.get('firebase_project_id', DEFAULT_FIREBASE_PROJECT_ID)
+                id_token = st.session_state.get("firebase_id_token")
+                val_str = load_portfolio_from_firebase(user_key, firebase_project_id, id_token)
+                if st.session_state.get("user_tier") == "premium":
+                    st.success("🎉 プレミアムプランへのアップグレードを確認しました！")
+                    st.balloons()
+                    st.rerun()
+                else:
+                    st.error("まだ決済データが反映されていないか、無料プランのままです。決済後、約10〜30秒ほど待ってから再度お試しください。")
+        else:
+            st.warning("ログイン状態が確認できません。")
+
 
 def check_and_increment_practice_runs(increment=False):
     if get_user_tier() == "premium":
