@@ -1240,9 +1240,8 @@ def batch_download_histories(tickers_list, period="1y"):
             
     return histories
 
-# Cached function for downloading ticker fundamental info
-@st.cache_data(ttl=86400)
-def get_ticker_info(ticker):
+# Pure Python ticker info fetcher (safe for multi-threading without cache lock contention)
+def _fetch_raw_ticker_info(ticker):
     raw_info = None
     try:
         t = yf.Ticker(ticker)
@@ -1409,6 +1408,27 @@ def get_ticker_info(ticker):
         return needed
     except Exception:
         return {}
+
+# Cached function for single-ticker lookups (e.g. popups / detailed analysis on main thread)
+@st.cache_data(ttl=86400)
+def get_ticker_info(ticker):
+    return _fetch_raw_ticker_info(ticker)
+
+# High-performance parallel multi-threaded batch fetcher for screener (zero cache lock issues)
+def parallel_fetch_ticker_infos(tickers_list, max_workers=15):
+    import concurrent.futures
+    results = {}
+    if not tickers_list:
+        return results
+    with concurrent.futures.ThreadPoolExecutor(max_workers=min(max_workers, len(tickers_list))) as executor:
+        f_map = {executor.submit(_fetch_raw_ticker_info, t): t for t in tickers_list}
+        for fut in concurrent.futures.as_completed(f_map):
+            t = f_map[fut]
+            try:
+                results[t] = fut.result()
+            except Exception:
+                results[t] = {}
+    return results
 
 # Dynamic Index constituent fetcher (Scraping from Wikipedia)
 @st.cache_data(ttl=86400)
@@ -5348,7 +5368,33 @@ with tab_screen:
                 tickers_list = list(filtered_pool.keys())
                 histories = batch_download_histories(tickers_list, period=selected_period)
                 
-                # 2. Analyze each ticker
+                # 2. Fast Parallel Pre-fetching of Fundamentals for candidates passing quick technical checks
+                technically_passed = []
+                for ticker in tickers_list:
+                    df = histories.get(ticker)
+                    if df is None or df.empty or len(df) < 75:
+                        continue
+                    t_eval = evaluate_stock(ticker, df, info=None)
+                    if t_eval is None or t_eval['tech_score'] < min_tech_score:
+                        continue
+                    if filter_golden_cross and not t_eval['signals']['golden_cross']:
+                        continue
+                    if filter_macd_cross and not t_eval['signals']['macd_cross']:
+                        continue
+                    if filter_rsi_oversold and not t_eval['signals']['rsi_oversold']:
+                        continue
+                    if filter_rsi_overbought and not t_eval['signals']['rsi_overbought']:
+                        continue
+                    if filter_bb_rebound and not t_eval['signals']['bb_rebound']:
+                        continue
+                    if filter_volume_surge and not t_eval['signals']['volume_surge']:
+                        continue
+                    technically_passed.append(ticker)
+
+                # Batch fetch all fundamental info in parallel via pure Python worker threads (Massive speedup!)
+                fetched_infos = parallel_fetch_ticker_infos(technically_passed, max_workers=15)
+                
+                # 3. Analyze each ticker
                 results = []
                 progress_bar = st.progress(0)
                 
@@ -5382,8 +5428,8 @@ with tab_screen:
                     if filter_volume_surge and not tech_analysis['signals']['volume_surge']:
                         continue
                         
-                    # 2. Fetch fundamentals ONLY for stocks passing technical checks
-                    info = get_ticker_info(ticker)
+                    # 2. Use parallel pre-fetched fundamentals (Instantaneous memory lookup!)
+                    info = fetched_infos.get(ticker) or get_ticker_info(ticker)
                     
                     # Run full analysis
                     analysis = evaluate_stock(ticker, df, info)
