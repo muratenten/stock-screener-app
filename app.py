@@ -1184,20 +1184,20 @@ def create_selection_chart(df, ticker, name, start_date, end_date):
 
 @st.cache_data(ttl=3600)
 def batch_download_histories(tickers_list, period="1y"):
-    import time
+    import concurrent.futures
     if not tickers_list:
         return {}
         
     chunk_size = 150
+    chunks = [tickers_list[i:i+chunk_size] for i in range(0, len(tickers_list), chunk_size)]
     histories = {}
     
-    # Process in chunks of 150 to avoid URL length limitations and reduce rate limiting risk
-    for i in range(0, len(tickers_list), chunk_size):
-        chunk = tickers_list[i:i+chunk_size]
+    def _download_chunk(chunk):
+        res = {}
         try:
             data = yf.download(chunk, period=period, progress=False)
-            if data.empty:
-                continue
+            if data is None or data.empty:
+                return res
                 
             if len(chunk) == 1:
                 ticker = chunk[0]
@@ -1214,7 +1214,7 @@ def batch_download_histories(tickers_list, period="1y"):
                 df = patch_history_with_fast_info(ticker, df, skip_fast_info=True)
                 df = df.dropna(subset=['Close'])
                 if not df.empty:
-                    histories[ticker] = df
+                    res[ticker] = df
             else:
                 for ticker in chunk:
                     try:
@@ -1229,14 +1229,23 @@ def batch_download_histories(tickers_list, period="1y"):
                             df = patch_history_with_fast_info(ticker, df, skip_fast_info=True)
                             df = df.dropna(subset=['Close'])
                             if not df.empty:
-                                histories[ticker] = df
+                                res[ticker] = df
                     except Exception:
                         continue
-            # Small throttle delay between chunks
-            if len(tickers_list) > chunk_size:
-                time.sleep(0.3)
         except Exception:
-            continue
+            pass
+        return res
+
+    if len(chunks) == 1:
+        histories = _download_chunk(chunks[0])
+    else:
+        with concurrent.futures.ThreadPoolExecutor(max_workers=min(4, len(chunks))) as executor:
+            future_results = [executor.submit(_download_chunk, ch) for ch in chunks]
+            for f in concurrent.futures.as_completed(future_results):
+                try:
+                    histories.update(f.result())
+                except Exception:
+                    pass
             
     return histories
 
@@ -5348,7 +5357,45 @@ with tab_screen:
                 tickers_list = list(filtered_pool.keys())
                 histories = batch_download_histories(tickers_list, period=selected_period)
                 
-                # 2. Analyze each ticker
+                # 2. Fast Parallel Pre-fetching of Fundamentals for candidates passing quick technical checks
+                import concurrent.futures
+                
+                technically_passed = []
+                for ticker in tickers_list:
+                    df = histories.get(ticker)
+                    if df is None or df.empty or len(df) < 75:
+                        continue
+                    t_eval = evaluate_stock(ticker, df, info=None)
+                    if t_eval is None or t_eval['tech_score'] < min_tech_score:
+                        continue
+                    if filter_golden_cross and not t_eval['signals']['golden_cross']:
+                        continue
+                    if filter_macd_cross and not t_eval['signals']['macd_cross']:
+                        continue
+                    if filter_rsi_oversold and not t_eval['signals']['rsi_oversold']:
+                        continue
+                    if filter_rsi_overbought and not t_eval['signals']['rsi_overbought']:
+                        continue
+                    if filter_bb_rebound and not t_eval['signals']['bb_rebound']:
+                        continue
+                    if filter_volume_surge and not t_eval['signals']['volume_surge']:
+                        continue
+                    technically_passed.append(ticker)
+
+                # Batch fetch all fundamental info in parallel (Massive speedup!)
+                fetched_infos = {}
+                if technically_passed:
+                    max_w = min(20, len(technically_passed))
+                    with concurrent.futures.ThreadPoolExecutor(max_workers=max_w) as executor:
+                        f_map = {executor.submit(get_ticker_info, t): t for t in technically_passed}
+                        for fut in concurrent.futures.as_completed(f_map):
+                            t = f_map[fut]
+                            try:
+                                fetched_infos[t] = fut.result()
+                            except Exception:
+                                fetched_infos[t] = {}
+                
+                # 3. Analyze each ticker
                 results = []
                 progress_bar = st.progress(0)
                 
@@ -5382,8 +5429,8 @@ with tab_screen:
                     if filter_volume_surge and not tech_analysis['signals']['volume_surge']:
                         continue
                         
-                    # 2. Fetch fundamentals ONLY for stocks passing technical checks
-                    info = get_ticker_info(ticker)
+                    # 2. Use parallel pre-fetched fundamentals (Instantaneous memory lookup!)
+                    info = fetched_infos.get(ticker, {})
                     
                     # Run full analysis
                     analysis = evaluate_stock(ticker, df, info)
