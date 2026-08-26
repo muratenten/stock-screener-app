@@ -1379,10 +1379,27 @@ def get_ticker_info(ticker):
             if abs(needed['returnOnEquity']) < 1.0:
                 needed['returnOnEquity'] *= 100
                 
-        # Adjust dividendYield (handle 0.15 threshold to resolve yfinance formatting inconsistency)
-        if needed['dividendYield'] is not None:
-            if needed['dividendYield'] < 0.15:
-                needed['dividendYield'] *= 100
+        # Accurate dividend yield calculation (prevents 0.10% from being misidentified as 0.10 fraction and multiplied to 10%)
+        dr = raw_info.get('dividendRate')
+        p = raw_info.get('currentPrice') or raw_info.get('previousClose') or raw_info.get('regularMarketPrice')
+        tdr = raw_info.get('trailingAnnualDividendRate')
+        
+        calc_div_yield = None
+        if dr is not None and p is not None and safe_float(p) and safe_float(p) > 0 and safe_float(dr) is not None:
+            calc_div_yield = (safe_float(dr) / safe_float(p)) * 100.0
+        elif tdr is not None and p is not None and safe_float(p) and safe_float(p) > 0 and safe_float(tdr) is not None:
+            calc_div_yield = (safe_float(tdr) / safe_float(p)) * 100.0
+        elif needed['dividendYield'] is not None:
+            dy = needed['dividendYield']
+            if dy > 0.20:
+                calc_div_yield = dy
+            else:
+                tdy = safe_float(raw_info.get('trailingAnnualDividendYield'))
+                if tdy is not None and tdy > 0:
+                    calc_div_yield = tdy * 100.0
+                else:
+                    calc_div_yield = dy
+        needed['dividendYield'] = calc_div_yield
                 
         # Adjust opMargin (fraction to % value)
         if needed['opMargin'] is not None:
@@ -2176,8 +2193,8 @@ def generate_ir_catalysts(ticker, tags, info):
         catalysts.append(f"**PBR改善要求（現状PBR: {pbr:.2f}倍）に対する資本効率改善策の発表**: PBRが1倍を下回っているため、東証からの改善要請に基づき、配当増額や大規模な自社株買い、政策保有株の縮減といった還元強化策が出やすい株価位置にあります。")
         
     div_yield = local_safe_float(info.get('dividendYield'))
-    if div_yield is not None and div_yield >= 0.035:
-        catalysts.append(f"**高配当利回り（現状予想配当利回り: {div_yield*100:.2f}%）による株価下値の堅さとインカム買い**: 安定した配当利回りが投資家の買いを呼び込みやすく、市場全体の下落局面でも下値のサポートとして機能します。")
+    if div_yield is not None and div_yield >= 3.5:
+        catalysts.append(f"**高配当利回り（現状予想配当利回り: {div_yield:.2f}%）による株価下値の堅さとインカム買い**: 安定した配当利回りが投資家の買いを呼び込みやすく、市場全体の下落局面でも下値のサポートとして機能します。")
         
     market_cap = local_safe_float(info.get('marketCap'))
     if market_cap is not None and market_cap < 150 * 10**8: # Under 150億円
