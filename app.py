@@ -4568,6 +4568,7 @@ widget_defaults = {
     "scr_filter_per": False,
     "scr_filter_roe": False,
     "scr_filter_dividend": False,
+    "scr_min_dividend": 3.0,
     "scr_filter_rev_growth": False,
     "scr_filter_eps_growth": False,
     "scr_filter_gc": False,
@@ -4623,6 +4624,7 @@ def apply_preset(preset_name):
     st.session_state["scr_filter_per"] = False
     st.session_state["scr_filter_roe"] = False
     st.session_state["scr_filter_dividend"] = False
+    st.session_state["scr_min_dividend"] = 3.0
     st.session_state["scr_filter_rev_growth"] = False
     st.session_state["scr_filter_eps_growth"] = False
     st.session_state["scr_filter_gc"] = False
@@ -4654,6 +4656,7 @@ def apply_preset(preset_name):
         st.session_state["scr_filter_pbr"] = True
         st.session_state["scr_filter_per"] = True
         st.session_state["scr_filter_dividend"] = True
+        st.session_state["scr_min_dividend"] = 3.0
     elif preset_name == "逆張り・大底打ち":
         st.session_state["scr_min_total"] = 4
         st.session_state["scr_min_tech"] = 1
@@ -4687,7 +4690,7 @@ def check_preset_match():
     expected = {
         "scr_min_total": 0, "scr_min_tech": 0, "scr_min_fund": 0,
         "scr_filter_pbr": False, "scr_filter_per": False, "scr_filter_roe": False,
-        "scr_filter_dividend": False, "scr_filter_rev_growth": False, "scr_filter_eps_growth": False,
+        "scr_filter_dividend": False, "scr_min_dividend": 3.0, "scr_filter_rev_growth": False, "scr_filter_eps_growth": False,
         "scr_filter_gc": False, "scr_filter_macd": False, "scr_filter_rsi_os": False,
         "scr_filter_rsi_ob": False, "scr_filter_bb_re": False, "scr_filter_vol_su": False,
         "scr_filter_similarity": False,
@@ -4706,7 +4709,8 @@ def check_preset_match():
     elif curr == "高配当割安株":
         expected.update({
             "scr_min_total": 6, "scr_min_tech": 1, "scr_min_fund": 5,
-            "scr_filter_pbr": True, "scr_filter_per": True, "scr_filter_dividend": True
+            "scr_filter_pbr": True, "scr_filter_per": True, "scr_filter_dividend": True,
+            "scr_min_dividend": 3.0
         })
     elif curr == "逆張り・大底打ち":
         expected.update({
@@ -5019,7 +5023,11 @@ with tab_screen:
             filter_pbr = st.checkbox("PBR 1.0倍未満 (割安バリュー) のみ", key="scr_filter_pbr")
             filter_per = st.checkbox("PER 15倍未満 (低PER) のみ", key="scr_filter_per")
             filter_roe = st.checkbox("ROE 10%以上 (高PBR効率) のみ", key="scr_filter_roe")
-            filter_dividend = st.checkbox("配当利回り 3%以上 のみ", key="scr_filter_dividend")
+            filter_dividend = st.checkbox("配当利回り 指定値以上 のみ", key="scr_filter_dividend")
+            if filter_dividend:
+                min_dividend_val = st.slider("   ↳ 最小配当利回り (%)", 0.5, 10.0, float(st.session_state.get("scr_min_dividend", 3.0)), step=0.1, format="%.1f%%", key="scr_min_dividend")
+            else:
+                min_dividend_val = float(st.session_state.get("scr_min_dividend", 3.0))
             filter_rev_growth = st.checkbox("売上高成長率 10%以上 のみ", key="scr_filter_rev_growth")
             filter_eps_growth = st.checkbox("EPS成長率 15%以上 のみ", key="scr_filter_eps_growth")
             
@@ -5125,7 +5133,11 @@ with tab_screen:
                 filter_pbr = st.checkbox("PBR 1.0倍未満 (割安バリュー) のみ", key="scr_filter_pbr")
                 filter_per = st.checkbox("PER 15倍未満 (低PER) のみ", key="scr_filter_per")
                 filter_roe = st.checkbox("ROE 10%以上 (高PBR効率) のみ", key="scr_filter_roe")
-                filter_dividend = st.checkbox("配当利回り 3%以上 のみ", key="scr_filter_dividend")
+                filter_dividend = st.checkbox("配当利回り 指定値以上 のみ", key="scr_filter_dividend")
+                if filter_dividend:
+                    min_dividend_val = st.slider("   ↳ 最小配当利回り (%)", 0.5, 10.0, float(st.session_state.get("scr_min_dividend", 3.0)), step=0.1, format="%.1f%%", key="scr_min_dividend")
+                else:
+                    min_dividend_val = float(st.session_state.get("scr_min_dividend", 3.0))
                 filter_rev_growth = st.checkbox("売上高成長率 10%以上 のみ", key="scr_filter_rev_growth")
                 filter_eps_growth = st.checkbox("EPS成長率 15%以上 のみ", key="scr_filter_eps_growth")
             with col_f3:
@@ -5375,7 +5387,7 @@ with tab_screen:
                         continue
                     if filter_roe and (metrics['roe'] is None or metrics['roe'] < 10.0):
                         continue
-                    if filter_dividend and (metrics['dividend_yield'] is None or metrics['dividend_yield'] < 3.0):
+                    if filter_dividend and (metrics['dividend_yield'] is None or metrics['dividend_yield'] < min_dividend_val):
                         continue
                     if filter_rev_growth and (metrics['rev_growth'] is None or metrics['rev_growth'] < 10.0):
                         continue
