@@ -1609,140 +1609,95 @@ def parallel_fetch_ticker_infos(tickers_list, max_workers=15):
                 results[t] = {}
     return results
 
-# Cached shareholder benefit (株主優待) fetcher (Minkabu + Yahoo Finance JP fallback)
+def load_tse_yutai_cache():
+    cache_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), "tse_yutai_cache.json")
+    if not os.path.exists(cache_file):
+        return {}
+    try:
+        with open(cache_file, "r", encoding="utf-8") as f:
+            payload = json.load(f)
+            return payload.get("data", {})
+    except Exception:
+        return {}
+
+# High-speed shareholder benefit (株主優待) fetcher (Local Cache + Kabutan Live Fallback)
 @st.cache_data(ttl=3600)
 def get_shareholder_benefits(ticker):
     if not ticker or not ticker.endswith('.T'):
         return {'has_yutai': False, 'is_us': True}
         
     code = ticker.split('.')[0]
-    headers = {
-        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36',
-        'Accept-Language': 'ja,en-US;q=0.9,en;q=0.8'
-    }
-
-    # 1. Primary Source: Minkabu
-    minkabu_url = f"https://minkabu.jp/stock/{code}/yutai"
-    try:
-        from bs4 import BeautifulSoup
-        req = urllib.request.Request(minkabu_url, headers=headers)
-        html = urllib.request.urlopen(req, timeout=5).read().decode('utf-8')
-        soup = BeautifulSoup(html, 'html.parser')
-        text = soup.get_text()
-        
-        if '株主優待はありません' in text or '優待情報はありません' in text:
-            return {'has_yutai': False, 'is_us': False, 'url': minkabu_url}
-            
-        record_date = '随時確認'
-        unit_shares = '100株'
-        genre = '自社商品・優待券'
-        
-        for tr in soup.find_all('tr'):
-            tds = [td.get_text().strip() for td in tr.find_all(['th', 'td'])]
-            for i, val in enumerate(tds):
-                if '優待権利確定月' in val and i + 1 < len(tds):
-                    record_date = f"{tds[i+1]}確定"
-                elif '優待発生株数' in val and i + 1 < len(tds):
-                    unit_shares = f"{tds[i+1]}株"
-                elif '優待の種類' in val and i + 1 < len(tds):
-                    genre = tds[i+1]
-                    
-        sections = []
-        notes = []
-        for tbl in soup.find_all('table'):
-            trs = tbl.find_all('tr')
-            if not trs:
-                continue
-            header_cells = [th.get_text().strip() for th in trs[0].find_all(['th', 'td'])]
-            if any('必要株数' in h or '優待内容' in h for h in header_cells):
-                rows = []
-                for tr in trs[1:]:
-                    cells = [td.get_text().strip() for td in tr.find_all(['th', 'td'])]
-                    if len(cells) >= 2:
-                        cond = cells[0]
-                        cnt = cells[1].replace('\n', ' ')
-                        note = cells[2].replace('\n', ' ') if len(cells) >= 3 else ''
-                        rows.append({'condition': cond, 'content': cnt})
-                        if note and note not in notes and len(note) < 350:
-                            notes.append(note)
-                if rows:
-                    sections.append({'title': '株主優待進呈基準', 'rows': rows})
-                    
-        if sections:
+    
+    # 1. Local Offline Cache (Instant 0.001s response, zero network block risk)
+    yutai_cache = load_tse_yutai_cache()
+    if code in yutai_cache and yutai_cache[code].get('has_yutai') is not None:
+        cached = yutai_cache[code]
+        if cached.get('has_yutai'):
             return {
                 'has_yutai': True,
                 'is_us': False,
-                'url': minkabu_url,
-                'genre': genre,
-                'record_date': record_date,
-                'unit_shares': unit_shares,
-                'sections': sections,
-                'notes': notes[:8]
+                'url': f"https://kabutan.jp/stock/yutai?code={code}",
+                'genre': cached.get('genre', '自社商品・優待券'),
+                'yutai_yield': cached.get('yutai_yield'),
+                'record_date': cached.get('record_date', '随時確認'),
+                'unit_shares': cached.get('unit_shares', '100株'),
+                'sections': cached.get('sections', []),
+                'notes': cached.get('notes', [])
             }
-    except Exception:
-        pass
+        else:
+            return {'has_yutai': False, 'is_us': False, 'url': f"https://kabutan.jp/stock/yutai?code={code}"}
 
-    # 2. Secondary Fallback: Yahoo Finance JP
-    yahoo_url = f"https://finance.yahoo.co.jp/quote/{code}/incentive"
+    # 2. Live Kabutan Fetch (Non-blocking fallback)
+    url = f"https://kabutan.jp/stock/yutai?code={code}"
+    headers = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)'}
     try:
         from bs4 import BeautifulSoup
-        req = urllib.request.Request(yahoo_url, headers=headers)
+        req = urllib.request.Request(url, headers=headers)
         html = urllib.request.urlopen(req, timeout=5).read().decode('utf-8')
         soup = BeautifulSoup(html, 'html.parser')
-        text = soup.get_text()
         
-        if '現在、株主優待情報はありません' in text or '株主優待はありません' in text:
-            return {'has_yutai': False, 'is_us': False, 'url': yahoo_url}
+        top_3 = soup.find('table', class_='stock_yutai_top_3')
+        if not top_3 or '現在、株主優待情報はありません' in soup.get_text():
+            return {'has_yutai': False, 'is_us': False, 'url': url}
             
-        genre = '自社商品・サービス'
-        record_date = '随時確認'
-        unit_shares = '100株'
-        
-        for dt in soup.find_all(['dt', 'th']):
-            lbl = dt.get_text().strip()
-            dd = dt.find_next_sibling(['dd', 'td'])
-            if dd:
-                v = dd.get_text().strip()
-                if '優待の種類' in lbl and genre == '自社商品・サービス':
-                    genre = v
-                elif '権利付き最終日' in lbl and record_date == '随時確認':
-                    record_date = v
-                elif '権利確定' in lbl and record_date == '随時確認':
-                    record_date = v
-                elif '単元株数' in lbl and unit_shares == '100株':
-                    unit_shares = v
-                    
-        sections = []
-        for tbl in soup.find_all('table'):
-            rows = []
-            for tr in tbl.find_all('tr'):
-                cells = [td.get_text().strip() for td in tr.find_all(['th', 'td'])]
-                if len(cells) == 2:
-                    rows.append({'condition': cells[0], 'content': cells[1]})
-                elif len(cells) > 2:
-                    rows.append({'condition': cells[0], 'content': ' | '.join(cells[1:])})
-            if rows and not any('権利付き最終日' in r['condition'] for r in rows):
-                prev_h = tbl.find_previous(['h2', 'h3', 'h4', 'h5', 'p', 'dt'])
-                header_txt = prev_h.get_text().strip() if prev_h else '優待進呈基準'
-                if len(header_txt) > 80 or header_txt.startswith('※'):
-                    header_txt = '優待進呈基準'
-                sections.append({'title': header_txt, 'rows': rows})
+        genre = top_3.get_text().replace('優待内容:', '').strip()
+        yutai_yield = None
+        top_1 = soup.find('table', class_='stock_yutai_top_1')
+        if top_1:
+            cells = [td.get_text().strip() for td in top_1.find_all('td')]
+            if len(cells) >= 2:
+                yutai_yield = cells[1]
                 
-        if sections:
-            return {
-                'has_yutai': True,
-                'is_us': False,
-                'url': yahoo_url,
-                'genre': genre,
-                'record_date': record_date,
-                'unit_shares': unit_shares,
-                'sections': sections,
-                'notes': []
-            }
-    except Exception:
-        pass
-        
-    return {'has_yutai': False, 'is_us': False, 'url': minkabu_url}
+        sections = []
+        for tbl in soup.find_all('table', class_='stock_yutai_detail_1'):
+            rows = []
+            for tr in tbl.find_all('tr')[1:]:
+                cells = [td.get_text().strip() for td in tr.find_all(['th', 'td'])]
+                if len(cells) >= 2:
+                    rows.append({'condition': cells[0], 'content': cells[1]})
+            if rows:
+                sections.append({'title': '株主優待進呈基準', 'rows': rows})
+                
+        notes = []
+        for tbl in soup.find_all('table', class_='stock_yutai_detail_3'):
+            for tr in tbl.find_all('tr'):
+                txt = tr.get_text().strip()
+                if txt and txt != '備考' and txt not in notes:
+                    notes.append(txt)
+                    
+        return {
+            'has_yutai': True,
+            'is_us': False,
+            'url': url,
+            'genre': genre or '自社商品・優待券',
+            'yutai_yield': yutai_yield,
+            'record_date': '随時確認',
+            'unit_shares': '100株',
+            'sections': sections,
+            'notes': notes[:6]
+        }
+    except Exception as e:
+        return {'has_yutai': False, 'is_us': False, 'error': str(e), 'url': url}
 
 def load_tse_fundamentals_cache():
     cache_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), "tse_fundamentals_cache.json")
@@ -3326,9 +3281,11 @@ def render_yutai_section(ticker, name, metrics):
         unit_num = int(re.sub(r'[^0-9]', '', unit_shares)) or 100
     except Exception:
         unit_num = 100
+    yutai_yield = yutai_data.get('yutai_yield', '－%')
     cur_price = metrics.get('cur_price') or metrics.get('price') or 0
     min_invest = cur_price * unit_num if cur_price else 0
     min_invest_str = f"約 {min_invest:,.0f} 円" if min_invest else f"株価基準 ({unit_shares})"
+    kabutan_url = f"https://kabutan.jp/stock/yutai?code={code}"
 
     # Build entire HTML card
     card_html = f"""
@@ -3342,12 +3299,9 @@ def render_yutai_section(ticker, name, metrics):
                     <span style="display: inline-block; margin-top: 4px; padding: 2px 10px; background: rgba(34, 197, 94, 0.12); color: #16a34a; font-size: 0.82rem; font-weight: 700; border-radius: 12px;">優待実施企業</span>
                 </div>
             </div>
-            <div style="display: flex; gap: 8px;">
-                <a href="{yahoo_url}" target="_blank" style="display: inline-block; padding: 6px 12px; background: #2563eb; color: #ffffff; text-decoration: none; border-radius: 6px; font-size: 0.82rem; font-weight: 600;">
-                    Yahoo!ファイナンス ↗
-                </a>
-                <a href="{minkabu_url}" target="_blank" style="display: inline-block; padding: 6px 12px; background: var(--secondary-background-color, #f1f5f9); color: #2563eb; text-decoration: none; border-radius: 6px; font-size: 0.82rem; font-weight: 600; border: 1px solid #cbd5e1;">
-                    みんかぶ ↗
+            <div>
+                <a href="{kabutan_url}" target="_blank" style="display: inline-block; padding: 6px 14px; background: #2563eb; color: #ffffff; text-decoration: none; border-radius: 6px; font-size: 0.85rem; font-weight: 600;">
+                    Kabutan 公式優待情報 ↗
                 </a>
             </div>
         </div>
@@ -3359,8 +3313,8 @@ def render_yutai_section(ticker, name, metrics):
                 <div style="font-size: 1.02rem; font-weight: 700; color: var(--text-color, #1e293b); margin-top: 4px;">{genre}</div>
             </div>
             <div style="background: var(--secondary-background-color, #f8fafc); padding: 12px 16px; border-radius: 8px; border: 1px solid rgba(100, 116, 139, 0.15);">
-                <div style="font-size: 0.8rem; color: #64748b; font-weight: 600;">権利確定月 / 基準日</div>
-                <div style="font-size: 1.02rem; font-weight: 700; color: #2563eb; margin-top: 4px;">{record_date}</div>
+                <div style="font-size: 0.8rem; color: #64748b; font-weight: 600;">優待利回り</div>
+                <div style="font-size: 1.02rem; font-weight: 700; color: #2563eb; margin-top: 4px;">{yutai_yield}</div>
             </div>
             <div style="background: var(--secondary-background-color, #f8fafc); padding: 12px 16px; border-radius: 8px; border: 1px solid rgba(100, 116, 139, 0.15);">
                 <div style="font-size: 0.8rem; color: #64748b; font-weight: 600;">優待獲得の最低投資額 ({unit_shares})</div>
