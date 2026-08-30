@@ -1928,14 +1928,16 @@ def evaluate_stock(ticker, df, info=None, cached_fund=None):
         bps = safe_float(cached_fund.get('bps'))
         dps = safe_float(cached_fund.get('dps')) or safe_float(cached_fund.get('dividendRate'))
         
-        per = (cur_price / eps) if (eps is not None and eps > 0) else None
-        pbr = (cur_price / bps) if (bps is not None and bps > 0) else None
+        per = (cur_price / eps) if (eps is not None and eps > 0) else safe_float(cached_fund.get('per'))
+        pbr = (cur_price / bps) if (bps is not None and bps > 0) else safe_float(cached_fund.get('pbr'))
         if dps is not None and cur_price > 0:
             div_yield = (dps / cur_price) * 100.0
         else:
             div_yield = safe_float(cached_fund.get('dividend_yield')) or safe_float(cached_fund.get('dividendYield'))
         
         roe = safe_float(cached_fund.get('roe'))
+        if roe is None and pbr is not None and per is not None and per > 0:
+            roe = (pbr / per) * 100.0
         op_margin = safe_float(cached_fund.get('op_margin'))
         net_inc = safe_float(cached_fund.get('net_income'))
         total_cash = safe_float(cached_fund.get('total_cash'))
@@ -2006,6 +2008,8 @@ def evaluate_stock(ticker, df, info=None, cached_fund=None):
     per = safe_float(info.get('trailingPE'))
     pbr = safe_float(info.get('priceToBook'))
     roe = safe_float(info.get('returnOnEquity'))
+    if roe is None and pbr is not None and per is not None and per > 0:
+        roe = (pbr / per) * 100.0
     
     # Priority: Accurate 1-share dividend / current price
     dr = safe_float(info.get('dividendRate'))
@@ -5925,8 +5929,8 @@ with tab_screen:
                         continue
                     technically_passed.append(ticker)
 
-                # Only fetch from network for tickers missing in local cache
-                needed_fetch = [t for t in technically_passed if t not in fund_cache]
+                # Only fetch from network for tickers missing in local cache or having empty cache
+                needed_fetch = [t for t in technically_passed if t not in fund_cache or (fund_cache[t].get('eps') is None and fund_cache[t].get('per') is None and fund_cache[t].get('bps') is None)]
                 fetched_infos = parallel_fetch_ticker_infos(needed_fetch, max_workers=15) if needed_fetch else {}
                 
                 # 3. Analyze each ticker
@@ -5965,7 +5969,7 @@ with tab_screen:
                         
                     # 2. Use cached fundamentals with real-time recalculation (Instantaneous!)
                     cached_data = fund_cache.get(ticker)
-                    if cached_data is not None:
+                    if cached_data is not None and (cached_data.get('eps') is not None or cached_data.get('bps') is not None or cached_data.get('per') is not None):
                         analysis = evaluate_stock(ticker, df, cached_fund=cached_data)
                     else:
                         info = fetched_infos.get(ticker) or get_ticker_info(ticker)
