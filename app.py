@@ -1562,7 +1562,7 @@ def _fetch_raw_ticker_info(ticker):
         return {}
 
 # Cached function for single-ticker lookups (e.g. popups / detailed analysis on main thread)
-@st.cache_data(ttl=86400)
+@st.cache_data(ttl=300)
 def get_ticker_info(ticker):
     return _fetch_raw_ticker_info(ticker)
 
@@ -2007,7 +2007,27 @@ def evaluate_stock(ticker, df, info=None, cached_fund=None):
     per = safe_float(info.get('trailingPE'))
     pbr = safe_float(info.get('priceToBook'))
     roe = safe_float(info.get('returnOnEquity'))
-    div_yield = safe_float(info.get('dividendYield'))
+    
+    # Priority: Accurate 1-share dividend / current price
+    dr = safe_float(info.get('dividendRate'))
+    if dr is not None and cur_price > 0:
+        div_yield = (dr / cur_price) * 100.0
+    else:
+        div_yield = safe_float(info.get('dividendYield'))
+        
+    # If Japanese stock, double check with Yahoo Japan live indicators for 100% precision
+    if ticker.endswith('.T'):
+        code = ticker.split('.')[0]
+        yj_ind = fetch_yahoo_japan_indicators(code)
+        if yj_ind:
+            if yj_ind.get('dividend_yield') is not None:
+                div_yield = yj_ind['dividend_yield']
+            if yj_ind.get('per') is not None:
+                per = yj_ind['per']
+            if yj_ind.get('pbr') is not None:
+                pbr = yj_ind['pbr']
+            if yj_ind.get('roe') is not None:
+                roe = yj_ind['roe']
     net_inc = safe_float(info.get('netIncome'))
     op_margin = safe_float(info.get('opMargin'))
     de_ratio = safe_float(info.get('debtToEquity'))
@@ -6430,6 +6450,7 @@ with tab_favorite:
             if st.button("🔄 最新データに更新", key=f"inline_ref_btn_{selected_fav_ticker}", use_container_width=True):
                 if cache_key in st.session_state:
                     del st.session_state[cache_key]
+                st.cache_data.clear()
                 st.rerun()
         else:
             col_cap, col_ref = st.columns([3.8, 1.2])
@@ -6439,6 +6460,7 @@ with tab_favorite:
                 if st.button("🔄 最新データに更新", key=f"inline_ref_btn_{selected_fav_ticker}", use_container_width=True):
                     if cache_key in st.session_state:
                         del st.session_state[cache_key]
+                    st.cache_data.clear()
                     st.rerun()
         
         if cache_key not in st.session_state:
