@@ -5875,7 +5875,6 @@ with tab_screen:
     else:
         meta, fund_cache = load_tse_fundamentals_cache()
         last_up_str = meta.get("last_updated", "未更新")
-        total_cached = meta.get("total_tickers", len(fund_cache))
         
         with st.container(border=True):
             col_c_info, col_c_btn = st.columns([4, 1.1])
@@ -5883,7 +5882,7 @@ with tab_screen:
                 st.markdown(f"""
                 <div style="font-weight: 700; color: #2563eb; font-size: 0.92rem; margin-bottom: 2px;">⚡ 基礎財務キャッシュ連携（毎週土曜深夜に全自動更新）</div>
                 <div style="font-size: 0.82rem; color: var(--text-color, #475569); line-height: 1.5;">
-                    最終更新: <strong>{last_up_str}</strong> ({total_cached:,} 銘柄登録済) — <span style="opacity: 0.8; font-size: 0.78rem;">※最新株価と連動してPER・PBR・利回りをリアルタイム算出</span>
+                    最終更新: <strong>{last_up_str}</strong> — <span style="opacity: 0.8; font-size: 0.78rem;">※最新株価と連動してPER・PBR・利回りをリアルタイム算出</span>
                 </div>
                 """, unsafe_allow_html=True)
             with col_c_btn:
