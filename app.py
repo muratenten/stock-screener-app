@@ -5878,18 +5878,17 @@ with tab_screen:
         total_cached = meta.get("total_tickers", len(fund_cache))
         
         with st.container(border=True):
-            col_c_info, col_c_btn = st.columns([3, 1])
+            col_c_info, col_c_btn = st.columns([4, 1.1])
             with col_c_info:
                 st.markdown(f"""
-                <div style="font-weight: 700; color: #2563eb; font-size: 0.95rem; margin-bottom: 2px;">⚡ 基礎財務キャッシュ連携（最新株価連動・超高速モード）</div>
-                <div style="font-size: 0.83rem; color: var(--text-color, #475569); line-height: 1.5;">
-                    キャッシュ最終更新: <strong>{last_up_str}</strong> ({total_cached:,} 銘柄登録済)<br>
-                    <span style="opacity: 0.8; font-size: 0.78rem;">※最新株価と連動してPER・PBR・利回りをリアルタイム高速算出</span>
+                <div style="font-weight: 700; color: #2563eb; font-size: 0.92rem; margin-bottom: 2px;">⚡ 基礎財務キャッシュ連携（毎週土曜深夜に全自動更新）</div>
+                <div style="font-size: 0.82rem; color: var(--text-color, #475569); line-height: 1.5;">
+                    最終更新: <strong>{last_up_str}</strong> ({total_cached:,} 銘柄登録済) — <span style="opacity: 0.8; font-size: 0.78rem;">※最新株価と連動してPER・PBR・利回りをリアルタイム算出</span>
                 </div>
                 """, unsafe_allow_html=True)
             with col_c_btn:
                 st.markdown("<div style='margin-top: 2px;'></div>", unsafe_allow_html=True)
-                if st.button("🔄 キャッシュ最新化", key="btn_refresh_fund_cache_inside", use_container_width=True, help="全銘柄の基礎財務データ（EPS, BPS, 予想配当, ROE, 成長率等）を最新の決算データに更新します。"):
+                if st.button("🔄 手動更新", key="btn_refresh_fund_cache_inside", use_container_width=True, help="通常は毎週土曜日の深夜に全自動更新されます。必要に応じて今すぐ手動更新することも可能です。"):
                     prog_container = st.empty()
                     prog_bar = prog_container.progress(0, text="最新の財務データを取得中...")
                     def prog_cb(curr, total):
@@ -5899,7 +5898,7 @@ with tab_screen:
                         payload = update_fundamentals_cache.build_fundamentals_cache(max_workers=20, progress_callback=prog_cb)
                         st.cache_data.clear()
                         prog_container.empty()
-                        st.success(f"🎉 財務データキャッシュを最新化しました！（{payload['metadata']['last_updated']}）")
+                        st.success(f"🎉 財務データキャッシュを手動更新しました！（{payload['metadata']['last_updated']}）")
                         st.rerun()
                     except Exception as e:
                         prog_container.empty()
