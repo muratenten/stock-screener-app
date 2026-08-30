@@ -1393,27 +1393,22 @@ def _fetch_raw_ticker_info(ticker):
             if abs(needed['returnOnEquity']) < 1.0:
                 needed['returnOnEquity'] *= 100
                 
-        # Accurate dividend yield calculation (prevents 0.10% from being misidentified as 0.10 fraction and multiplied to 10%)
-        dr = raw_info.get('dividendRate')
-        p = raw_info.get('currentPrice') or raw_info.get('previousClose') or raw_info.get('regularMarketPrice')
-        tdr = raw_info.get('trailingAnnualDividendRate')
+        # Accurate dividend yield calculation (100% precision for Japan and US stocks)
+        dr = safe_float(raw_info.get('dividendRate')) or safe_float(raw_info.get('trailingAnnualDividendRate'))
+        p = safe_float(raw_info.get('currentPrice') or raw_info.get('previousClose') or raw_info.get('regularMarketPrice'))
         
         calc_div_yield = None
-        if dr is not None and p is not None and safe_float(p) and safe_float(p) > 0 and safe_float(dr) is not None:
-            calc_div_yield = (safe_float(dr) / safe_float(p)) * 100.0
-        elif tdr is not None and p is not None and safe_float(p) and safe_float(p) > 0 and safe_float(tdr) is not None:
-            calc_div_yield = (safe_float(tdr) / safe_float(p)) * 100.0
-        elif needed['dividendYield'] is not None:
-            dy = needed['dividendYield']
-            if dy > 0.20:
-                calc_div_yield = dy
-            else:
-                tdy = safe_float(raw_info.get('trailingAnnualDividendYield'))
-                if tdy is not None and tdy > 0:
-                    calc_div_yield = tdy * 100.0
+        if dr is not None and p is not None and p > 0:
+            calc_div_yield = (dr / p) * 100.0
+        elif needed.get('dividendYield') is not None:
+            raw_dy = safe_float(needed['dividendYield'])
+            if raw_dy is not None:
+                if is_us_stock(ticker) and raw_dy < 0.20:
+                    calc_div_yield = raw_dy * 100.0
                 else:
-                    calc_div_yield = dy
+                    calc_div_yield = raw_dy
         needed['dividendYield'] = calc_div_yield
+        needed['dividendRate'] = dr
                 
         # Adjust opMargin (fraction to % value)
         if needed['opMargin'] is not None:
@@ -1790,11 +1785,14 @@ def evaluate_stock(ticker, df, info=None, cached_fund=None):
     if cached_fund is not None:
         eps = safe_float(cached_fund.get('eps'))
         bps = safe_float(cached_fund.get('bps'))
-        dps = safe_float(cached_fund.get('dps'))
+        dps = safe_float(cached_fund.get('dps')) or safe_float(cached_fund.get('dividendRate'))
         
         per = (cur_price / eps) if (eps is not None and eps > 0) else None
         pbr = (cur_price / bps) if (bps is not None and bps > 0) else None
-        div_yield = ((dps / cur_price) * 100.0) if (dps is not None and cur_price > 0) else None
+        if dps is not None and cur_price > 0:
+            div_yield = (dps / cur_price) * 100.0
+        else:
+            div_yield = safe_float(cached_fund.get('dividend_yield')) or safe_float(cached_fund.get('dividendYield'))
         
         roe = safe_float(cached_fund.get('roe'))
         op_margin = safe_float(cached_fund.get('op_margin'))

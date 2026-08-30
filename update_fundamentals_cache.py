@@ -35,6 +35,14 @@ def extract_single_fundamental(ticker, ticker_meta=None):
         bps = safe_float(info.get('bookValue'))
         
         dps = safe_float(info.get('dividendRate')) or safe_float(info.get('trailingAnnualDividendRate'))
+        if dps is None or dps == 0:
+            raw_dy = safe_float(info.get('dividendYield')) or safe_float(info.get('trailingAnnualDividendYield'))
+            cur_p = safe_float(info.get('currentPrice') or info.get('previousClose') or info.get('regularMarketPrice'))
+            if raw_dy is not None and cur_p is not None and cur_p > 0:
+                if raw_dy < 0.20:
+                    dps = raw_dy * cur_p
+                else:
+                    dps = (raw_dy / 100.0) * cur_p
         
         roe = safe_float(info.get('returnOnEquity'))
         if roe is not None and abs(roe) < 1.0:
