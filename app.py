@@ -1609,6 +1609,44 @@ def parallel_fetch_ticker_infos(tickers_list, max_workers=15):
                 results[t] = {}
     return results
 
+YUTAI_CATEGORIES = [
+    '💳 金券・ギフト・QUOカード',
+    '🍔 飲食・お食事券',
+    '🎁 カタログギフト・ポイント',
+    '🍱 食品・お米・飲料詰合せ',
+    '🛍️ 買い物優待・割引券',
+    '✈️ 旅行・交通・ホテル宿泊',
+    '🎟️ エンタメ・映画・施設招待',
+    '💄 美容・日用品・ヘルスケア'
+]
+
+def get_yutai_categories(info):
+    if not info or not info.get('has_yutai'):
+        return []
+    genre = info.get('genre', '')
+    sections = info.get('sections', [])
+    full_text = genre + ' ' + ' '.join([r.get('condition', '') + ' ' + r.get('content', '') for s in sections for r in s.get('rows', [])])
+    
+    cats = []
+    if any(k in full_text for k in ['QUO', 'クオ', 'ギフトカード', '商品券', 'JCB', 'Amazon', 'Wallet', 'デジタルギフト', '図書カード', 'Pay', 'マネー']):
+        cats.append('💳 金券・ギフト・QUOカード')
+    if any(k in full_text for k in ['食事券', '飲食券', '外食', 'レストラン', '喫茶', 'カフェ', 'フード', 'バーガー', '牛丼', 'ラーメン', '居酒屋', 'すかいらーく', 'マクドナルド', '吉野家', 'コロワイド', 'コメダ', 'ゼンショー', 'トリドール', '丸亀', 'ＫＯＭＥＣＡ']):
+        cats.append('🍔 飲食・お食事券')
+    if any(k in full_text for k in ['カタログ', '倶楽部', 'ポイント', '特産品', '選べる', 'ｄポイント']):
+        cats.append('🎁 カタログギフト・ポイント')
+    if any(k in full_text for k in ['買物', '買い物', '割引', 'キャッシュバック', 'ショッピング', '店舗優待', '自社グル―プ優待券', '株主優待券', '株主優待カード']):
+        cats.append('🛍️ 買い物優待・割引券')
+    if any(k in full_text for k in ['食品', '飲料', '米', '詰合せ', '自社製品', '自社商品', '農産物', '肉', '菓子', 'ビール', '清涼飲料', 'カレー', '銘柄米']):
+        cats.append('🍱 食品・お米・飲料詰合せ')
+    if any(k in full_text for k in ['乗車', '航空', 'ホテル', '宿泊', '旅行', '鉄道', 'バス', 'レジャー', 'リゾート', '電車']):
+        cats.append('✈️ 旅行・交通・ホテル宿泊')
+    if any(k in full_text for k in ['映画', '招待', 'イベント', '観戦', 'ゴルフ', 'モータースポーツ', '遊園地', '温浴', 'ボウリング']):
+        cats.append('🎟️ エンタメ・映画・施設招待')
+    if any(k in full_text for k in ['化粧品', '美容', '日用品', 'ヘルスケア', 'シャンプー', '洗剤', '薬', '健康食品']):
+        cats.append('💄 美容・日用品・ヘルスケア')
+        
+    return cats or ['✨ その他・自社オリジナル']
+
 def load_tse_yutai_cache():
     cache_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), "tse_yutai_cache.json")
     if not os.path.exists(cache_file):
@@ -5175,6 +5213,9 @@ widget_defaults = {
     "scr_filter_roe": False,
     "scr_filter_dividend": False,
     "scr_min_dividend": 3.0,
+    "scr_filter_yutai": False,
+    "scr_selected_yutai_cats": [],
+    "scr_min_yutai": 0.0,
     "scr_filter_rev_growth": False,
     "scr_filter_eps_growth": False,
     "scr_filter_gc": False,
@@ -5231,6 +5272,9 @@ def apply_preset(preset_name):
     st.session_state["scr_filter_roe"] = False
     st.session_state["scr_filter_dividend"] = False
     st.session_state["scr_min_dividend"] = 3.0
+    st.session_state["scr_filter_yutai"] = False
+    st.session_state["scr_selected_yutai_cats"] = []
+    st.session_state["scr_min_yutai"] = 0.0
     st.session_state["scr_filter_rev_growth"] = False
     st.session_state["scr_filter_eps_growth"] = False
     st.session_state["scr_filter_gc"] = False
@@ -5296,7 +5340,9 @@ def check_preset_match():
     expected = {
         "scr_min_total": 0, "scr_min_tech": 0, "scr_min_fund": 0,
         "scr_filter_pbr": False, "scr_filter_per": False, "scr_filter_roe": False,
-        "scr_filter_dividend": False, "scr_min_dividend": 3.0, "scr_filter_rev_growth": False, "scr_filter_eps_growth": False,
+        "scr_filter_dividend": False, "scr_min_dividend": 3.0,
+        "scr_filter_yutai": False, "scr_min_yutai": 0.0,
+        "scr_filter_rev_growth": False, "scr_filter_eps_growth": False,
         "scr_filter_gc": False, "scr_filter_macd": False, "scr_filter_rsi_os": False,
         "scr_filter_rsi_ob": False, "scr_filter_bb_re": False, "scr_filter_vol_su": False,
         "scr_filter_similarity": False,
@@ -5625,7 +5671,7 @@ with tab_screen:
             min_tech_score = st.slider("最小テクニカルスコア (最大3点)", 0, 3, 1, key="scr_min_tech")
             min_fund_score = st.slider("最小ファンダメンタルスコア (最大7点)", 0, 7, 3, key="scr_min_fund")
             
-            st.markdown("**💰 財務指標フィルタ**")
+            st.markdown("**💰 財務・優待指標フィルタ**")
             filter_pbr = st.checkbox("PBR 1.0倍未満 (割安バリュー) のみ", key="scr_filter_pbr")
             filter_per = st.checkbox("PER 15倍未満 (低PER) のみ", key="scr_filter_per")
             filter_roe = st.checkbox("ROE 10%以上 (高PBR効率) のみ", key="scr_filter_roe")
@@ -5634,6 +5680,13 @@ with tab_screen:
                 min_dividend_val = st.slider("   ↳ 最小配当利回り (%)", 0.5, 10.0, float(st.session_state.get("scr_min_dividend", 3.0)), step=0.1, format="%.1f%%", key="scr_min_dividend")
             else:
                 min_dividend_val = float(st.session_state.get("scr_min_dividend", 3.0))
+            filter_yutai = st.checkbox("🎁 株主優待実施銘柄 のみ", key="scr_filter_yutai_mobile")
+            if filter_yutai:
+                selected_yutai_cats = st.multiselect("   ↳ 優待ジャンル (未選択で全対象)", YUTAI_CATEGORIES, default=st.session_state.get("scr_selected_yutai_cats", []), key="scr_selected_yutai_cats_mobile", help="複数選択可能。特定の優待ジャンル（食事券、QUOカード等）を絞り込めます。")
+                min_yutai_val = st.slider("   ↳ 最小優待利回り (%)", 0.0, 5.0, float(st.session_state.get("scr_min_yutai", 0.0)), step=0.1, format="%.1f%%", key="scr_min_yutai_mobile", help="0.0%に設定すると、金額非公表・割引券などの優待実施銘柄も含めて全抽出します。")
+            else:
+                selected_yutai_cats = []
+                min_yutai_val = 0.0
             filter_rev_growth = st.checkbox("売上高成長率 10%以上 のみ", key="scr_filter_rev_growth")
             filter_eps_growth = st.checkbox("EPS成長率 15%以上 のみ", key="scr_filter_eps_growth")
             
@@ -5735,7 +5788,7 @@ with tab_screen:
                 min_tech_score = st.slider("最小テクニカルスコア (最大3点)", 0, 3, 1, key="scr_min_tech")
                 min_fund_score = st.slider("最小ファンダメンタルスコア (最大7点)", 0, 7, 3, key="scr_min_fund")
             with col_f2:
-                st.markdown("**💰 財務指標フィルタ**")
+                st.markdown("**💰 財務・優待指標フィルタ**")
                 filter_pbr = st.checkbox("PBR 1.0倍未満 (割安バリュー) のみ", key="scr_filter_pbr")
                 filter_per = st.checkbox("PER 15倍未満 (低PER) のみ", key="scr_filter_per")
                 filter_roe = st.checkbox("ROE 10%以上 (高PBR効率) のみ", key="scr_filter_roe")
@@ -5744,6 +5797,13 @@ with tab_screen:
                     min_dividend_val = st.slider("   ↳ 最小配当利回り (%)", 0.5, 10.0, float(st.session_state.get("scr_min_dividend", 3.0)), step=0.1, format="%.1f%%", key="scr_min_dividend")
                 else:
                     min_dividend_val = float(st.session_state.get("scr_min_dividend", 3.0))
+                filter_yutai = st.checkbox("🎁 株主優待実施銘柄 のみ", key="scr_filter_yutai")
+                if filter_yutai:
+                    selected_yutai_cats = st.multiselect("   ↳ 優待ジャンル (未選択で全対象)", YUTAI_CATEGORIES, default=st.session_state.get("scr_selected_yutai_cats", []), key="scr_selected_yutai_cats", help="複数選択可能。特定の優待ジャンル（食事券、QUOカード等）を絞り込めます。")
+                    min_yutai_val = st.slider("   ↳ 最小優待利回り (%)", 0.0, 5.0, float(st.session_state.get("scr_min_yutai", 0.0)), step=0.1, format="%.1f%%", key="scr_min_yutai", help="0.0%に設定すると、金額非公表・割引券などの優待実施銘柄も含めて全抽出します。")
+                else:
+                    selected_yutai_cats = []
+                    min_yutai_val = 0.0
                 filter_rev_growth = st.checkbox("売上高成長率 10%以上 のみ", key="scr_filter_rev_growth")
                 filter_eps_growth = st.checkbox("EPS成長率 15%以上 のみ", key="scr_filter_eps_growth")
             with col_f3:
@@ -5993,6 +6053,7 @@ with tab_screen:
                 # Only fetch from network for tickers missing in local cache or having empty cache/missing dividend yield
                 needed_fetch = [t for t in technically_passed if t not in fund_cache or fund_cache[t].get('dividend_yield') is None or (fund_cache[t].get('eps') is None and fund_cache[t].get('per') is None)]
                 fetched_infos = parallel_fetch_ticker_infos(needed_fetch, max_workers=15) if needed_fetch else {}
+                yutai_cache = load_tse_yutai_cache()
                 
                 # 3. Analyze each ticker
                 results = []
@@ -6059,6 +6120,27 @@ with tab_screen:
                         continue
                     if filter_eps_growth and (metrics['eps_growth'] is None or metrics['eps_growth'] < 15.0):
                         continue
+                        
+                    # 2.5 Apply shareholder perk (優待) filters
+                    code_clean = ticker.split('.')[0]
+                    y_info = yutai_cache.get(code_clean, {})
+                    y_has = y_info.get('has_yutai', False)
+                    y_cats = get_yutai_categories(y_info) if y_has else []
+                    y_yield_str = y_info.get('yutai_yield', '')
+                    y_yield_val = 0.0
+                    if y_yield_str and '%' in y_yield_str and '－' not in y_yield_str:
+                        try:
+                            y_yield_val = float(y_yield_str.replace('%', '').strip())
+                        except Exception:
+                            y_yield_val = 0.0
+
+                    if filter_yutai:
+                        if not y_has:
+                            continue
+                        if selected_yutai_cats and not any(cat in y_cats for cat in selected_yutai_cats):
+                            continue
+                        if min_yutai_val > 0.0 and y_yield_val < min_yutai_val:
+                            continue
                         
                     # Advanced technical checks (Full)
                     if filter_golden_cross and not analysis['signals']['golden_cross']:
@@ -6202,6 +6284,8 @@ with tab_screen:
                         'PBR (倍)': f"{metrics['pbr']:.2f}" if metrics['pbr'] is not None else "N/A",
                         'ROE (%)': f"{metrics['roe']:.1f}%" if metrics['roe'] is not None else "N/A",
                         '配当利回り (%)': f"{metrics['dividend_yield']:.2f}%" if metrics['dividend_yield'] is not None else "N/A",
+                        '優待利回り (%)': y_yield_str if (y_has and y_yield_str) else ('－%' if y_has else 'なし'),
+                        '株主優待': (", ".join(y_cats[:2])) if y_has else 'なし',
                         'テーマ/タグ': ", ".join(filtered_pool[ticker].get('tags', [])),
                         'raw_data': analysis
                     })
@@ -6347,6 +6431,8 @@ with tab_screen:
                         "PBR (倍)": st.column_config.TextColumn("PBR (倍)\n[1.0倍以下:割安]", help="目安: 1.0倍未満で解散価値割れ・割安"),
                         "ROE (%)": st.column_config.TextColumn("ROE (%)\n[8%以上:優良]", help="目安: 8%〜10%以上で高収益・資本効率良好"),
                         "配当利回り (%)": st.column_config.TextColumn("配当利回り (%)\n[3%以上:高配当]", help="目安: 3.0%以上で高配当・下値堅調"),
+                        "優待利回り (%)": st.column_config.TextColumn("優待利回り (%)\n[金額換算分]", help="株探算出の優待利回り（金額確定分のみ）"),
+                        "株主優待": st.column_config.TextColumn("株主優待ジャンル", help="優待の種類（食事券・QUOカード・カタログ等）"),
                     },
                     on_select="rerun",
                     selection_mode="single-row",
