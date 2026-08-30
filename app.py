@@ -1251,6 +1251,47 @@ def batch_download_histories(tickers_list, period="1y"):
             
     return histories
 
+# Real-time Japanese stock official indicator fetcher (from Kabutan / TSE IR)
+def fetch_japanese_stock_indicators_kabutan(code):
+    try:
+        url = f"https://kabutan.jp/stock/?code={code}"
+        req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)'})
+        html = urllib.request.urlopen(req, timeout=4).read().decode('utf-8')
+        from bs4 import BeautifulSoup
+        soup = BeautifulSoup(html, 'html.parser')
+        box = soup.find('div', id='stockinfo_i3')
+        if not box:
+            return {}
+        thead = box.find('thead')
+        tbody = box.find('tbody')
+        if not thead or not tbody:
+            return {}
+        ths = [th.text.strip() for th in thead.find_all('th')]
+        tds = [td.text.strip() for td in tbody.find_all('td')]
+        
+        def clean_num(s):
+            if not s or s in ('－', '---'):
+                return None
+            s = s.replace('倍', '').replace('％', '').replace('%', '').replace(',', '').strip()
+            try:
+                return float(s)
+            except Exception:
+                return None
+
+        res = {}
+        for h, d in zip(ths, tds):
+            if 'PER' in h:
+                res['per'] = clean_num(d)
+            elif 'PBR' in h:
+                res['pbr'] = clean_num(d)
+            elif '利回り' in h:
+                res['dividend_yield'] = clean_num(d)
+            elif '信用倍率' in h:
+                res['margin_ratio'] = clean_num(d)
+        return res
+    except Exception:
+        return {}
+
 # Pure Python ticker info fetcher (safe for multi-threading without cache lock contention)
 def _fetch_raw_ticker_info(ticker):
     raw_info = None
@@ -1338,9 +1379,10 @@ def _fetch_raw_ticker_info(ticker):
         total_debt = raw_info.get('totalDebt')
         debt_equity = raw_info.get('debtToEquity')
         
+        # Build clean dictionary with safe keys
         needed = {
-            'longName': raw_info.get('longName'),
-            'shortName': raw_info.get('shortName'),
+            'longName': raw_info.get('longName') or raw_info.get('shortName') or ticker,
+            'shortName': raw_info.get('shortName') or raw_info.get('longName') or ticker,
             'trailingPE': raw_info.get('trailingPE') or raw_info.get('forwardPE'),
             'priceToBook': raw_info.get('priceToBook'),
             'returnOnEquity': raw_info.get('returnOnEquity'),
@@ -1348,9 +1390,9 @@ def _fetch_raw_ticker_info(ticker):
             'marketCap': raw_info.get('marketCap'),
             'fiftyTwoWeekHigh': raw_info.get('fiftyTwoWeekHigh'),
             'fiftyTwoWeekLow': raw_info.get('fiftyTwoWeekLow'),
-            'sector': raw_info.get('sector'),
-            'industry': raw_info.get('industry'),
-            'longBusinessSummary': raw_info.get('longBusinessSummary'),
+            'sector': raw_info.get('sector', ''),
+            'industry': raw_info.get('industry', ''),
+            'longBusinessSummary': raw_info.get('longBusinessSummary', ''),
             'netIncome': net_income,
             'opMargin': op_margin,
             'totalCash': total_cash,
@@ -1366,7 +1408,7 @@ def _fetch_raw_ticker_info(ticker):
             try:
                 if isinstance(val, str):
                     val = val.replace(',', '').replace('%', '').strip()
-                    if val == '---' or val == '':
+                    if val in ('---', '', 'None'):
                         return None
                 return float(val)
             except (ValueError, TypeError):
@@ -1432,6 +1474,19 @@ def _fetch_raw_ticker_info(ticker):
                     else:
                         calc_div_yield = raw_dy
                     final_dps = (calc_div_yield / 100.0) * p
+
+        # 🇯🇵 For Japanese stocks, consult official TSE / Kabutan consensus for highest precision
+        if ticker.endswith('.T'):
+            code = ticker.split('.')[0]
+            kabutan_ind = fetch_japanese_stock_indicators_kabutan(code)
+            if kabutan_ind.get('dividend_yield') is not None:
+                calc_div_yield = kabutan_ind['dividend_yield']
+                if p is not None and p > 0:
+                    final_dps = (calc_div_yield / 100.0) * p
+                if kabutan_ind.get('per') is not None:
+                    needed['trailingPE'] = kabutan_ind['per']
+                if kabutan_ind.get('pbr') is not None:
+                    needed['priceToBook'] = kabutan_ind['pbr']
                     
         needed['dividendYield'] = calc_div_yield
         needed['dividendRate'] = final_dps

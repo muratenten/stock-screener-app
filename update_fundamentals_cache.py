@@ -21,6 +21,47 @@ def safe_float(val):
     except Exception:
         return None
 
+def fetch_japanese_stock_indicators_kabutan(code):
+    try:
+        import urllib.request
+        from bs4 import BeautifulSoup
+        url = f"https://kabutan.jp/stock/?code={code}"
+        req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)'})
+        html = urllib.request.urlopen(req, timeout=4).read().decode('utf-8')
+        soup = BeautifulSoup(html, 'html.parser')
+        box = soup.find('div', id='stockinfo_i3')
+        if not box:
+            return {}
+        thead = box.find('thead')
+        tbody = box.find('tbody')
+        if not thead or not tbody:
+            return {}
+        ths = [th.text.strip() for th in thead.find_all('th')]
+        tds = [td.text.strip() for td in tbody.find_all('td')]
+        
+        def clean_num(s):
+            if not s or s in ('－', '---'):
+                return None
+            s = s.replace('倍', '').replace('％', '').replace('%', '').replace(',', '').strip()
+            try:
+                return float(s)
+            except Exception:
+                return None
+
+        res = {}
+        for h, d in zip(ths, tds):
+            if 'PER' in h:
+                res['per'] = clean_num(d)
+            elif 'PBR' in h:
+                res['pbr'] = clean_num(d)
+            elif '利回り' in h:
+                res['dividend_yield'] = clean_num(d)
+            elif '信用倍率' in h:
+                res['margin_ratio'] = clean_num(d)
+        return res
+    except Exception:
+        return {}
+
 def extract_single_fundamental(ticker, ticker_meta=None):
     try:
         t = yf.Ticker(ticker)
@@ -64,6 +105,13 @@ def extract_single_fundamental(ticker, ticker_meta=None):
             dps = dr
         elif tdr is not None:
             dps = tdr
+            
+        # 🇯🇵 If Japanese stock, consult Kabutan consensus for official 1-share dividend
+        if ticker.endswith('.T'):
+            code = ticker.split('.')[0]
+            kab_ind = fetch_japanese_stock_indicators_kabutan(code)
+            if kab_ind.get('dividend_yield') is not None and cur_p is not None and cur_p > 0:
+                dps = (kab_ind['dividend_yield'] / 100.0) * cur_p
         
         roe = safe_float(info.get('returnOnEquity'))
         if roe is not None and abs(roe) < 1.0:
