@@ -262,7 +262,8 @@ def build_fundamentals_cache(tickers_dict=None, max_workers=25, progress_callbac
             if completed % 100 == 0 or completed == total:
                 print(f"Progress: {completed}/{total} ({completed/total*100:.1f}%)")
 
-    now_str = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    jst = datetime.timezone(datetime.timedelta(hours=9))
+    now_str = datetime.datetime.now(jst).strftime("%Y-%m-%d %H:%M:%S")
     payload = {
         "metadata": {
             "last_updated": now_str,

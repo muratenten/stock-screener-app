@@ -1643,7 +1643,6 @@ def get_shareholder_benefits(ticker):
     except Exception as e:
         return {'has_yutai': False, 'is_us': False, 'error': str(e), 'url': url}
 
-@st.cache_data(ttl=3600)
 def load_tse_fundamentals_cache():
     cache_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), "tse_fundamentals_cache.json")
     if not os.path.exists(cache_file):
@@ -5891,15 +5890,20 @@ with tab_screen:
             with col_c_btn:
                 st.markdown("<div style='margin-top: 2px;'></div>", unsafe_allow_html=True)
                 if st.button("🔄 キャッシュ最新化", key="btn_refresh_fund_cache_inside", use_container_width=True, help="全銘柄の基礎財務データ（EPS, BPS, 予想配当, ROE, 成長率等）を最新の決算データに更新します。"):
-                    with st.spinner("最新の財務データを取得・更新中..."):
-                        try:
-                            import update_fundamentals_cache
-                            update_fundamentals_cache.build_fundamentals_cache(max_workers=15)
-                            st.cache_data.clear()
-                            st.success("🎉 財務データキャッシュを最新化しました！")
-                            st.rerun()
-                        except Exception as e:
-                            st.error(f"更新エラー: {e}")
+                    prog_container = st.empty()
+                    prog_bar = prog_container.progress(0, text="最新の財務データを取得中...")
+                    def prog_cb(curr, total):
+                        prog_bar.progress(curr / total, text=f"日本のYahoo!から財務データを取得中... ({curr}/{total})")
+                    try:
+                        import update_fundamentals_cache
+                        payload = update_fundamentals_cache.build_fundamentals_cache(max_workers=20, progress_callback=prog_cb)
+                        st.cache_data.clear()
+                        prog_container.empty()
+                        st.success(f"🎉 財務データキャッシュを最新化しました！（{payload['metadata']['last_updated']}）")
+                        st.rerun()
+                    except Exception as e:
+                        prog_container.empty()
+                        st.error(f"更新エラー: {e}")
         
         st.markdown(f"**現在のスクリーニング対象候補数**: {len(filtered_pool)} 銘柄")
         
