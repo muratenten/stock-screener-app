@@ -32,17 +32,38 @@ def extract_single_fundamental(ticker, ticker_meta=None):
         forward_eps = safe_float(info.get('forwardEps'))
         eps = trailing_eps if trailing_eps is not None else forward_eps
         
-        bps = safe_float(info.get('bookValue'))
+        # Accurate dividend per share with cross-validation
+        dr = safe_float(info.get('dividendRate'))
+        tdr = safe_float(info.get('trailingAnnualDividendRate'))
+        tdy = safe_float(info.get('trailingAnnualDividendYield'))
+        cur_p = safe_float(info.get('currentPrice') or info.get('previousClose') or info.get('regularMarketPrice'))
         
-        dps = safe_float(info.get('dividendRate')) or safe_float(info.get('trailingAnnualDividendRate'))
-        if dps is None or dps == 0:
-            raw_dy = safe_float(info.get('dividendYield')) or safe_float(info.get('trailingAnnualDividendYield'))
-            cur_p = safe_float(info.get('currentPrice') or info.get('previousClose') or info.get('regularMarketPrice'))
-            if raw_dy is not None and cur_p is not None and cur_p > 0:
-                if raw_dy < 0.20:
-                    dps = raw_dy * cur_p
+        dps = None
+        if cur_p is not None and cur_p > 0:
+            y_dr = (dr / cur_p * 100.0) if (dr is not None and dr > 0) else None
+            y_tdr = (tdr / cur_p * 100.0) if (tdr is not None and tdr > 0) else None
+            tdy_pct = (tdy * 100.0) if (tdy is not None and tdy > 0) else None
+            
+            if y_dr is not None and y_tdr is not None:
+                if (y_dr > 6.0 and y_dr > y_tdr * 1.5) or (dr > tdr * 2.0 and y_dr > 5.0):
+                    dps = tdr
                 else:
-                    dps = (raw_dy / 100.0) * cur_p
+                    dps = dr
+            elif y_dr is not None:
+                dps = dr
+            elif y_tdr is not None:
+                dps = tdr
+            elif tdy_pct is not None:
+                dps = (tdy_pct / 100.0) * cur_p
+            elif info.get('dividendYield') is not None:
+                raw_dy = safe_float(info.get('dividendYield'))
+                if raw_dy is not None:
+                    dy_pct = raw_dy * 100.0 if raw_dy < 0.20 else raw_dy
+                    dps = (dy_pct / 100.0) * cur_p
+        elif dr is not None:
+            dps = dr
+        elif tdr is not None:
+            dps = tdr
         
         roe = safe_float(info.get('returnOnEquity'))
         if roe is not None and abs(roe) < 1.0:

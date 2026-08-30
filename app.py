@@ -1393,22 +1393,48 @@ def _fetch_raw_ticker_info(ticker):
             if abs(needed['returnOnEquity']) < 1.0:
                 needed['returnOnEquity'] *= 100
                 
-        # Accurate dividend yield calculation (100% precision for Japan and US stocks)
-        dr = safe_float(raw_info.get('dividendRate')) or safe_float(raw_info.get('trailingAnnualDividendRate'))
+        # Accurate dividend yield calculation with dual forward/trailing cross-validation
+        dr = safe_float(raw_info.get('dividendRate'))
+        tdr = safe_float(raw_info.get('trailingAnnualDividendRate'))
+        tdy = safe_float(raw_info.get('trailingAnnualDividendYield'))
         p = safe_float(raw_info.get('currentPrice') or raw_info.get('previousClose') or raw_info.get('regularMarketPrice'))
         
+        final_dps = None
         calc_div_yield = None
-        if dr is not None and p is not None and p > 0:
-            calc_div_yield = (dr / p) * 100.0
-        elif needed.get('dividendYield') is not None:
-            raw_dy = safe_float(needed['dividendYield'])
-            if raw_dy is not None:
-                if is_us_stock(ticker) and raw_dy < 0.20:
-                    calc_div_yield = raw_dy * 100.0
+        
+        if p is not None and p > 0:
+            y_dr = (dr / p * 100.0) if (dr is not None and dr > 0) else None
+            y_tdr = (tdr / p * 100.0) if (tdr is not None and tdr > 0) else None
+            tdy_pct = (tdy * 100.0) if (tdy is not None and tdy > 0) else None
+            
+            # Detect Yahoo US forward projection glitches (e.g. 2410.T where dr=280 instead of 100)
+            if y_dr is not None and y_tdr is not None:
+                if (y_dr > 6.0 and y_dr > y_tdr * 1.5) or (dr > tdr * 2.0 and y_dr > 5.0):
+                    final_dps = tdr
+                    calc_div_yield = y_tdr
                 else:
-                    calc_div_yield = raw_dy
+                    final_dps = dr
+                    calc_div_yield = y_dr
+            elif y_dr is not None:
+                final_dps = dr
+                calc_div_yield = y_dr
+            elif y_tdr is not None:
+                final_dps = tdr
+                calc_div_yield = y_tdr
+            elif tdy_pct is not None:
+                final_dps = (tdy_pct / 100.0) * p
+                calc_div_yield = tdy_pct
+            elif needed.get('dividendYield') is not None:
+                raw_dy = safe_float(needed['dividendYield'])
+                if raw_dy is not None:
+                    if is_us_stock(ticker) and raw_dy < 0.20:
+                        calc_div_yield = raw_dy * 100.0
+                    else:
+                        calc_div_yield = raw_dy
+                    final_dps = (calc_div_yield / 100.0) * p
+                    
         needed['dividendYield'] = calc_div_yield
-        needed['dividendRate'] = dr
+        needed['dividendRate'] = final_dps
                 
         # Adjust opMargin (fraction to % value)
         if needed['opMargin'] is not None:
