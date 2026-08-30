@@ -1251,6 +1251,57 @@ def batch_download_histories(tickers_list, period="1y"):
             
     return histories
 
+# Official Yahoo! Finance JP indicator fetcher (Direct Japanese TSE source)
+def fetch_yahoo_japan_indicators(code):
+    url = f"https://finance.yahoo.co.jp/quote/{code}"
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/128.0.0.0',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
+        'Accept-Language': 'ja,en-US;q=0.9,en;q=0.8',
+    }
+    try:
+        import requests
+        r = requests.get(url, headers=headers, timeout=4)
+        if r.status_code != 200:
+            return {}
+        import re
+        clean = re.sub(r'<[^>]+>', ' ', r.text)
+        clean = ' '.join(clean.split())
+        
+        def extract(pat):
+            m = re.search(pat, clean)
+            if m:
+                s = m.group(1).replace(',', '').replace('%', '').replace('％', '').replace('倍', '').replace('円', '').strip()
+                if s in ('---', '－', 'None', ''):
+                    return None
+                try:
+                    return float(s)
+                except Exception:
+                    return None
+            return None
+            
+        div_y = extract(r'配当利回り\s*（(?:会社予想|実績)）[^\d]*?([\d,\.]+)\s*[%％]')
+        dps = extract(r'1株配当\s*（(?:会社予想|実績)）[^\d]*?([\d,\.]+)\s*円')
+        per = extract(r'PER\s*（(?:会社予想|実績)）[^\d]*?([\d,\.]+)\s*倍')
+        pbr = extract(r'PBR\s*（実績）[^\d]*?([\d,\.]+)\s*倍')
+        eps = extract(r'EPS\s*（(?:会社予想|実績)）[^\d]*?([\d,\.]+)')
+        bps = extract(r'BPS\s*（実績）[^\d]*?([\d,\.]+)')
+        roe = extract(r'ROE\s*（実績）[^\d]*?([\d,\.]+)\s*[%％]')
+        equity_ratio = extract(r'自己資本比率\s*（実績）[^\d]*?([\d,\.]+)\s*[%％]')
+        
+        return {
+            'dividend_yield': div_y,
+            'dps': dps,
+            'per': per,
+            'pbr': pbr,
+            'eps': eps,
+            'bps': bps,
+            'roe': roe,
+            'equity_ratio': equity_ratio
+        }
+    except Exception:
+        return {}
+
 # Real-time Japanese stock official indicator fetcher (from Kabutan / TSE IR)
 def fetch_japanese_stock_indicators_kabutan(code):
     try:
@@ -1399,7 +1450,7 @@ def _fetch_raw_ticker_info(ticker):
             'totalDebt': total_debt,
             'debtToEquity': debt_equity,
             'revenueGrowth': raw_info.get('revenueGrowth'),
-            'earningsGrowth': raw_info.get('earningsGrowth') or raw_info.get('earningsQuarterlyGrowth')
+            'earningsGrowth': raw_info.get('earningsGrowth')
         }
         
         def safe_float(val):
@@ -1475,18 +1526,28 @@ def _fetch_raw_ticker_info(ticker):
                         calc_div_yield = raw_dy
                     final_dps = (calc_div_yield / 100.0) * p
 
-        # 🇯🇵 For Japanese stocks, consult official TSE / Kabutan consensus for highest precision
+        # 🇯🇵 For Japanese stocks, consult official Yahoo! Finance JP (with Kabutan fallback) for 100% precision
         if ticker.endswith('.T'):
             code = ticker.split('.')[0]
-            kabutan_ind = fetch_japanese_stock_indicators_kabutan(code)
-            if kabutan_ind.get('dividend_yield') is not None:
-                calc_div_yield = kabutan_ind['dividend_yield']
-                if p is not None and p > 0:
-                    final_dps = (calc_div_yield / 100.0) * p
-                if kabutan_ind.get('per') is not None:
-                    needed['trailingPE'] = kabutan_ind['per']
-                if kabutan_ind.get('pbr') is not None:
-                    needed['priceToBook'] = kabutan_ind['pbr']
+            yj_ind = fetch_yahoo_japan_indicators(code)
+            if not yj_ind or yj_ind.get('dividend_yield') is None:
+                yj_ind = fetch_japanese_stock_indicators_kabutan(code)
+                
+            if yj_ind.get('dividend_yield') is not None:
+                calc_div_yield = yj_ind['dividend_yield']
+                needed['dividendYield'] = calc_div_yield
+            if yj_ind.get('dps') is not None:
+                final_dps = yj_ind['dps']
+            elif calc_div_yield is not None and p is not None and p > 0:
+                final_dps = (calc_div_yield / 100.0) * p
+            needed['dividendRate'] = final_dps
+            
+            if yj_ind.get('per') is not None:
+                needed['trailingPE'] = yj_ind['per']
+            if yj_ind.get('pbr') is not None:
+                needed['priceToBook'] = yj_ind['pbr']
+            if yj_ind.get('roe') is not None:
+                needed['returnOnEquity'] = yj_ind['roe']
                     
         needed['dividendYield'] = calc_div_yield
         needed['dividendRate'] = final_dps

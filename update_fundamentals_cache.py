@@ -21,6 +21,56 @@ def safe_float(val):
     except Exception:
         return None
 
+def fetch_yahoo_japan_indicators(code):
+    url = f"https://finance.yahoo.co.jp/quote/{code}"
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/128.0.0.0',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
+        'Accept-Language': 'ja,en-US;q=0.9,en;q=0.8',
+    }
+    try:
+        import requests
+        r = requests.get(url, headers=headers, timeout=4)
+        if r.status_code != 200:
+            return {}
+        import re
+        clean = re.sub(r'<[^>]+>', ' ', r.text)
+        clean = ' '.join(clean.split())
+        
+        def extract(pat):
+            m = re.search(pat, clean)
+            if m:
+                s = m.group(1).replace(',', '').replace('%', '').replace('％', '').replace('倍', '').replace('円', '').strip()
+                if s in ('---', '－', 'None', ''):
+                    return None
+                try:
+                    return float(s)
+                except Exception:
+                    return None
+            return None
+            
+        div_y = extract(r'配当利回り\s*（(?:会社予想|実績)）[^\d]*?([\d,\.]+)\s*[%％]')
+        dps = extract(r'1株配当\s*（(?:会社予想|実績)）[^\d]*?([\d,\.]+)\s*円')
+        per = extract(r'PER\s*（(?:会社予想|実績)）[^\d]*?([\d,\.]+)\s*倍')
+        pbr = extract(r'PBR\s*（実績）[^\d]*?([\d,\.]+)\s*倍')
+        eps = extract(r'EPS\s*（(?:会社予想|実績)）[^\d]*?([\d,\.]+)')
+        bps = extract(r'BPS\s*（実績）[^\d]*?([\d,\.]+)')
+        roe = extract(r'ROE\s*（実績）[^\d]*?([\d,\.]+)\s*[%％]')
+        equity_ratio = extract(r'自己資本比率\s*（実績）[^\d]*?([\d,\.]+)\s*[%％]')
+        
+        return {
+            'dividend_yield': div_y,
+            'dps': dps,
+            'per': per,
+            'pbr': pbr,
+            'eps': eps,
+            'bps': bps,
+            'roe': roe,
+            'equity_ratio': equity_ratio
+        }
+    except Exception:
+        return {}
+
 def fetch_japanese_stock_indicators_kabutan(code):
     try:
         import urllib.request
@@ -106,12 +156,23 @@ def extract_single_fundamental(ticker, ticker_meta=None):
         elif tdr is not None:
             dps = tdr
             
-        # 🇯🇵 If Japanese stock, consult Kabutan consensus for official 1-share dividend
+        # 🇯🇵 If Japanese stock, consult Yahoo! Finance JP for official 1-share dividend, EPS, BPS, ROE
         if ticker.endswith('.T'):
             code = ticker.split('.')[0]
-            kab_ind = fetch_japanese_stock_indicators_kabutan(code)
-            if kab_ind.get('dividend_yield') is not None and cur_p is not None and cur_p > 0:
-                dps = (kab_ind['dividend_yield'] / 100.0) * cur_p
+            yj_ind = fetch_yahoo_japan_indicators(code)
+            if not yj_ind or yj_ind.get('dividend_yield') is None:
+                yj_ind = fetch_japanese_stock_indicators_kabutan(code)
+            if yj_ind:
+                if yj_ind.get('dps') is not None:
+                    dps = yj_ind['dps']
+                elif yj_ind.get('dividend_yield') is not None and cur_p is not None and cur_p > 0:
+                    dps = (yj_ind['dividend_yield'] / 100.0) * cur_p
+                if yj_ind.get('eps') is not None:
+                    eps = yj_ind['eps']
+                if yj_ind.get('bps') is not None:
+                    bps = yj_ind['bps']
+                if yj_ind.get('roe') is not None:
+                    roe = yj_ind['roe']
         
         roe = safe_float(info.get('returnOnEquity'))
         if roe is not None and abs(roe) < 1.0:
