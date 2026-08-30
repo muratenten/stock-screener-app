@@ -1506,6 +1506,18 @@ def get_shareholder_benefits(ticker):
     except Exception as e:
         return {'has_yutai': False, 'is_us': False, 'error': str(e), 'url': url}
 
+@st.cache_data(ttl=3600)
+def load_tse_fundamentals_cache():
+    cache_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), "tse_fundamentals_cache.json")
+    if not os.path.exists(cache_file):
+        return {}, {}
+    try:
+        with open(cache_file, "r", encoding="utf-8") as f:
+            payload = json.load(f)
+            return payload.get("metadata", {}), payload.get("data", {})
+    except Exception:
+        return {}, {}
+
 # Dynamic Index constituent fetcher (Scraping from Wikipedia)
 @st.cache_data(ttl=86400)
 def fetch_nikkei225_tickers():
@@ -1689,7 +1701,7 @@ def fetch_tse_growth_tickers():
     return fallback_res
 
 # Build indicator scoring logic
-def evaluate_stock(ticker, df, info=None):
+def evaluate_stock(ticker, df, info=None, cached_fund=None):
     if df.empty or len(df) < 75:
         return None
         
@@ -1759,14 +1771,92 @@ def evaluate_stock(ticker, df, info=None):
         'uptrend': t_uptrend
     }
     
+    def safe_float(val):
+        if val is None:
+            return None
+        try:
+            if isinstance(val, str):
+                val = val.replace(',', '').replace('%', '').strip()
+                if val in ('---', ''):
+                    return None
+            return float(val)
+        except (ValueError, TypeError):
+            return None
+
+    cur_price = float(close.iloc[-1])
+    change_pct = ((close.iloc[-1] - close.iloc[-2]) / close.iloc[-2]) * 100 if len(close) > 1 else 0.0
+
+    # 1. Handle fast fundamental cache calculation (Sub-millisecond real-time calculation)
+    if cached_fund is not None:
+        eps = safe_float(cached_fund.get('eps'))
+        bps = safe_float(cached_fund.get('bps'))
+        dps = safe_float(cached_fund.get('dps'))
+        
+        per = (cur_price / eps) if (eps is not None and eps > 0) else None
+        pbr = (cur_price / bps) if (bps is not None and bps > 0) else None
+        div_yield = ((dps / cur_price) * 100.0) if (dps is not None and cur_price > 0) else None
+        
+        roe = safe_float(cached_fund.get('roe'))
+        op_margin = safe_float(cached_fund.get('op_margin'))
+        net_inc = safe_float(cached_fund.get('net_income'))
+        total_cash = safe_float(cached_fund.get('total_cash'))
+        total_debt = safe_float(cached_fund.get('total_debt'))
+        de_ratio = safe_float(cached_fund.get('debt_to_equity'))
+        rev_growth = safe_float(cached_fund.get('rev_growth'))
+        eps_growth = safe_float(cached_fund.get('eps_growth'))
+        market_cap = safe_float(cached_fund.get('market_cap'))
+        name = cached_fund.get('name') or ticker
+        
+        f_roe = roe is not None and roe >= 10.0
+        f_op_margin = op_margin is not None and op_margin >= 8.0
+        f_profitable = net_inc is not None and net_inc > 0
+        f_per = per is not None and per < 15.0
+        f_pbr = pbr is not None and pbr < 1.0
+        f_solvency = de_ratio is not None and de_ratio < 100.0
+        if de_ratio is None:
+            cash_val = total_cash or 0.0
+            debt_val = total_debt or 0.0
+            f_solvency = cash_val >= debt_val
+        f_dividend = div_yield is not None and div_yield >= 3.0
+        
+        fund_score = sum([f_roe, f_op_margin, f_profitable, f_per, f_pbr, f_solvency, f_dividend])
+        
+        metrics = {
+            'price': cur_price,
+            'change_pct': change_pct,
+            'per': per,
+            'pbr': pbr,
+            'roe': roe,
+            'dividend_yield': div_yield,
+            'market_cap': market_cap,
+            'name': name,
+            'net_income': net_inc,
+            'op_margin': op_margin,
+            'total_cash': total_cash,
+            'total_debt': total_debt,
+            'debt_equity': de_ratio,
+            'vol_surge_ratio': vol_5d / vol_25d if vol_25d > 0 else 1.0,
+            'rev_growth': rev_growth,
+            'eps_growth': eps_growth
+        }
+        return {
+            'df': df,
+            'tech_score': tech_score,
+            'fund_score': fund_score,
+            'total_score': tech_score + fund_score,
+            'signals': signals,
+            'metrics': metrics,
+            'info_raw': cached_fund
+        }
+
     if info is None:
         return {
             'df': df,
             'tech_score': tech_score,
             'signals': signals,
             'metrics': {
-                'price': close.iloc[-1],
-                'change_pct': ((close.iloc[-1] - close.iloc[-2]) / close.iloc[-2]) * 100 if len(close) > 1 else 0.0,
+                'price': cur_price,
+                'change_pct': change_pct,
                 'vol_surge_ratio': vol_5d / vol_25d if vol_25d > 0 else 1.0,
                 'rev_growth': None,
                 'eps_growth': None
@@ -1774,14 +1864,6 @@ def evaluate_stock(ticker, df, info=None):
         }
         
     # --- 2. ファンダメンタルズスコアリング（7点満点に拡張） ---
-    def safe_float(val):
-        if val is None:
-            return None
-        try:
-            return float(val)
-        except (ValueError, TypeError):
-            return None
-
     per = safe_float(info.get('trailingPE'))
     pbr = safe_float(info.get('priceToBook'))
     roe = safe_float(info.get('returnOnEquity'))
@@ -1828,8 +1910,8 @@ def evaluate_stock(ticker, df, info=None):
             eps_growth = eps_growth * 100.0
         
     metrics = {
-        'price': close.iloc[-1],
-        'change_pct': ((close.iloc[-1] - close.iloc[-2]) / close.iloc[-2]) * 100 if len(close) > 1 else 0.0,
+        'price': cur_price,
+        'change_pct': change_pct,
         'per': per,
         'pbr': pbr,
         'roe': roe,
@@ -5632,19 +5714,48 @@ with tab_screen:
     if not filtered_pool:
         st.info("条件に該当する銘柄がありません。他の市場を選択するか、カスタムティッカーを入力してください。")
     else:
-        st.markdown(f"**現在のスクリーニング対象候補数**: {len(filtered_pool)} 銘柄")
-        if len(filtered_pool) > 300:
-            st.warning(f"⚠️ 候補銘柄数が多いため（現在 {len(filtered_pool)} 銘柄）、スクリーニング開始時のデータ取得に10〜20秒程度かかる場合があります。必要に応じてサイドバーの「業種・テーマ絞り込み」や「詳細なスコア・財務条件フィルタ」を活用して事前に候補数を絞り込んでください。")
+        meta, fund_cache = load_tse_fundamentals_cache()
+        last_up_str = meta.get("last_updated", "未更新")
+        total_cached = meta.get("total_tickers", len(fund_cache))
         
+        st.markdown(f"""
+        <div style="background: rgba(59, 130, 246, 0.06); border: 1px solid rgba(59, 130, 246, 0.18); border-radius: 8px; padding: 10px 14px; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
+            <div>
+                <div style="font-weight: 700; color: #2563eb; font-size: 0.88rem;">⚡ 基礎財務キャッシュ連携（最新株価連動・超高速モード）</div>
+                <div style="font-size: 0.82rem; color: var(--text-color, #475569); margin-top: 2px;">
+                    キャッシュ最終更新: <strong>{last_up_str}</strong> ({total_cached:,} 銘柄登録済) — <em>※最新株価と連動してPER・PBR・利回りをリアルタイム算出</em>
+                </div>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        st.markdown(f"**現在のスクリーニング対象候補数**: {len(filtered_pool)} 銘柄")
+        
+        col_scr_run, col_scr_sync = st.columns([3, 1])
+        with col_scr_sync:
+            if st.button("🔄 財務キャッシュ最新化", key="btn_refresh_fund_cache_main", use_container_width=True, help="全銘柄の基礎財務データ（EPS, BPS, 予想配当, ROE, 成長率等）を最新の決算データに更新します。"):
+                with st.spinner("最新の財務データを取得・更新中..."):
+                    try:
+                        import update_fundamentals_cache
+                        update_fundamentals_cache.build_fundamentals_cache(max_workers=15)
+                        st.cache_data.clear()
+                        st.success("🎉 財務データキャッシュを最新化しました！")
+                        st.rerun()
+                    except Exception as e:
+                        st.error(f"更新エラー: {e}")
+        
+        with col_scr_run:
+            start_screening_clicked = st.button("スクリーニングを開始する", type="primary", use_container_width=True)
+            
         # Start button
-        if st.button("スクリーニングを開始する", type="primary", use_container_width=True):
-            with st.spinner("株価データ及び企業財務データをYahoo Financeから取得中..."):
+        if start_screening_clicked:
+            with st.spinner("株価データ及び企業財務データを取得中..."):
                 
                 # 1. Download price history in batch for fast loading
                 tickers_list = list(filtered_pool.keys())
                 histories = batch_download_histories(tickers_list, period=selected_period)
                 
-                # 2. Fast Parallel Pre-fetching of Fundamentals for candidates passing quick technical checks
+                # 2. Fast Parallel Pre-fetching of Fundamentals only for candidates NOT present in local cache
                 technically_passed = []
                 for ticker in tickers_list:
                     df = histories.get(ticker)
@@ -5667,8 +5778,9 @@ with tab_screen:
                         continue
                     technically_passed.append(ticker)
 
-                # Batch fetch all fundamental info in parallel via pure Python worker threads (Massive speedup!)
-                fetched_infos = parallel_fetch_ticker_infos(technically_passed, max_workers=15)
+                # Only fetch from network for tickers missing in local cache
+                needed_fetch = [t for t in technically_passed if t not in fund_cache]
+                fetched_infos = parallel_fetch_ticker_infos(needed_fetch, max_workers=15) if needed_fetch else {}
                 
                 # 3. Analyze each ticker
                 results = []
@@ -5704,11 +5816,14 @@ with tab_screen:
                     if filter_volume_surge and not tech_analysis['signals']['volume_surge']:
                         continue
                         
-                    # 2. Use parallel pre-fetched fundamentals (Instantaneous memory lookup!)
-                    info = fetched_infos.get(ticker) or get_ticker_info(ticker)
-                    
-                    # Run full analysis
-                    analysis = evaluate_stock(ticker, df, info)
+                    # 2. Use cached fundamentals with real-time recalculation (Instantaneous!)
+                    cached_data = fund_cache.get(ticker)
+                    if cached_data is not None:
+                        analysis = evaluate_stock(ticker, df, cached_fund=cached_data)
+                    else:
+                        info = fetched_infos.get(ticker) or get_ticker_info(ticker)
+                        analysis = evaluate_stock(ticker, df, info=info)
+                        
                     if analysis is None:
                         continue
                         
