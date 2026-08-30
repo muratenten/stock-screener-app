@@ -1526,12 +1526,12 @@ def _fetch_raw_ticker_info(ticker):
                         calc_div_yield = raw_dy
                     final_dps = (calc_div_yield / 100.0) * p
 
-        # 🇯🇵 For Japanese stocks, consult official Yahoo! Finance JP (with Kabutan fallback) for 100% precision
+        # 🇯🇵 For Japanese stocks, consult official Kabutan (with Yahoo Japan fallback) for 100% precision
         if ticker.endswith('.T'):
             code = ticker.split('.')[0]
-            yj_ind = fetch_yahoo_japan_indicators(code)
+            yj_ind = fetch_japanese_stock_indicators_kabutan(code)
             if not yj_ind or yj_ind.get('dividend_yield') is None:
-                yj_ind = fetch_japanese_stock_indicators_kabutan(code)
+                yj_ind = fetch_yahoo_japan_indicators(code)
                 
             if yj_ind.get('dividend_yield') is not None:
                 calc_div_yield = yj_ind['dividend_yield']
@@ -1930,10 +1930,13 @@ def evaluate_stock(ticker, df, info=None, cached_fund=None):
         
         per = (cur_price / eps) if (eps is not None and eps > 0) else safe_float(cached_fund.get('per'))
         pbr = (cur_price / bps) if (bps is not None and bps > 0) else safe_float(cached_fund.get('pbr'))
-        if dps is not None and cur_price > 0:
+        cached_dy = safe_float(cached_fund.get('dividend_yield')) or safe_float(cached_fund.get('dividendYield'))
+        if cached_dy is not None:
+            div_yield = cached_dy
+        elif dps is not None and cur_price > 0:
             div_yield = (dps / cur_price) * 100.0
         else:
-            div_yield = safe_float(cached_fund.get('dividend_yield')) or safe_float(cached_fund.get('dividendYield'))
+            div_yield = None
         
         roe = safe_float(cached_fund.get('roe'))
         if roe is None and pbr is not None and per is not None and per > 0:
@@ -2011,12 +2014,15 @@ def evaluate_stock(ticker, df, info=None, cached_fund=None):
     if roe is None and pbr is not None and per is not None and per > 0:
         roe = (pbr / per) * 100.0
     
-    # Priority: Accurate 1-share dividend / current price
+    # Priority: Official verified dividend yield from Japanese consensus / info
+    raw_dy = safe_float(info.get('dividendYield'))
     dr = safe_float(info.get('dividendRate'))
-    if dr is not None and cur_price > 0:
+    if raw_dy is not None:
+        div_yield = raw_dy
+    elif dr is not None and cur_price > 0:
         div_yield = (dr / cur_price) * 100.0
     else:
-        div_yield = safe_float(info.get('dividendYield'))
+        div_yield = None
         
     net_inc = safe_float(info.get('netIncome'))
     op_margin = safe_float(info.get('opMargin'))
