@@ -3230,20 +3230,13 @@ def render_yutai_section(ticker, name, metrics):
         """, unsafe_allow_html=True)
         return
 
-    # Add refresh button in case of stale cache
-    col_btn, _ = st.columns([1, 4])
-    with col_btn:
-        if st.button("🔄 優待情報を再取得", key=f"refresh_yutai_{ticker}"):
-            get_shareholder_benefits.clear()
-            st.rerun()
-
     with st.spinner("株主優待データを取得中..."):
         yutai_data = get_shareholder_benefits(ticker)
         
     div_y_str = f"{metrics['dividend_yield']:.2f}%" if metrics.get('dividend_yield') is not None else "N/A"
     code = ticker.split('.')[0]
     yahoo_url = f"https://finance.yahoo.co.jp/quote/{code}/incentive"
-    minkabu_url = f"https://minkabu.jp/stock/{code}/yutai"
+    kabutan_url = f"https://kabutan.jp/stock/yutai?code={code}"
 
     if not yutai_data.get('has_yutai'):
         no_yutai_raw = f"""
@@ -3253,8 +3246,9 @@ def render_yutai_section(ticker, name, metrics):
                     <span style="font-size: 1.5rem;">ℹ️</span>
                     <h4 style="margin: 0; color: var(--text-color, #1e293b);">{name} ({ticker}) の株主優待</h4>
                 </div>
-                <div>
-                    <a href="https://kabutan.jp/stock/yutai?code={code}" target="_blank" style="padding: 5px 12px; background: #2563eb; color: #ffffff; text-decoration: none; border-radius: 6px; font-size: 0.82rem; font-weight: 600;">Kabutan ↗</a>
+                <div style="display: flex; gap: 8px;">
+                    <a href="{yahoo_url}" target="_blank" style="padding: 6px 12px; background: #2563eb; color: #ffffff; text-decoration: none; border-radius: 6px; font-size: 0.82rem; font-weight: 600;">Yahoo! ↗</a>
+                    <a href="{kabutan_url}" target="_blank" style="padding: 6px 12px; background: var(--secondary-background-color, #f1f5f9); color: #2563eb; text-decoration: none; border-radius: 6px; font-size: 0.82rem; font-weight: 600; border: 1px solid #cbd5e1;">株探 ↗</a>
                 </div>
             </div>
             <div style="background: rgba(100, 116, 139, 0.08); border-left: 4px solid #64748b; padding: 15px; border-radius: 6px; margin-bottom: 15px;">
@@ -3285,7 +3279,6 @@ def render_yutai_section(ticker, name, metrics):
     cur_price = metrics.get('cur_price') or metrics.get('price') or 0
     min_invest = cur_price * unit_num if cur_price else 0
     min_invest_str = f"約 {min_invest:,.0f} 円" if min_invest else f"株価基準 ({unit_shares})"
-    kabutan_url = f"https://kabutan.jp/stock/yutai?code={code}"
 
     # Build pure clean HTML card with no indentation to prevent markdown code block triggers
     card_parts = []
@@ -3298,8 +3291,9 @@ def render_yutai_section(ticker, name, metrics):
     card_parts.append('<span style="display: inline-block; margin-top: 4px; padding: 2px 10px; background: rgba(34, 197, 94, 0.12); color: #16a34a; font-size: 0.82rem; font-weight: 700; border-radius: 12px;">優待実施企業</span>')
     card_parts.append('</div>')
     card_parts.append('</div>')
-    card_parts.append('<div>')
-    card_parts.append(f'<a href="{kabutan_url}" target="_blank" style="display: inline-block; padding: 6px 14px; background: #2563eb; color: #ffffff; text-decoration: none; border-radius: 6px; font-size: 0.85rem; font-weight: 600;">Kabutan 公式優待情報 ↗</a>')
+    card_parts.append('<div style="display: flex; gap: 8px;">')
+    card_parts.append(f'<a href="{yahoo_url}" target="_blank" style="display: inline-block; padding: 6px 14px; background: #2563eb; color: #ffffff; text-decoration: none; border-radius: 6px; font-size: 0.85rem; font-weight: 600;">Yahoo! ↗</a>')
+    card_parts.append(f'<a href="{kabutan_url}" target="_blank" style="display: inline-block; padding: 6px 14px; background: var(--secondary-background-color, #f1f5f9); color: #2563eb; text-decoration: none; border-radius: 6px; font-size: 0.85rem; font-weight: 600; border: 1px solid #cbd5e1;">株探 ↗</a>')
     card_parts.append('</div>')
     card_parts.append('</div>')
 
