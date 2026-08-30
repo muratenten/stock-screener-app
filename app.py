@@ -618,28 +618,31 @@ st.markdown(f"""
     
     /* Text Inputs, Number Inputs, Date Inputs, Textareas */
     div[data-testid="stTextInput"] input, div[data-testid="stNumberInput"] input, div[data-testid="stDateInput"] input, textarea {{
-        background-color: {'#1e293b' if is_dark else '#ffffff'} !important;
+        background-color: {'#1e293b' if is_dark else '#f8fafc'} !important;
         color: var(--text-color) !important;
-        border: 1px solid {'#334155' if is_dark else '#cbd5e1'} !important;
+        border: 1.5px solid {'#475569' if is_dark else '#94a3b8'} !important;
         border-radius: 8px !important;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
     }}
     div[data-testid="stTextInput"] input:focus, div[data-testid="stNumberInput"] input:focus, div[data-testid="stDateInput"] input:focus, textarea:focus {{
-        border-color: var(--primary-color) !important;
-        box-shadow: 0 0 0 1px var(--primary-color) !important;
+        border-color: #2563eb !important;
+        box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2) !important;
     }}
     
-    /* Selectbox (BaseWeb dropdown select) - crisp defined border */
+    /* Selectbox (BaseWeb dropdown select) - high contrast crisp border */
     div[data-baseweb="select"] > div {{
-        background-color: {'#1e293b' if is_dark else '#ffffff'} !important;
+        background-color: {'#1e293b' if is_dark else '#f8fafc'} !important;
         color: var(--text-color) !important;
-        border: 1px solid {'#334155' if is_dark else '#cbd5e1'} !important;
+        border: 1.5px solid {'#475569' if is_dark else '#94a3b8'} !important;
         border-radius: 8px !important;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
     }}
     div[data-baseweb="select"] > div:hover {{
-        border-color: var(--primary-color) !important;
+        border-color: #2563eb !important;
+        box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15) !important;
     }}
     div[data-baseweb="select"] [data-baseweb="icon"] {{
-        color: {'#94a3b8' if is_dark else '#64748b'} !important;
+        color: {'#cbd5e1' if is_dark else '#475569'} !important;
     }}
     
     /* Fix multiselect tag (pill) readability: bright blue background and crisp white text */
