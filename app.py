@@ -1430,6 +1430,67 @@ def parallel_fetch_ticker_infos(tickers_list, max_workers=15):
                 results[t] = {}
     return results
 
+# Cached shareholder benefit (株主優待) fetcher from Yahoo Finance JP
+@st.cache_data(ttl=86400)
+def get_shareholder_benefits(ticker):
+    from html.parser import HTMLParser
+
+    class _YutaiParser(HTMLParser):
+        def __init__(self):
+            super().__init__()
+            self.text = []
+        def handle_data(self, data):
+            d = data.strip()
+            if d:
+                self.text.append(d)
+
+    if not ticker or not ticker.endswith('.T'):
+        return {'has_yutai': False, 'is_us': True}
+        
+    code = ticker.split('.')[0]
+    url = f"https://finance.yahoo.co.jp/quote/{code}/incentive"
+    req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)'})
+    try:
+        html = urllib.request.urlopen(req, timeout=6).read().decode('utf-8')
+        parser = _YutaiParser()
+        parser.feed(html)
+        txts = parser.text
+        
+        # Check no yutai phrases
+        for t in txts:
+            if '現在、株主優待情報はありません' in t or '株主優待情報はありません' in t or '株主優待はありません' in t or '現在、株主優待はありません' in t:
+                return {'has_yutai': False, 'is_us': False, 'url': url}
+                
+        summary_info = {
+            'has_yutai': False, 
+            'is_us': False, 
+            'url': url, 
+            'content': [], 
+            'unit_shares': '100株', 
+            'genre': '自社商品・サービス', 
+            'record_date': '随時確認'
+        }
+        for i, t in enumerate(txts):
+            if t == '権利付き最終日' and i+1 < len(txts):
+                summary_info['record_date'] = txts[i+1]
+                summary_info['has_yutai'] = True
+            elif t == '単元株数' and i+1 < len(txts):
+                summary_info['unit_shares'] = txts[i+1]
+            elif t == '優待の種類' and i+1 < len(txts):
+                summary_info['genre'] = txts[i+1]
+            elif t == '株主優待の内容':
+                content_lines = []
+                for j in range(i+1, min(len(txts), i+60)):
+                    if any(stop_word in txts[j] for stop_word in ['投資金額', '人気ランキング', '株主優待積極企業', '関連ニュース', 'よくある質問', '利用規約', '会社概要', '免責事項']):
+                        break
+                    content_lines.append(txts[j])
+                summary_info['content'] = content_lines
+                summary_info['has_yutai'] = True
+                
+        return summary_info
+    except Exception as e:
+        return {'has_yutai': False, 'is_us': False, 'error': str(e), 'url': url}
+
 # Dynamic Index constituent fetcher (Scraping from Wikipedia)
 @st.cache_data(ttl=86400)
 def fetch_nikkei225_tickers():
@@ -2836,6 +2897,135 @@ def generate_final_pattern_implication(name, matches_data, avg_ret, future_days=
     """
     return "\n".join([line.strip() for line in text.split("\n")])
 
+def render_yutai_section(ticker, name, metrics):
+    if is_us_stock(ticker):
+        div_y_str = f"{metrics['dividend_yield']:.2f}%" if metrics.get('dividend_yield') is not None else "無配 / N/A"
+        st.markdown(f"""
+        <div class="card" style="padding: 25px; line-height: 1.8;">
+            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 12px;">
+                <span style="font-size: 1.5rem;">🇺🇸</span>
+                <h4 style="margin: 0; color: var(--text-color, #1e293b);">米国株の株主還元について</h4>
+            </div>
+            <p style="color: #64748b; margin-bottom: 15px;">
+                米国市場に上場する企業には、日本特有の「株主優待制度（商品券や現物進呈）」は基本的に存在しません。
+            </p>
+            <div style="background: rgba(59, 130, 246, 0.08); border-left: 4px solid #3b82f6; padding: 15px; border-radius: 6px; margin-bottom: 15px;">
+                <strong>💡 米国企業の主な株主還元方針:</strong><br>
+                ・<strong>現金配当（四半期配当）</strong>: 年4回に分けて株主へ直接現金還元を実施。<br>
+                ・<strong>自社株買い（Share Buyback）</strong>: 市場の流通株式数を減らして1株あたり利益（EPS）や株式価値を引き上げ。<br>
+                ・<strong>予想配当利回り</strong>: <span style="color: #2563eb; font-weight: bold;">{div_y_str}</span>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+        return
+
+    with st.spinner("株主優待データを取得中..."):
+        yutai_data = get_shareholder_benefits(ticker)
+        
+    div_y_str = f"{metrics['dividend_yield']:.2f}%" if metrics.get('dividend_yield') is not None else "N/A"
+    code = ticker.split('.')[0]
+    url = yutai_data.get('url', f"https://finance.yahoo.co.jp/quote/{code}/incentive")
+
+    if not yutai_data.get('has_yutai'):
+        st.markdown(f"""
+        <div class="card" style="padding: 25px; line-height: 1.8;">
+            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 12px;">
+                <span style="font-size: 1.5rem;">ℹ️</span>
+                <h4 style="margin: 0; color: var(--text-color, #1e293b);">{name} ({ticker}) の株主優待</h4>
+            </div>
+            <div style="background: rgba(100, 116, 139, 0.08); border-left: 4px solid #64748b; padding: 15px; border-radius: 6px; margin-bottom: 15px;">
+                <strong>現在、株主優待制度は実施されていません。</strong><br>
+                <span style="font-size: 0.9rem; color: #64748b;">
+                ※この企業は現物優待ではなく、配当金（予想配当利回り: <strong style="color: #2563eb;">{div_y_str}</strong>）や事業投資・成長による企業価値向上を軸に株主還元を行っています。
+                </span>
+            </div>
+            <div style="margin-top: 15px;">
+                <a href="{url}" target="_blank" style="display: inline-block; padding: 8px 16px; background: var(--secondary-background-color, #f1f5f9); color: #2563eb; text-decoration: none; border-radius: 6px; font-size: 0.9rem; font-weight: 600; border: 1px solid #cbd5e1;">
+                    🔗 Yahoo!ファイナンス公式優待ページで確認する ↗
+                </a>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+        return
+
+    record_date = yutai_data.get('record_date', '随時確認')
+    unit_shares = yutai_data.get('unit_shares', '100株')
+    genre = yutai_data.get('genre', '自社商品・サービス')
+    content_lines = yutai_data.get('content', [])
+
+    # Calculate minimum investment amount for 1 unit
+    unit_num = 100
+    try:
+        import re
+        unit_num = int(re.sub(r'[^0-9]', '', unit_shares)) or 100
+    except Exception:
+        unit_num = 100
+    cur_price = metrics.get('price', 0)
+    min_invest = cur_price * unit_num if cur_price else 0
+
+    st.markdown(f"""
+    <div class="card" style="padding: 25px; line-height: 1.8;">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <span style="font-size: 1.6rem;">🎁</span>
+                <div>
+                    <h4 style="margin: 0; color: var(--text-color, #1e293b);">{name} ({ticker}) の株主優待制度</h4>
+                    <span style="display: inline-block; margin-top: 4px; padding: 2px 10px; background: rgba(34, 197, 94, 0.12); color: #16a34a; font-size: 0.85rem; font-weight: 700; border-radius: 12px;">優待実施企業</span>
+                </div>
+            </div>
+            <div>
+                <a href="{url}" target="_blank" style="display: inline-block; padding: 7px 15px; background: #2563eb; color: #ffffff; text-decoration: none; border-radius: 6px; font-size: 0.85rem; font-weight: 600;">
+                    Yahoo!ファイナンス公式優待情報 ↗
+                </a>
+            </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px;">
+            <div style="background: var(--secondary-background-color, #f8fafc); padding: 12px 16px; border-radius: 8px; border: 1px solid rgba(100, 116, 139, 0.15);">
+                <div style="font-size: 0.8rem; color: #64748b; font-weight: 600;">優待の種類・ジャンル</div>
+                <div style="font-size: 1.05rem; font-weight: 700; color: var(--text-color, #1e293b); margin-top: 4px;">{genre}</div>
+            </div>
+            <div style="background: var(--secondary-background-color, #f8fafc); padding: 12px 16px; border-radius: 8px; border: 1px solid rgba(100, 116, 139, 0.15);">
+                <div style="font-size: 0.8rem; color: #64748b; font-weight: 600;">権利確定月 / 最終日</div>
+                <div style="font-size: 1.05rem; font-weight: 700; color: #2563eb; margin-top: 4px;">{record_date}</div>
+            </div>
+            <div style="background: var(--secondary-background-color, #f8fafc); padding: 12px 16px; border-radius: 8px; border: 1px solid rgba(100, 116, 139, 0.15);">
+                <div style="font-size: 0.8rem; color: #64748b; font-weight: 600;">優待獲得の最低投資額 ({unit_shares})</div>
+                <div style="font-size: 1.05rem; font-weight: 700; color: #16a34a; margin-top: 4px;">約 {format_price(min_invest, ticker)}</div>
+            </div>
+        </div>
+
+        <h5 style="margin: 20px 0 10px 0; color: var(--text-color, #1e293b); border-bottom: 2px solid rgba(100, 116, 139, 0.2); padding-bottom: 6px;">
+            📋 優待進呈条件と内容詳細
+        </h5>
+    """, unsafe_allow_html=True)
+
+    # Format content lines cleanly
+    formatted_html = "<div style='background: var(--secondary-background-color, #f8fafc); padding: 16px 20px; border-radius: 8px; border: 1px solid rgba(100, 116, 139, 0.15); line-height: 1.8;'>"
+    idx = 0
+    while idx < len(content_lines):
+        item = content_lines[idx].strip()
+        if not item:
+            idx += 1
+            continue
+        if '株以上' in item and idx + 1 < len(content_lines) and any(unit in content_lines[idx+1] for unit in ['％', '%', '円', '冊', '回', '枚', '点', 'セット', '割', 'クーポン', 'ギフト', 'ポイント']):
+            val = content_lines[idx+1].strip()
+            formatted_html += f"<div style='padding: 4px 12px; margin: 3px 0; background: rgba(59, 130, 246, 0.06); border-radius: 4px; display: inline-block; font-size: 0.92rem;'>🔹 <strong>{item}</strong>: <span style='color: #2563eb; font-weight: bold;'>{val}</span></div><br/>"
+            idx += 2
+        elif item.startswith('※') or item.startswith('（注'):
+            formatted_html += f"<div style='color:#64748b; font-size:0.85rem; margin: 4px 0 8px 6px;'>{item}</div>"
+            idx += 1
+        elif re.match(r'^[①-⑳0-9]+[．\.]', item) or re.match(r'^[①-⑳]', item) or item.startswith('＜') or item.startswith('【') or item.endswith('特典') or '特典（年' in item or '優待内容' in item:
+            formatted_html += f"<div style='font-weight: 700; color: var(--text-color, #1e293b); margin-top: 14px; margin-bottom: 6px;'>🎁 {item}</div>"
+            idx += 1
+        else:
+            formatted_html += f"<div style='color: var(--text-color, #334155); margin: 3px 0; font-size: 0.93rem;'>{item}</div>"
+            idx += 1
+    formatted_html += "</div>"
+
+    st.markdown(formatted_html, unsafe_allow_html=True)
+    st.markdown("</div>", unsafe_allow_html=True)
+
 def render_detail_dashboard(selected_ticker, selected_name, raw_analysis, key_suffix="", is_practice=False):
     # Get owned stock details for the dashboard
     if is_practice:
@@ -3096,11 +3286,13 @@ def render_detail_dashboard(selected_ticker, selected_name, raw_analysis, key_su
     if is_practice:
         tab_options = [
             "📈 チャート・指標", 
+            "🎁 株主優待",
             "🔍 類似パターン検索"
         ]
     else:
         tab_options = [
             "📈 チャート・指標", 
+            "🎁 株主優待",
             "💡 事業カタリスト",
             "📊 財務データ分析",
             "🔍 類似パターン検索"
@@ -3177,6 +3369,9 @@ def render_detail_dashboard(selected_ticker, selected_name, raw_analysis, key_su
             )
         st.markdown(f'<div class="card" style="padding: 25px; margin-top: 15px;">{report_md}</div>', unsafe_allow_html=True)
             
+    elif selected_tab == "🎁 株主優待":
+        render_yutai_section(selected_ticker, selected_name, metrics)
+        
     elif selected_tab == "💡 事業カタリスト":
         # Business & IR analysis
         ir_md = generate_ir_catalysts(
