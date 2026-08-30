@@ -397,9 +397,9 @@ title_text_color = "#3b82f6" if is_dark else "#1e3a8a"
 subtitle_text_color = "#94a3b8" if is_dark else "#475569"
 
 # Theme-aware styling for selectbox tags (pills) to ensure excellent contrast
-tag_bg = "#1e3a8a" if is_dark else "#eff6ff"
-tag_border = "#3b82f6" if is_dark else "#93c5fd"
-tag_text = "#ffffff" if is_dark else "#1e40af"
+tag_bg = "#2563eb"
+tag_border = "#1d4ed8"
+tag_text = "#ffffff"
 
 # Specific colors for Glide Data Grid (st.dataframe) to make it black-based in dark mode
 gdg_bg_cell = "#0b0f19" if is_dark else "#ffffff"
@@ -635,35 +635,49 @@ st.markdown(f"""
     }}
     
     /* Fix multiselect tag (pill) readability: bright blue background and crisp white text */
-    div[data-baseweb="select"] [data-baseweb="tag"],
-    div[data-baseweb="tag"],
+    [data-baseweb="tag"],
     span[data-baseweb="tag"],
+    div[data-baseweb="tag"],
     [data-testid="stMultiSelectTag"],
+    [data-testid="stMultiSelect"] [data-baseweb="tag"],
+    [data-testid="stMultiSelect"] span[data-baseweb="tag"],
+    div[data-baseweb="select"] [data-baseweb="tag"],
+    div[data-baseweb="select"] span[data-baseweb="tag"],
     .stMultiSelect [data-baseweb="tag"],
-    .stMultiSelect span[data-baseweb="tag"] {{
+    .stMultiSelect span[data-baseweb="tag"],
+    span[class*="tag"],
+    span[class*="Tag"] {{
         background-color: #2563eb !important;
         background: #2563eb !important;
         border: 1px solid #1d4ed8 !important;
         border-radius: 6px !important;
     }}
-    div[data-baseweb="select"] [data-baseweb="tag"] *,
-    div[data-baseweb="tag"] *,
+    [data-baseweb="tag"] *,
     span[data-baseweb="tag"] *,
+    div[data-baseweb="tag"] *,
     [data-testid="stMultiSelectTag"] *,
+    [data-testid="stMultiSelect"] [data-baseweb="tag"] *,
+    [data-testid="stMultiSelect"] span[data-baseweb="tag"] *,
+    div[data-baseweb="select"] [data-baseweb="tag"] *,
     .stMultiSelect [data-baseweb="tag"] * {{
         color: #ffffff !important;
         fill: #ffffff !important;
         font-weight: 600 !important;
+        -webkit-text-fill-color: #ffffff !important;
     }}
-    div[data-baseweb="select"] [data-baseweb="tag"] svg,
-    div[data-baseweb="tag"] svg,
+    [data-baseweb="tag"] svg,
     span[data-baseweb="tag"] svg,
+    div[data-baseweb="tag"] svg,
     [data-testid="stMultiSelectTag"] svg,
+    [data-testid="stMultiSelect"] [data-baseweb="tag"] svg,
+    div[data-baseweb="select"] [data-baseweb="tag"] svg,
     .stMultiSelect [data-baseweb="tag"] svg,
-    div[data-baseweb="select"] [data-baseweb="tag"] path,
-    div[data-baseweb="tag"] path,
+    [data-baseweb="tag"] path,
     span[data-baseweb="tag"] path,
+    div[data-baseweb="tag"] path,
     [data-testid="stMultiSelectTag"] path,
+    [data-testid="stMultiSelect"] [data-baseweb="tag"] path,
+    div[data-baseweb="select"] [data-baseweb="tag"] path,
     .stMultiSelect [data-baseweb="tag"] path {{
         fill: #ffffff !important;
         color: #ffffff !important;
