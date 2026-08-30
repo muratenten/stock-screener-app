@@ -1609,29 +1609,95 @@ def parallel_fetch_ticker_infos(tickers_list, max_workers=15):
                 results[t] = {}
     return results
 
-# Cached shareholder benefit (株主優待) fetcher from Yahoo Finance JP
-@st.cache_data(ttl=86400)
+# Cached shareholder benefit (株主優待) fetcher (Minkabu + Yahoo Finance JP fallback)
+@st.cache_data(ttl=3600)
 def get_shareholder_benefits(ticker):
     if not ticker or not ticker.endswith('.T'):
         return {'has_yutai': False, 'is_us': True}
         
     code = ticker.split('.')[0]
-    url = f"https://finance.yahoo.co.jp/quote/{code}/incentive"
-    req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36'})
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36',
+        'Accept-Language': 'ja,en-US;q=0.9,en;q=0.8'
+    }
+
+    # 1. Primary Source: Minkabu
+    minkabu_url = f"https://minkabu.jp/stock/{code}/yutai"
     try:
         from bs4 import BeautifulSoup
-        html = urllib.request.urlopen(req, timeout=6).read().decode('utf-8')
+        req = urllib.request.Request(minkabu_url, headers=headers)
+        html = urllib.request.urlopen(req, timeout=5).read().decode('utf-8')
         soup = BeautifulSoup(html, 'html.parser')
-        
         text = soup.get_text()
-        if '現在、株主優待情報はありません' in text or '株主優待はありません' in text or '現在、株主優待制度は実施されておりません' in text:
-            return {'has_yutai': False, 'is_us': False, 'url': url}
+        
+        if '株主優待はありません' in text or '優待情報はありません' in text:
+            return {'has_yutai': False, 'is_us': False, 'url': minkabu_url}
+            
+        record_date = '随時確認'
+        unit_shares = '100株'
+        genre = '自社商品・優待券'
+        
+        for tr in soup.find_all('tr'):
+            tds = [td.get_text().strip() for td in tr.find_all(['th', 'td'])]
+            for i, val in enumerate(tds):
+                if '優待権利確定月' in val and i + 1 < len(tds):
+                    record_date = f"{tds[i+1]}確定"
+                elif '優待発生株数' in val and i + 1 < len(tds):
+                    unit_shares = f"{tds[i+1]}株"
+                elif '優待の種類' in val and i + 1 < len(tds):
+                    genre = tds[i+1]
+                    
+        sections = []
+        notes = []
+        for tbl in soup.find_all('table'):
+            trs = tbl.find_all('tr')
+            if not trs:
+                continue
+            header_cells = [th.get_text().strip() for th in trs[0].find_all(['th', 'td'])]
+            if any('必要株数' in h or '優待内容' in h for h in header_cells):
+                rows = []
+                for tr in trs[1:]:
+                    cells = [td.get_text().strip() for td in tr.find_all(['th', 'td'])]
+                    if len(cells) >= 2:
+                        cond = cells[0]
+                        cnt = cells[1].replace('\n', ' ')
+                        note = cells[2].replace('\n', ' ') if len(cells) >= 3 else ''
+                        rows.append({'condition': cond, 'content': cnt})
+                        if note and note not in notes and len(note) < 350:
+                            notes.append(note)
+                if rows:
+                    sections.append({'title': '株主優待進呈基準', 'rows': rows})
+                    
+        if sections:
+            return {
+                'has_yutai': True,
+                'is_us': False,
+                'url': minkabu_url,
+                'genre': genre,
+                'record_date': record_date,
+                'unit_shares': unit_shares,
+                'sections': sections,
+                'notes': notes[:8]
+            }
+    except Exception:
+        pass
+
+    # 2. Secondary Fallback: Yahoo Finance JP
+    yahoo_url = f"https://finance.yahoo.co.jp/quote/{code}/incentive"
+    try:
+        from bs4 import BeautifulSoup
+        req = urllib.request.Request(yahoo_url, headers=headers)
+        html = urllib.request.urlopen(req, timeout=5).read().decode('utf-8')
+        soup = BeautifulSoup(html, 'html.parser')
+        text = soup.get_text()
+        
+        if '現在、株主優待情報はありません' in text or '株主優待はありません' in text:
+            return {'has_yutai': False, 'is_us': False, 'url': yahoo_url}
             
         genre = '自社商品・サービス'
         record_date = '随時確認'
         unit_shares = '100株'
         
-        # Meta info
         for dt in soup.find_all(['dt', 'th']):
             lbl = dt.get_text().strip()
             dd = dt.find_next_sibling(['dd', 'td'])
@@ -1646,10 +1712,8 @@ def get_shareholder_benefits(ticker):
                 elif '単元株数' in lbl and unit_shares == '100株':
                     unit_shares = v
                     
-        # Extract structured benefit tables
         sections = []
-        tables = soup.find_all('table')
-        for tbl in tables:
+        for tbl in soup.find_all('table'):
             rows = []
             for tr in tbl.find_all('tr'):
                 cells = [td.get_text().strip() for td in tr.find_all(['th', 'td'])]
@@ -1657,44 +1721,28 @@ def get_shareholder_benefits(ticker):
                     rows.append({'condition': cells[0], 'content': cells[1]})
                 elif len(cells) > 2:
                     rows.append({'condition': cells[0], 'content': ' | '.join(cells[1:])})
-                elif len(cells) == 1 and cells[0]:
-                    rows.append({'condition': '', 'content': cells[0]})
-            if rows:
-                if any('権利付き最終日' in r['condition'] for r in rows):
-                    continue
+            if rows and not any('権利付き最終日' in r['condition'] for r in rows):
                 prev_h = tbl.find_previous(['h2', 'h3', 'h4', 'h5', 'p', 'dt'])
-                header_txt = prev_h.get_text().strip() if prev_h else ''
-                if '投資金額' in header_txt or any('円' in r['content'] and '株' in r['condition'] and len(r['content'].split('|')) >= 2 for r in rows):
-                    continue
-                if '株主優待の内容' in header_txt or not header_txt:
+                header_txt = prev_h.get_text().strip() if prev_h else '優待進呈基準'
+                if len(header_txt) > 80 or header_txt.startswith('※'):
                     header_txt = '優待進呈基準'
-                elif header_txt.startswith('※') or len(header_txt) > 80:
-                    header_txt = '優待進呈基準・特典詳細'
                 sections.append({'title': header_txt, 'rows': rows})
                 
-        # Notes & Conditions
-        notes = []
-        for p in soup.find_all(['p', 'li', 'dd', 'div']):
-            t = p.get_text().strip()
-            if (t.startswith('※') or t.startswith('（注') or t.startswith('【備考】')) and len(t) < 350:
-                if t not in notes:
-                    notes.append(t)
-                    
-        if not sections and not notes:
-            return {'has_yutai': False, 'is_us': False, 'url': url}
-            
-        return {
-            'has_yutai': True,
-            'is_us': False,
-            'url': url,
-            'genre': genre,
-            'record_date': record_date,
-            'unit_shares': unit_shares,
-            'sections': sections,
-            'notes': notes[:10]
-        }
-    except Exception as e:
-        return {'has_yutai': False, 'is_us': False, 'error': str(e), 'url': url}
+        if sections:
+            return {
+                'has_yutai': True,
+                'is_us': False,
+                'url': yahoo_url,
+                'genre': genre,
+                'record_date': record_date,
+                'unit_shares': unit_shares,
+                'sections': sections,
+                'notes': []
+            }
+    except Exception:
+        pass
+        
+    return {'has_yutai': False, 'is_us': False, 'url': minkabu_url}
 
 def load_tse_fundamentals_cache():
     cache_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), "tse_fundamentals_cache.json")
@@ -3268,8 +3316,10 @@ def render_yutai_section(ticker, name, metrics):
         unit_num = int(re.sub(r'[^0-9]', '', unit_shares)) or 100
     except Exception:
         unit_num = 100
-    cur_price = metrics.get('cur_price') or metrics.get('price') or (raw_analysis['df']['Close'].iloc[-1] if 'df' in raw_analysis and not raw_analysis['df'].empty else 0)
+    cur_price = metrics.get('cur_price') or metrics.get('price') or 0
     min_invest = cur_price * unit_num if cur_price else 0
+    yahoo_url = f"https://finance.yahoo.co.jp/quote/{code}/incentive"
+    minkabu_url = f"https://minkabu.jp/stock/{code}/yutai"
 
     st.markdown(f"""
     <div class="card" style="padding: 25px; line-height: 1.8;">
@@ -3281,9 +3331,12 @@ def render_yutai_section(ticker, name, metrics):
                     <span style="display: inline-block; margin-top: 4px; padding: 2px 10px; background: rgba(34, 197, 94, 0.12); color: #16a34a; font-size: 0.85rem; font-weight: 700; border-radius: 12px;">優待実施企業</span>
                 </div>
             </div>
-            <div>
-                <a href="{url}" target="_blank" style="display: inline-block; padding: 7px 15px; background: #2563eb; color: #ffffff; text-decoration: none; border-radius: 6px; font-size: 0.85rem; font-weight: 600;">
-                    Yahoo!ファイナンス公式優待情報 ↗
+            <div style="display: flex; gap: 8px;">
+                <a href="{yahoo_url}" target="_blank" style="display: inline-block; padding: 6px 12px; background: #2563eb; color: #ffffff; text-decoration: none; border-radius: 6px; font-size: 0.82rem; font-weight: 600;">
+                    Yahoo!ファイナンス ↗
+                </a>
+                <a href="{minkabu_url}" target="_blank" style="display: inline-block; padding: 6px 12px; background: var(--secondary-background-color, #f1f5f9); color: #2563eb; text-decoration: none; border-radius: 6px; font-size: 0.82rem; font-weight: 600; border: 1px solid #cbd5e1;">
+                    みんかぶ ↗
                 </a>
             </div>
         </div>
