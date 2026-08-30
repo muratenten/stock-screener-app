@@ -397,7 +397,8 @@ title_text_color = "#3b82f6" if is_dark else "#1e3a8a"
 subtitle_text_color = "#94a3b8" if is_dark else "#475569"
 
 # Theme-aware styling for selectbox tags (pills) to ensure excellent contrast
-tag_bg = "#3b82f6" if is_dark else "#dbeafe"
+tag_bg = "#1e3a8a" if is_dark else "#eff6ff"
+tag_border = "#3b82f6" if is_dark else "#93c5fd"
 tag_text = "#ffffff" if is_dark else "#1e40af"
 
 # Specific colors for Glide Data Grid (st.dataframe) to make it black-based in dark mode
@@ -632,21 +633,27 @@ st.markdown(f"""
         color: var(--text-color) !important;
         border: 1px solid var(--border-color) !important;
     }}
-    div[data-baseweb="select"] * {{
-        color: var(--text-color) !important;
-    }}
+    
     /* Fix multiselect tag (pill) readability with high specificity */
     div[data-baseweb="select"] [data-baseweb="tag"],
-    div[data-baseweb="select"] [data-testid="stMultiSelectTag"] {{
+    div[data-baseweb="tag"],
+    span[data-baseweb="tag"],
+    [data-testid="stMultiSelectTag"] {{
         background-color: {tag_bg} !important;
-        border: none !important;
+        border: 1px solid {tag_border} !important;
+        border-radius: 6px !important;
     }}
     div[data-baseweb="select"] [data-baseweb="tag"] *,
-    div[data-baseweb="select"] [data-testid="stMultiSelectTag"] * {{
+    div[data-baseweb="tag"] *,
+    span[data-baseweb="tag"] *,
+    [data-testid="stMultiSelectTag"] * {{
         color: {tag_text} !important;
+        font-weight: 600 !important;
     }}
     div[data-baseweb="select"] [data-baseweb="tag"] svg,
-    div[data-baseweb="select"] [data-testid="stMultiSelectTag"] svg {{
+    div[data-baseweb="tag"] svg,
+    span[data-baseweb="tag"] svg,
+    [data-testid="stMultiSelectTag"] svg {{
         fill: {tag_text} !important;
         color: {tag_text} !important;
     }}
