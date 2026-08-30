@@ -618,20 +618,28 @@ st.markdown(f"""
     
     /* Text Inputs, Number Inputs, Date Inputs, Textareas */
     div[data-testid="stTextInput"] input, div[data-testid="stNumberInput"] input, div[data-testid="stDateInput"] input, textarea {{
-        background-color: var(--secondary-background-color) !important;
+        background-color: {'#1e293b' if is_dark else '#ffffff'} !important;
         color: var(--text-color) !important;
-        border: 1px solid var(--border-color) !important;
+        border: 1px solid {'#334155' if is_dark else '#cbd5e1'} !important;
+        border-radius: 8px !important;
     }}
     div[data-testid="stTextInput"] input:focus, div[data-testid="stNumberInput"] input:focus, div[data-testid="stDateInput"] input:focus, textarea:focus {{
         border-color: var(--primary-color) !important;
         box-shadow: 0 0 0 1px var(--primary-color) !important;
     }}
     
-    /* Selectbox (BaseWeb dropdown select) */
+    /* Selectbox (BaseWeb dropdown select) - crisp defined border */
     div[data-baseweb="select"] > div {{
-        background-color: var(--secondary-background-color) !important;
+        background-color: {'#1e293b' if is_dark else '#ffffff'} !important;
         color: var(--text-color) !important;
-        border: 1px solid var(--border-color) !important;
+        border: 1px solid {'#334155' if is_dark else '#cbd5e1'} !important;
+        border-radius: 8px !important;
+    }}
+    div[data-baseweb="select"] > div:hover {{
+        border-color: var(--primary-color) !important;
+    }}
+    div[data-baseweb="select"] [data-baseweb="icon"] {{
+        color: {'#94a3b8' if is_dark else '#64748b'} !important;
     }}
     
     /* Fix multiselect tag (pill) readability: bright blue background and crisp white text */
