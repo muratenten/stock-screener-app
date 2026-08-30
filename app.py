@@ -1612,61 +1612,83 @@ def parallel_fetch_ticker_infos(tickers_list, max_workers=15):
 # Cached shareholder benefit (株主優待) fetcher from Yahoo Finance JP
 @st.cache_data(ttl=86400)
 def get_shareholder_benefits(ticker):
-    from html.parser import HTMLParser
-
-    class _YutaiParser(HTMLParser):
-        def __init__(self):
-            super().__init__()
-            self.text = []
-        def handle_data(self, data):
-            d = data.strip()
-            if d:
-                self.text.append(d)
-
     if not ticker or not ticker.endswith('.T'):
         return {'has_yutai': False, 'is_us': True}
         
     code = ticker.split('.')[0]
     url = f"https://finance.yahoo.co.jp/quote/{code}/incentive"
-    req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)'})
+    req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36'})
     try:
+        from bs4 import BeautifulSoup
         html = urllib.request.urlopen(req, timeout=6).read().decode('utf-8')
-        parser = _YutaiParser()
-        parser.feed(html)
-        txts = parser.text
+        soup = BeautifulSoup(html, 'html.parser')
         
-        # Check no yutai phrases
-        for t in txts:
-            if '現在、株主優待情報はありません' in t or '株主優待情報はありません' in t or '株主優待はありません' in t or '現在、株主優待はありません' in t:
-                return {'has_yutai': False, 'is_us': False, 'url': url}
+        text = soup.get_text()
+        if '現在、株主優待情報はありません' in text or '株主優待はありません' in text or '現在、株主優待制度は実施されておりません' in text:
+            return {'has_yutai': False, 'is_us': False, 'url': url}
+            
+        genre = '自社商品・サービス'
+        record_date = '随時確認'
+        unit_shares = '100株'
+        
+        # Meta info
+        for dt in soup.find_all(['dt', 'th']):
+            lbl = dt.get_text().strip()
+            dd = dt.find_next_sibling(['dd', 'td'])
+            if dd:
+                v = dd.get_text().strip()
+                if '優待の種類' in lbl:
+                    genre = v
+                elif '権利付き最終日' in lbl or '権利確定' in lbl:
+                    record_date = v
+                elif '単元株数' in lbl:
+                    unit_shares = v
+                    
+        # Extract structured benefit tables
+        sections = []
+        tables = soup.find_all('table')
+        for tbl in tables:
+            rows = []
+            for tr in tbl.find_all('tr'):
+                cells = [td.get_text().strip() for td in tr.find_all(['th', 'td'])]
+                if len(cells) == 2:
+                    rows.append({'condition': cells[0], 'content': cells[1]})
+                elif len(cells) > 2:
+                    rows.append({'condition': cells[0], 'content': ' | '.join(cells[1:])})
+                elif len(cells) == 1 and cells[0]:
+                    rows.append({'condition': '', 'content': cells[0]})
+            if rows:
+                if any('権利付き最終日' in r['condition'] for r in rows):
+                    continue
+                prev_h = tbl.find_previous(['h2', 'h3', 'h4', 'h5', 'p', 'dt'])
+                header_txt = prev_h.get_text().strip() if prev_h else ''
+                if '投資金額' in header_txt or any('円' in r['content'] and '株' in r['condition'] and len(r['content'].split('|')) >= 2 for r in rows):
+                    continue
+                if '株主優待の内容' in header_txt:
+                    header_txt = '優待進呈基準'
+                sections.append({'title': header_txt, 'rows': rows})
                 
-        summary_info = {
-            'has_yutai': False, 
-            'is_us': False, 
-            'url': url, 
-            'content': [], 
-            'unit_shares': '100株', 
-            'genre': '自社商品・サービス', 
-            'record_date': '随時確認'
+        # Notes & Conditions
+        notes = []
+        for p in soup.find_all(['p', 'li', 'dd', 'div']):
+            t = p.get_text().strip()
+            if (t.startswith('※') or t.startswith('（注') or t.startswith('【備考】')) and len(t) < 350:
+                if t not in notes:
+                    notes.append(t)
+                    
+        if not sections and not notes:
+            return {'has_yutai': False, 'is_us': False, 'url': url}
+            
+        return {
+            'has_yutai': True,
+            'is_us': False,
+            'url': url,
+            'genre': genre,
+            'record_date': record_date,
+            'unit_shares': unit_shares,
+            'sections': sections,
+            'notes': notes[:10]
         }
-        for i, t in enumerate(txts):
-            if t == '権利付き最終日' and i+1 < len(txts):
-                summary_info['record_date'] = txts[i+1]
-                summary_info['has_yutai'] = True
-            elif t == '単元株数' and i+1 < len(txts):
-                summary_info['unit_shares'] = txts[i+1]
-            elif t == '優待の種類' and i+1 < len(txts):
-                summary_info['genre'] = txts[i+1]
-            elif t == '株主優待の内容':
-                content_lines = []
-                for j in range(i+1, min(len(txts), i+60)):
-                    if any(stop_word in txts[j] for stop_word in ['投資金額', '人気ランキング', '株主優待積極企業', '関連ニュース', 'よくある質問', '利用規約', '会社概要', '免責事項']):
-                        break
-                    content_lines.append(txts[j])
-                summary_info['content'] = content_lines
-                summary_info['has_yutai'] = True
-                
-        return summary_info
     except Exception as e:
         return {'has_yutai': False, 'is_us': False, 'error': str(e), 'url': url}
 
@@ -3242,7 +3264,7 @@ def render_yutai_section(ticker, name, metrics):
         unit_num = int(re.sub(r'[^0-9]', '', unit_shares)) or 100
     except Exception:
         unit_num = 100
-    cur_price = metrics.get('price', 0)
+    cur_price = metrics.get('cur_price') or metrics.get('price') or (raw_analysis['df']['Close'].iloc[-1] if 'df' in raw_analysis and not raw_analysis['df'].empty else 0)
     min_invest = cur_price * unit_num if cur_price else 0
 
     st.markdown(f"""
@@ -3277,35 +3299,39 @@ def render_yutai_section(ticker, name, metrics):
             </div>
         </div>
 
-        <h5 style="margin: 20px 0 10px 0; color: var(--text-color, #1e293b); border-bottom: 2px solid rgba(100, 116, 139, 0.2); padding-bottom: 6px;">
+        <h5 style="margin: 20px 0 12px 0; color: var(--text-color, #1e293b); border-bottom: 2px solid rgba(100, 116, 139, 0.2); padding-bottom: 6px;">
             📋 優待進呈条件と内容詳細
         </h5>
     """, unsafe_allow_html=True)
 
-    # Format content lines cleanly
-    formatted_html = "<div style='background: var(--secondary-background-color, #f8fafc); padding: 16px 20px; border-radius: 8px; border: 1px solid rgba(100, 116, 139, 0.15); line-height: 1.8;'>"
-    idx = 0
-    while idx < len(content_lines):
-        item = content_lines[idx].strip()
-        if not item:
-            idx += 1
-            continue
-        if '株以上' in item and idx + 1 < len(content_lines) and any(unit in content_lines[idx+1] for unit in ['％', '%', '円', '冊', '回', '枚', '点', 'セット', '割', 'クーポン', 'ギフト', 'ポイント']):
-            val = content_lines[idx+1].strip()
-            formatted_html += f"<div style='padding: 4px 12px; margin: 3px 0; background: rgba(59, 130, 246, 0.06); border-radius: 4px; display: inline-block; font-size: 0.92rem;'>🔹 <strong>{item}</strong>: <span style='color: #2563eb; font-weight: bold;'>{val}</span></div><br/>"
-            idx += 2
-        elif item.startswith('※') or item.startswith('（注'):
-            formatted_html += f"<div style='color:#64748b; font-size:0.85rem; margin: 4px 0 8px 6px;'>{item}</div>"
-            idx += 1
-        elif re.match(r'^[①-⑳0-9]+[．\.]', item) or re.match(r'^[①-⑳]', item) or item.startswith('＜') or item.startswith('【') or item.endswith('特典') or '特典（年' in item or '優待内容' in item:
-            formatted_html += f"<div style='font-weight: 700; color: var(--text-color, #1e293b); margin-top: 14px; margin-bottom: 6px;'>🎁 {item}</div>"
-            idx += 1
-        else:
-            formatted_html += f"<div style='color: var(--text-color, #334155); margin: 3px 0; font-size: 0.93rem;'>{item}</div>"
-            idx += 1
-    formatted_html += "</div>"
+    # Format structured table sections
+    sections = yutai_data.get('sections', [])
+    notes = yutai_data.get('notes', [])
 
-    st.markdown(formatted_html, unsafe_allow_html=True)
+    if sections:
+        for sec in sections:
+            sec_title = sec.get('title', '').strip()
+            if not sec_title:
+                sec_title = "株主優待進呈基準"
+            st.markdown(f"<div style='font-weight: 700; color: var(--text-color, #1e293b); margin: 16px 0 8px 0; font-size: 0.98rem;'>🎁 {sec_title}</div>", unsafe_allow_html=True)
+            
+            table_html = "<table style='width: 100%; border-collapse: collapse; margin-bottom: 16px; font-size: 0.92rem; background: var(--secondary-background-color, #f8fafc); border-radius: 8px; overflow: hidden; border: 1px solid rgba(100, 116, 139, 0.15);'>"
+            table_html += "<thead><tr style='background: rgba(37, 99, 235, 0.08); border-bottom: 1px solid rgba(100, 116, 139, 0.2);'><th style='padding: 10px 16px; text-align: left; font-weight: 700; width: 35%; color: var(--text-color, #1e293b);'>保有株式数・条件</th><th style='padding: 10px 16px; text-align: left; font-weight: 700; color: var(--text-color, #1e293b);'>優待内容・進呈特典</th></tr></thead><tbody>"
+            for r in sec.get('rows', []):
+                cond = r.get('condition', '')
+                cnt = r.get('content', '')
+                table_html += f"<tr style='border-bottom: 1px solid rgba(100, 116, 139, 0.1);'><td style='padding: 10px 16px; font-weight: 600; color: #2563eb;'>{cond}</td><td style='padding: 10px 16px; color: var(--text-color, #334155); font-weight: 500;'>{cnt}</td></tr>"
+            table_html += "</tbody></table>"
+            st.markdown(table_html, unsafe_allow_html=True)
+
+    if notes:
+        notes_html = "<div style='background: rgba(100, 116, 139, 0.06); padding: 14px 18px; border-radius: 8px; margin-top: 14px; font-size: 0.86rem; color: #64748b; line-height: 1.7;'>"
+        notes_html += "<div style='font-weight: 700; margin-bottom: 6px; color: var(--text-color, #475569);'>⚠️ 特記事項・継続保有条件</div>"
+        for n in notes:
+            notes_html += f"<div style='margin: 3px 0;'>{n}</div>"
+        notes_html += "</div>"
+        st.markdown(notes_html, unsafe_allow_html=True)
+
     st.markdown("</div>", unsafe_allow_html=True)
 
 def render_detail_dashboard(selected_ticker, selected_name, raw_analysis, key_suffix="", is_practice=False):
