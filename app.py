@@ -3275,19 +3275,33 @@ def render_yutai_section(ticker, name, metrics):
         """, unsafe_allow_html=True)
         return
 
+    # Add refresh button in case of stale cache
+    col_btn, _ = st.columns([1, 4])
+    with col_btn:
+        if st.button("🔄 優待情報を再取得", key=f"refresh_yutai_{ticker}"):
+            get_shareholder_benefits.clear()
+            st.rerun()
+
     with st.spinner("株主優待データを取得中..."):
         yutai_data = get_shareholder_benefits(ticker)
         
     div_y_str = f"{metrics['dividend_yield']:.2f}%" if metrics.get('dividend_yield') is not None else "N/A"
     code = ticker.split('.')[0]
-    url = yutai_data.get('url', f"https://finance.yahoo.co.jp/quote/{code}/incentive")
+    yahoo_url = f"https://finance.yahoo.co.jp/quote/{code}/incentive"
+    minkabu_url = f"https://minkabu.jp/stock/{code}/yutai"
 
     if not yutai_data.get('has_yutai'):
         st.markdown(f"""
         <div class="card" style="padding: 25px; line-height: 1.8;">
-            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 12px;">
-                <span style="font-size: 1.5rem;">ℹ️</span>
-                <h4 style="margin: 0; color: var(--text-color, #1e293b);">{name} ({ticker}) の株主優待</h4>
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <span style="font-size: 1.5rem;">ℹ️</span>
+                    <h4 style="margin: 0; color: var(--text-color, #1e293b);">{name} ({ticker}) の株主優待</h4>
+                </div>
+                <div style="display: flex; gap: 8px;">
+                    <a href="{yahoo_url}" target="_blank" style="padding: 5px 12px; background: #2563eb; color: #ffffff; text-decoration: none; border-radius: 6px; font-size: 0.82rem; font-weight: 600;">Yahoo! ↗</a>
+                    <a href="{minkabu_url}" target="_blank" style="padding: 5px 12px; background: var(--secondary-background-color, #f1f5f9); color: #2563eb; text-decoration: none; border-radius: 6px; font-size: 0.82rem; font-weight: 600; border: 1px solid #cbd5e1;">みんかぶ ↗</a>
+                </div>
             </div>
             <div style="background: rgba(100, 116, 139, 0.08); border-left: 4px solid #64748b; padding: 15px; border-radius: 6px; margin-bottom: 15px;">
                 <strong>現在、株主優待制度は実施されていません。</strong><br>
@@ -3295,19 +3309,15 @@ def render_yutai_section(ticker, name, metrics):
                 ※この企業は現物優待ではなく、配当金（予想配当利回り: <strong style="color: #2563eb;">{div_y_str}</strong>）や事業投資・成長による企業価値向上を軸に株主還元を行っています。
                 </span>
             </div>
-            <div style="margin-top: 15px;">
-                <a href="{url}" target="_blank" style="display: inline-block; padding: 8px 16px; background: var(--secondary-background-color, #f1f5f9); color: #2563eb; text-decoration: none; border-radius: 6px; font-size: 0.9rem; font-weight: 600; border: 1px solid #cbd5e1;">
-                    🔗 Yahoo!ファイナンス公式優待ページで確認する ↗
-                </a>
-            </div>
         </div>
         """, unsafe_allow_html=True)
         return
 
     record_date = yutai_data.get('record_date', '随時確認')
     unit_shares = yutai_data.get('unit_shares', '100株')
-    genre = yutai_data.get('genre', '自社商品・サービス')
-    content_lines = yutai_data.get('content', [])
+    genre = yutai_data.get('genre', '自社商品・優待券')
+    sections = yutai_data.get('sections', [])
+    notes = yutai_data.get('notes', [])
 
     # Calculate minimum investment amount for 1 unit
     unit_num = 100
@@ -3318,17 +3328,18 @@ def render_yutai_section(ticker, name, metrics):
         unit_num = 100
     cur_price = metrics.get('cur_price') or metrics.get('price') or 0
     min_invest = cur_price * unit_num if cur_price else 0
-    yahoo_url = f"https://finance.yahoo.co.jp/quote/{code}/incentive"
-    minkabu_url = f"https://minkabu.jp/stock/{code}/yutai"
+    min_invest_str = f"約 {min_invest:,.0f} 円" if min_invest else f"株価基準 ({unit_shares})"
 
-    st.markdown(f"""
-    <div class="card" style="padding: 25px; line-height: 1.8;">
-        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;">
+    # Build entire HTML card
+    card_html = f"""
+    <div class="card" style="padding: 24px; line-height: 1.8;">
+        <!-- Header -->
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; flex-wrap: wrap; gap: 10px; padding-bottom: 14px; border-bottom: 1px solid var(--border-color, #e2e8f0);">
             <div style="display: flex; align-items: center; gap: 10px;">
                 <span style="font-size: 1.6rem;">🎁</span>
                 <div>
-                    <h4 style="margin: 0; color: var(--text-color, #1e293b);">{name} ({ticker}) の株主優待制度</h4>
-                    <span style="display: inline-block; margin-top: 4px; padding: 2px 10px; background: rgba(34, 197, 94, 0.12); color: #16a34a; font-size: 0.85rem; font-weight: 700; border-radius: 12px;">優待実施企業</span>
+                    <h4 style="margin: 0; color: var(--text-color, #1e293b); font-size: 1.15rem;">{name} ({ticker}) の株主優待制度</h4>
+                    <span style="display: inline-block; margin-top: 4px; padding: 2px 10px; background: rgba(34, 197, 94, 0.12); color: #16a34a; font-size: 0.82rem; font-weight: 700; border-radius: 12px;">優待実施企業</span>
                 </div>
             </div>
             <div style="display: flex; gap: 8px;">
@@ -3341,55 +3352,51 @@ def render_yutai_section(ticker, name, metrics):
             </div>
         </div>
 
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px;">
+        <!-- 3 KPIs -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 20px;">
             <div style="background: var(--secondary-background-color, #f8fafc); padding: 12px 16px; border-radius: 8px; border: 1px solid rgba(100, 116, 139, 0.15);">
-                <div style="font-size: 0.8rem; color: #64748b; font-weight: 600;">優待の種類・ジャンル</div>
-                <div style="font-size: 1.05rem; font-weight: 700; color: var(--text-color, #1e293b); margin-top: 4px;">{genre}</div>
+                <div style="font-size: 0.8rem; color: #64748b; font-weight: 600;">優待の種類</div>
+                <div style="font-size: 1.02rem; font-weight: 700; color: var(--text-color, #1e293b); margin-top: 4px;">{genre}</div>
             </div>
             <div style="background: var(--secondary-background-color, #f8fafc); padding: 12px 16px; border-radius: 8px; border: 1px solid rgba(100, 116, 139, 0.15);">
-                <div style="font-size: 0.8rem; color: #64748b; font-weight: 600;">権利確定月 / 最終日</div>
-                <div style="font-size: 1.05rem; font-weight: 700; color: #2563eb; margin-top: 4px;">{record_date}</div>
+                <div style="font-size: 0.8rem; color: #64748b; font-weight: 600;">権利確定月 / 基準日</div>
+                <div style="font-size: 1.02rem; font-weight: 700; color: #2563eb; margin-top: 4px;">{record_date}</div>
             </div>
             <div style="background: var(--secondary-background-color, #f8fafc); padding: 12px 16px; border-radius: 8px; border: 1px solid rgba(100, 116, 139, 0.15);">
                 <div style="font-size: 0.8rem; color: #64748b; font-weight: 600;">優待獲得の最低投資額 ({unit_shares})</div>
-                <div style="font-size: 1.05rem; font-weight: 700; color: #16a34a; margin-top: 4px;">約 {format_price(min_invest, ticker)}</div>
+                <div style="font-size: 1.02rem; font-weight: 700; color: #16a34a; margin-top: 4px;">{min_invest_str}</div>
             </div>
         </div>
 
-        <h5 style="margin: 20px 0 12px 0; color: var(--text-color, #1e293b); border-bottom: 2px solid rgba(100, 116, 139, 0.2); padding-bottom: 6px;">
+        <!-- Table -->
+        <h5 style="margin: 20px 0 10px 0; color: var(--text-color, #1e293b); border-bottom: 2px solid rgba(100, 116, 139, 0.2); padding-bottom: 6px;">
             📋 優待進呈条件と内容詳細
         </h5>
-    """, unsafe_allow_html=True)
-
-    # Format structured table sections
-    sections = yutai_data.get('sections', [])
-    notes = yutai_data.get('notes', [])
+    """
 
     if sections:
         for sec in sections:
-            sec_title = sec.get('title', '').strip()
+            sec_title = sec.get('title', '株主優待進呈基準').strip()
             if not sec_title:
                 sec_title = "株主優待進呈基準"
-            st.markdown(f"<div style='font-weight: 700; color: var(--text-color, #1e293b); margin: 16px 0 8px 0; font-size: 0.98rem;'>🎁 {sec_title}</div>", unsafe_allow_html=True)
-            
-            table_html = "<table style='width: 100%; border-collapse: collapse; margin-bottom: 16px; font-size: 0.92rem; background: var(--secondary-background-color, #f8fafc); border-radius: 8px; overflow: hidden; border: 1px solid rgba(100, 116, 139, 0.15);'>"
-            table_html += "<thead><tr style='background: rgba(37, 99, 235, 0.08); border-bottom: 1px solid rgba(100, 116, 139, 0.2);'><th style='padding: 10px 16px; text-align: left; font-weight: 700; width: 35%; color: var(--text-color, #1e293b);'>保有株式数・条件</th><th style='padding: 10px 16px; text-align: left; font-weight: 700; color: var(--text-color, #1e293b);'>優待内容・進呈特典</th></tr></thead><tbody>"
+            card_html += f"<div style='font-weight: 700; color: var(--text-color, #1e293b); margin: 14px 0 6px 0; font-size: 0.95rem;'>🎁 {sec_title}</div>"
+            card_html += "<table style='width: 100%; border-collapse: collapse; margin-bottom: 14px; font-size: 0.9rem; background: var(--secondary-background-color, #f8fafc); border-radius: 8px; overflow: hidden; border: 1px solid rgba(100, 116, 139, 0.15);'>"
+            card_html += "<thead><tr style='background: rgba(37, 99, 235, 0.08); border-bottom: 1px solid rgba(100, 116, 139, 0.2);'><th style='padding: 10px 14px; text-align: left; font-weight: 700; width: 32%; color: var(--text-color, #1e293b);'>保有株式数・条件</th><th style='padding: 10px 14px; text-align: left; font-weight: 700; color: var(--text-color, #1e293b);'>優待内容・進呈特典</th></tr></thead><tbody>"
             for r in sec.get('rows', []):
                 cond = r.get('condition', '')
                 cnt = r.get('content', '')
-                table_html += f"<tr style='border-bottom: 1px solid rgba(100, 116, 139, 0.1);'><td style='padding: 10px 16px; font-weight: 600; color: #2563eb;'>{cond}</td><td style='padding: 10px 16px; color: var(--text-color, #334155); font-weight: 500;'>{cnt}</td></tr>"
-            table_html += "</tbody></table>"
-            st.markdown(table_html, unsafe_allow_html=True)
+                card_html += f"<tr style='border-bottom: 1px solid rgba(100, 116, 139, 0.1);'><td style='padding: 10px 14px; font-weight: 700; color: #2563eb; vertical-align: top;'>{cond}</td><td style='padding: 10px 14px; color: var(--text-color, #334155); font-weight: 500; vertical-align: top; line-height: 1.6;'>{cnt}</td></tr>"
+            card_html += "</tbody></table>"
 
     if notes:
-        notes_html = "<div style='background: rgba(100, 116, 139, 0.06); padding: 14px 18px; border-radius: 8px; margin-top: 14px; font-size: 0.86rem; color: #64748b; line-height: 1.7;'>"
-        notes_html += "<div style='font-weight: 700; margin-bottom: 6px; color: var(--text-color, #475569);'>⚠️ 特記事項・継続保有条件</div>"
+        card_html += "<div style='background: rgba(100, 116, 139, 0.06); padding: 12px 16px; border-radius: 8px; margin-top: 14px; font-size: 0.85rem; color: #64748b; line-height: 1.7;'>"
+        card_html += "<div style='font-weight: 700; margin-bottom: 4px; color: var(--text-color, #475569);'>⚠️ 特記事項・継続保有条件</div>"
         for n in notes:
-            notes_html += f"<div style='margin: 3px 0;'>{n}</div>"
-        notes_html += "</div>"
-        st.markdown(notes_html, unsafe_allow_html=True)
+            card_html += f"<div style='margin: 2px 0;'>{n}</div>"
+        card_html += "</div>"
 
-    st.markdown("</div>", unsafe_allow_html=True)
+    card_html += "</div>"
+    st.markdown(card_html, unsafe_allow_html=True)
 
 def render_detail_dashboard(selected_ticker, selected_name, raw_analysis, key_suffix="", is_practice=False):
     # Get owned stock details for the dashboard
