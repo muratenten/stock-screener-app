@@ -1355,7 +1355,9 @@ def _fetch_raw_ticker_info(ticker):
             'opMargin': op_margin,
             'totalCash': total_cash,
             'totalDebt': total_debt,
-            'debtToEquity': debt_equity
+            'debtToEquity': debt_equity,
+            'revenueGrowth': raw_info.get('revenueGrowth'),
+            'earningsGrowth': raw_info.get('earningsGrowth') or raw_info.get('earningsQuarterlyGrowth')
         }
         
         def safe_float(val):
@@ -1383,6 +1385,8 @@ def _fetch_raw_ticker_info(ticker):
         needed['totalCash'] = safe_float(needed['totalCash'])
         needed['totalDebt'] = safe_float(needed['totalDebt'])
         needed['debtToEquity'] = safe_float(needed['debtToEquity'])
+        needed['revenueGrowth'] = safe_float(needed['revenueGrowth'])
+        needed['earningsGrowth'] = safe_float(needed['earningsGrowth'])
         
         # Adjust ROE (fraction to % value)
         if needed['returnOnEquity'] is not None:
@@ -1815,11 +1819,13 @@ def evaluate_stock(ticker, df, info=None):
     
     rev_growth = safe_float(info.get('revenueGrowth'))
     if rev_growth is not None:
-        rev_growth = rev_growth * 100.0
+        if abs(rev_growth) <= 10.0:
+            rev_growth = rev_growth * 100.0
         
     eps_growth = safe_float(info.get('earningsGrowth'))
     if eps_growth is not None:
-        eps_growth = eps_growth * 100.0
+        if abs(eps_growth) <= 10.0:
+            eps_growth = eps_growth * 100.0
         
     metrics = {
         'price': close.iloc[-1],
