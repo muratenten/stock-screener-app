@@ -634,28 +634,40 @@ st.markdown(f"""
         border: 1px solid var(--border-color) !important;
     }}
     
-    /* Fix multiselect tag (pill) readability with high specificity */
+    /* Fix multiselect tag (pill) readability: bright blue background and crisp white text */
     div[data-baseweb="select"] [data-baseweb="tag"],
     div[data-baseweb="tag"],
     span[data-baseweb="tag"],
-    [data-testid="stMultiSelectTag"] {{
-        background-color: {tag_bg} !important;
-        border: 1px solid {tag_border} !important;
+    [data-testid="stMultiSelectTag"],
+    .stMultiSelect [data-baseweb="tag"],
+    .stMultiSelect span[data-baseweb="tag"] {{
+        background-color: #2563eb !important;
+        background: #2563eb !important;
+        border: 1px solid #1d4ed8 !important;
         border-radius: 6px !important;
     }}
     div[data-baseweb="select"] [data-baseweb="tag"] *,
     div[data-baseweb="tag"] *,
     span[data-baseweb="tag"] *,
-    [data-testid="stMultiSelectTag"] * {{
-        color: {tag_text} !important;
+    [data-testid="stMultiSelectTag"] *,
+    .stMultiSelect [data-baseweb="tag"] * {{
+        color: #ffffff !important;
+        fill: #ffffff !important;
         font-weight: 600 !important;
     }}
     div[data-baseweb="select"] [data-baseweb="tag"] svg,
     div[data-baseweb="tag"] svg,
     span[data-baseweb="tag"] svg,
-    [data-testid="stMultiSelectTag"] svg {{
-        fill: {tag_text} !important;
-        color: {tag_text} !important;
+    [data-testid="stMultiSelectTag"] svg,
+    .stMultiSelect [data-baseweb="tag"] svg,
+    div[data-baseweb="select"] [data-baseweb="tag"] path,
+    div[data-baseweb="tag"] path,
+    span[data-baseweb="tag"] path,
+    [data-testid="stMultiSelectTag"] path,
+    .stMultiSelect [data-baseweb="tag"] path {{
+        fill: #ffffff !important;
+        color: #ffffff !important;
+        stroke: #ffffff !important;
     }}
     
     /* Dropdown menu list styling */
