@@ -5730,23 +5730,16 @@ with tab_screen:
                 min_dividend_val = float(st.session_state.get("scr_min_dividend", 3.0))
             filter_yutai = st.checkbox("🎁 株主優待実施銘柄 のみ", key="scr_filter_yutai_mobile")
             if filter_yutai:
-                st.markdown("""
-                <style>
-                [data-baseweb="tag"], [data-baseweb="tag"] *, span[data-baseweb="tag"], span[data-baseweb="tag"] * {
-                    background-color: #2563eb !important;
-                    color: #ffffff !important;
-                    fill: #ffffff !important;
-                    stroke: #ffffff !important;
-                    -webkit-text-fill-color: #ffffff !important;
-                    font-weight: 700 !important;
-                }
-                [data-baseweb="tag"] {
-                    border: 1px solid #1d4ed8 !important;
-                    border-radius: 6px !important;
-                }
-                </style>
-                """, unsafe_allow_html=True)
-                selected_yutai_cats = st.multiselect("   ↳ 優待ジャンル (未選択で全対象)", YUTAI_CATEGORIES, default=st.session_state.get("scr_selected_yutai_cats", []), key="scr_selected_yutai_cats_mobile", help="複数選択可能。特定の優待ジャンル（食事券、QUOカード等）を絞り込めます。")
+                selected_yutai_cats = st.pills(
+                    "↳ 優待ジャンル指定 (複数選択可 / 未選択で全対象):",
+                    YUTAI_CATEGORIES,
+                    selection_mode="multi",
+                    default=st.session_state.get("scr_selected_yutai_cats", []),
+                    key="scr_selected_yutai_cats_mobile",
+                    help="タップして優待ジャンル（食事券、QUOカード等）を絞り込めます。複数選択可能。"
+                )
+                if selected_yutai_cats is None:
+                    selected_yutai_cats = []
                 min_yutai_val = st.slider("   ↳ 最小優待利回り (%)", 0.0, 5.0, float(st.session_state.get("scr_min_yutai", 0.0)), step=0.1, format="%.1f%%", key="scr_min_yutai_mobile", help="0.0%に設定すると、金額非公表・割引券などの優待実施銘柄も含めて全抽出します。")
             else:
                 selected_yutai_cats = []
@@ -5863,23 +5856,16 @@ with tab_screen:
                     min_dividend_val = float(st.session_state.get("scr_min_dividend", 3.0))
                 filter_yutai = st.checkbox("🎁 株主優待実施銘柄 のみ", key="scr_filter_yutai")
                 if filter_yutai:
-                    st.markdown("""
-                    <style>
-                    [data-baseweb="tag"], [data-baseweb="tag"] *, span[data-baseweb="tag"], span[data-baseweb="tag"] * {
-                        background-color: #2563eb !important;
-                        color: #ffffff !important;
-                        fill: #ffffff !important;
-                        stroke: #ffffff !important;
-                        -webkit-text-fill-color: #ffffff !important;
-                        font-weight: 700 !important;
-                    }
-                    [data-baseweb="tag"] {
-                        border: 1px solid #1d4ed8 !important;
-                        border-radius: 6px !important;
-                    }
-                    </style>
-                    """, unsafe_allow_html=True)
-                    selected_yutai_cats = st.multiselect("   ↳ 優待ジャンル (未選択で全対象)", YUTAI_CATEGORIES, default=st.session_state.get("scr_selected_yutai_cats", []), key="scr_selected_yutai_cats", help="複数選択可能。特定の優待ジャンル（食事券、QUOカード等）を絞り込めます。")
+                    selected_yutai_cats = st.pills(
+                        "↳ 優待ジャンル指定 (複数選択可 / 未選択で全対象):",
+                        YUTAI_CATEGORIES,
+                        selection_mode="multi",
+                        default=st.session_state.get("scr_selected_yutai_cats", []),
+                        key="scr_selected_yutai_cats",
+                        help="タップして優待ジャンル（食事券、QUOカード等）を絞り込めます。複数選択可能。"
+                    )
+                    if selected_yutai_cats is None:
+                        selected_yutai_cats = []
                     min_yutai_val = st.slider("   ↳ 最小優待利回り (%)", 0.0, 5.0, float(st.session_state.get("scr_min_yutai", 0.0)), step=0.1, format="%.1f%%", key="scr_min_yutai", help="0.0%に設定すると、金額非公表・割引券などの優待実施銘柄も含めて全抽出します。")
                 else:
                     selected_yutai_cats = []
