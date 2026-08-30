@@ -5718,34 +5718,32 @@ with tab_screen:
         last_up_str = meta.get("last_updated", "未更新")
         total_cached = meta.get("total_tickers", len(fund_cache))
         
-        st.markdown(f"""
-        <div style="background: rgba(59, 130, 246, 0.06); border: 1px solid rgba(59, 130, 246, 0.18); border-radius: 8px; padding: 10px 14px; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
-            <div>
-                <div style="font-weight: 700; color: #2563eb; font-size: 0.88rem;">⚡ 基礎財務キャッシュ連携（最新株価連動・超高速モード）</div>
-                <div style="font-size: 0.82rem; color: var(--text-color, #475569); margin-top: 2px;">
-                    キャッシュ最終更新: <strong>{last_up_str}</strong> ({total_cached:,} 銘柄登録済) — <em>※最新株価と連動してPER・PBR・利回りをリアルタイム算出</em>
+        with st.container(border=True):
+            col_c_info, col_c_btn = st.columns([3, 1])
+            with col_c_info:
+                st.markdown(f"""
+                <div style="font-weight: 700; color: #2563eb; font-size: 0.95rem; margin-bottom: 2px;">⚡ 基礎財務キャッシュ連携（最新株価連動・超高速モード）</div>
+                <div style="font-size: 0.83rem; color: var(--text-color, #475569); line-height: 1.5;">
+                    キャッシュ最終更新: <strong>{last_up_str}</strong> ({total_cached:,} 銘柄登録済)<br>
+                    <span style="opacity: 0.8; font-size: 0.78rem;">※最新株価と連動してPER・PBR・利回りをリアルタイム高速算出</span>
                 </div>
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
+                """, unsafe_allow_html=True)
+            with col_c_btn:
+                st.markdown("<div style='margin-top: 2px;'></div>", unsafe_allow_html=True)
+                if st.button("🔄 キャッシュ最新化", key="btn_refresh_fund_cache_inside", use_container_width=True, help="全銘柄の基礎財務データ（EPS, BPS, 予想配当, ROE, 成長率等）を最新の決算データに更新します。"):
+                    with st.spinner("最新の財務データを取得・更新中..."):
+                        try:
+                            import update_fundamentals_cache
+                            update_fundamentals_cache.build_fundamentals_cache(max_workers=15)
+                            st.cache_data.clear()
+                            st.success("🎉 財務データキャッシュを最新化しました！")
+                            st.rerun()
+                        except Exception as e:
+                            st.error(f"更新エラー: {e}")
         
         st.markdown(f"**現在のスクリーニング対象候補数**: {len(filtered_pool)} 銘柄")
         
-        col_scr_run, col_scr_sync = st.columns([3, 1])
-        with col_scr_sync:
-            if st.button("🔄 財務キャッシュ最新化", key="btn_refresh_fund_cache_main", use_container_width=True, help="全銘柄の基礎財務データ（EPS, BPS, 予想配当, ROE, 成長率等）を最新の決算データに更新します。"):
-                with st.spinner("最新の財務データを取得・更新中..."):
-                    try:
-                        import update_fundamentals_cache
-                        update_fundamentals_cache.build_fundamentals_cache(max_workers=15)
-                        st.cache_data.clear()
-                        st.success("🎉 財務データキャッシュを最新化しました！")
-                        st.rerun()
-                    except Exception as e:
-                        st.error(f"更新エラー: {e}")
-        
-        with col_scr_run:
-            start_screening_clicked = st.button("スクリーニングを開始する", type="primary", use_container_width=True)
+        start_screening_clicked = st.button("スクリーニングを開始する", type="primary", use_container_width=True)
             
         # Start button
         if start_screening_clicked:
