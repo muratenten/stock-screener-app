@@ -1,8 +1,8 @@
 {
   "metadata": {
-    "last_updated": "2026-08-30 20:06:15",
-    "total_tickers": 1222,
-    "version": "3.1"
+    "last_updated": "2026-08-30 20:18:24",
+    "total_tickers": 1281,
+    "version": "4.0"
   },
   "data": {
     "1419.T": {
@@ -1187,7 +1187,7 @@
       "eps": 51.0,
       "bps": 776.259,
       "dps": 65.0,
-      "roe": 23.706,
+      "roe": 22.183098591549296,
       "op_margin": 8.55,
       "net_income": 26257999872.0,
       "total_cash": 53836001280.0,
@@ -1197,7 +1197,10 @@
       "eps_growth": 146.5,
       "sector": "Industrials",
       "industry": "Engineering & Construction",
-      "market_cap": 372752089088.0
+      "market_cap": 372752089088.0,
+      "dividend_yield": 2.66,
+      "per": 14.2,
+      "pbr": 3.15
     },
     "1938.T": {
       "ticker": "1938.T",
@@ -1478,7 +1481,7 @@
       "eps": 188.8,
       "bps": 1982.557,
       "dps": 75.0,
-      "roe": 11.124,
+      "roe": 9.615384615384617,
       "op_margin": 9.137,
       "net_income": 13116999680.0,
       "total_cash": 27431999488.0,
@@ -1488,7 +1491,10 @@
       "eps_growth": 108.3,
       "sector": "Industrials",
       "industry": "Engineering & Construction",
-      "market_cap": 156561965056.0
+      "market_cap": 156561965056.0,
+      "dividend_yield": 3.02,
+      "per": 13.0,
+      "pbr": 1.25
     },
     "1964.T": {
       "ticker": "1964.T",
@@ -1517,7 +1523,7 @@
       "eps": 358.09,
       "bps": 1974.085,
       "dps": 144.0,
-      "roe": 20.392,
+      "roe": 18.165137614678898,
       "op_margin": 11.323,
       "net_income": 9395999744.0,
       "total_cash": 25194999808.0,
@@ -1527,7 +1533,10 @@
       "eps_growth": 10.7,
       "sector": "Industrials",
       "industry": "Engineering & Construction",
-      "market_cap": 101044543488.0
+      "market_cap": 101044543488.0,
+      "dividend_yield": 3.69,
+      "per": 10.9,
+      "pbr": 1.98
     },
     "1969.T": {
       "ticker": "1969.T",
@@ -1556,7 +1565,7 @@
       "eps": 116.94,
       "bps": 1484.4,
       "dps": 80.0,
-      "roe": 8.093,
+      "roe": 8.23943661971831,
       "op_margin": 8.276,
       "net_income": 5548000256.0,
       "total_cash": 37404999680.0,
@@ -1566,7 +1575,10 @@
       "eps_growth": 10.7,
       "sector": "Industrials",
       "industry": "Engineering & Construction",
-      "market_cap": 79640133632.0
+      "market_cap": 79640133632.0,
+      "dividend_yield": 3.75,
+      "per": 14.2,
+      "pbr": 1.17
     },
     "1980.T": {
       "ticker": "1980.T",
@@ -1574,7 +1586,7 @@
       "eps": 207.28,
       "bps": 1006.684,
       "dps": 86.0,
-      "roe": 21.871,
+      "roe": 20.916030534351147,
       "op_margin": 17.727,
       "net_income": 26457999360.0,
       "total_cash": 82575998976.0,
@@ -1584,7 +1596,10 @@
       "eps_growth": -5.1,
       "sector": "Industrials",
       "industry": "Specialty Industrial Machinery",
-      "market_cap": 357083447296.0
+      "market_cap": 357083447296.0,
+      "dividend_yield": 3.08,
+      "per": 13.1,
+      "pbr": 2.74
     },
     "2001.T": {
       "ticker": "2001.T",
@@ -1592,7 +1607,7 @@
       "eps": 256.89,
       "bps": 3402.451,
       "dps": 68.0,
-      "roe": 7.795000000000001,
+      "roe": 7.5221238938053085,
       "op_margin": 4.0149998,
       "net_income": 21390000128.0,
       "total_cash": 61928001536.0,
@@ -1602,7 +1617,10 @@
       "eps_growth": -2.5,
       "sector": "Consumer Defensive",
       "industry": "Packaged Foods",
-      "market_cap": 240223141888.0
+      "market_cap": 240223141888.0,
+      "dividend_yield": 2.34,
+      "per": 11.3,
+      "pbr": 0.85
     },
     "2002.T": {
       "ticker": "2002.T",
@@ -1610,7 +1628,7 @@
       "eps": 113.31,
       "bps": 1844.727,
       "dps": 65.0,
-      "roe": 6.0960002,
+      "roe": 7.913669064748202,
       "op_margin": 5.144,
       "net_income": 30318000128.0,
       "total_cash": 94361001984.0,
@@ -1620,7 +1638,10 @@
       "eps_growth": -16.7,
       "sector": "Consumer Defensive",
       "industry": "Packaged Foods",
-      "market_cap": 569854001152.0
+      "market_cap": 569854001152.0,
+      "dividend_yield": 3.19,
+      "per": 13.9,
+      "pbr": 1.1
     },
     "1982.T": {
       "ticker": "1982.T",
@@ -1628,7 +1649,7 @@
       "eps": 199.39,
       "bps": 1749.157,
       "dps": 100.0,
-      "roe": 12.591,
+      "roe": 12.127659574468085,
       "op_margin": 12.158,
       "net_income": 9061000192.0,
       "total_cash": 33962000384.0,
@@ -1638,7 +1659,10 @@
       "eps_growth": 33.1,
       "sector": "Industrials",
       "industry": "Engineering & Construction",
-      "market_cap": 122804756480.0
+      "market_cap": 122804756480.0,
+      "dividend_yield": 3.7,
+      "per": 14.1,
+      "pbr": 1.71
     },
     "2004.T": {
       "ticker": "2004.T",
@@ -1646,7 +1670,7 @@
       "eps": 326.69,
       "bps": 4679.149,
       "dps": 140.0,
-      "roe": 7.2749999999999995,
+      "roe": 6.25,
       "op_margin": 3.7670000000000003,
       "net_income": 10604999680.0,
       "total_cash": 6054000128.0,
@@ -1656,7 +1680,10 @@
       "eps_growth": -0.3,
       "sector": "Consumer Defensive",
       "industry": "Packaged Foods",
-      "market_cap": 122025631744.0
+      "market_cap": 122025631744.0,
+      "dividend_yield": 3.73,
+      "per": 12.8,
+      "pbr": 0.8
     },
     "1979.T": {
       "ticker": "1979.T",
@@ -1664,7 +1691,7 @@
       "eps": 245.29,
       "bps": 2770.18,
       "dps": 138.0,
-      "roe": 9.6219994,
+      "roe": 10.294117647058822,
       "op_margin": 5.7740003,
       "net_income": 14787999744.0,
       "total_cash": 78845001728.0,
@@ -1674,7 +1701,10 @@
       "eps_growth": -26.5,
       "sector": "Industrials",
       "industry": "Building Products & Equipment",
-      "market_cap": 244123107328.0
+      "market_cap": 244123107328.0,
+      "dividend_yield": 3.07,
+      "per": 13.6,
+      "pbr": 1.4
     },
     "2053.T": {
       "ticker": "2053.T",
@@ -1682,7 +1712,7 @@
       "eps": 190.59,
       "bps": 2611.425,
       "dps": 76.0,
-      "roe": 11.209,
+      "roe": 9.27710843373494,
       "op_margin": 2.1919999999999997,
       "net_income": 7992999936.0,
       "total_cash": 12199000064.0,
@@ -1692,7 +1722,10 @@
       "eps_growth": 248.20000000000002,
       "sector": "Consumer Defensive",
       "industry": "Packaged Foods",
-      "market_cap": 57449934848.0
+      "market_cap": 57449934848.0,
+      "dividend_yield": 3.8,
+      "per": 8.3,
+      "pbr": 0.77
     },
     "2108.T": {
       "ticker": "2108.T",
@@ -1700,7 +1733,7 @@
       "eps": 410.62,
       "bps": 6477.941,
       "dps": 90.0,
-      "roe": 6.959,
+      "roe": 6.259541984732825,
       "op_margin": 1.555,
       "net_income": 5196000256.0,
       "total_cash": 5318000128.0,
@@ -1710,7 +1743,10 @@
       "eps_growth": 106.4,
       "sector": "Consumer Defensive",
       "industry": "Confectioners",
-      "market_cap": 63652048896.0
+      "market_cap": 63652048896.0,
+      "dividend_yield": 4.99,
+      "per": 13.1,
+      "pbr": 0.82
     },
     "2109.T": {
       "ticker": "2109.T",
@@ -1718,7 +1754,7 @@
       "eps": 126.81,
       "bps": 3633.558,
       "dps": 140.0,
-      "roe": 2.319,
+      "roe": 6.824324324324324,
       "op_margin": 8.571999499999999,
       "net_income": 4222000128.0,
       "total_cash": 31466000384.0,
@@ -1728,7 +1764,10 @@
       "eps_growth": 11.799999999999999,
       "sector": "Consumer Defensive",
       "industry": "Confectioners",
-      "market_cap": 114042372096.0
+      "market_cap": 114042372096.0,
+      "dividend_yield": 3.82,
+      "per": 14.8,
+      "pbr": 1.01
     },
     "2121.T": {
       "ticker": "2121.T",
@@ -1736,7 +1775,7 @@
       "eps": 258.12,
       "bps": 2898.162,
       "dps": 190.0,
-      "roe": 10.9239995,
+      "roe": 13.297872340425531,
       "op_margin": 11.535,
       "net_income": 21681000448.0,
       "total_cash": 109435002880.0,
@@ -1746,7 +1785,10 @@
       "eps_growth": 328.6,
       "sector": "Communication Services",
       "industry": "Electronic Gaming & Multimedia",
-      "market_cap": 234787094528.0
+      "market_cap": 234787094528.0,
+      "dividend_yield": 4.31,
+      "per": 9.4,
+      "pbr": 1.25
     },
     "2117.T": {
       "ticker": "2117.T",
@@ -1754,7 +1796,7 @@
       "eps": 197.8,
       "bps": 2367.026,
       "dps": 118.0,
-      "roe": 9.072,
+      "roe": 8.39160839160839,
       "op_margin": 10.761999999999999,
       "net_income": 6842999808.0,
       "total_cash": 10366999552.0,
@@ -1764,7 +1806,10 @@
       "eps_growth": 21.3,
       "sector": "Consumer Defensive",
       "industry": "Confectioners",
-      "market_cap": 93042974720.0
+      "market_cap": 93042974720.0,
+      "dividend_yield": 4.19,
+      "per": 14.3,
+      "pbr": 1.2
     },
     "2120.T": {
       "ticker": "2120.T",
@@ -1772,7 +1817,7 @@
       "eps": 25.81,
       "bps": 154.538,
       "dps": 13.44,
-      "roe": 11.5109995,
+      "roe": 8.870967741935484,
       "op_margin": 9.945,
       "net_income": 3124999936.0,
       "total_cash": 5509000192.0,
@@ -1782,7 +1827,10 @@
       "eps_growth": -50.5,
       "sector": "Communication Services",
       "industry": "Internet Content & Information",
-      "market_cap": 30930079744.0
+      "market_cap": 30930079744.0,
+      "dividend_yield": 2.79,
+      "per": 12.4,
+      "pbr": 1.1
     },
     "2146.T": {
       "ticker": "2146.T",
@@ -1826,7 +1874,7 @@
       "eps": 94.61,
       "bps": 465.127,
       "dps": 35.0,
-      "roe": 19.489999,
+      "roe": 29.13043478260869,
       "op_margin": -6.8870000000000005,
       "net_income": 1212999936.0,
       "total_cash": 3739000064.0,
@@ -1836,7 +1884,10 @@
       "eps_growth": null,
       "sector": "Communication Services",
       "industry": "Advertising Agencies",
-      "market_cap": 11959234560.0
+      "market_cap": 11959234560.0,
+      "dividend_yield": 3.75,
+      "per": 6.9,
+      "pbr": 2.01
     },
     "2060.T": {
       "ticker": "2060.T",
@@ -1844,7 +1895,7 @@
       "eps": 166.71,
       "bps": 1634.225,
       "dps": 52.0,
-      "roe": 10.936,
+      "roe": 10.36144578313253,
       "op_margin": 2.7290002,
       "net_income": 6501000192.0,
       "total_cash": 11875999744.0,
@@ -1854,7 +1905,10 @@
       "eps_growth": 7.3999999999999995,
       "sector": "Consumer Defensive",
       "industry": "Packaged Foods",
-      "market_cap": 53882953728.0
+      "market_cap": 53882953728.0,
+      "dividend_yield": 3.69,
+      "per": 8.3,
+      "pbr": 0.86
     },
     "2148.T": {
       "ticker": "2148.T",
@@ -1952,7 +2006,7 @@
       "eps": 39.38,
       "bps": 149.834,
       "dps": 25.0,
-      "roe": 28.750999999999998,
+      "roe": 28.22085889570552,
       "op_margin": 25.812997999999997,
       "net_income": 12999000064.0,
       "total_cash": 32927000576.0,
@@ -1962,7 +2016,10 @@
       "eps_growth": 33.800000000000004,
       "sector": "Financial Services",
       "industry": "Capital Markets",
-      "market_cap": 218293960704.0
+      "market_cap": 218293960704.0,
+      "dividend_yield": 4.21,
+      "per": 16.3,
+      "pbr": 4.6
     },
     "2170.T": {
       "ticker": "2170.T",
@@ -2826,7 +2883,8 @@
       "eps_growth": 5.1,
       "sector": "Industrials",
       "industry": "Staffing & Employment Services",
-      "market_cap": 15685422080.0
+      "market_cap": 15685422080.0,
+      "dividend_yield": 5.39
     },
     "2471.T": {
       "ticker": "2471.T",
@@ -3370,11 +3428,14 @@
     },
     "2737.T": {
       "ticker": "2737.T",
-      "name": "Tomen Devices Corporation",
-      "eps": 1472.9,
+      "name": "トーメンデバイス",
+      "eps": 4437.5,
       "bps": 10368.158,
-      "dps": 540.0,
-      "roe": 39.269,
+      "dps": 1640.0,
+      "dividend_yield": 5.13,
+      "per": 7.2,
+      "pbr": 3.08,
+      "roe": 42.78,
       "op_margin": 5.633,
       "net_income": 23264999424.0,
       "total_cash": 14204999680.0,
@@ -3805,7 +3866,7 @@
       "name": "Japan Tobacco Inc.",
       "eps": 335.59,
       "bps": 2474.856,
-      "dps": 272.0,
+      "dps": 194.0,
       "roe": 14.298001,
       "op_margin": 31.737,
       "net_income": 609960001536.0,
@@ -3816,7 +3877,8 @@
       "eps_growth": 44.6,
       "sector": "Consumer Defensive",
       "industry": "Tobacco",
-      "market_cap": 12335184871424.0
+      "market_cap": 12335184871424.0,
+      "dividend_yield": 3.91
     },
     "2884.T": {
       "ticker": "2884.T",
@@ -20627,6 +20689,578 @@
       "bps": null,
       "sector": "陸運業",
       "industry": "東証プライム"
+    },
+    "6539.T": {
+      "ticker": "6539.T",
+      "name": "ＭＳ－Ｊａｐａｎ",
+      "sector": "サービス業",
+      "industry": "東証プライム",
+      "dividend_yield": 5.5,
+      "per": 23.4,
+      "pbr": 2.96,
+      "roe": 12.649572649572649
+    },
+    "6560.T": {
+      "ticker": "6560.T",
+      "name": "エル・ティー・エス",
+      "sector": "サービス業",
+      "industry": "東証プライム",
+      "dividend_yield": 2.31,
+      "per": 7.2,
+      "pbr": 1.52,
+      "roe": 21.11111111111111
+    },
+    "6564.T": {
+      "ticker": "6564.T",
+      "name": "ミダックホールディングス",
+      "sector": "サービス業",
+      "industry": "東証プライム",
+      "dividend_yield": 0.97,
+      "per": 17.1,
+      "pbr": 3.12,
+      "roe": 18.24561403508772
+    },
+    "6584.T": {
+      "ticker": "6584.T",
+      "name": "三櫻工業",
+      "sector": "輸送用機器",
+      "industry": "東証プライム",
+      "dividend_yield": 3.57,
+      "per": 18.7,
+      "pbr": 0.58,
+      "roe": 3.1016042780748663
+    },
+    "6590.T": {
+      "ticker": "6590.T",
+      "name": "芝浦メカトロニクス",
+      "sector": "電気機器",
+      "industry": "東証プライム",
+      "dividend_yield": 1.58,
+      "per": 22.3,
+      "pbr": 4.95,
+      "roe": 22.19730941704036
+    },
+    "6594.T": {
+      "ticker": "6594.T",
+      "name": "ニデック",
+      "sector": "電気機器",
+      "industry": "東証プライム",
+      "pbr": 1.71
+    },
+    "6615.T": {
+      "ticker": "6615.T",
+      "name": "ユー・エム・シー・エレクトロニクス",
+      "sector": "電気機器",
+      "industry": "東証プライム",
+      "pbr": 0.6
+    },
+    "6616.T": {
+      "ticker": "6616.T",
+      "name": "トレックス・セミコンダクター",
+      "sector": "電気機器",
+      "industry": "東証プライム",
+      "dividend_yield": 2.9,
+      "per": 12.8,
+      "pbr": 1.05,
+      "roe": 8.203125
+    },
+    "6620.T": {
+      "ticker": "6620.T",
+      "name": "宮越ホールディングス",
+      "sector": "不動産業",
+      "industry": "東証プライム",
+      "per": 84.7,
+      "pbr": 1.13,
+      "roe": 1.3341204250295158
+    },
+    "6630.T": {
+      "ticker": "6630.T",
+      "name": "ヤーマン",
+      "sector": "電気機器",
+      "industry": "東証プライム",
+      "dividend_yield": 1.12,
+      "per": 125.0,
+      "pbr": 1.81,
+      "roe": 1.448
+    },
+    "6632.T": {
+      "ticker": "6632.T",
+      "name": "ＪＶＣケンウッド",
+      "sector": "電気機器",
+      "industry": "東証プライム",
+      "dividend_yield": 1.93,
+      "per": 9.8,
+      "pbr": 1.01,
+      "roe": 10.30612244897959
+    },
+    "6674.T": {
+      "ticker": "6674.T",
+      "name": "ジーエス・ユアサ　コーポレーション",
+      "sector": "電気機器",
+      "industry": "東証プライム",
+      "dividend_yield": 1.86,
+      "per": 13.4,
+      "pbr": 1.34,
+      "roe": 10.0
+    },
+    "6706.T": {
+      "ticker": "6706.T",
+      "name": "電気興業",
+      "sector": "電気機器",
+      "industry": "東証プライム",
+      "dividend_yield": 3.14,
+      "per": 12.7,
+      "pbr": 0.78,
+      "roe": 6.141732283464568
+    },
+    "6707.T": {
+      "ticker": "6707.T",
+      "name": "サンケン電気",
+      "sector": "電気機器",
+      "industry": "東証プライム",
+      "per": 147.0,
+      "pbr": 1.24,
+      "roe": 0.8435374149659863
+    },
+    "6723.T": {
+      "ticker": "6723.T",
+      "name": "ルネサスエレクトロニクス",
+      "sector": "電気機器",
+      "industry": "東証プライム",
+      "pbr": 2.19
+    },
+    "6724.T": {
+      "ticker": "6724.T",
+      "name": "セイコーエプソン",
+      "sector": "電気機器",
+      "industry": "東証プライム",
+      "dividend_yield": 2.49,
+      "per": 14.9,
+      "pbr": 1.19,
+      "roe": 7.986577181208053
+    },
+    "6741.T": {
+      "ticker": "6741.T",
+      "name": "日本信号",
+      "sector": "電気機器",
+      "industry": "東証プライム",
+      "dividend_yield": 2.99,
+      "per": 11.7,
+      "pbr": 1.03,
+      "roe": 8.803418803418804
+    },
+    "6745.T": {
+      "ticker": "6745.T",
+      "name": "ホーチキ",
+      "sector": "電気機器",
+      "industry": "東証プライム",
+      "dividend_yield": 2.01,
+      "per": 16.5,
+      "pbr": 2.19,
+      "roe": 13.272727272727272
+    },
+    "6752.T": {
+      "ticker": "6752.T",
+      "name": "パナソニック　ホールディングス",
+      "sector": "電気機器",
+      "industry": "東証プライム",
+      "dividend_yield": 1.22,
+      "per": 22.9,
+      "pbr": 1.91,
+      "roe": 8.340611353711791
+    },
+    "6779.T": {
+      "ticker": "6779.T",
+      "name": "日本電波工業",
+      "sector": "電気機器",
+      "industry": "東証プライム",
+      "dividend_yield": 1.09,
+      "per": 19.6,
+      "pbr": 1.91,
+      "roe": 9.744897959183673
+    },
+    "6785.T": {
+      "ticker": "6785.T",
+      "name": "鈴木",
+      "sector": "電気機器",
+      "industry": "東証プライム",
+      "dividend_yield": 3.84,
+      "per": 10.5,
+      "pbr": 1.31,
+      "roe": 12.476190476190476
+    },
+    "6804.T": {
+      "ticker": "6804.T",
+      "name": "ホシデン",
+      "sector": "電気機器",
+      "industry": "東証プライム",
+      "dividend_yield": 2.82,
+      "per": 10.8,
+      "pbr": 0.87,
+      "roe": 8.055555555555555
+    },
+    "6806.T": {
+      "ticker": "6806.T",
+      "name": "ヒロセ電機",
+      "sector": "電気機器",
+      "industry": "東証プライム",
+      "dividend_yield": 2.0,
+      "per": 24.3,
+      "pbr": 2.24,
+      "roe": 9.218106995884774
+    },
+    "6810.T": {
+      "ticker": "6810.T",
+      "name": "マクセル",
+      "sector": "電気機器",
+      "industry": "東証プライム",
+      "dividend_yield": 2.23,
+      "per": 13.8,
+      "pbr": 1.02,
+      "roe": 7.391304347826087
+    },
+    "6820.T": {
+      "ticker": "6820.T",
+      "name": "アイコム",
+      "sector": "電気機器",
+      "industry": "東証プライム",
+      "dividend_yield": 2.32,
+      "per": 17.4,
+      "pbr": 0.73,
+      "roe": 4.195402298850575
+    },
+    "7888.T": {
+      "ticker": "7888.T",
+      "name": "三光合成",
+      "sector": "化学",
+      "industry": "東証プライム",
+      "dividend_yield": 3.52,
+      "per": 6.2,
+      "pbr": 0.8,
+      "roe": 12.903225806451612
+    },
+    "8242.T": {
+      "ticker": "8242.T",
+      "name": "エイチ・ツー・オー　リテイリング",
+      "sector": "小売業",
+      "industry": "東証プライム",
+      "dividend_yield": 1.58,
+      "per": 14.9,
+      "pbr": 1.13,
+      "roe": 7.583892617449664
+    },
+    "8253.T": {
+      "ticker": "8253.T",
+      "name": "クレディセゾン",
+      "sector": "その他金融業",
+      "industry": "東証プライム",
+      "dividend_yield": 3.37,
+      "per": 9.0,
+      "pbr": 0.88,
+      "roe": 9.777777777777779
+    },
+    "8267.T": {
+      "ticker": "8267.T",
+      "name": "イオン",
+      "sector": "小売業",
+      "industry": "東証プライム",
+      "dividend_yield": 1.1,
+      "per": 51.5,
+      "pbr": 3.11,
+      "roe": 6.03883495145631
+    },
+    "8273.T": {
+      "ticker": "8273.T",
+      "name": "イズミ",
+      "sector": "小売業",
+      "industry": "東証プライム",
+      "dividend_yield": 2.88,
+      "per": 12.6,
+      "pbr": 0.74,
+      "roe": 5.873015873015873
+    },
+    "8276.T": {
+      "ticker": "8276.T",
+      "name": "平和堂",
+      "sector": "小売業",
+      "industry": "東証プライム",
+      "dividend_yield": 2.46,
+      "per": 13.6,
+      "pbr": 0.68,
+      "roe": 5.0
+    },
+    "8281.T": {
+      "ticker": "8281.T",
+      "name": "ゼビオホールディングス",
+      "sector": "小売業",
+      "industry": "東証プライム",
+      "dividend_yield": 2.97,
+      "per": 6.5,
+      "pbr": 0.41,
+      "roe": 6.3076923076923075
+    },
+    "8283.T": {
+      "ticker": "8283.T",
+      "name": "ＰＡＬＴＡＣ",
+      "sector": "卸売業",
+      "industry": "東証プライム"
+    },
+    "8304.T": {
+      "ticker": "8304.T",
+      "name": "あおぞら銀行",
+      "sector": "銀行業",
+      "industry": "東証プライム",
+      "dividend_yield": 2.92,
+      "per": 17.6,
+      "pbr": 0.95,
+      "roe": 5.3977272727272725
+    },
+    "8308.T": {
+      "ticker": "8308.T",
+      "name": "りそなホールディングス",
+      "sector": "銀行業",
+      "industry": "東証プライム",
+      "dividend_yield": 1.47,
+      "per": 17.0,
+      "pbr": 1.87,
+      "roe": 11.0
+    },
+    "8331.T": {
+      "ticker": "8331.T",
+      "name": "千葉銀行",
+      "sector": "銀行業",
+      "industry": "東証プライム",
+      "dividend_yield": 2.27,
+      "per": 18.2,
+      "pbr": 1.51,
+      "roe": 8.296703296703297
+    },
+    "8334.T": {
+      "ticker": "8334.T",
+      "name": "群馬銀行",
+      "sector": "銀行業",
+      "industry": "東証プライム",
+      "dividend_yield": 2.47,
+      "per": 16.5,
+      "pbr": 1.69,
+      "roe": 10.242424242424242
+    },
+    "8337.T": {
+      "ticker": "8337.T",
+      "name": "千葉興業銀行",
+      "sector": "銀行業",
+      "industry": "東証プライム",
+      "dividend_yield": 0.72,
+      "per": 18.0,
+      "pbr": 1.04,
+      "roe": 5.777777777777779
+    },
+    "8338.T": {
+      "ticker": "8338.T",
+      "name": "筑波銀行",
+      "sector": "銀行業",
+      "industry": "東証プライム",
+      "dividend_yield": 0.66,
+      "per": 9.4,
+      "pbr": 0.88,
+      "roe": 9.361702127659575
+    },
+    "8341.T": {
+      "ticker": "8341.T",
+      "name": "七十七銀行",
+      "sector": "銀行業",
+      "industry": "東証プライム",
+      "dividend_yield": 2.63,
+      "per": 14.3,
+      "pbr": 1.16,
+      "roe": 8.11188811188811
+    },
+    "8344.T": {
+      "ticker": "8344.T",
+      "name": "山形銀行",
+      "sector": "銀行業",
+      "industry": "東証プライム",
+      "dividend_yield": 2.07,
+      "per": 19.6,
+      "pbr": 0.94,
+      "roe": 4.795918367346938
+    },
+    "8354.T": {
+      "ticker": "8354.T",
+      "name": "ふくおかフィナンシャルグループ",
+      "sector": "銀行業",
+      "industry": "東証プライム",
+      "dividend_yield": 2.68,
+      "per": 14.8,
+      "pbr": 1.32,
+      "roe": 8.91891891891892
+    },
+    "8358.T": {
+      "ticker": "8358.T",
+      "name": "スルガ銀行",
+      "sector": "銀行業",
+      "industry": "東証プライム",
+      "dividend_yield": 2.01,
+      "per": 15.8,
+      "pbr": 1.53,
+      "roe": 9.683544303797468
+    },
+    "8360.T": {
+      "ticker": "8360.T",
+      "name": "山梨中央銀行",
+      "sector": "銀行業",
+      "industry": "東証プライム",
+      "dividend_yield": 2.2,
+      "per": 18.2,
+      "pbr": 0.95,
+      "roe": 5.21978021978022
+    },
+    "8362.T": {
+      "ticker": "8362.T",
+      "name": "福井銀行",
+      "sector": "銀行業",
+      "industry": "東証プライム",
+      "dividend_yield": 2.08,
+      "per": 19.0,
+      "pbr": 1.05,
+      "roe": 5.526315789473685
+    },
+    "8364.T": {
+      "ticker": "8364.T",
+      "name": "清水銀行",
+      "sector": "銀行業",
+      "industry": "東証プライム",
+      "dividend_yield": 1.87,
+      "per": 14.6,
+      "pbr": 0.45,
+      "roe": 3.082191780821918
+    },
+    "8366.T": {
+      "ticker": "8366.T",
+      "name": "滋賀銀行",
+      "sector": "銀行業",
+      "industry": "東証プライム",
+      "dividend_yield": 1.77,
+      "per": 22.7,
+      "pbr": 1.0,
+      "roe": 4.405286343612335
+    },
+    "8368.T": {
+      "ticker": "8368.T",
+      "name": "百五銀行",
+      "sector": "銀行業",
+      "industry": "東証プライム",
+      "dividend_yield": 1.72,
+      "per": 20.4,
+      "pbr": 1.13,
+      "roe": 5.53921568627451
+    },
+    "8370.T": {
+      "ticker": "8370.T",
+      "name": "紀陽銀行",
+      "sector": "銀行業",
+      "industry": "東証プライム",
+      "dividend_yield": 3.06,
+      "per": 13.1,
+      "pbr": 1.33,
+      "roe": 10.15267175572519
+    },
+    "8381.T": {
+      "ticker": "8381.T",
+      "name": "山陰合同銀行",
+      "sector": "銀行業",
+      "industry": "東証プライム",
+      "dividend_yield": 2.59,
+      "per": 15.4,
+      "pbr": 1.21,
+      "roe": 7.857142857142857
+    },
+    "8386.T": {
+      "ticker": "8386.T",
+      "name": "百十四銀行",
+      "sector": "銀行業",
+      "industry": "東証プライム",
+      "dividend_yield": 2.23,
+      "per": 16.9,
+      "pbr": 0.91,
+      "roe": 5.384615384615385
+    },
+    "8388.T": {
+      "ticker": "8388.T",
+      "name": "阿波銀行",
+      "sector": "銀行業",
+      "industry": "東証プライム",
+      "dividend_yield": 1.86,
+      "per": 22.5,
+      "pbr": 0.96,
+      "roe": 4.266666666666667
+    },
+    "8392.T": {
+      "ticker": "8392.T",
+      "name": "大分銀行",
+      "sector": "銀行業",
+      "industry": "東証プライム",
+      "dividend_yield": 1.72,
+      "per": 16.9,
+      "pbr": 0.83,
+      "roe": 4.9112426035502965
+    },
+    "8393.T": {
+      "ticker": "8393.T",
+      "name": "宮崎銀行",
+      "sector": "銀行業",
+      "industry": "東証プライム",
+      "dividend_yield": 2.2,
+      "per": 14.7,
+      "pbr": 0.92,
+      "roe": 6.258503401360545
+    },
+    "8395.T": {
+      "ticker": "8395.T",
+      "name": "佐賀銀行",
+      "sector": "銀行業",
+      "industry": "東証プライム",
+      "dividend_yield": 1.66,
+      "per": 12.0,
+      "pbr": 0.85,
+      "roe": 7.083333333333333
+    },
+    "8418.T": {
+      "ticker": "8418.T",
+      "name": "山口フィナンシャルグループ",
+      "sector": "銀行業",
+      "industry": "東証プライム",
+      "dividend_yield": 3.0,
+      "per": 14.3,
+      "pbr": 0.94,
+      "roe": 6.573426573426573
+    },
+    "8424.T": {
+      "ticker": "8424.T",
+      "name": "芙蓉総合リース",
+      "sector": "その他金融業",
+      "industry": "東証プライム",
+      "dividend_yield": 3.89,
+      "per": 8.3,
+      "pbr": 0.78,
+      "roe": 9.397590361445783
+    },
+    "8473.T": {
+      "ticker": "8473.T",
+      "name": "ＳＢＩホールディングス",
+      "sector": "証券、商品先物取引業",
+      "industry": "東証プライム",
+      "pbr": 1.19
+    },
+    "8524.T": {
+      "ticker": "8524.T",
+      "name": "北洋銀行",
+      "sector": "銀行業",
+      "industry": "東証プライム",
+      "dividend_yield": 2.45,
+      "per": 16.6,
+      "pbr": 1.24,
+      "roe": 7.469879518072288
     }
   }
 }

@@ -5935,8 +5935,8 @@ with tab_screen:
                         continue
                     technically_passed.append(ticker)
 
-                # Only fetch from network for tickers missing in local cache or having empty cache
-                needed_fetch = [t for t in technically_passed if t not in fund_cache or (fund_cache[t].get('eps') is None and fund_cache[t].get('per') is None and fund_cache[t].get('bps') is None)]
+                # Only fetch from network for tickers missing in local cache or having empty cache/missing dividend yield
+                needed_fetch = [t for t in technically_passed if t not in fund_cache or fund_cache[t].get('dividend_yield') is None or (fund_cache[t].get('eps') is None and fund_cache[t].get('per') is None)]
                 fetched_infos = parallel_fetch_ticker_infos(needed_fetch, max_workers=15) if needed_fetch else {}
                 
                 # 3. Analyze each ticker
@@ -5975,7 +5975,7 @@ with tab_screen:
                         
                     # 2. Use cached fundamentals with real-time recalculation (Instantaneous!)
                     cached_data = fund_cache.get(ticker)
-                    if cached_data is not None and (cached_data.get('eps') is not None or cached_data.get('bps') is not None or cached_data.get('per') is not None):
+                    if cached_data is not None and cached_data.get('dividend_yield') is not None:
                         analysis = evaluate_stock(ticker, df, cached_fund=cached_data)
                     else:
                         info = fetched_infos.get(ticker) or get_ticker_info(ticker)
