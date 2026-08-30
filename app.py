@@ -575,7 +575,7 @@ st.markdown(f"""
         background: var(--background-color) !important;
     }}
     
-    /* Native Streamlit Primary Buttons (High Visibility Vibrant Blue) */
+    /* Native Streamlit Primary Buttons (Flat Clean Blue, No Shadows) */
     [data-testid="stBaseButton-primary"],
     button[data-testid="stBaseButton-primary"],
     div.stButton > button[kind="primary"],
@@ -583,36 +583,36 @@ st.markdown(f"""
     div.stButton > button[data-testid="stBaseButton-primary"],
     div.stButton > button.st-emotion-cache-16idsys,
     div.stButton > button.st-emotion-cache-1f81d1z {{
-        background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%) !important;
         background-color: #2563eb !important;
+        background: #2563eb !important;
         color: #ffffff !important;
-        font-weight: 700 !important;
-        font-size: 1.08rem !important;
-        letter-spacing: 0.02em !important;
+        font-weight: 600 !important;
+        font-size: 1.02rem !important;
         border: none !important;
-        border-radius: 12px !important;
-        box-shadow: 0 4px 14px rgba(37, 99, 235, 0.4) !important;
-        transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
-        padding: 0.65rem 1.5rem !important;
+        border-radius: 8px !important;
+        box-shadow: none !important;
+        outline: none !important;
+        transition: background-color 0.15s ease !important;
+        padding: 0.6rem 1.4rem !important;
     }}
     [data-testid="stBaseButton-primary"]:hover,
     button[data-testid="stBaseButton-primary"]:hover,
     div.stButton > button[kind="primary"]:hover,
     div.stButton > button[type="primary"]:hover,
     div.stButton > button[data-testid="stBaseButton-primary"]:hover {{
-        background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%) !important;
         background-color: #1d4ed8 !important;
+        background: #1d4ed8 !important;
         color: #ffffff !important;
-        box-shadow: 0 6px 20px rgba(37, 99, 235, 0.55) !important;
-        transform: translateY(-2px) !important;
+        box-shadow: none !important;
+        transform: none !important;
     }}
     [data-testid="stBaseButton-primary"] p,
     button[data-testid="stBaseButton-primary"] p,
     div.stButton > button[kind="primary"] p,
     div.stButton > button[type="primary"] p {{
         color: #ffffff !important;
-        font-weight: 700 !important;
-        font-size: 1.08rem !important;
+        font-weight: 600 !important;
+        font-size: 1.02rem !important;
     }}
     
     /* Text Inputs, Number Inputs, Date Inputs, Textareas */
