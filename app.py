@@ -5892,24 +5892,86 @@ with tab_screen:
             else:
                 st.success(f"条件に合致する銘柄が {len(results)} 件検出されました！ (スコア順で並び替えています)")
                 
-                with st.expander("📖 良い銘柄を見極めるための目安数値・判断基準ガイド（PER・PBR・ROE・配当・成長率など）", expanded=False):
+                with st.expander("📖 良い銘柄を見極めるための詳細ガイド（各指標の役割と判断基準）", expanded=False):
                     st.markdown("""
-                    株式投資で「優良銘柄（お宝株）」を探す際の目安となる数値基準一覧です。スクリーニング結果の比較にご活用ください。
-
-                    | 指標名 | 意味（何を見る指標か） | 🟢 良い銘柄の目安数値 | 見方と投資判断のポイント |
-                    | :--- | :--- | :--- | :--- |
-                    | **PER (株価収益率)** | 稼ぐ力（利益）に対する割安度 | **15倍 未満** <br><span style="font-size:0.8rem; color:#16a34a;">(10倍以下は超割安)</span> | 投資元本を会社の純利益で回収できる年数。15倍以下は割安でお買い得。成長株（グロース）は30倍以上になることも。 |
-                    | **PBR (株価純資産倍率)** | 会社の財産（純資産）に対する割安度 | **1.0倍 未満** <br><span style="font-size:0.8rem; color:#16a34a;">(0.8倍以下は超割安)</span> | 会社が解散した時の財産価値。1.0倍未満は「会社の純資産より株価が安い」状態（東証も改善要請中）。 |
-                    | **ROE (自己資本利益率)** | 預かったお金を増やす上手さ | **8% 〜 10% 以上** | 株主資本を使ってどれだけ効率よく利益を生み出しているか（資本効率の高さ）。10%以上は優良企業。 |
-                    | **配当利回り** | 年間の現金配当リターン | **3.0% 〜 4.0% 以上** | 株価に対する年間配当の割合。3%以上は高配当株と呼ばれ、下落相場でも株価の下値が堅い。 |
-                    | **売上高成長率** | 本業のビジネス規模の拡大スピード | **前年比 +10% 以上** | 会社の売上が前年と比べて拡大しているスピード。2桁成長（+10%以上）は事業拡大の証。 |
-                    | **EPS成長率** | 1株あたり純利益の伸び率 | **前年比 +15% 以上** | 1株あたりの最終利益の成長率。株価の上昇トレンドに最も直結しやすい重要指標。 |
-                    | **営業利益率** | 本業の儲かりやすさ（利益の質） | **8% 〜 10% 以上** | 売上高に対してどれだけ本業で利益が残るか。10%超えは業界内での高い競争力を示す。 |
-
-                    **🎯 スクリーニングでの組み合わせのコツ**:
-                    * **堅実な高配当・割安バリュー投資**: `PER < 15倍` ＋ `PBR < 1.0倍` ＋ `配当利回り >= 3%` ＋ `ROE >= 8%`
-                    * **株価上昇を狙う成長株投資**: `売上高成長率 >= 10%` ＋ `EPS成長率 >= 15%` ＋ `ROE >= 10%` ＋ `上昇トレンド`
-                    """)
+                    <div style="overflow-x: auto; font-size: 0.88rem; line-height: 1.6;">
+                        <p style="margin-top:0; color: var(--text-color, #1e293b);">株式投資で「優良銘柄（お宝株）」を探す際の目安となる数値基準一覧です。スクリーニング結果の比較にご活用ください。</p>
+                        <table style="width: 100%; border-collapse: collapse; text-align: left; margin-bottom: 12px;">
+                            <thead>
+                                <tr style="border-bottom: 2px solid rgba(100, 116, 139, 0.2); color: var(--text-color, #1e293b);">
+                                    <th style="padding: 8px 6px;">指標名</th>
+                                    <th style="padding: 8px 6px;">意味（何を見る指標か）</th>
+                                    <th style="padding: 8px 6px;">🟢 良い銘柄の目安数値</th>
+                                    <th style="padding: 8px 6px;">見方と投資判断のポイント</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr style="border-bottom: 1px solid rgba(100, 116, 139, 0.1);">
+                                    <td style="padding: 8px 6px; font-weight: bold;">PER (株価収益率)</td>
+                                    <td style="padding: 8px 6px;">稼ぐ力（利益）に対する割安度</td>
+                                    <td style="padding: 8px 6px; color: #16a34a; font-weight: bold;">15倍 未満<br><span style="font-size:0.75rem; color:#64748b;">(10倍以下は超割安)</span></td>
+                                    <td style="padding: 8px 6px; color: #64748b;">投資元本を会社の純利益で回収できる年数。15倍以下はお買い得。成長株は30倍以上になることも。</td>
+                                </tr>
+                                <tr style="border-bottom: 1px solid rgba(100, 116, 139, 0.1);">
+                                    <td style="padding: 8px 6px; font-weight: bold;">PBR (株価純資産倍率)</td>
+                                    <td style="padding: 8px 6px;">会社の財産（純資産）に対する割安度</td>
+                                    <td style="padding: 8px 6px; color: #16a34a; font-weight: bold;">1.0倍 未満<br><span style="font-size:0.75rem; color:#64748b;">(0.8倍以下は超割安)</span></td>
+                                    <td style="padding: 8px 6px; color: #64748b;">会社が解散した時の財産価値。1.0倍未満は「会社の純資産より株価が安い」状態（東証も改善要請中）。</td>
+                                </tr>
+                                <tr style="border-bottom: 1px solid rgba(100, 116, 139, 0.1);">
+                                    <td style="padding: 8px 6px; font-weight: bold;">ROE (自己資本利益率)</td>
+                                    <td style="padding: 8px 6px;">預かったお金を増やす上手さ</td>
+                                    <td style="padding: 8px 6px; color: #2563eb; font-weight: bold;">8% 〜 10% 以上</td>
+                                    <td style="padding: 8px 6px; color: #64748b;">株主資本を使ってどれだけ効率よく利益を生み出しているか（資本効率の高さ）。10%以上は優良企業。</td>
+                                </tr>
+                                <tr style="border-bottom: 1px solid rgba(100, 116, 139, 0.1);">
+                                    <td style="padding: 8px 6px; font-weight: bold;">配当利回り</td>
+                                    <td style="padding: 8px 6px;">年間の現金配当リターン</td>
+                                    <td style="padding: 8px 6px; color: #f59e0b; font-weight: bold;">3.0% 〜 4.0% 以上</td>
+                                    <td style="padding: 8px 6px; color: #64748b;">株価に対する年間配当の割合。3%以上は高配当株と呼ばれ、下落相場でも株価の下値が堅い。</td>
+                                </tr>
+                                <tr style="border-bottom: 1px solid rgba(100, 116, 139, 0.1);">
+                                    <td style="padding: 8px 6px; font-weight: bold;">売上高成長率</td>
+                                    <td style="padding: 8px 6px;">本業のビジネス規模の拡大スピード</td>
+                                    <td style="padding: 8px 6px; color: #2563eb; font-weight: bold;">前年比 +10% 以上</td>
+                                    <td style="padding: 8px 6px; color: #64748b;">会社の売上が前年と比べて拡大しているスピード。2桁成長（+10%以上）は事業拡大の証。</td>
+                                </tr>
+                                <tr style="border-bottom: 1px solid rgba(100, 116, 139, 0.1);">
+                                    <td style="padding: 8px 6px; font-weight: bold;">EPS成長率</td>
+                                    <td style="padding: 8px 6px;">1株あたり純利益の伸び率</td>
+                                    <td style="padding: 8px 6px; color: #2563eb; font-weight: bold;">前年比 +15% 以上</td>
+                                    <td style="padding: 8px 6px; color: #64748b;">1株あたりの最終利益の成長率。株価の上昇トレンドに最も直結しやすい重要指標。</td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 8px 6px; font-weight: bold;">営業利益率</td>
+                                    <td style="padding: 8px 6px;">本業の儲かりやすさ（利益の質）</td>
+                                    <td style="padding: 8px 6px; color: #16a34a; font-weight: bold;">8% 〜 10% 以上</td>
+                                    <td style="padding: 8px 6px; color: #64748b;">売上高に対してどれだけ本業で利益が残るか。10%超えは業界内での高い競争力を示す。</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <div style="margin-top: 10px; font-size: 0.85rem; color: #64748b;">
+                            <strong>🎯 スクリーニングでの組み合わせのコツ:</strong><br>
+                            ・<strong>堅実な高配当・割安バリュー投資</strong>: <code>PER < 15倍</code> ＋ <code>PBR < 1.0倍</code> ＋ <code>配当利回り >= 3%</code> ＋ <code>ROE >= 8%</code><br>
+                            ・<strong>株価上昇を狙う成長株投資</strong>: <code>売上高成長率 >= 10%</code> ＋ <code>EPS成長率 >= 15%</code> ＋ <code>ROE >= 10%</code> ＋ <code>上昇トレンド</code>
+                        </div>
+                    </div>
+                    """, unsafe_allow_html=True)
+                
+                # Render helpful criteria summary banner
+                st.markdown("""
+                <div style="background: rgba(59, 130, 246, 0.05); border: 1px solid rgba(59, 130, 246, 0.18); border-radius: 8px; padding: 10px 14px; margin: 10px 0 12px 0; font-size: 0.84rem; display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; line-height: 1.5; color: var(--text-color, #334155);">
+                    <div style="font-weight: 700; color: #2563eb; display: flex; align-items: center; gap: 4px;">
+                        <span>💡</span><span>優良の目安:</span>
+                    </div>
+                    <span><strong>PER</strong>: 15倍以下 (割安)</span>
+                    <span><strong>PBR</strong>: 1.0倍以下 (割安)</span>
+                    <span><strong>ROE</strong>: 8%以上</span>
+                    <span><strong>配当</strong>: 3.0%以上</span>
+                    <span><strong>売上成長</strong>: +10%以上</span>
+                    <span><strong>EPS成長</strong>: +15%以上</span>
+                </div>
+                """, unsafe_allow_html=True)
                 
                 # Convert results to display DataFrame
                 display_data = []
@@ -5952,6 +6014,12 @@ with tab_screen:
                     column_config={
                         "ティッカー": st.column_config.TextColumn("ティッカー", width="small"),
                         "前日比 (%)": st.column_config.TextColumn("前日比 (%)"),
+                        "売上高成長率 (%)": st.column_config.TextColumn("売上高成長率 (%)\n[+10%以上]", help="目安: 前年同期比 +10%以上で好調"),
+                        "EPS成長率 (%)": st.column_config.TextColumn("EPS成長率 (%)\n[+15%以上]", help="目安: 前年同期比 +15%以上で高成長"),
+                        "PER (倍)": st.column_config.TextColumn("PER (倍)\n[15倍以下:割安]", help="目安: 15倍未満で割安、10倍以下で超割安"),
+                        "PBR (倍)": st.column_config.TextColumn("PBR (倍)\n[1.0倍以下:割安]", help="目安: 1.0倍未満で解散価値割れ・割安"),
+                        "ROE (%)": st.column_config.TextColumn("ROE (%)\n[8%以上:優良]", help="目安: 8%〜10%以上で高収益・資本効率良好"),
+                        "配当利回り (%)": st.column_config.TextColumn("配当利回り (%)\n[3%以上:高配当]", help="目安: 3.0%以上で高配当・下値堅調"),
                     },
                     on_select="rerun",
                     selection_mode="single-row",
