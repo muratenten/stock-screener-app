@@ -242,9 +242,20 @@ def save_profile_to_firebase(user_key, project_id, display_name, avatar, id_toke
 
 def get_user_tier():
     user_key = st.session_state.get('user_key', 'default')
-    if user_key in ("google_111998389463136687256", "takkun") or "google_111998389463136687256" in user_key:
+    if user_key in ("google_111998389463136687256", "takkun", "line_Uf3de8f9ba3463f32a3e05b3e019b22f4") or "111998389463136687256" in user_key or "Uf3de8f9ba3463f32a3e05b3e019b22f4" in user_key:
         return "premium"
-    return st.session_state.get("user_tier", "free")
+    
+    tier = st.session_state.get("user_tier")
+    if not tier:
+        try:
+            p_data = load_portfolio()
+            if str(p_data.get("user_tier", "")).lower() == "premium":
+                st.session_state["user_tier"] = "premium"
+                return "premium"
+        except Exception:
+            pass
+        tier = "free"
+    return "premium" if str(tier).lower() == "premium" else "free"
 
 def render_upgrade_banner(reason_text):
     is_dark = st.session_state.get('color_theme', 'light') == 'dark'
@@ -4541,6 +4552,13 @@ if query_user == "default":
 user_key = query_user
 st.session_state['user_key'] = user_key
 st.query_params["user"] = user_key
+
+# Proactively load user profile and tier from Firebase immediately on startup
+if "user_tier" not in st.session_state or st.session_state.get("user_tier") != "premium":
+    firebase_project_id = st.session_state.get('firebase_project_id', DEFAULT_FIREBASE_PROJECT_ID)
+    if firebase_project_id and user_key and user_key != 'default':
+        id_token = st.session_state.get("firebase_id_token")
+        load_portfolio_from_firebase(user_key, firebase_project_id, id_token)
 
 # Save pending profile details to local storage if requested
 save_profile_key = f"ls_save_profile_{user_key}"
