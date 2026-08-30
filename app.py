@@ -643,14 +643,21 @@ st.markdown(f"""
     [data-testid="stMultiSelect"] span[data-baseweb="tag"],
     div[data-baseweb="select"] [data-baseweb="tag"],
     div[data-baseweb="select"] span[data-baseweb="tag"],
+    div[data-baseweb="select"] [data-baseweb="tag"] span,
     .stMultiSelect [data-baseweb="tag"],
     .stMultiSelect span[data-baseweb="tag"],
+    .stMultiSelect [data-baseweb="tag"] span,
     span[class*="tag"],
-    span[class*="Tag"] {{
+    span[class*="Tag"],
+    div[class*="tag"],
+    div[class*="Tag"],
+    [data-baseweb="tag"] span[title] {{
         background-color: #2563eb !important;
         background: #2563eb !important;
         border: 1px solid #1d4ed8 !important;
         border-radius: 6px !important;
+        color: #ffffff !important;
+        -webkit-text-fill-color: #ffffff !important;
     }}
     [data-baseweb="tag"] *,
     span[data-baseweb="tag"] *,
@@ -658,8 +665,16 @@ st.markdown(f"""
     [data-testid="stMultiSelectTag"] *,
     [data-testid="stMultiSelect"] [data-baseweb="tag"] *,
     [data-testid="stMultiSelect"] span[data-baseweb="tag"] *,
+    [data-testid="stMultiSelect"] [data-baseweb="tag"] span,
     div[data-baseweb="select"] [data-baseweb="tag"] *,
-    .stMultiSelect [data-baseweb="tag"] * {{
+    div[data-baseweb="select"] [data-baseweb="tag"] span,
+    div[data-baseweb="select"] [data-baseweb="tag"] div,
+    div[data-baseweb="select"] [data-baseweb="tag"] p,
+    .stMultiSelect [data-baseweb="tag"] *,
+    .stMultiSelect [data-baseweb="tag"] span,
+    .stMultiSelect [data-baseweb="tag"] div,
+    span[class*="tag"] *,
+    span[class*="Tag"] * {{
         color: #ffffff !important;
         fill: #ffffff !important;
         font-weight: 600 !important;
