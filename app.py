@@ -1637,11 +1637,13 @@ def get_shareholder_benefits(ticker):
             dd = dt.find_next_sibling(['dd', 'td'])
             if dd:
                 v = dd.get_text().strip()
-                if '優待の種類' in lbl:
+                if '優待の種類' in lbl and genre == '自社商品・サービス':
                     genre = v
-                elif '権利付き最終日' in lbl or '権利確定' in lbl:
+                elif '権利付き最終日' in lbl and record_date == '随時確認':
                     record_date = v
-                elif '単元株数' in lbl:
+                elif '権利確定' in lbl and record_date == '随時確認':
+                    record_date = v
+                elif '単元株数' in lbl and unit_shares == '100株':
                     unit_shares = v
                     
         # Extract structured benefit tables
@@ -1664,8 +1666,10 @@ def get_shareholder_benefits(ticker):
                 header_txt = prev_h.get_text().strip() if prev_h else ''
                 if '投資金額' in header_txt or any('円' in r['content'] and '株' in r['condition'] and len(r['content'].split('|')) >= 2 for r in rows):
                     continue
-                if '株主優待の内容' in header_txt:
+                if '株主優待の内容' in header_txt or not header_txt:
                     header_txt = '優待進呈基準'
+                elif header_txt.startswith('※') or len(header_txt) > 80:
+                    header_txt = '優待進呈基準・特典詳細'
                 sections.append({'title': header_txt, 'rows': rows})
                 
         # Notes & Conditions
