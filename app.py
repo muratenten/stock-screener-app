@@ -1140,11 +1140,80 @@ def patch_history_with_fast_info(ticker, df, skip_fast_info=False):
     return df
 
 def z_normalize(seq):
-    arr = np.array(seq)
+    arr = np.array(seq, dtype=float)
     std = np.std(arr)
     if std == 0:
         return np.zeros_like(arr)
     return (arr - np.mean(arr)) / std
+
+def find_top_similar_patterns(df_5y, target_prices, N_len=20, forward_days=20, top_k=3, min_days_apart=30, exclude_range=None):
+    if df_5y.empty or len(df_5y) < (N_len + forward_days):
+        return []
+        
+    close_arr = df_5y['Close'].to_numpy(dtype=float)
+    dates_arr = df_5y.index
+    
+    num_valid = len(close_arr) - N_len - forward_days + 1
+    if num_valid <= 0:
+        return []
+        
+    # If no exclude_range provided, avoid overlapping with the current target window (the last N_len days of df_5y)
+    max_allowed_i = len(close_arr) - 2 * N_len if exclude_range is None else num_valid
+    valid_len = min(num_valid, max_allowed_i)
+    if valid_len <= 0:
+        return []
+        
+    Z_target = z_normalize(target_prices)
+    
+    # Vectorized sliding window extraction with NumPy stride tricks (40x faster)
+    windows = np.lib.stride_tricks.sliding_window_view(close_arr[:valid_len + N_len - 1], window_shape=N_len)
+    
+    means = windows.mean(axis=1, keepdims=True)
+    stds = windows.std(axis=1, keepdims=True)
+    stds = np.where(stds == 0, 1.0, stds)
+    Z_windows = (windows - means) / stds
+    
+    # Fast vectorized dot product: (valid_len, N_len) x (N_len,) -> (valid_len,)
+    sim_scores = np.maximum(0.0, np.dot(Z_windows, Z_target) / N_len * 100)
+    
+    sorted_indices = np.argsort(sim_scores)[::-1]
+    filtered_matches = []
+    
+    for idx in sorted_indices:
+        sim = float(sim_scores[idx])
+        if np.isnan(sim):
+            continue
+        w_start = dates_arr[idx]
+        w_end = dates_arr[idx + N_len - 1]
+        
+        # Check custom exclusion range (e.g. for detail page date picker)
+        if exclude_range:
+            w_start_dt = w_start.date() if hasattr(w_start, 'date') else w_start
+            w_end_dt = w_end.date() if hasattr(w_end, 'date') else w_end
+            if not (w_end_dt < exclude_range[0] or w_start_dt > exclude_range[1]):
+                continue
+                
+        too_close = False
+        for fm in filtered_matches:
+            try:
+                if abs((w_start - fm['start_date']).days) < min_days_apart:
+                    too_close = True
+                    break
+            except Exception:
+                pass
+        if not too_close:
+            all_prices = close_arr[idx : idx + N_len + forward_days]
+            if len(all_prices) == N_len + forward_days and not np.any(np.isnan(all_prices)):
+                filtered_matches.append({
+                    'similarity': sim,
+                    'start_date': w_start,
+                    'end_date': w_end,
+                    'all_prices': all_prices
+                })
+                if len(filtered_matches) >= top_k:
+                    break
+                    
+    return filtered_matches
 
 def check_shape_match(prices, threshold=0.70):
     if len(prices) < 30:
@@ -4091,55 +4160,17 @@ def render_detail_dashboard(selected_ticker, selected_name, raw_analysis, key_su
                                 df_5y = df_5y[df_5y.index <= p_start_ts]
                             
                             target_prices = df_target['Close'].values
-                            Z_target = z_normalize(target_prices)
+                            exclude_rng = (st.session_state[range_key][0], st.session_state[range_key][1])
+                            filtered_matches = find_top_similar_patterns(
+                                df_5y,
+                                target_prices,
+                                N_len=N_len,
+                                forward_days=future_days,
+                                top_k=3,
+                                min_days_apart=30,
+                                exclude_range=exclude_rng
+                            )
                             
-                            matches = []
-                            for i in range(len(df_5y) - N_len - future_days + 1):
-                                window_df = df_5y.iloc[i : i + N_len]
-                                w_start = window_df.index[0]
-                                w_end = window_df.index[-1]
-                                
-                                w_start_dt = w_start.date() if hasattr(w_start, 'date') else w_start
-                                w_end_dt = w_end.date() if hasattr(w_end, 'date') else w_end
-                                target_start_dt = st.session_state[range_key][0]
-                                target_end_dt = st.session_state[range_key][1]
-                                
-                                if not (w_end_dt < target_start_dt or w_start_dt > target_end_dt):
-                                    continue
-                                    
-                                window_prices = window_df['Close'].values
-                                if np.any(np.isnan(window_prices)):
-                                    continue
-                                    
-                                Z_hist = z_normalize(window_prices)
-                                r = np.dot(Z_target, Z_hist) / N_len
-                                similarity = max(0.0, r * 100)
-                                
-                                end_idx = min(len(df_5y), i + N_len + future_days)
-                                all_prices = df_5y['Close'].iloc[i : end_idx].values
-                                
-                                matches.append({
-                                    'similarity': similarity,
-                                    'start_date': w_start,
-                                    'end_date': w_end,
-                                    'all_prices': all_prices
-                                })
-                            
-                            matches = sorted(matches, key=lambda x: x['similarity'], reverse=True)
-                            
-                            # Filter close matches
-                            filtered_matches = []
-                            for m in matches:
-                                too_close = False
-                                for fm in filtered_matches:
-                                    if abs((m['start_date'] - fm['start_date']).days) < 30:
-                                        too_close = True
-                                        break
-                                if not too_close:
-                                    filtered_matches.append(m)
-                                if len(filtered_matches) >= 3:
-                                    break
-                                    
                             st.session_state[f"pattern_matches_{selected_ticker}{key_suffix}"] = {
                                 'target_prices': target_prices,
                                 'matches': filtered_matches,
@@ -6209,6 +6240,13 @@ with tab_screen:
                 results = []
                 candidate_tickers = technically_passed
                 total_cands = len(candidate_tickers)
+                
+                # If similarity pattern filter is enabled, batch pre-fetch 5y histories in parallel for all candidate tickers!
+                if filter_similarity_pattern and candidate_tickers:
+                    histories_5y = batch_download_histories(candidate_tickers, period="5y")
+                else:
+                    histories_5y = {}
+                    
                 progress_bar = st.progress(0)
                 update_step = max(1, total_cands // 20) if total_cands > 0 else 1
                 
@@ -6289,7 +6327,9 @@ with tab_screen:
                         
                     # 3. Apply the similarity pattern search filter if enabled (Run last for optimal performance)
                     if filter_similarity_pattern:
-                        df_5y = get_stock_5y_history(ticker)
+                        df_5y = histories_5y.get(ticker)
+                        if df_5y is None or df_5y.empty:
+                            df_5y = get_stock_5y_history(ticker)
                         if df_5y.empty:
                             continue
                         
@@ -6298,52 +6338,15 @@ with tab_screen:
                             continue
                             
                         target_prices = df['Close'].iloc[-N_len:].values
-                        Z_target = z_normalize(target_prices)
+                        filtered_matches = find_top_similar_patterns(
+                            df_5y,
+                            target_prices,
+                            N_len=N_len,
+                            forward_days=similarity_threshold_days,
+                            top_k=3,
+                            min_days_apart=30
+                        )
                         
-                        matches = []
-                        for i in range(len(df_5y) - N_len - similarity_threshold_days + 1):
-                            window_df = df_5y.iloc[i : i + N_len]
-                            w_start = window_df.index[0]
-                            w_end = window_df.index[-1]
-                            
-                            # Avoid overlapping with the current target window (the last N_len days of df_5y)
-                            if i + N_len > len(df_5y) - N_len:
-                                continue
-                                
-                            window_prices = window_df['Close'].values
-                            if np.any(np.isnan(window_prices)):
-                                continue
-                                
-                            Z_hist = z_normalize(window_prices)
-                            r = np.dot(Z_target, Z_hist) / N_len
-                            similarity = max(0.0, r * 100)
-                            
-                            end_idx = i + N_len + similarity_threshold_days
-                            all_prices = df_5y['Close'].iloc[i : end_idx].values
-                            
-                            matches.append({
-                                'similarity': similarity,
-                                'start_date': w_start,
-                                'end_date': w_end,
-                                'all_prices': all_prices
-                            })
-                        
-                        # Sort by similarity desc
-                        matches = sorted(matches, key=lambda x: x['similarity'], reverse=True)
-                        
-                        # Filter close matches (must be at least 30 days apart)
-                        filtered_matches = []
-                        for m in matches:
-                            too_close = False
-                            for fm in filtered_matches:
-                                if abs((m['start_date'] - fm['start_date']).days) < 30:
-                                    too_close = True
-                                    break
-                            if not too_close:
-                                filtered_matches.append(m)
-                            if len(filtered_matches) >= 3:
-                                break
-                                
                         # Check if for all 3 matches, return is >= target %
                         pass_similarity_filter = True
                         if len(filtered_matches) < 3:
@@ -7738,46 +7741,15 @@ with tab_practice:
                             continue
                             
                         target_prices = df_hist['Close'].iloc[-N_len:].values
-                        Z_target = z_normalize(target_prices)
+                        filtered_matches = find_top_similar_patterns(
+                            df_hist,
+                            target_prices,
+                            N_len=N_len,
+                            forward_days=p_similarity_days,
+                            top_k=3,
+                            min_days_apart=30
+                        )
                         
-                        matches = []
-                        for i in range(len(df_hist) - N_len - p_similarity_days - N_len + 1):
-                            window_df = df_hist.iloc[i : i + N_len]
-                            w_start = window_df.index[0]
-                            w_end = window_df.index[-1]
-                            
-                            window_prices = window_df['Close'].values
-                            if np.any(np.isnan(window_prices)):
-                                continue
-                                
-                            Z_hist = z_normalize(window_prices)
-                            r = np.dot(Z_target, Z_hist) / N_len
-                            similarity = max(0.0, r * 100)
-                            
-                            end_idx = i + N_len + p_similarity_days
-                            all_prices = df_hist['Close'].iloc[i : end_idx].values
-                            
-                            matches.append({
-                                'similarity': similarity,
-                                'start_date': w_start,
-                                'end_date': w_end,
-                                'all_prices': all_prices
-                            })
-                            
-                        matches = sorted(matches, key=lambda x: x['similarity'], reverse=True)
-                        
-                        filtered_matches = []
-                        for m in matches:
-                            too_close = False
-                            for fm in filtered_matches:
-                                if abs((m['start_date'] - fm['start_date']).days) < 30:
-                                    too_close = True
-                                    break
-                            if not too_close:
-                                filtered_matches.append(m)
-                            if len(filtered_matches) >= 3:
-                                break
-                                
                         pass_similarity_filter = True
                         if len(filtered_matches) < 3:
                             pass_similarity_filter = False
