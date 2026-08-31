@@ -1270,15 +1270,81 @@ def localize_timestamp(ts, tz):
             return ts_pd.tz_localize(None)
         return ts_pd
 
+STOCK_5Y_CACHE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".cache_5y")
+os.makedirs(STOCK_5Y_CACHE_DIR, exist_ok=True)
+
 @st.cache_data(ttl=86400)
 def get_stock_5y_history(ticker):
+    if "stock_5y_mem_cache" not in st.session_state:
+        st.session_state["stock_5y_mem_cache"] = {}
+    if ticker in st.session_state["stock_5y_mem_cache"]:
+        return st.session_state["stock_5y_mem_cache"][ticker]
+        
+    cache_path = os.path.join(STOCK_5Y_CACHE_DIR, f"{ticker}.parquet")
+    if os.path.exists(cache_path):
+        try:
+            mtime = os.path.getmtime(cache_path)
+            # Valid for 12 hours
+            if (time.time() - mtime) < 43200:
+                df = pd.read_parquet(cache_path)
+                st.session_state["stock_5y_mem_cache"][ticker] = df
+                return df
+        except Exception:
+            pass
+            
     try:
         tk = yf.Ticker(ticker)
         df_5y = tk.history(period="5y")
         df_5y = patch_history_with_fast_info(ticker, df_5y)
+        if not df_5y.empty:
+            st.session_state["stock_5y_mem_cache"][ticker] = df_5y
+            try:
+                df_5y.to_parquet(cache_path)
+            except Exception:
+                pass
         return df_5y
     except Exception:
         return pd.DataFrame()
+
+def batch_fetch_5y_histories(tickers_list):
+    if not tickers_list:
+        return {}
+    if "stock_5y_mem_cache" not in st.session_state:
+        st.session_state["stock_5y_mem_cache"] = {}
+        
+    results = {}
+    missing = []
+    
+    for t in tickers_list:
+        if t in st.session_state["stock_5y_mem_cache"]:
+            results[t] = st.session_state["stock_5y_mem_cache"][t]
+            continue
+        cache_path = os.path.join(STOCK_5Y_CACHE_DIR, f"{t}.parquet")
+        if os.path.exists(cache_path):
+            try:
+                mtime = os.path.getmtime(cache_path)
+                if (time.time() - mtime) < 43200:
+                    df = pd.read_parquet(cache_path)
+                    st.session_state["stock_5y_mem_cache"][t] = df
+                    results[t] = df
+                    continue
+            except Exception:
+                pass
+        missing.append(t)
+        
+    if missing:
+        downloaded = batch_download_histories(missing, period="5y")
+        for t, df in downloaded.items():
+            if not df.empty:
+                st.session_state["stock_5y_mem_cache"][t] = df
+                results[t] = df
+                try:
+                    cache_path = os.path.join(STOCK_5Y_CACHE_DIR, f"{t}.parquet")
+                    df.to_parquet(cache_path)
+                except Exception:
+                    pass
+                    
+    return results
 
 def create_pattern_overlay_chart(target_prices, matches_data, N, ticker=None):
     fig = go.Figure()
@@ -6236,17 +6302,10 @@ with tab_screen:
                 fetched_infos = parallel_fetch_ticker_infos(needed_fetch, max_workers=15) if needed_fetch else {}
                 yutai_cache = load_tse_yutai_cache()
                 
-                # 3. Analyze candidate tickers (Only those that passed technical filters!)
-                results = []
+                # 3. Analyze candidate tickers (Fast preliminary pass in memory)
+                preliminary_passed = []
                 candidate_tickers = technically_passed
                 total_cands = len(candidate_tickers)
-                
-                # If similarity pattern filter is enabled, batch pre-fetch 5y histories in parallel for all candidate tickers!
-                if filter_similarity_pattern and candidate_tickers:
-                    histories_5y = batch_download_histories(candidate_tickers, period="5y")
-                else:
-                    histories_5y = {}
-                    
                 progress_bar = st.progress(0)
                 update_step = max(1, total_cands // 20) if total_cands > 0 else 1
                 
@@ -6325,52 +6384,7 @@ with tab_screen:
                     if filter_volume_surge and not analysis['signals']['volume_surge']:
                         continue
                         
-                    # 3. Apply the similarity pattern search filter if enabled (Run last for optimal performance)
-                    if filter_similarity_pattern:
-                        df_5y = histories_5y.get(ticker)
-                        if df_5y is None or df_5y.empty:
-                            df_5y = get_stock_5y_history(ticker)
-                        if df_5y.empty:
-                            continue
-                        
-                        N_len = 20
-                        if len(df) < N_len:
-                            continue
-                            
-                        target_prices = df['Close'].iloc[-N_len:].values
-                        filtered_matches = find_top_similar_patterns(
-                            df_5y,
-                            target_prices,
-                            N_len=N_len,
-                            forward_days=similarity_threshold_days,
-                            top_k=3,
-                            min_days_apart=30
-                        )
-                        
-                        # Check if for all 3 matches, return is >= target %
-                        pass_similarity_filter = True
-                        if len(filtered_matches) < 3:
-                            pass_similarity_filter = False
-                        else:
-                            for m in filtered_matches:
-                                all_prices = m['all_prices']
-                                if len(all_prices) < N_len + similarity_threshold_days:
-                                    pass_similarity_filter = False
-                                    break
-                                price_at_end = all_prices[N_len-1]
-                                price_after = all_prices[-1]
-                                if price_at_end == 0:
-                                    pass_similarity_filter = False
-                                    break
-                                ret = (price_after - price_at_end) / price_at_end * 100
-                                if ret < similarity_threshold_pct:
-                                    pass_similarity_filter = False
-                                    break
-                                    
-                        if not pass_similarity_filter:
-                            continue
-                            
-                    # 4. Apply the chart shape match filter (Computed anyway to show in results table)
+                    # 3. Apply the chart shape match filter
                     matched_shape_label = "判定不可"
                     matched_shape_corr = 0.0
                     
@@ -6384,12 +6398,10 @@ with tab_screen:
                     if filter_shape_match:
                         if matched_shape_label == "判定不可":
                             continue
-                        # Extract the base label (e.g. "上昇傾向")
                         base_lbl = matched_shape_label.split(" ")[0]
                         if base_lbl not in selected_shapes:
                             continue
                             
-                        # Bypass the strict threshold if it is a Reversal shape and has a positive 5-day price change
                         is_reversal_rising = False
                         if base_lbl == "上昇反転" and len(prices_for_shape) >= 5:
                             if prices_for_shape[-1] > prices_for_shape[-5]:
@@ -6398,31 +6410,108 @@ with tab_screen:
                         if not is_reversal_rising and matched_shape_corr < shape_threshold:
                             continue
                         
-                    # Determine display name: prefer offline name unless it is equal to ticker
+                    # Determine display name
                     display_name = filtered_pool[ticker].get('name', ticker)
                     if (display_name == ticker or not display_name) and metrics.get('name'):
                         display_name = metrics['name']
                         
-                    results.append({
-                        'ティッカー': ticker,
-                        '銘柄名': display_name,
-                        '総合スコア (10点)': int(analysis['total_score']),
-                        'チャート形状': matched_shape_label,
-                        'テクニカルスコア (3点)': int(analysis['tech_score']),
-                        'ファンダスコア (7点)': int(analysis['fund_score']),
-                        '株価': float(metrics['price']) if metrics.get('price') is not None else 0.0,
-                        '前日比 (%)': float(metrics['change_pct']) if metrics.get('change_pct') is not None else 0.0,
-                        '売上高成長率 (%)': float(metrics['rev_growth']) if metrics.get('rev_growth') is not None else None,
-                        'EPS成長率 (%)': float(metrics['eps_growth']) if metrics.get('eps_growth') is not None else None,
-                        'PER (倍)': float(metrics['per']) if metrics.get('per') is not None else None,
-                        'PBR (倍)': float(metrics['pbr']) if metrics.get('pbr') is not None else None,
-                        'ROE (%)': float(metrics['roe']) if metrics.get('roe') is not None else None,
-                        '配当利回り (%)': float(metrics['dividend_yield']) if metrics.get('dividend_yield') is not None else None,
-                        '優待利回り (%)': float(y_yield_val) if (y_has and y_yield_val > 0) else (0.0 if y_has else None),
-                        '株主優待': (", ".join(y_cats[:2])) if y_has else 'なし',
-                        'テーマ/タグ': ", ".join(filtered_pool[ticker].get('tags', [])),
-                        'raw_data': analysis
+                    preliminary_passed.append({
+                        'ticker': ticker,
+                        'display_name': display_name,
+                        'analysis': analysis,
+                        'metrics': metrics,
+                        'matched_shape_label': matched_shape_label,
+                        'y_has': y_has,
+                        'y_cats': y_cats,
+                        'y_yield_str': y_yield_str,
+                        'y_yield_val': y_yield_val,
+                        'df': df
                     })
+
+                # 4. Final step: Similarity pattern matching (Only for finalists that passed all other filters!)
+                results = []
+                if preliminary_passed:
+                    if filter_similarity_pattern:
+                        finalist_tickers = [p['ticker'] for p in preliminary_passed]
+                        histories_5y = batch_fetch_5y_histories(finalist_tickers)
+                    else:
+                        histories_5y = {}
+
+                    for p in preliminary_passed:
+                        ticker = p['ticker']
+                        df = p['df']
+                        analysis = p['analysis']
+                        metrics = p['metrics']
+                        y_has = p['y_has']
+                        y_cats = p['y_cats']
+                        y_yield_str = p['y_yield_str']
+                        y_yield_val = p['y_yield_val']
+                        matched_shape_label = p['matched_shape_label']
+                        display_name = p['display_name']
+                        
+                        if filter_similarity_pattern:
+                            df_5y = histories_5y.get(ticker)
+                            if df_5y is None or df_5y.empty:
+                                df_5y = get_stock_5y_history(ticker)
+                            if df_5y.empty:
+                                continue
+                            
+                            N_len = 20
+                            if len(df) < N_len:
+                                continue
+                                
+                            target_prices = df['Close'].iloc[-N_len:].values
+                            filtered_matches = find_top_similar_patterns(
+                                df_5y,
+                                target_prices,
+                                N_len=N_len,
+                                forward_days=similarity_threshold_days,
+                                top_k=3,
+                                min_days_apart=30
+                            )
+                            
+                            pass_similarity_filter = True
+                            if len(filtered_matches) < 3:
+                                pass_similarity_filter = False
+                            else:
+                                for m in filtered_matches:
+                                    all_prices = m['all_prices']
+                                    if len(all_prices) < N_len + similarity_threshold_days:
+                                        pass_similarity_filter = False
+                                        break
+                                    price_at_end = all_prices[N_len-1]
+                                    price_after = all_prices[-1]
+                                    if price_at_end == 0:
+                                        pass_similarity_filter = False
+                                        break
+                                    ret = (price_after - price_at_end) / price_at_end * 100
+                                    if ret < similarity_threshold_pct:
+                                        pass_similarity_filter = False
+                                        break
+                                        
+                            if not pass_similarity_filter:
+                                continue
+                                
+                        results.append({
+                            'ティッカー': ticker,
+                            '銘柄名': display_name,
+                            '総合スコア (10点)': int(analysis['total_score']),
+                            'チャート形状': matched_shape_label,
+                            'テクニカルスコア (3点)': int(analysis['tech_score']),
+                            'ファンダスコア (7点)': int(analysis['fund_score']),
+                            '株価': float(metrics['price']) if metrics.get('price') is not None else 0.0,
+                            '前日比 (%)': float(metrics['change_pct']) if metrics.get('change_pct') is not None else 0.0,
+                            '売上高成長率 (%)': float(metrics['rev_growth']) if metrics.get('rev_growth') is not None else None,
+                            'EPS成長率 (%)': float(metrics['eps_growth']) if metrics.get('eps_growth') is not None else None,
+                            'PER (倍)': float(metrics['per']) if metrics.get('per') is not None else None,
+                            'PBR (倍)': float(metrics['pbr']) if metrics.get('pbr') is not None else None,
+                            'ROE (%)': float(metrics['roe']) if metrics.get('roe') is not None else None,
+                            '配当利回り (%)': float(metrics['dividend_yield']) if metrics.get('dividend_yield') is not None else None,
+                            '優待利回り (%)': float(y_yield_val) if (y_has and y_yield_val > 0) else (0.0 if y_has else None),
+                            '株主優待': (", ".join(y_cats[:2])) if y_has else 'なし',
+                            'テーマ/タグ': ", ".join(filtered_pool[ticker].get('tags', [])),
+                            'raw_data': analysis
+                        })
                 
                 # Store in session state to persist results
                 st.session_state['screening_results'] = results
