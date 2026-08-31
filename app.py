@@ -1349,20 +1349,20 @@ def create_selection_chart(df, ticker, name, start_date, end_date):
 
 @st.cache_data(ttl=3600)
 def batch_download_histories(tickers_list, period="1y"):
-    import time
+    import concurrent.futures
     if not tickers_list:
         return {}
         
-    chunk_size = 150
+    chunk_size = 100
+    chunks = [tickers_list[i:i+chunk_size] for i in range(0, len(tickers_list), chunk_size)]
     histories = {}
     
-    # Process in chunks of 150 to avoid URL length limitations and reduce rate limiting risk
-    for i in range(0, len(tickers_list), chunk_size):
-        chunk = tickers_list[i:i+chunk_size]
+    def _download_single_chunk(chunk):
+        chunk_res = {}
         try:
             data = yf.download(chunk, period=period, progress=False)
             if data is None or data.empty:
-                continue
+                return chunk_res
                 
             if len(chunk) == 1:
                 ticker = chunk[0]
@@ -1379,7 +1379,7 @@ def batch_download_histories(tickers_list, period="1y"):
                 df = patch_history_with_fast_info(ticker, df, skip_fast_info=True)
                 df = df.dropna(subset=['Close'])
                 if not df.empty:
-                    histories[ticker] = df
+                    chunk_res[ticker] = df
             else:
                 for ticker in chunk:
                     try:
@@ -1394,14 +1394,24 @@ def batch_download_histories(tickers_list, period="1y"):
                             df = patch_history_with_fast_info(ticker, df, skip_fast_info=True)
                             df = df.dropna(subset=['Close'])
                             if not df.empty:
-                                histories[ticker] = df
+                                chunk_res[ticker] = df
                     except Exception:
                         continue
-            # Small throttle delay between chunks
-            if len(tickers_list) > chunk_size:
-                time.sleep(0.3)
         except Exception:
-            continue
+            pass
+        return chunk_res
+
+    if len(chunks) == 1:
+        histories = _download_single_chunk(chunks[0])
+    else:
+        max_workers = min(5, len(chunks))
+        with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
+            futures = [executor.submit(_download_single_chunk, ch) for ch in chunks]
+            for fut in concurrent.futures.as_completed(futures):
+                try:
+                    histories.update(fut.result())
+                except Exception:
+                    pass
             
     return histories
 
@@ -1774,6 +1784,7 @@ def get_yutai_categories(info):
         
     return cats or ['✨ その他・自社オリジナル']
 
+@st.cache_data(ttl=86400)
 def load_tse_yutai_cache():
     cache_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), "tse_yutai_cache.json")
     if not os.path.exists(cache_file):
@@ -1864,6 +1875,7 @@ def get_shareholder_benefits(ticker):
     except Exception as e:
         return {'has_yutai': False, 'is_us': False, 'error': str(e), 'url': url}
 
+@st.cache_data(ttl=86400)
 def load_tse_fundamentals_cache():
     cache_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), "tse_fundamentals_cache.json")
     if not os.path.exists(cache_file):
@@ -2065,18 +2077,19 @@ def evaluate_stock(ticker, df, info=None, cached_fund=None):
     close = df['Close']
     volume = df['Volume']
     
-    df['SMA5'] = close.rolling(window=5).mean()
-    df['SMA25'] = close.rolling(window=25).mean()
-    df['SMA75'] = close.rolling(window=75).mean()
-    df['RSI'] = calculate_rsi(close)
-    macd, macd_signal, macd_hist = calculate_macd(close)
-    df['MACD'] = macd
-    df['MACD_Signal'] = macd_signal
-    df['MACD_Hist'] = macd_hist
-    upper, middle, lower = calculate_bollinger_bands(close)
-    df['BB_Upper'] = upper
-    df['BB_Middle'] = middle
-    df['BB_Lower'] = lower
+    if 'SMA5' not in df.columns or 'RSI' not in df.columns or 'MACD' not in df.columns:
+        df['SMA5'] = close.rolling(window=5).mean()
+        df['SMA25'] = close.rolling(window=25).mean()
+        df['SMA75'] = close.rolling(window=75).mean()
+        df['RSI'] = calculate_rsi(close)
+        macd, macd_signal, macd_hist = calculate_macd(close)
+        df['MACD'] = macd
+        df['MACD_Signal'] = macd_signal
+        df['MACD_Hist'] = macd_hist
+        upper, middle, lower = calculate_bollinger_bands(close)
+        df['BB_Upper'] = upper
+        df['BB_Middle'] = middle
+        df['BB_Lower'] = lower
     
     # --- 1. テクニカルスコアリング（3点満点に縮小） ---
     
@@ -6192,38 +6205,19 @@ with tab_screen:
                 fetched_infos = parallel_fetch_ticker_infos(needed_fetch, max_workers=15) if needed_fetch else {}
                 yutai_cache = load_tse_yutai_cache()
                 
-                # 3. Analyze each ticker
+                # 3. Analyze candidate tickers (Only those that passed technical filters!)
                 results = []
+                candidate_tickers = technically_passed
+                total_cands = len(candidate_tickers)
                 progress_bar = st.progress(0)
+                update_step = max(1, total_cands // 20) if total_cands > 0 else 1
                 
-                for idx, ticker in enumerate(tickers_list):
-                    progress_bar.progress((idx + 1) / len(tickers_list))
+                for idx, ticker in enumerate(candidate_tickers):
+                    if idx % update_step == 0 or idx == total_cands - 1:
+                        progress_bar.progress((idx + 1) / total_cands)
                     
                     df = histories.get(ticker)
                     if df is None or df.empty or len(df) < 75:
-                        continue
-                        
-                    # 1. Run technical analysis first (Fast!)
-                    tech_analysis = evaluate_stock(ticker, df, info=None)
-                    if tech_analysis is None:
-                        continue
-                        
-                    # Apply technical score filter first (Skip slow API if it doesn't match technical criteria)
-                    if tech_analysis['tech_score'] < min_tech_score:
-                        continue
-                        
-                    # Apply advanced technical filters in the fast-track step
-                    if filter_golden_cross and not tech_analysis['signals']['golden_cross']:
-                        continue
-                    if filter_macd_cross and not tech_analysis['signals']['macd_cross']:
-                        continue
-                    if filter_rsi_oversold and not tech_analysis['signals']['rsi_oversold']:
-                        continue
-                    if filter_rsi_overbought and not tech_analysis['signals']['rsi_overbought']:
-                        continue
-                    if filter_bb_rebound and not tech_analysis['signals']['bb_rebound']:
-                        continue
-                    if filter_volume_surge and not tech_analysis['signals']['volume_surge']:
                         continue
                         
                     # 2. Use cached fundamentals with real-time recalculation (Instantaneous!)
