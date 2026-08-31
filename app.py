@@ -1273,22 +1273,31 @@ def localize_timestamp(ts, tz):
 STOCK_5Y_CACHE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".cache_5y")
 os.makedirs(STOCK_5Y_CACHE_DIR, exist_ok=True)
 
+def is_5y_cache_valid_today(filepath):
+    try:
+        if not os.path.exists(filepath):
+            return False
+        mtime = os.path.getmtime(filepath)
+        cache_dt = datetime.datetime.fromtimestamp(mtime)
+        now = datetime.datetime.now()
+        # Cache is only valid for the same calendar day AND within 12 hours
+        return (cache_dt.date() == now.date()) and ((time.time() - mtime) < 43200)
+    except Exception:
+        return False
+
 @st.cache_data(ttl=86400)
 def get_stock_5y_history(ticker):
     if "stock_5y_mem_cache" not in st.session_state:
         st.session_state["stock_5y_mem_cache"] = {}
-    if ticker in st.session_state["stock_5y_mem_cache"]:
-        return st.session_state["stock_5y_mem_cache"][ticker]
         
     cache_path = os.path.join(STOCK_5Y_CACHE_DIR, f"{ticker}.parquet")
-    if os.path.exists(cache_path):
+    if is_5y_cache_valid_today(cache_path):
+        if ticker in st.session_state["stock_5y_mem_cache"]:
+            return st.session_state["stock_5y_mem_cache"][ticker]
         try:
-            mtime = os.path.getmtime(cache_path)
-            # Valid for 12 hours
-            if (time.time() - mtime) < 43200:
-                df = pd.read_parquet(cache_path)
-                st.session_state["stock_5y_mem_cache"][ticker] = df
-                return df
+            df = pd.read_parquet(cache_path)
+            st.session_state["stock_5y_mem_cache"][ticker] = df
+            return df
         except Exception:
             pass
             
@@ -1316,18 +1325,16 @@ def batch_fetch_5y_histories(tickers_list):
     missing = []
     
     for t in tickers_list:
-        if t in st.session_state["stock_5y_mem_cache"]:
-            results[t] = st.session_state["stock_5y_mem_cache"][t]
-            continue
         cache_path = os.path.join(STOCK_5Y_CACHE_DIR, f"{t}.parquet")
-        if os.path.exists(cache_path):
+        if is_5y_cache_valid_today(cache_path):
+            if t in st.session_state["stock_5y_mem_cache"]:
+                results[t] = st.session_state["stock_5y_mem_cache"][t]
+                continue
             try:
-                mtime = os.path.getmtime(cache_path)
-                if (time.time() - mtime) < 43200:
-                    df = pd.read_parquet(cache_path)
-                    st.session_state["stock_5y_mem_cache"][t] = df
-                    results[t] = df
-                    continue
+                df = pd.read_parquet(cache_path)
+                st.session_state["stock_5y_mem_cache"][t] = df
+                results[t] = df
+                continue
             except Exception:
                 pass
         missing.append(t)
