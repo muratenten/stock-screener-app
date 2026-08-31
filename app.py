@@ -6406,19 +6406,19 @@ with tab_screen:
                     results.append({
                         'ティッカー': ticker,
                         '銘柄名': display_name,
-                        '総合スコア (10点)': f"{analysis['total_score']} / 10",
+                        '総合スコア (10点)': int(analysis['total_score']),
                         'チャート形状': matched_shape_label,
-                        'テクニカルスコア (3点)': f"{analysis['tech_score']} / 3",
-                        'ファンダスコア (7点)': f"{analysis['fund_score']} / 7",
-                        '株価': format_price(metrics['price'], ticker),
-                        '前日比 (%)': f"{metrics['change_pct']:.2f}%",
-                        '売上高成長率 (%)': f"{metrics['rev_growth']:.1f}%" if metrics['rev_growth'] is not None else "N/A",
-                        'EPS成長率 (%)': f"{metrics['eps_growth']:.1f}%" if metrics['eps_growth'] is not None else "N/A",
-                        'PER (倍)': f"{metrics['per']:.1f}" if metrics['per'] is not None else "N/A",
-                        'PBR (倍)': f"{metrics['pbr']:.2f}" if metrics['pbr'] is not None else "N/A",
-                        'ROE (%)': f"{metrics['roe']:.1f}%" if metrics['roe'] is not None else "N/A",
-                        '配当利回り (%)': f"{metrics['dividend_yield']:.2f}%" if metrics['dividend_yield'] is not None else "N/A",
-                        '優待利回り (%)': y_yield_str if (y_has and y_yield_str) else ('－%' if y_has else 'なし'),
+                        'テクニカルスコア (3点)': int(analysis['tech_score']),
+                        'ファンダスコア (7点)': int(analysis['fund_score']),
+                        '株価': float(metrics['price']) if metrics.get('price') is not None else 0.0,
+                        '前日比 (%)': float(metrics['change_pct']) if metrics.get('change_pct') is not None else 0.0,
+                        '売上高成長率 (%)': float(metrics['rev_growth']) if metrics.get('rev_growth') is not None else None,
+                        'EPS成長率 (%)': float(metrics['eps_growth']) if metrics.get('eps_growth') is not None else None,
+                        'PER (倍)': float(metrics['per']) if metrics.get('per') is not None else None,
+                        'PBR (倍)': float(metrics['pbr']) if metrics.get('pbr') is not None else None,
+                        'ROE (%)': float(metrics['roe']) if metrics.get('roe') is not None else None,
+                        '配当利回り (%)': float(metrics['dividend_yield']) if metrics.get('dividend_yield') is not None else None,
+                        '優待利回り (%)': float(y_yield_val) if (y_has and y_yield_val > 0) else (0.0 if y_has else None),
                         '株主優待': (", ".join(y_cats[:2])) if y_has else 'なし',
                         'テーマ/タグ': ", ".join(filtered_pool[ticker].get('tags', [])),
                         'raw_data': analysis
@@ -6435,7 +6435,7 @@ with tab_screen:
             if not results:
                 st.warning("指定された条件に一致する銘柄が見つかりませんでした。サイドバーのフィルタ条件を緩めて再実行してください。")
             else:
-                st.success(f"条件に合致する銘柄が {len(results)} 件検出されました！ (スコア順で並び替えています)")
+                st.success(f"条件に合致する銘柄が {len(results)} 件検出されました！")
                 
                 with st.expander("📖 良い銘柄を見極めるための詳細ガイド（各指標の役割と判断基準）", expanded=False):
                     st.markdown("""
@@ -6517,6 +6517,23 @@ with tab_screen:
                     <span><strong>EPS成長</strong>: +15%以上</span>
                 </div>
                 """, unsafe_allow_html=True)
+
+                def _safe_num(v):
+                    if v is None:
+                        return None
+                    if isinstance(v, (int, float)):
+                        return float(v)
+                    if isinstance(v, str):
+                        v_clean = v.replace('¥', '').replace('$', '').replace(',', '').replace('%', '').replace('倍', '').replace('円', '').strip()
+                        if '/' in v_clean:
+                            v_clean = v_clean.split('/')[0].strip()
+                        if v_clean in ('N/A', '－', 'なし', '---', ''):
+                            return None
+                        try:
+                            return float(v_clean)
+                        except ValueError:
+                            return None
+                    return None
                 
                 # Convert results to display DataFrame
                 display_data = []
@@ -6529,21 +6546,74 @@ with tab_screen:
                     qty = owned_stocks.get(ticker, 0)
                     row['保有状況'] = f"保有中 ({int(qty):,}株)" if qty > 0 else "未保有"
                     
+                    # Ensure numeric columns are clean floats for accurate numerical sorting
+                    row['総合スコア (10点)'] = _safe_num(r.get('総合スコア (10点)', 0)) or 0
+                    row['株価'] = _safe_num(r.get('株価', 0.0)) or 0.0
+                    row['前日比 (%)'] = _safe_num(r.get('前日比 (%)', 0.0)) or 0.0
+                    row['売上高成長率 (%)'] = _safe_num(r.get('売上高成長率 (%)'))
+                    row['EPS成長率 (%)'] = _safe_num(r.get('EPS成長率 (%)'))
+                    row['PER (倍)'] = _safe_num(r.get('PER (倍)'))
+                    row['PBR (倍)'] = _safe_num(r.get('PBR (倍)'))
+                    row['ROE (%)'] = _safe_num(r.get('ROE (%)'))
+                    row['配当利回り (%)'] = _safe_num(r.get('配当利回り (%)'))
+                    row['優待利回り (%)'] = _safe_num(r.get('優待利回り (%)'))
+                    
                     # Add clean text signals
-                    raw = r['raw_data']
+                    raw = r.get('raw_data', {})
+                    signals = raw.get('signals', {})
                     badges = []
-                    if raw['signals']['perfect_order']: badges.append("上昇トレンド")
-                    if raw['signals']['trend_reversal']: badges.append("転換シグナル")
-                    if raw['signals']['volume_surge']: badges.append("出来高急増")
+                    if signals.get('perfect_order'): badges.append("上昇トレンド")
+                    if signals.get('trend_reversal'): badges.append("転換シグナル")
+                    if signals.get('volume_surge'): badges.append("出来高急増")
                     
                     row['点灯シグナル'] = " ".join(badges) if badges else "なし"
                     display_data.append(row)
                     
                 df_display = pd.DataFrame(display_data)
+
+                # Sorting UI controls
+                col_sort1, col_sort2 = st.columns([3, 2])
+                with col_sort1:
+                    sort_option = st.selectbox(
+                        "↕️ 表示の並び替え（ソート順）",
+                        options=[
+                            "🏆 総合スコアが高い順 (おすすめ)",
+                            "💴 株価が安い順 (少額・買いやすい順)",
+                            "🚀 株価が高い順 (値がさ株)",
+                            "📈 前日比の上昇率が高い順",
+                            "📉 前日比の下落率が大きい順 (押し目買い狙い)",
+                            "🎁 配当利回りが高い順",
+                            "💎 PERが低い順 (利益割安順)",
+                            "🏢 PBRが低い順 (純資産割安順)",
+                            "📊 ROEが高い順 (高収益・経営効率順)",
+                            "🚀 売上高成長率が高い順 (事業拡大順)",
+                            "💰 EPS成長率が高い順 (純利益成長順)",
+                            "💳 優待利回りが高い順",
+                        ],
+                        index=0,
+                        key="screening_sort_selector"
+                    )
+                with col_sort2:
+                    st.markdown("<div style='margin-top: 28px; font-size: 0.82rem; color: #64748b;'>💡 表の見出し（列名）をクリックすることでも、項目ごとの昇順/降順を直接切り替えられます。</div>", unsafe_allow_html=True)
+
+                sort_map = {
+                    "🏆 総合スコアが高い順 (おすすめ)": ("総合スコア (10点)", False),
+                    "💴 株価が安い順 (少額・買いやすい順)": ("株価", True),
+                    "🚀 株価が高い順 (値がさ株)": ("株価", False),
+                    "📈 前日比の上昇率が高い順": ("前日比 (%)", False),
+                    "📉 前日比の下落率が大きい順 (押し目買い狙い)": ("前日比 (%)", True),
+                    "🎁 配当利回りが高い順": ("配当利回り (%)", False),
+                    "💎 PERが低い順 (利益割安順)": ("PER (倍)", True),
+                    "🏢 PBRが低い順 (純資産割安順)": ("PBR (倍)", True),
+                    "📊 ROEが高い順 (高収益・経営効率順)": ("ROE (%)", False),
+                    "🚀 売上高成長率が高い順 (事業拡大順)": ("売上高成長率 (%)", False),
+                    "💰 EPS成長率が高い順 (純利益成長順)": ("EPS成長率 (%)", False),
+                    "💳 優待利回りが高い順": ("優待利回り (%)", False),
+                }
                 
-                # Sort by score descending
-                df_display['sort_val'] = df_display['総合スコア (10点)'].apply(lambda x: int(x.split('/')[0]))
-                df_display = df_display.sort_values(by='sort_val', ascending=False).drop(columns=['sort_val']).reset_index(drop=True)
+                sort_col, sort_asc = sort_map.get(sort_option, ("総合スコア (10点)", False))
+                if sort_col in df_display.columns:
+                    df_display = df_display.sort_values(by=sort_col, ascending=sort_asc, na_position='last').reset_index(drop=True)
                 
                 # Show dataframe (Enable row selection)
                 if is_mobile:
@@ -6558,15 +6628,21 @@ with tab_screen:
                     use_container_width=True,
                     column_config={
                         "ティッカー": st.column_config.TextColumn("ティッカー", width="small"),
-                        "前日比 (%)": st.column_config.TextColumn("前日比 (%)"),
-                        "売上高成長率 (%)": st.column_config.TextColumn("売上高成長率 (%)\n[+10%以上]", help="目安: 前年同期比 +10%以上で好調"),
-                        "EPS成長率 (%)": st.column_config.TextColumn("EPS成長率 (%)\n[+15%以上]", help="目安: 前年同期比 +15%以上で高成長"),
-                        "PER (倍)": st.column_config.TextColumn("PER (倍)\n[15倍以下:割安]", help="目安: 15倍未満で割安、10倍以下で超割安"),
-                        "PBR (倍)": st.column_config.TextColumn("PBR (倍)\n[1.0倍以下:割安]", help="目安: 1.0倍未満で解散価値割れ・割安"),
-                        "ROE (%)": st.column_config.TextColumn("ROE (%)\n[8%以上:優良]", help="目安: 8%〜10%以上で高収益・資本効率良好"),
-                        "配当利回り (%)": st.column_config.TextColumn("配当利回り (%)\n[3%以上:高配当]", help="目安: 3.0%以上で高配当・下値堅調"),
-                        "優待利回り (%)": st.column_config.TextColumn("優待利回り (%)\n[金額換算分]", help="株探算出の優待利回り（金額確定分のみ）"),
+                        "銘柄名": st.column_config.TextColumn("銘柄名", width="medium"),
+                        "総合スコア (10点)": st.column_config.NumberColumn("総合スコア (10点)", format="%d / 10", help="10点満点評価"),
+                        "株価": st.column_config.NumberColumn("株価", format="¥%d"),
+                        "前日比 (%)": st.column_config.NumberColumn("前日比 (%)", format="%+.2f%%"),
+                        "売上高成長率 (%)": st.column_config.NumberColumn("売上高成長率 (%)\n[+10%以上]", format="%+.1f%%", help="目安: 前年同期比 +10%以上で好調"),
+                        "EPS成長率 (%)": st.column_config.NumberColumn("EPS成長率 (%)\n[+15%以上]", format="%+.1f%%", help="目安: 前年同期比 +15%以上で高成長"),
+                        "PER (倍)": st.column_config.NumberColumn("PER (倍)\n[15倍以下:割安]", format="%.1f倍", help="目安: 15倍未満で割安、10倍以下で超割安"),
+                        "PBR (倍)": st.column_config.NumberColumn("PBR (倍)\n[1.0倍以下:割安]", format="%.2f倍", help="目安: 1.0倍未満で解散価値割れ・割安"),
+                        "ROE (%)": st.column_config.NumberColumn("ROE (%)\n[8%以上:優良]", format="%.1f%%", help="目安: 8%〜10%以上で高収益・資本効率良好"),
+                        "配当利回り (%)": st.column_config.NumberColumn("配当利回り (%)\n[3%以上:高配当]", format="%.2f%%", help="目安: 3.0%以上で高配当・下値堅調"),
+                        "優待利回り (%)": st.column_config.NumberColumn("優待利回り (%)\n[金額換算分]", format="%.2f%%", help="株探算出の優待利回り（金額確定分のみ）"),
                         "株主優待": st.column_config.TextColumn("株主優待ジャンル", help="優待の種類（食事券・QUOカード・カタログ等）"),
+                        "チャート形状": st.column_config.TextColumn("チャート形状"),
+                        "保有状況": st.column_config.TextColumn("保有状況"),
+                        "点灯シグナル": st.column_config.TextColumn("点灯シグナル"),
                     },
                     on_select="rerun",
                     selection_mode="single-row",
@@ -7829,15 +7905,47 @@ with tab_practice:
             df_display_list.append({
                 'ティッカー': r['ティッカー'],
                 '銘柄名': r['銘柄名'],
-                'テクニカルスコア': f"{r['テクニカルスコア']} / 3",
-                '基準日株価': f"{r['基準日株価']:,.1f} 円" if r['ティッカー'].endswith(('.T', 'T')) or '日経平均' in st.session_state.get("prac_market", "") or 'プライム' in st.session_state.get("prac_market", "") or 'グロース' in st.session_state.get("prac_market", "") else f"${r['基準日株価']:,.2f}",
-                'チャート形状': r['チャート形状'],
+                'テクニカルスコア': int(r.get('テクニカルスコア', 0)),
+                '基準日株価': float(r.get('基準日株価', 0.0)),
+                'チャート形状': r.get('チャート形状', '判定不可'),
             })
+            
+        df_prac_display = pd.DataFrame(df_display_list)
+        
+        # Sort option
+        prac_sort_col1, prac_sort_col2 = st.columns([3, 2])
+        with prac_sort_col1:
+            prac_sort = st.selectbox(
+                "↕️ 並び替え（ソート順）",
+                options=[
+                    "🏆 テクニカルスコアが高い順",
+                    "💴 株価が安い順",
+                    "🚀 株価が高い順",
+                ],
+                index=0,
+                key="prac_screening_sort_selector"
+            )
+        with prac_sort_col2:
+            st.markdown("<div style='margin-top: 28px; font-size: 0.82rem; color: #64748b;'>💡 列名をクリックして昇順/降順を直接切り替えられます。</div>", unsafe_allow_html=True)
+            
+        if prac_sort == "💴 株価が安い順":
+            df_prac_display = df_prac_display.sort_values(by='基準日株価', ascending=True).reset_index(drop=True)
+        elif prac_sort == "🚀 株価が高い順":
+            df_prac_display = df_prac_display.sort_values(by='基準日株価', ascending=False).reset_index(drop=True)
+        else:
+            df_prac_display = df_prac_display.sort_values(by='テクニカルスコア', ascending=False).reset_index(drop=True)
             
         # Show dataframe (Enable row selection)
         selected_rows = st.dataframe(
-            pd.DataFrame(df_display_list), 
+            df_prac_display, 
             use_container_width=True,
+            column_config={
+                "ティッカー": st.column_config.TextColumn("ティッカー", width="small"),
+                "銘柄名": st.column_config.TextColumn("銘柄名", width="medium"),
+                "テクニカルスコア": st.column_config.NumberColumn("テクニカルスコア (3点)", format="%d / 3"),
+                "基準日株価": st.column_config.NumberColumn("基準日株価", format="¥%d"),
+                "チャート形状": st.column_config.TextColumn("チャート形状"),
+            },
             on_select="rerun",
             selection_mode="single-row",
             key="practice_df_selection"
@@ -7851,12 +7959,12 @@ with tab_practice:
             selected_idx = 0
             
         # Boundary check safety
-        if selected_idx >= len(results):
+        if selected_idx >= len(df_prac_display):
             selected_idx = 0
             
         if results:
-            selected_item = results[selected_idx]
-            selected_ticker = selected_item['ティッカー']
+            selected_ticker = df_prac_display.iloc[selected_idx]["ティッカー"]
+            selected_item = next((item for item in results if item['ティッカー'] == selected_ticker), results[0])
             selected_name = selected_item['銘柄名']
             
             # Safe recovery from old cached results that don't have 'raw_data' key
