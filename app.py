@@ -7884,12 +7884,13 @@ with tab_practice:
         )
         
     with col_s2:
-        # Date Input: Explicitly allow all dates from 2020 through 2026
-        min_prac_date = datetime.date(2020, 1, 1)
-        max_prac_date = datetime.date(2026, 12, 31)
-        default_prac_date = datetime.date(2026, 3, 2)
+        # Date Input: Strictly allow past dates from 5 years ago up to TODAY (future dates disabled)
+        today_dt = datetime.date.today()
+        min_prac_date = today_dt - datetime.timedelta(days=1825) # 5 years ago
+        max_prac_date = today_dt # Up to today (no future dates allowed!)
+        default_prac_date = today_dt - datetime.timedelta(days=180) # Default to 6 months ago
         
-        # If existing session value is invalid, default to 2026
+        # If existing session value is invalid or in the future, default to 6 months ago
         saved_date = st.session_state.get("prac_start_date", default_prac_date)
         if isinstance(saved_date, pd.Timestamp):
             saved_date = saved_date.date()
@@ -7905,26 +7906,26 @@ with tab_practice:
         )
         st.session_state["prac_start_date"] = prac_start_date
         
-        # Quick Jump Date Presets
-        st.caption("⚡ 基準日のクイック指定:")
+        # Quick Jump Date Presets (Past Dates)
+        st.caption("⚡ 過去の基準日クイック指定:")
         col_qj1, col_qj2, col_qj3 = st.columns(3)
         with col_qj1:
-            if st.button("2026年3月", key="btn_qj_2026_03", use_container_width=True):
-                target_d = datetime.date(2026, 3, 2)
-                st.session_state["prac_start_date"] = target_d
-                st.session_state["prac_start_date_input"] = target_d
+            d_3m = today_dt - datetime.timedelta(days=90)
+            if st.button("3ヶ月前", key="btn_qj_3m", use_container_width=True):
+                st.session_state["prac_start_date"] = d_3m
+                st.session_state["prac_start_date_input"] = d_3m
                 st.rerun()
         with col_qj2:
-            if st.button("2026年1月", key="btn_qj_2026_01", use_container_width=True):
-                target_d = datetime.date(2026, 1, 15)
-                st.session_state["prac_start_date"] = target_d
-                st.session_state["prac_start_date_input"] = target_d
+            d_6m = today_dt - datetime.timedelta(days=180)
+            if st.button("6ヶ月前", key="btn_qj_6m", use_container_width=True):
+                st.session_state["prac_start_date"] = d_6m
+                st.session_state["prac_start_date_input"] = d_6m
                 st.rerun()
         with col_qj3:
-            if st.button("2025年9月", key="btn_qj_2025_09", use_container_width=True):
-                target_d = datetime.date(2025, 9, 1)
-                st.session_state["prac_start_date"] = target_d
-                st.session_state["prac_start_date_input"] = target_d
+            d_1y = today_dt - datetime.timedelta(days=365)
+            if st.button("1年前", key="btn_qj_1y", use_container_width=True):
+                st.session_state["prac_start_date"] = d_1y
+                st.session_state["prac_start_date_input"] = d_1y
                 st.rerun()
         
     with col_s3:
