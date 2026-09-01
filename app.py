@@ -7922,15 +7922,21 @@ with tab_practice:
             prac_start_date = constructed_date
             st.session_state["prac_start_date"] = prac_start_date
         else:
-            min_prac_date = today_dt - datetime.timedelta(days=1825)
-            prac_start_date = st.date_input(
+            min_prac_date = datetime.date(2020, 1, 1)
+            max_prac_date = datetime.date(2026, 12, 31)
+            raw_input_date = st.date_input(
                 "カレンダー",
                 value=saved_date,
                 min_value=min_prac_date,
-                max_value=today_dt,
+                max_value=max_prac_date,
                 label_visibility="collapsed",
                 key="prac_start_date_input"
             )
+            if raw_input_date > today_dt:
+                st.caption(f"💡 {raw_input_date} は未来日のため、最新データが存在する本日 ({today_dt}) として分析します。")
+                prac_start_date = today_dt
+            else:
+                prac_start_date = raw_input_date
             st.session_state["prac_start_date"] = prac_start_date
             
         # Quick Jump Date Presets
