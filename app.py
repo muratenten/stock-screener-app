@@ -445,12 +445,61 @@ def check_and_increment_practice_runs(increment=False):
     return True, run_count
 
 # Page config
+logo_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "logo.png")
+try:
+    from PIL import Image
+    logo_img = Image.open(logo_path)
+except Exception:
+    logo_img = "📈"
+
 st.set_page_config(
-    page_title="ZenStockScreener | 株価上昇シグナル選定ツール",
-    page_icon="📈",
+    page_title="ZenStock | AI日本株スクリーナー＆分析",
+    page_icon=logo_img,
     layout="wide",
     initial_sidebar_state="expanded"
 )
+
+# Base64 encode logo for web app header and mobile icon injection
+logo_b64 = ""
+if os.path.exists(logo_path):
+    try:
+        with open(logo_path, "rb") as f:
+            logo_b64 = base64.b64encode(f.read()).decode("utf-8")
+    except Exception:
+        pass
+logo_data_uri = f"data:image/png;base64,{logo_b64}" if logo_b64 else ""
+
+# Inject high-res favicon, apple-touch-icon, and manifest into HTML head
+if logo_data_uri:
+    st.markdown(
+        f"""
+        <head>
+            <link rel="icon" type="image/png" sizes="32x32" href="{logo_data_uri}">
+            <link rel="icon" type="image/png" sizes="192x192" href="{logo_data_uri}">
+            <link rel="apple-touch-icon" sizes="180x180" href="{logo_data_uri}">
+            <link rel="apple-touch-icon-precomposed" href="{logo_data_uri}">
+            <link rel="shortcut icon" href="{logo_data_uri}">
+            <meta name="apple-mobile-web-app-title" content="zenstock">
+            <meta name="application-name" content="zenstock">
+            <meta name="theme-color" content="#0b0f19">
+        </head>
+        <script>
+            (function() {{
+                var links = document.querySelectorAll("link[rel*='icon'], link[rel*='apple-touch']");
+                links.forEach(function(el) {{
+                    el.href = "{logo_data_uri}";
+                }});
+                if (!document.querySelector("link[rel='apple-touch-icon']")) {{
+                    var appleIcon = document.createElement('link');
+                    appleIcon.rel = 'apple-touch-icon';
+                    appleIcon.href = "{logo_data_uri}";
+                    document.head.appendChild(appleIcon);
+                }}
+            }})();
+        </script>
+        """,
+        unsafe_allow_html=True
+    )
 
 # Inject premium custom CSS dynamically based on theme selection
 bg_color = "#0b0f19" if is_dark else "#f8fafc"
@@ -5170,6 +5219,8 @@ if query_user == "default":
         col_w1, col_w2, col_w3 = st.columns([0.6, 2.8, 0.6])
         
     with col_w2:
+        login_logo_html = f'<div style="text-align: center; margin-bottom: 16px;"><img src="{logo_data_uri}" style="width: 72px; height: 72px; border-radius: 18px; box-shadow: 0 8px 24px rgba(37,99,235,0.4); border: 1.5px solid rgba(59,130,246,0.4);" /></div>' if logo_data_uri else ""
+        st.markdown(login_logo_html, unsafe_allow_html=True)
         st.markdown('<div class="login-title-glow">ZenStockScreener</div>', unsafe_allow_html=True)
         st.markdown('<div class="login-subtitle-glow">AI・ファンダメンタルズ指標分析システム</div>', unsafe_allow_html=True)
         
@@ -5571,7 +5622,9 @@ if get_user_tier() == "free":
 else:
     badge_html = f'<span style="font-size: 0.8rem; font-weight: 700; color: {badge_color}; background: {badge_bg}; border: {badge_border}; padding: 4px 12px; border-radius: 9999px; letter-spacing: 0.05em; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">👑 {tier_label}</span>'
 
-st.markdown(f'<div class="title-container" style="display: flex; flex-direction: column; gap: 6px;"><div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;"><div class="title-text" style="margin: 0; line-height: 1;">ZenStockScreener</div>{badge_html}</div><div class="subtitle-text" style="margin-top: 4px;">AI分析とファンダメンタルズ指標による日本株上昇期待銘柄の選定システム</div></div>', unsafe_allow_html=True)
+logo_header_html = f'<img src="{logo_data_uri}" style="width: 44px; height: 44px; border-radius: 11px; box-shadow: 0 4px 14px rgba(37,99,235,0.35); border: 1.5px solid rgba(59,130,246,0.35); object-fit: cover;" />' if logo_data_uri else ""
+
+st.markdown(f'<div class="title-container" style="display: flex; flex-direction: column; gap: 6px;"><div style="display: flex; align-items: center; gap: 14px; flex-wrap: wrap;">{logo_header_html}<div class="title-text" style="margin: 0; line-height: 1;">ZenStockScreener</div>{badge_html}</div><div class="subtitle-text" style="margin-top: 4px;">AI分析とファンダメンタルズ指標による日本株上昇期待銘柄の選定システム</div></div>', unsafe_allow_html=True)
 
 # Persistent purchase success alert
 if 'purchase_success_msg' in st.session_state:
