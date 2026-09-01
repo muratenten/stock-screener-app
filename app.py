@@ -5659,7 +5659,7 @@ widget_defaults = {
     "scr_filter_shape_match_mobile": False,
     "active_preset": "カスタム設定",
     "prac_market": f"日本株 厳選トレンド銘柄 ({len(JP_TICKERS)}件)",
-    "prac_start_date": pd.Timestamp.now().date() - pd.Timedelta(days=365),
+    "prac_start_date": pd.Timestamp.now().date() - pd.Timedelta(days=90),
     "prac_duration": 60,
     "prac_preset": "🚀 大化け成長株",
     "prac_portfolio": [],
@@ -7884,14 +7884,21 @@ with tab_practice:
         )
         
     with col_s2:
-        # Date Input (between 2 years ago and 30 days ago)
-        min_prac_date = pd.Timestamp.now().date() - pd.Timedelta(days=730)
-        max_prac_date = pd.Timestamp.now().date() - pd.Timedelta(days=30)
-        default_prac_date = pd.Timestamp.now().date() - pd.Timedelta(days=365)
+        # Date Input: Allow choosing between 5 years ago and today (including all dates in 2026!)
+        now_dt = pd.Timestamp.now().date()
+        min_prac_date = now_dt - pd.Timedelta(days=1825) # 5 years ago (e.g. 2021)
+        max_prac_date = now_dt # Up to today (allowing all of 2026!)
+        default_prac_date = now_dt - pd.Timedelta(days=90) # Default to recent 2026 date
         
+        saved_date = st.session_state.get("prac_start_date", default_prac_date)
+        if isinstance(saved_date, pd.Timestamp):
+            saved_date = saved_date.date()
+        if saved_date < min_prac_date or saved_date > max_prac_date:
+            saved_date = default_prac_date
+            
         prac_start_date = st.date_input(
             "基準日 (練習のスタート日)",
-            value=st.session_state.get("prac_start_date", default_prac_date),
+            value=saved_date,
             min_value=min_prac_date,
             max_value=max_prac_date,
             key="prac_start_date_input"
@@ -8132,8 +8139,8 @@ with tab_practice:
         else:
             with st.spinner("過去データの取得とタイムトラベル分析を実行中..."):
                 tickers_list = list(prac_pool.keys())
-                # Download 2 years of history for analysis + practice exit tracking
-                histories = batch_download_histories(tickers_list, period="2y")
+                # Download 5 years of history for analysis + practice exit tracking
+                histories = batch_download_histories(tickers_list, period="5y")
                 
                 prac_results = []
                 p_start_ts = pd.Timestamp(prac_start_date)
