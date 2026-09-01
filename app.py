@@ -7885,11 +7885,16 @@ with tab_practice:
         
     with col_s2:
         today_dt = datetime.date.today()
-        saved_date = st.session_state.get("prac_start_date", datetime.date(2026, 3, 2))
+        if "prac_start_date_input" in st.session_state:
+            saved_date = st.session_state["prac_start_date_input"]
+        else:
+            saved_date = st.session_state.get("prac_start_date", datetime.date(2026, 3, 2))
+            
         if isinstance(saved_date, pd.Timestamp):
             saved_date = saved_date.date()
         if not isinstance(saved_date, datetime.date) or saved_date > today_dt:
             saved_date = datetime.date(2026, 3, 2)
+            st.session_state["prac_start_date_input"] = saved_date
             
         min_prac_date = datetime.date(2020, 1, 1)
         max_prac_date = datetime.date(2026, 12, 31)
@@ -7943,6 +7948,7 @@ with tab_practice:
             st.warning(f"⚠️ 基準日から本日まで約{days_diff}日のため、保有期間（{prac_duration}営業日）に満たず途中経過までの損益計算となります。")
             if st.button(f"🎯 最適基準日 ({rec_max_date.strftime('%Y/%m/%d')}) に合わせる", key="btn_auto_align_date", use_container_width=True):
                 st.session_state["prac_start_date"] = rec_max_date
+                st.session_state["prac_start_date_input"] = rec_max_date
                 st.rerun()
         else:
             st.success(f"✅ 保有期間（{prac_duration_label}）の検証に必要な株価データが揃っています。")
