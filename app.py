@@ -7943,13 +7943,20 @@ with tab_practice:
         cal_buffer = int(prac_duration * 1.55)
         rec_max_date = today_dt - datetime.timedelta(days=cal_buffer)
         
+        def _cb_apply_optimal_date(opt_d):
+            st.session_state["prac_start_date_input"] = opt_d
+            st.session_state["prac_start_date"] = opt_d
+            
         if prac_start_date > rec_max_date:
             days_diff = max(1, (today_dt - prac_start_date).days)
             st.warning(f"⚠️ 基準日から本日まで約{days_diff}日のため、保有期間（{prac_duration}営業日）に満たず途中経過までの損益計算となります。")
-            if st.button(f"🎯 最適基準日 ({rec_max_date.strftime('%Y/%m/%d')}) に合わせる", key="btn_auto_align_date", use_container_width=True):
-                st.session_state["prac_start_date"] = rec_max_date
-                st.session_state["prac_start_date_input"] = rec_max_date
-                st.rerun()
+            st.button(
+                f"🎯 最適基準日 ({rec_max_date.strftime('%Y/%m/%d')}) に合わせる",
+                key="btn_auto_align_date",
+                on_click=_cb_apply_optimal_date,
+                args=(rec_max_date,),
+                use_container_width=True
+            )
         else:
             st.success(f"✅ 保有期間（{prac_duration_label}）の検証に必要な株価データが揃っています。")
         
