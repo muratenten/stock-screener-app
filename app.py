@@ -2200,16 +2200,155 @@ def fetch_tse_growth_tickers():
         pass
     return {}
 
-    # 3. Last resort fallback based on JP_TICKERS
-    fallback_res = {}
-    for k, v in JP_TICKERS.items():
-        fallback_res[k] = {
-            "name": v.get("name", k),
-            "tags": v.get("tags", []) + ["東証プライム"],
-            "sector": v.get("tags", ["その他"])[0],
-            "size": "その他"
-        }
-    return fallback_res
+COMPANY_ALIASES = {
+    '9983.T': ['ユニクロ', 'ファストリ', 'uniqlo', 'fast retailing', '柳井'],
+    '4689.T': ['ヤフー', 'yahoo', 'line', 'paypay', 'ラインヤフー', 'zホールディングス'],
+    '9984.T': ['sbg', 'ソフトバンクg', 'softbank group', '孫正義'],
+    '9434.T': ['ソフトバンク', 'softbank mobile', 'sb', '携帯'],
+    '9432.T': ['ntt', '日本電信電話', '電電公社'],
+    '9433.T': ['kddi', 'au'],
+    '7203.T': ['toyota', 'トヨタ', '豊田'],
+    '7267.T': ['ホンダ', 'honda', '本田'],
+    '7201.T': ['日産', 'nissan', 'ニッサン'],
+    '7270.T': ['スバル', 'subaru', '富士重工'],
+    '7269.T': ['スズキ', 'suzuki'],
+    '7211.T': ['三菱自動車', 'mitsubishi motors'],
+    '4755.T': ['楽天', 'rakuten', '三木谷'],
+    '2914.T': ['jt', '日本たばこ', 'たばこ'],
+    '6758.T': ['sony', 'ソニー'],
+    '7974.T': ['nintendo', '任天堂', 'ニンテンドー', 'マリオ', 'ポケモン'],
+    '6861.T': ['keyence', 'キーエンス'],
+    '8035.T': ['tel', '東京エレクトロン', '東エレ'],
+    '6857.T': ['advantest', 'アドバンテスト'],
+    '6501.T': ['hitachi', '日立', '日立製作所'],
+    '6502.T': ['toshiba', '東芝'],
+    '6503.T': ['三菱電機', 'mitsubishi electric'],
+    '7011.T': ['mhi', '三菱重工', '三菱重工業'],
+    '7012.T': ['khi', '川崎重工', '川崎重工業'],
+    '7013.T': ['ihi', '石川島播磨'],
+    '6701.T': ['nec', '日本電気'],
+    '6702.T': ['fujitsu', '富士通'],
+    '4385.T': ['mercari', 'メルカリ'],
+    '2413.T': ['m3', 'エムスリー'],
+    '6098.T': ['recruit', 'リクルート', 'リクルートhd'],
+    '3382.T': ['セブン', 'セブンイレブン', 'セブンアンドアイ', '7&i'],
+    '8267.T': ['aeon', 'イオン'],
+    '9843.T': ['nitori', 'ニトリ'],
+    '3197.T': ['すかいらーく', 'ガスト', 'バーミヤン', 'skylark'],
+    '7550.T': ['ゼンショー', 'すき家', 'zensho'],
+    '9861.T': ['吉野家', 'yoshinoya'],
+    '2702.T': ['マクドナルド', 'マック', 'マクド', 'mcdonalds'],
+    '7564.T': ['ワークマン', 'workman'],
+    '4751.T': ['サイバーエージェント', 'abema', 'アベマ', 'ウマ娘'],
+    '3659.T': ['ネクソン', 'nexon'],
+    '9684.T': ['スクエニ', 'スクウェアエニックス', 'square enix', 'ドラクエ', 'ff'],
+    '9697.T': ['カプコン', 'capcom', 'モンハン'],
+    '3778.T': ['さくら', 'さくらインターネット', 'sakura internet'],
+    '6526.T': ['ソシオネクスト', 'socionext'],
+    '5253.T': ['カバー', 'cover', 'ホロライブ', 'hololive', 'vtuber'],
+    '5032.T': ['エニーカラー', 'anycolor', 'えにから', 'にじさんじ', 'vtuber'],
+    '9166.T': ['genda', 'ジェンダ', 'giago'],
+    '8306.T': ['三菱ufj', 'mufg', 'ufj'],
+    '8316.T': ['三井住友', 'smbc', 'smfg'],
+    '8411.T': ['みずほ', 'mizuho', 'fg'],
+    '8058.T': ['三菱商事', 'mitsubishi corp'],
+    '8031.T': ['三井物産', 'mitsui'],
+    '8001.T': ['伊藤忠', 'itochu'],
+    '8002.T': ['丸紅', 'marubeni'],
+    '8053.T': ['住友商事', 'sumitomo corp'],
+    'AAPL': ['apple', 'アップル', 'iphone', 'mac'],
+    'MSFT': ['microsoft', 'マイクロソフト', 'windows', 'azure', 'openai'],
+    'NVDA': ['nvidia', 'エヌビディア', 'gpu'],
+    'GOOGL': ['google', 'グーグル', 'alphabet', 'アルファベット', 'youtube'],
+    'AMZN': ['amazon', 'アマゾン', 'aws'],
+    'META': ['meta', 'メタ', 'facebook', 'フェイスブック', 'instagram'],
+    'TSLA': ['tesla', 'テスラ', 'イーロンマスク', 'ev'],
+}
+
+@st.cache_data(ttl=86400)
+def get_all_searchable_stocks():
+    stocks = {}
+    
+    # 1. Load full TSE 4,400+ stock master (JPX official)
+    json_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "tse_all_tickers.json")
+    if os.path.exists(json_path):
+        try:
+            with open(json_path, "r", encoding="utf-8") as f:
+                tse_all = json.load(f)
+                stocks.update(tse_all)
+        except Exception:
+            pass
+            
+    # 2. Merge Prime & Growth
+    prime_map = fetch_tse_prime_tickers()
+    for t, v in prime_map.items():
+        if t in stocks:
+            stocks[t]["tags"] = list(set(stocks[t].get("tags", []) + v.get("tags", [])))
+            if v.get("name"): stocks[t]["name"] = v["name"]
+        else:
+            stocks[t] = v
+            
+    growth_map = fetch_tse_growth_tickers()
+    for t, v in growth_map.items():
+        if t in stocks:
+            stocks[t]["tags"] = list(set(stocks[t].get("tags", []) + v.get("tags", [])))
+            if v.get("name"): stocks[t]["name"] = v["name"]
+        else:
+            stocks[t] = v
+
+    # 3. Merge JP_TICKERS with enriched tags
+    for t, v in JP_TICKERS.items():
+        if t in stocks:
+            stocks[t]["name"] = v.get("name", stocks[t].get("name", t))
+            stocks[t]["tags"] = list(set(stocks[t].get("tags", []) + v.get("tags", [])))
+        else:
+            stocks[t] = {"name": v.get("name", t), "market": "日本株", "tags": v.get("tags", [])}
+            
+    # 4. Merge US_TICKERS
+    for t, v in US_TICKERS.items():
+        stocks[t] = {"name": v.get("name", t), "market": "米国株", "tags": v.get("tags", [])}
+        
+    return stocks
+
+def search_stocks_by_query(query, limit=20):
+    if not query or not str(query).strip():
+        return []
+    q = str(query).strip().lower()
+    all_stocks = get_all_searchable_stocks()
+    exact_matches = []
+    prefix_matches = []
+    fuzzy_matches = []
+    seen = set()
+    
+    # 1. Check alias dictionary
+    for ticker, aliases in COMPANY_ALIASES.items():
+        if ticker in all_stocks and any(q == a.lower() or (len(q) >= 2 and q in a.lower()) for a in aliases):
+            info = all_stocks[ticker]
+            if ticker not in seen:
+                exact_matches.append((ticker, info.get('name', ticker), info.get('market', '')))
+                seen.add(ticker)
+
+    # 2. Iterate all stocks
+    for ticker, info in all_stocks.items():
+        if ticker in seen:
+            continue
+        name = info.get('name', '')
+        code = ticker.split('.')[0].lower()
+        t_low = ticker.lower()
+        n_low = name.lower()
+        
+        item = (ticker, name, info.get('market', ''))
+        if q == code or q == t_low or q == n_low:
+            exact_matches.append(item)
+            seen.add(ticker)
+        elif n_low.startswith(q) or code.startswith(q):
+            prefix_matches.append(item)
+            seen.add(ticker)
+        elif q in n_low or q in t_low:
+            fuzzy_matches.append(item)
+            seen.add(ticker)
+            
+    return (exact_matches + prefix_matches + fuzzy_matches)[:limit]
 
 # Build indicator scoring logic
 def evaluate_stock(ticker, df, info=None, cached_fund=None):
@@ -5703,7 +5842,7 @@ def check_practice_preset_match():
 # Main Navigation Tabs
 tab_screen, tab_favorite, tab_simulation, tab_practice, tab_explanation = st.tabs([
     "🔍 スクリーニング実行と結果分析", 
-    "⭐ 保有・お気に入り銘柄の分析",
+    "⭐ 銘柄検索・個別分析 & お気に入り",
     "💼 仮想シミュレーション（デモトレード）", 
     "🏋️ 過去チャート練習モード",
     "📚 指標とシグナルの解説"
@@ -5781,13 +5920,35 @@ with tab_screen:
     period_map = {"6ヶ月": "6m", "1年": "1y", "2年": "2y"}
     selected_period = period_map[period]
 
-    # Custom tickers input
+    # Custom tickers input with full name search capability
     custom_tickers = ""
     if market == "カスタム指定":
+        st.markdown("##### 🔍 銘柄名・コードでスクリーニング対象を指定")
+        
+        c_search_kw = st.text_input(
+            "銘柄名・企業名、または証券コードで検索して候補追加",
+            placeholder="例: トヨタ、任天堂、すかいらーく、ユニクロ、7203、Apple、NVDA...",
+            key="scr_custom_search_kw"
+        )
+        
+        if c_search_kw and c_search_kw.strip():
+            c_matches = search_stocks_by_query(c_search_kw.strip(), limit=8)
+            if c_matches:
+                st.caption("検索ヒット（クリックして下欄に追加）:")
+                c_btn_cols = st.columns(min(len(c_matches), 4))
+                for idx_m, (m_t, m_n, m_m) in enumerate(c_matches):
+                    with c_btn_cols[idx_m % min(len(c_matches), 4)]:
+                        if st.button(f"➕ {m_n} ({m_t})", key=f"add_custom_btn_{m_t}", use_container_width=True):
+                            curr_val = st.session_state.get("scr_custom_tickers", "")
+                            if m_t not in curr_val:
+                                new_val = (curr_val + f", {m_t}" if curr_val.strip() else m_t).strip(", ")
+                                st.session_state["scr_custom_tickers"] = new_val
+                                st.rerun()
+
         custom_tickers = st.text_area(
-            "カスタムティッカー入力",
-            placeholder="例: 7203.T, 6758.T, 9984.T\n(カンマまたは改行で区切ってください)",
-            help="日本株は末尾に .T をつけてください (例: トヨタは 7203.T)",
+            "スクリーニング対象銘柄（コード・企業名・カンマ区切り）",
+            placeholder="例: トヨタ自動車, ソニーグループ, 任天堂, 7203.T, AAPL, NVDA\n(※ 企業名でも証券コードでも自由に入力可能です)",
+            help="企業名（トヨタ、任天堂など）またはティッカーコード（7203.T, AAPLなど）をカンマまたは改行区切りで入力してください",
             key="scr_custom_tickers"
         )
 
@@ -6140,26 +6301,30 @@ with tab_screen:
     elif market == "東証グロース (全上場銘柄 - 動的取得)":
         tickers_pool = fetch_tse_growth_tickers()
     else:
-        # Custom
+        # Custom (Support full corporate name & ticker resolution)
         if custom_tickers:
-            parsed = [t.strip().upper() for t in custom_tickers.replace('\n', ',').split(',') if t.strip()]
+            raw_items = [t.strip() for t in custom_tickers.replace('\n', ',').split(',') if t.strip()]
+            all_searchable = get_all_searchable_stocks()
             
-            # Fetch local databases to lookup names
-            prime_dir = fetch_tse_prime_tickers()
-            growth_dir = fetch_tse_growth_tickers()
-            
-            for p in parsed:
-                name_lookup = p
-                if p in prime_dir:
-                    name_lookup = prime_dir[p].get("name", p)
-                elif p in growth_dir:
-                    name_lookup = growth_dir[p].get("name", p)
-                elif p in JP_TICKERS:
-                    name_lookup = JP_TICKERS[p].get("name", p)
-                elif p in US_TICKERS:
-                    name_lookup = US_TICKERS[p].get("name", p)
-                    
-                tickers_pool[p] = {"name": name_lookup, "tags": ["カスタム"]}
+            for item in raw_items:
+                item_upper = item.upper()
+                # 1. Exact ticker code match (e.g. 7203.T or AAPL)
+                if item_upper in all_searchable:
+                    tickers_pool[item_upper] = all_searchable[item_upper]
+                elif f"{item_upper}.T" in all_searchable:
+                    tickers_pool[f"{item_upper}.T"] = all_searchable[f"{item_upper}.T"]
+                elif item.isdigit() and len(item) == 4:
+                    t_code = f"{item}.T"
+                    name_res = all_searchable.get(t_code, {}).get("name", t_code)
+                    tickers_pool[t_code] = {"name": name_res, "tags": ["カスタム"]}
+                else:
+                    # 2. Company name / alias search (e.g. "トヨタ", "任天堂", "すかいらーく")
+                    matches = search_stocks_by_query(item, limit=1)
+                    if matches:
+                        m_ticker, m_name, _ = matches[0]
+                        tickers_pool[m_ticker] = all_searchable.get(m_ticker, {"name": m_name, "tags": ["カスタム"]})
+                    else:
+                        tickers_pool[item_upper] = {"name": item, "tags": ["カスタム"]}
                 
     # Apply theme filter
     filtered_pool = {}
@@ -6667,8 +6832,14 @@ with tab_screen:
                     
                 df_display = pd.DataFrame(display_data)
 
-                # Sorting UI controls
-                col_sort1, col_sort2 = st.columns([3, 2])
+                # Search and sorting UI controls
+                col_filt, col_sort1 = st.columns([1.5, 1.5]) if not is_mobile else (st.container(), st.container())
+                with col_filt:
+                    filter_kw = st.text_input(
+                        "🔍 結果一覧から銘柄名・コードで絞り込み",
+                        placeholder="例: 自動車、半導体、7203、トヨタ、ソニー...",
+                        key="screening_table_kw_filter"
+                    )
                 with col_sort1:
                     sort_option = st.selectbox(
                         "↕️ 表示の並び替え（ソート順）",
@@ -6689,8 +6860,17 @@ with tab_screen:
                         index=0,
                         key="screening_sort_selector"
                     )
-                with col_sort2:
-                    st.markdown("<div style='margin-top: 28px; font-size: 0.82rem; color: #64748b;'>💡 表の見出し（列名）をクリックすることでも、項目ごとの昇順/降順を直接切り替えられます。</div>", unsafe_allow_html=True)
+                st.markdown("<div style='font-size: 0.82rem; color: #64748b; margin-top: -6px; margin-bottom: 8px;'>💡 表の見出し（列名）をクリックすることでも、項目ごとの昇順/降順を直接切り替えられます。</div>", unsafe_allow_html=True)
+
+                if filter_kw and filter_kw.strip():
+                    q_kw = filter_kw.strip().lower()
+                    df_display = df_display[df_display.apply(
+                        lambda r: q_kw in str(r.get('銘柄名', '')).lower() or 
+                                  q_kw in str(r.get('ティッカー', '')).lower() or 
+                                  q_kw in str(r.get('テーマ/タグ', '')).lower() or 
+                                  q_kw in str(r.get('チャート形状', '')).lower(), 
+                        axis=1
+                    )].reset_index(drop=True)
 
                 sort_map = {
                     "🏆 総合スコアが高い順 (おすすめ)": ("総合スコア (10点)", False),
@@ -6792,13 +6972,79 @@ with tab_screen:
 # -----------------------------------------------------------------------------
 with tab_favorite:
 
-    st.markdown("### ⭐ 保有・お気に入り銘柄の分析")
-    st.markdown("現在保有している仮想ポートフォリオ銘柄、およびお気に入り（ウォッチリスト）に登録されている銘柄のリアルタイム分析・値動きを表示します。")
+    st.markdown("### 🔍 銘柄名・コード検索 & お気に入り・保有銘柄の分析")
+    st.markdown("東証全上場企業（プライム・スタンダード・グロース 4,400社以上）および主要米国株を、**企業名・ブランド名・証券コード**から直接検索してリアルタイム分析できます。")
     
+    all_searchable_stocks = get_all_searchable_stocks()
     watchlist = load_watchlist()
     portfolio = load_portfolio()
     purchase_records = portfolio.get("purchase_records", [])
     
+    # 1. Prominent Search Box
+    col_s1, col_s2 = st.columns([3.5, 1.2]) if not is_mobile else (st.container(), st.container())
+    with col_s1:
+        tab2_search_query = st.text_input(
+            "🔍 銘柄名・企業名、または証券コードで検索",
+            placeholder="例: トヨタ、任天堂、すかいらーく、ユニクロ、7203、Apple、NVDA...",
+            key="tab2_stock_search_query"
+        )
+    with col_s2:
+        if not is_mobile:
+            st.markdown("<div style='margin-top: 28px;'></div>", unsafe_allow_html=True)
+        if tab2_search_query:
+            if st.button("✖️ 検索をクリア", key="btn_clear_tab2_search", use_container_width=True):
+                st.session_state["tab2_stock_search_query"] = ""
+                st.rerun()
+
+    # If search query is provided
+    if tab2_search_query and tab2_search_query.strip():
+        matches = search_stocks_by_query(tab2_search_query.strip(), limit=20)
+        if matches:
+            st.markdown(f"**🎯 検索結果 ({len(matches)}件):**")
+            match_labels = [f"{t} | {n} ({m})" for t, n, m in matches]
+            selected_match = st.selectbox(
+                "分析する銘柄を選択してください:",
+                options=match_labels,
+                index=0,
+                key="tab2_matched_stock_select"
+            )
+            if selected_match:
+                sel_ticker = selected_match.split(" | ")[0].strip()
+                sel_name = selected_match.split(" | ")[1].split(" (")[0].strip()
+                if st.session_state.get("selected_fav_ticker") != sel_ticker:
+                    st.session_state["selected_fav_ticker"] = sel_ticker
+                    st.session_state["selected_fav_name"] = sel_name
+                    st.session_state["scroll_fav"] = True
+        else:
+            st.warning(f"「{tab2_search_query}」に一致する銘柄が見つかりませんでした。証券コード（例: 7203）または別のキーワードでお試しください。")
+            
+    # Popular Quick-Pick Chips
+    st.markdown("<div style='margin-top: 10px;'></div>", unsafe_allow_html=True)
+    with st.expander("🔥 注目の人気・主要銘柄からクイック選択", expanded=(not tab2_search_query and not purchase_records and not watchlist)):
+        popular_picks = [
+            ("7203.T", "🚗 トヨタ自動車"),
+            ("7974.T", "🎮 任天堂"),
+            ("6758.T", "📱 ソニーグループ"),
+            ("9984.T", "🌐 ソフトバンクG"),
+            ("3778.T", "⚡ さくらインターネット"),
+            ("6857.T", "💎 アドバンテスト"),
+            ("8035.T", "🏭 東京エレクトロン"),
+            ("6501.T", "⚙️ 日立製作所"),
+            ("3197.T", "🍽️ すかいらーくHD"),
+            ("9983.T", "👕 ファーストリテイリング"),
+            ("NVDA", "🤖 NVIDIA"),
+            ("AAPL", "🍎 Apple")
+        ]
+        q_cols = st.columns(4 if not is_mobile else 2)
+        for i, (p_tick, p_nm) in enumerate(popular_picks):
+            with q_cols[i % (4 if not is_mobile else 2)]:
+                is_cur = (st.session_state.get("selected_fav_ticker") == p_tick)
+                if st.button(f"{p_nm}", key=f"quick_pick_{p_tick}", use_container_width=True, type="primary" if is_cur else "secondary"):
+                    st.session_state["selected_fav_ticker"] = p_tick
+                    st.session_state["selected_fav_name"] = p_nm.split(" ")[-1]
+                    st.session_state["scroll_fav"] = True
+                    st.rerun()
+
     # Generate unique list of tickers
     ticker_display = {}
     ticker_names = {}
@@ -6821,117 +7067,112 @@ with tab_favorite:
             
     all_tickers = sorted(list(ticker_display.keys()))
     
-    if "selected_fav_ticker" not in st.session_state or st.session_state["selected_fav_ticker"] not in all_tickers:
-        if all_tickers:
-            st.session_state["selected_fav_ticker"] = all_tickers[0]
-        
-    if not all_tickers:
-        st.info("保有銘柄、またはお気に入り登録された銘柄がありません。🔍「スクリーニング実行と結果分析」タブの銘柄詳細ダッシュボードから「☆ お気に入り追加」または「仮想購入する」をクリックして登録してください。")
+    if is_mobile:
+        col_list_owned = st.container()
+        col_list_fav = st.container()
     else:
-        if is_mobile:
-            col_list_owned = st.container()
-            col_list_fav = st.container()
+        col_list_owned, col_list_fav = st.columns(2)
+        
+    with col_list_owned:
+        st.markdown("##### 💼 保有銘柄一覧 (クリックして選択)")
+        if purchase_records:
+            for rec in purchase_records:
+                qty_str = f"{int(rec['quantity']):,}株" if not is_us_stock(rec['ticker']) else f"{rec['quantity']:,.2f}株" if int(rec['quantity']) != rec['quantity'] else f"{int(rec['quantity']):,}株"
+                btn_label = f"💼 {rec['name']} ({rec['ticker']}) | {qty_str} (平均取得: {format_price(rec['purchase_price'], rec['ticker'])})"
+                is_active = (rec['ticker'] == st.session_state.get("selected_fav_ticker"))
+                btn_type = "primary" if is_active else "secondary"
+                if st.button(btn_label, key=f"btn_owned_{rec['ticker']}", use_container_width=True, type=btn_type):
+                    st.session_state["selected_fav_ticker"] = rec['ticker']
+                    st.session_state["selected_fav_name"] = rec['name']
+                    st.session_state["scroll_fav"] = True
+                    st.rerun()
         else:
-            col_list_owned, col_list_fav = st.columns(2)
+            st.caption("保有している銘柄はありません。")
             
-        with col_list_owned:
-            st.markdown("##### 💼 保有銘柄一覧 (クリックして選択)")
-            if purchase_records:
-                for rec in purchase_records:
-                    qty_str = f"{int(rec['quantity']):,}株" if not is_us_stock(rec['ticker']) else f"{rec['quantity']:,.2f}株" if int(rec['quantity']) != rec['quantity'] else f"{int(rec['quantity']):,}株"
-                    btn_label = f"💼 {rec['name']} ({rec['ticker']}) | {qty_str} (平均取得: {format_price(rec['purchase_price'], rec['ticker'])})"
-                    is_active = (rec['ticker'] == st.session_state.get("selected_fav_ticker"))
-                    btn_type = "primary" if is_active else "secondary"
-                    if st.button(btn_label, key=f"btn_owned_{rec['ticker']}", use_container_width=True, type=btn_type):
-                        st.session_state["selected_fav_ticker"] = rec['ticker']
-                        st.session_state["scroll_fav"] = True
-                        st.rerun()
-            else:
-                st.caption("保有している銘柄はありません。")
-                
-        with col_list_fav:
-            if is_mobile:
-                st.markdown("<div style='margin-top: 15px;'></div>", unsafe_allow_html=True)
-            st.markdown("##### ⭐ お気に入り銘柄一覧 (クリックして選択)")
-            if watchlist:
-                for t, n in watchlist.items():
-                    btn_label = f"⭐ {n} ({t})"
-                    is_active = (t == st.session_state.get("selected_fav_ticker"))
-                    btn_type = "primary" if is_active else "secondary"
-                    if st.button(btn_label, key=f"btn_fav_{t}", use_container_width=True, type=btn_type):
-                        st.session_state["selected_fav_ticker"] = t
-                        st.session_state["scroll_fav"] = True
-                        st.rerun()
-            else:
-                st.caption("お気に入り登録されている銘柄はありません。")
-                
-        st.markdown("<hr style='margin: 15px 0; border: none; border-top: 1px solid #e2e8f0;'>", unsafe_allow_html=True)
-        
-        # Scroll anchor
-        st.markdown('<div id="fav-deep-analysis-section"></div>', unsafe_allow_html=True)
-        
-        # Trigger smooth scroll if requested
-        if st.session_state.get("scroll_fav"):
-            js_scroll = """
-            <script>
-                setTimeout(function() {
-                    var el = window.parent.document.getElementById('fav-deep-analysis-section');
-                    if (el) {
-                        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                    }
-                }, 100);
-            </script>
-            """
-            st.components.v1.html(js_scroll, height=0, width=0)
-            st.session_state["scroll_fav"] = False
-            
-        # Determine currently selected ticker
-        selected_fav_ticker = st.session_state["selected_fav_ticker"]
-        selected_fav_name = ticker_names[selected_fav_ticker]
-        cache_key = f"fav_analysis_{selected_fav_ticker}"
-        
-        # Row with a small caption and refresh button
+    with col_list_fav:
         if is_mobile:
-            st.caption("💡 選択した銘柄の分析とチャートが以下に表示されます。")
+            st.markdown("<div style='margin-top: 15px;'></div>", unsafe_allow_html=True)
+        st.markdown("##### ⭐ お気に入り銘柄一覧 (クリックして選択)")
+        if watchlist:
+            for t, n in watchlist.items():
+                btn_label = f"⭐ {n} ({t})"
+                is_active = (t == st.session_state.get("selected_fav_ticker"))
+                btn_type = "primary" if is_active else "secondary"
+                if st.button(btn_label, key=f"btn_fav_{t}", use_container_width=True, type=btn_type):
+                    st.session_state["selected_fav_ticker"] = t
+                    st.session_state["selected_fav_name"] = n
+                    st.session_state["scroll_fav"] = True
+                    st.rerun()
+        else:
+            st.caption("お気に入り登録されている銘柄はありません。")
+            
+    st.markdown("<hr style='margin: 15px 0; border: none; border-top: 1px solid #e2e8f0;'>", unsafe_allow_html=True)
+    
+    # Scroll anchor
+    st.markdown('<div id="fav-deep-analysis-section"></div>', unsafe_allow_html=True)
+    
+    # Trigger smooth scroll if requested
+    if st.session_state.get("scroll_fav"):
+        js_scroll = """
+        <script>
+            setTimeout(function() {
+                var el = window.parent.document.getElementById('fav-deep-analysis-section');
+                if (el) {
+                    el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            }, 100);
+        </script>
+        """
+        st.components.v1.html(js_scroll, height=0, width=0)
+        st.session_state["scroll_fav"] = False
+        
+    # Determine currently selected ticker
+    selected_fav_ticker = st.session_state.get("selected_fav_ticker", "7203.T")
+    selected_fav_name = ticker_names.get(selected_fav_ticker) or all_searchable_stocks.get(selected_fav_ticker, {}).get("name") or st.session_state.get("selected_fav_name", selected_fav_ticker)
+    cache_key = f"fav_analysis_{selected_fav_ticker}"
+        
+    # Row with a small caption and refresh button
+    if is_mobile:
+        st.caption("💡 選択した銘柄の分析とチャートが以下に表示されます。")
+        if st.button("🔄 最新データに更新", key=f"inline_ref_btn_{selected_fav_ticker}", use_container_width=True):
+            if cache_key in st.session_state:
+                del st.session_state[cache_key]
+            st.cache_data.clear()
+            st.rerun()
+    else:
+        col_cap, col_ref = st.columns([3.8, 1.2])
+        with col_cap:
+            st.caption("💡 検索または上記リストで選択した銘柄の分析とチャートが以下に表示されます。")
+        with col_ref:
             if st.button("🔄 最新データに更新", key=f"inline_ref_btn_{selected_fav_ticker}", use_container_width=True):
                 if cache_key in st.session_state:
                     del st.session_state[cache_key]
                 st.cache_data.clear()
                 st.rerun()
-        else:
-            col_cap, col_ref = st.columns([3.8, 1.2])
-            with col_cap:
-                st.caption("💡 上記リストの銘柄ボタンをクリックすると、その銘柄の分析とチャートが以下に表示されます。")
-            with col_ref:
-                if st.button("🔄 最新データに更新", key=f"inline_ref_btn_{selected_fav_ticker}", use_container_width=True):
-                    if cache_key in st.session_state:
-                        del st.session_state[cache_key]
-                    st.cache_data.clear()
-                    st.rerun()
-        
-        if cache_key not in st.session_state:
-            with st.spinner(f"{selected_fav_name} ({selected_fav_ticker}) のデータを取得・分析中..."):
-                try:
-                    tk = yf.Ticker(selected_fav_ticker)
-                    df = tk.history(period="1y")
-                    df = patch_history_with_fast_info(selected_fav_ticker, df)
-                    if df.empty or len(df) < 75:
-                        st.error(f"{selected_fav_name} ({selected_fav_ticker}) の十分な株価履歴データを取得できませんでした（取引日数が75日未満、または非上場）。")
+    
+    if cache_key not in st.session_state:
+        with st.spinner(f"{selected_fav_name} ({selected_fav_ticker}) のデータを取得・分析中..."):
+            try:
+                tk = yf.Ticker(selected_fav_ticker)
+                df = tk.history(period="1y")
+                df = patch_history_with_fast_info(selected_fav_ticker, df)
+                if df.empty or len(df) < 75:
+                    st.error(f"{selected_fav_name} ({selected_fav_ticker}) の十分な株価履歴データを取得できませんでした（取引日数が75日未満、または非上場）。")
+                else:
+                    info = get_ticker_info(selected_fav_ticker)
+                    raw_analysis = evaluate_stock(selected_fav_ticker, df, info)
+                    if raw_analysis:
+                        st.session_state[cache_key] = raw_analysis
+                        st.rerun()
                     else:
-                        info = get_ticker_info(selected_fav_ticker)
-                        raw_analysis = evaluate_stock(selected_fav_ticker, df, info)
-                        if raw_analysis:
-                            st.session_state[cache_key] = raw_analysis
-                            st.rerun()
-                        else:
-                            st.error("銘柄の評価に失敗しました。")
-                except Exception as e:
-                    st.error(f"データ取得中にエラーが発生しました: {e}")
-                    
-        if cache_key in st.session_state:
-            raw_analysis = st.session_state[cache_key]
-            # Call the dashboard with _fav suffix to prevent any key collisions
-            render_detail_dashboard(selected_fav_ticker, selected_fav_name, raw_analysis, key_suffix="_fav")
+                        st.error("銘柄の評価に失敗しました。")
+            except Exception as e:
+                st.error(f"データ取得中にエラーが発生しました: {e}")
+                
+    if cache_key in st.session_state:
+        raw_analysis = st.session_state[cache_key]
+        # Call the dashboard with _fav suffix to prevent any key collisions
+        render_detail_dashboard(selected_fav_ticker, selected_fav_name, raw_analysis, key_suffix="_fav")
 
 
 # -----------------------------------------------------------------------------
