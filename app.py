@@ -6175,8 +6175,8 @@ with tab_screen:
             else:
                 filter_similarity_pattern = st.checkbox("🔍 類似連動 (過去類似3局面の上昇率フィルタ)", key="scr_filter_similarity", help="直近チャート形状に類似する過去の局面を直近5年間の歴史データから3つ抽出し、そのすべての局面において指定した営業日後の上昇率が指定値以上となった銘柄のみを抽出します。他フィルタで絞り込んだ後、最後に実行されます。")
             if filter_similarity_pattern:
-                similarity_match_days = st.slider("   ↳ 照合する直近チャート期間 (営業日)", 5, 60, int(st.session_state.get("scr_similarity_match_days", 20)), step=5, key="scr_similarity_match_days", help="直近何営業日分のチャート形状（波形）を照合元として使用するかを設定します（例: 20日 = 約1ヶ月）。")
-                similarity_future_days = st.slider("   ↳ 参照する未来予測期間 (営業日後)", 5, 60, int(st.session_state.get("scr_similarity_future_days", st.session_state.get("scr_similarity_days", 20))), step=5, key="scr_similarity_future_days", help="過去類似局面から何営業日後に上昇したかを判定するかを設定します（例: 20日後 = 約1ヶ月後）。")
+                similarity_match_days = st.slider("   ↳ 照合する直近チャート期間 (営業日)", 5, 120, int(st.session_state.get("scr_similarity_match_days", 20)), step=5, key="scr_similarity_match_days", help="直近何営業日分のチャート形状（波形）を照合元として使用するかを設定します（例: 20日 = 約1ヶ月、60日 = 約3ヶ月、120日 = 約半年）。")
+                similarity_future_days = st.slider("   ↳ 参照する未来予測期間 (営業日後)", 5, 120, int(st.session_state.get("scr_similarity_future_days", st.session_state.get("scr_similarity_days", 20))), step=5, key="scr_similarity_future_days", help="過去類似局面から何営業日後に上昇したかを判定するかを設定します（例: 20日後 = 約1ヶ月後、60日後 = 約3ヶ月後、120日後 = 約半年後）。")
                 similarity_threshold_pct = st.slider("   ↳ 必要上昇率 (%)", 0.0, 15.0, float(st.session_state.get("scr_similarity_pct", 5.0)), step=0.5, key="scr_similarity_pct")
             else:
                 similarity_match_days = 20
@@ -6303,8 +6303,8 @@ with tab_screen:
                 else:
                     filter_similarity_pattern = st.checkbox("🔍 類似連動 (過去類似3局面の上昇率フィルタ)", key="scr_filter_similarity", help="直近チャート形状に類似する過去の局面を直近5年間の歴史データから3つ抽出し、そのすべての局面において指定した営業日後の上昇率が指定値以上となった銘柄のみを抽出します。他フィルタで絞り込んだ後、最後に実行されます。")
                 if filter_similarity_pattern:
-                    similarity_match_days = st.slider("   ↳ 照合する直近チャート期間 (営業日)", 5, 60, int(st.session_state.get("scr_similarity_match_days", 20)), step=5, key="scr_similarity_match_days", help="直近何営業日分のチャート形状（波形）を照合元として使用するかを設定します（例: 20日 = 約1ヶ月）。")
-                    similarity_future_days = st.slider("   ↳ 参照する未来予測期間 (営業日後)", 5, 60, int(st.session_state.get("scr_similarity_future_days", st.session_state.get("scr_similarity_days", 20))), step=5, key="scr_similarity_future_days", help="過去類似局面から何営業日後に上昇したかを判定するかを設定します（例: 20日後 = 約1ヶ月後）。")
+                    similarity_match_days = st.slider("   ↳ 照合する直近チャート期間 (営業日)", 5, 120, int(st.session_state.get("scr_similarity_match_days", 20)), step=5, key="scr_similarity_match_days", help="直近何営業日分のチャート形状（波形）を照合元として使用するかを設定します（例: 20日 = 約1ヶ月、60日 = 約3ヶ月、120日 = 約半年）。")
+                    similarity_future_days = st.slider("   ↳ 参照する未来予測期間 (営業日後)", 5, 120, int(st.session_state.get("scr_similarity_future_days", st.session_state.get("scr_similarity_days", 20))), step=5, key="scr_similarity_future_days", help="過去類似局面から何営業日後に上昇したかを判定するかを設定します（例: 20日後 = 約1ヶ月後、60日後 = 約3ヶ月後、120日後 = 約半年後）。")
                     similarity_threshold_pct = st.slider("   ↳ 必要上昇率 (%)", 0.0, 15.0, float(st.session_state.get("scr_similarity_pct", 5.0)), step=0.5, key="scr_similarity_pct")
                 else:
                     similarity_match_days = 20
@@ -8027,8 +8027,8 @@ with tab_practice:
             else:
                 prac_filter_similarity = st.checkbox("🔍 類似連動 (過去類似3局面の上昇率フィルタ)", key="prac_filter_similarity", help="直近チャート形状に類似する過去の局面を過去データから3つ抽出し、そのすべての局面において指定した営業日後の上昇率が指定値以上となった銘柄のみを抽出します。他フィルタで絞り込んだ後、最後に実行されます。")
             if prac_filter_similarity:
-                prac_similarity_match_days = st.slider("   ↳ 照合する直近チャート期間 (営業日)", 5, 60, int(st.session_state.get("prac_similarity_match_days", 20)), step=5, key="prac_similarity_match_days", help="直近何営業日分のチャート波形を照合元として使用するかを設定します。")
-                prac_similarity_future_days = st.slider("   ↳ 参照する未来予測期間 (営業日後)", 5, 60, int(st.session_state.get("prac_similarity_future_days", st.session_state.get("prac_similarity_days", 20))), step=5, key="prac_similarity_future_days", help="過去類似局面から何営業日後に上昇したかを評価します。")
+                prac_similarity_match_days = st.slider("   ↳ 照合する直近チャート期間 (営業日)", 5, 120, int(st.session_state.get("prac_similarity_match_days", 20)), step=5, key="prac_similarity_match_days", help="直近何営業日分のチャート波形を照合元として使用するかを設定します（例: 20日 = 約1ヶ月、60日 = 約3ヶ月、120日 = 約半年）。")
+                prac_similarity_future_days = st.slider("   ↳ 参照する未来予測期間 (営業日後)", 5, 120, int(st.session_state.get("prac_similarity_future_days", st.session_state.get("prac_similarity_days", 20))), step=5, key="prac_similarity_future_days", help="過去類似局面から何営業日後に上昇したかを評価します（例: 20日後 = 約1ヶ月後、60日後 = 約3ヶ月後、120日後 = 約半年後）。")
                 prac_similarity_pct = st.slider("   ↳ 必要上昇率 (%)", 0.0, 15.0, float(st.session_state.get("prac_similarity_pct", 5.0)), step=0.5, key="prac_similarity_pct")
             else:
                 prac_similarity_match_days = 20
@@ -8120,8 +8120,8 @@ with tab_practice:
                 else:
                     prac_filter_similarity = st.checkbox("🔍 類似連動 (過去類似3局面の上昇率フィルタ)", key="prac_filter_similarity")
                 if prac_filter_similarity:
-                    prac_similarity_match_days = st.slider("   ↳ 照合する直近チャート期間 (営業日)", 5, 60, int(st.session_state.get("prac_similarity_match_days", 20)), step=5, key="prac_similarity_match_days", help="直近何営業日分のチャート波形を照合元として使用するかを設定します。")
-                    prac_similarity_future_days = st.slider("   ↳ 参照する未来予測期間 (営業日後)", 5, 60, int(st.session_state.get("prac_similarity_future_days", st.session_state.get("prac_similarity_days", 20))), step=5, key="prac_similarity_future_days", help="過去類似局面から何営業日後に上昇したかを評価します。")
+                    prac_similarity_match_days = st.slider("   ↳ 照合する直近チャート期間 (営業日)", 5, 120, int(st.session_state.get("prac_similarity_match_days", 20)), step=5, key="prac_similarity_match_days", help="直近何営業日分のチャート波形を照合元として使用するかを設定します（例: 20日 = 約1ヶ月、60日 = 約3ヶ月、120日 = 約半年）。")
+                    prac_similarity_future_days = st.slider("   ↳ 参照する未来予測期間 (営業日後)", 5, 120, int(st.session_state.get("prac_similarity_future_days", st.session_state.get("prac_similarity_days", 20))), step=5, key="prac_similarity_future_days", help="過去類似局面から何営業日後に上昇したかを評価します（例: 20日後 = 約1ヶ月後、60日後 = 約3ヶ月後、120日後 = 約半年後）。")
                     prac_similarity_pct = st.slider("   ↳ 必要上昇率 (%)", 0.0, 15.0, float(st.session_state.get("prac_similarity_pct", 5.0)), step=0.5, key="prac_similarity_pct")
                 else:
                     prac_similarity_match_days = 20
