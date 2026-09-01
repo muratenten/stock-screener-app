@@ -8536,36 +8536,37 @@ with tab_practice:
             
         st.markdown("### 💼 練習用キープ（保有）銘柄一覧")
         
-        # Individual stock items with delete buttons
+        # Individual stock items with delete buttons inside border frame
         for idx, p in enumerate(portfolio):
             is_jpy = p['ticker'].endswith(('.T', 'T')) or '日経平均' in st.session_state.get("prac_market", "") or 'プライム' in st.session_state.get("prac_market", "") or 'グロース' in st.session_state.get("prac_market", "")
             price_str = f"{p['entry_price']:,.1f} 円" if is_jpy else f"${p['entry_price']:,.2f}"
             qty_str = f"{p['quantity']:,.2f} 株"
             budget_str = f"{p['budget']:,} 円" if is_jpy else f"${p['budget']:,}"
             
-            c_info, c_del = st.columns([4.2, 1.1] if is_mobile else [4.8, 1.0])
-            with c_info:
-                st.markdown(f"""
-                <div style="background-color: var(--card-bg, #f8fafc); border: 1px solid var(--border-color, #e2e8f0); border-radius: 8px; padding: 8px 12px; margin-bottom: 4px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
-                    <div>
-                        <span style="font-weight: 700; font-size: 1.0rem; color: var(--text-color, #1e293b);">{p['name']}</span>
-                        <span style="font-size: 0.85rem; color: #64748b; margin-left: 6px;"><code>{p['ticker']}</code></span>
+            with st.container(border=True):
+                c_info, c_del = st.columns([4.2, 1.0] if not is_mobile else [3.2, 1.2])
+                with c_info:
+                    st.markdown(f"""
+                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; padding-top: 2px;">
+                        <div>
+                            <span style="font-weight: 700; font-size: 1.05rem; color: var(--text-color, #1e293b);">{p['name']}</span>
+                            <span style="font-size: 0.85rem; color: #64748b; margin-left: 6px;"><code>{p['ticker']}</code></span>
+                        </div>
+                        <div style="font-size: 0.88rem; color: var(--text-color, #334155);">
+                            <span style="margin-right: 12px;">購入価格: <b>{price_str}</b></span>
+                            <span style="margin-right: 12px;">数量: <b>{qty_str}</b></span>
+                            <span>投資額: <b style="color: #2563eb;">{budget_str}</b></span>
+                        </div>
                     </div>
-                    <div style="font-size: 0.85rem; color: var(--text-color, #334155);">
-                        <span style="margin-right: 10px;">買値: <b>{price_str}</b></span>
-                        <span style="margin-right: 10px;">数量: <b>{qty_str}</b></span>
-                        <span>投資額: <b style="color: #2563eb;">{budget_str}</b></span>
-                    </div>
-                </div>
-                """, unsafe_allow_html=True)
-            with c_del:
-                if st.button("🗑️ 削除", key=f"btn_del_prac_item_{p['ticker']}_{idx}", use_container_width=True, help=f"{p['name']} を練習リストから削除"):
-                    st.session_state["prac_portfolio"] = [item for item in st.session_state["prac_portfolio"] if item['ticker'] != p['ticker']]
-                    st.session_state["prac_selected_labels"] = [lbl for lbl in st.session_state.get("prac_selected_labels", []) if not lbl.startswith(p['ticker'])]
-                    if len(st.session_state["prac_portfolio"]) == 0:
-                        st.session_state["prac_show_results"] = False
-                    st.toast(f"🗑️ {p['name']} ({p['ticker']}) を練習リストから削除しました")
-                    st.rerun()
+                    """, unsafe_allow_html=True)
+                with c_del:
+                    if st.button("削除", key=f"btn_del_prac_item_{p['ticker']}_{idx}", use_container_width=True, help=f"{p['name']} を練習リストから削除"):
+                        st.session_state["prac_portfolio"] = [item for item in st.session_state["prac_portfolio"] if item['ticker'] != p['ticker']]
+                        st.session_state["prac_selected_labels"] = [lbl for lbl in st.session_state.get("prac_selected_labels", []) if not lbl.startswith(p['ticker'])]
+                        if len(st.session_state["prac_portfolio"]) == 0:
+                            st.session_state["prac_show_results"] = False
+                        st.toast(f"{p['name']} ({p['ticker']}) を練習リストから削除しました")
+                        st.rerun()
         
         st.markdown("<div style='margin-bottom: 12px;'></div>", unsafe_allow_html=True)
         
