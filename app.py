@@ -7917,7 +7917,7 @@ with tab_practice:
                 
             constructed_date = datetime.date(sel_year, sel_month, sel_day)
             if constructed_date > today_dt:
-                st.caption(f"⚠️ {constructed_date} は未来日のため、本日の日付 ({today_dt}) に調整されます。")
+                st.warning(f"⚠️ 指定された「{constructed_date.strftime('%Y年%m月%d日')}」は未来の日付です。市場データが存在しないため、最新の取引日である「{today_dt.strftime('%Y年%m月%d日')}」を基準日として設定しました。")
                 constructed_date = today_dt
             prac_start_date = constructed_date
             st.session_state["prac_start_date"] = prac_start_date
@@ -7933,26 +7933,33 @@ with tab_practice:
                 key="prac_start_date_input"
             )
             if raw_input_date > today_dt:
-                st.caption(f"💡 {raw_input_date} は未来日のため、最新データが存在する本日 ({today_dt}) として分析します。")
+                st.warning(f"⚠️ カレンダーで選択された「{raw_input_date.strftime('%Y年%m月%d日')}」は未来の日付です。市場データが存在しないため、最新の取引日である「{today_dt.strftime('%Y年%m月%d日')}」を基準日として設定しました。")
                 prac_start_date = today_dt
             else:
                 prac_start_date = raw_input_date
             st.session_state["prac_start_date"] = prac_start_date
             
-        # Quick Jump Date Presets
+        # Quick Jump Scenario Presets
         st.caption(f"📌 設定中: **{prac_start_date.strftime('%Y年%m月%d日')}**")
-        col_qj1, col_qj2, col_qj3 = st.columns(3)
-        with col_qj1:
-            if st.button("2026年3月", key="btn_qj_2026_03", use_container_width=True):
-                st.session_state["prac_start_date"] = datetime.date(2026, 3, 2)
+        st.markdown("**⚡ 1タップでおすすめ検証シナリオを設定:**")
+        col_sc1, col_sc2 = st.columns(2)
+        with col_sc1:
+            if st.button("🚀 1ヶ月検証 (2026/7月〜)", key="btn_sc_1m", use_container_width=True):
+                st.session_state["prac_start_date"] = today_dt - datetime.timedelta(days=35)
+                st.session_state["prac_duration"] = 20
                 st.rerun()
-        with col_qj2:
-            if st.button("2026年1月", key="btn_qj_2026_01", use_container_width=True):
-                st.session_state["prac_start_date"] = datetime.date(2026, 1, 15)
+            if st.button("🚀 3ヶ月検証 (2026/5月〜)", key="btn_sc_3m", use_container_width=True):
+                st.session_state["prac_start_date"] = today_dt - datetime.timedelta(days=95)
+                st.session_state["prac_duration"] = 60
                 st.rerun()
-        with col_qj3:
-            if st.button("2025年9月", key="btn_qj_2025_09", use_container_width=True):
-                st.session_state["prac_start_date"] = datetime.date(2025, 9, 1)
+        with col_sc2:
+            if st.button("🚀 6ヶ月検証 (2026/2月〜)", key="btn_sc_6m", use_container_width=True):
+                st.session_state["prac_start_date"] = today_dt - datetime.timedelta(days=185)
+                st.session_state["prac_duration"] = 120
+                st.rerun()
+            if st.button("🚀 1年間検証 (2025/8月〜)", key="btn_sc_1y", use_container_width=True):
+                st.session_state["prac_start_date"] = today_dt - datetime.timedelta(days=370)
+                st.session_state["prac_duration"] = 240
                 st.rerun()
         
     with col_s3:
@@ -7963,14 +7970,35 @@ with tab_practice:
             "120営業日 (約6ヶ月)": 120,
             "240営業日 (約1年)": 240
         }
+        cur_dur = st.session_state.get("prac_duration", 60)
+        dur_keys = list(durations.keys())
+        default_idx = 1
+        for idx, k in enumerate(dur_keys):
+            if durations[k] == cur_dur:
+                default_idx = idx
+                break
+                
         prac_duration_label = st.selectbox(
             "トレード保有期間",
-            options=list(durations.keys()),
-            index=1, # Default 60 days
+            options=dur_keys,
+            index=default_idx,
             key="prac_duration_selectbox"
         )
         prac_duration = durations[prac_duration_label]
         st.session_state["prac_duration"] = prac_duration
+        
+        # Calculate recommended max date for full backtest
+        cal_buffer = int(prac_duration * 1.55)
+        rec_max_date = today_dt - datetime.timedelta(days=cal_buffer)
+        
+        if prac_start_date > rec_max_date:
+            days_diff = max(1, (today_dt - prac_start_date).days)
+            st.warning(f"⚠️ 基準日から本日まで約{days_diff}日のため、保有期間（{prac_duration}営業日）に満たず途中経過までの損益計算となります。")
+            if st.button(f"🎯 最適基準日 ({rec_max_date.strftime('%Y/%m/%d')}) に合わせる", key="btn_auto_align_date", use_container_width=True):
+                st.session_state["prac_start_date"] = rec_max_date
+                st.rerun()
+        else:
+            st.success(f"✅ 保有期間（{prac_duration_label}）の検証に必要な株価データが揃っています。")
         
     # Presets & Custom filters expander
     with st.expander("🔍 練習用スクリーニング条件の設定 (クリックで開閉)", expanded=True):
