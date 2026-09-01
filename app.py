@@ -481,7 +481,7 @@ if logo_data_uri:
             <link rel="shortcut icon" href="{logo_data_uri}">
             <meta name="apple-mobile-web-app-title" content="zenstock">
             <meta name="application-name" content="zenstock">
-            <meta name="theme-color" content="#0b0f19">
+            <meta name="theme-color" content="#2563eb">
         </head>
         <script>
             (function() {{
@@ -5622,7 +5622,7 @@ if get_user_tier() == "free":
 else:
     badge_html = f'<span style="font-size: 0.8rem; font-weight: 700; color: {badge_color}; background: {badge_bg}; border: {badge_border}; padding: 4px 12px; border-radius: 9999px; letter-spacing: 0.05em; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">👑 {tier_label}</span>'
 
-logo_header_html = f'<img src="{logo_data_uri}" style="width: 44px; height: 44px; border-radius: 11px; box-shadow: 0 4px 14px rgba(37,99,235,0.35); border: 1.5px solid rgba(59,130,246,0.35); object-fit: cover;" />' if logo_data_uri else ""
+logo_header_html = f'<img src="{logo_data_uri}" style="width: 42px; height: 42px; border-radius: 11px; box-shadow: 0 2px 10px rgba(37,99,235,0.2); border: 1px solid rgba(226,232,240,0.8); background: #ffffff; object-fit: contain; padding: 2px;" />' if logo_data_uri else ""
 
 st.markdown(f'<div class="title-container" style="display: flex; flex-direction: column; gap: 6px;"><div style="display: flex; align-items: center; gap: 14px; flex-wrap: wrap;">{logo_header_html}<div class="title-text" style="margin: 0; line-height: 1;">ZenStockScreener</div>{badge_html}</div><div class="subtitle-text" style="margin-top: 4px;">AI分析とファンダメンタルズ指標による日本株上昇期待銘柄の選定システム</div></div>', unsafe_allow_html=True)
 
