@@ -7891,76 +7891,23 @@ with tab_practice:
         if not isinstance(saved_date, datetime.date) or saved_date > today_dt:
             saved_date = datetime.date(2026, 3, 2)
             
-        st.markdown("**基準日 (練習のスタート日)**")
-        date_pick_mode = st.radio(
-            "選択方式",
-            options=["🔢 年・月・日で直接指定", "📅 カレンダーから指定"],
-            horizontal=True,
-            label_visibility="collapsed",
-            key="prac_date_pick_mode"
-        )
+        min_prac_date = datetime.date(2020, 1, 1)
+        max_prac_date = datetime.date(2026, 12, 31)
         
-        if date_pick_mode == "🔢 年・月・日で直接指定":
-            col_y, col_m, col_d = st.columns([1.2, 1.0, 1.0])
-            avail_years = [2026, 2025, 2024, 2023, 2022, 2021]
-            y_idx = avail_years.index(saved_date.year) if saved_date.year in avail_years else 0
-            with col_y:
-                sel_year = st.selectbox("年", options=avail_years, index=y_idx, key="prac_sel_year", format_func=lambda x: f"{x}年")
-            with col_m:
-                sel_month = st.selectbox("月", options=list(range(1, 13)), index=saved_date.month - 1, key="prac_sel_month", format_func=lambda x: f"{x}月")
-            
-            import calendar
-            max_days_in_m = calendar.monthrange(sel_year, sel_month)[1]
-            day_idx = min(saved_date.day, max_days_in_m) - 1
-            with col_d:
-                sel_day = st.selectbox("日", options=list(range(1, max_days_in_m + 1)), index=day_idx, key="prac_sel_day", format_func=lambda x: f"{x}日")
-                
-            constructed_date = datetime.date(sel_year, sel_month, sel_day)
-            if constructed_date > today_dt:
-                st.warning(f"⚠️ 指定された「{constructed_date.strftime('%Y年%m月%d日')}」は未来の日付です。市場データが存在しないため、最新の取引日である「{today_dt.strftime('%Y年%m月%d日')}」を基準日として設定しました。")
-                constructed_date = today_dt
-            prac_start_date = constructed_date
-            st.session_state["prac_start_date"] = prac_start_date
+        raw_input_date = st.date_input(
+            "基準日 (練習のスタート日)",
+            value=saved_date,
+            min_value=min_prac_date,
+            max_value=max_prac_date,
+            key="prac_start_date_input"
+        )
+        if raw_input_date > today_dt:
+            st.warning(f"⚠️ 選択された「{raw_input_date.strftime('%Y年%m月%d日')}」は未来の日付です。市場データが存在しないため、最新の取引日である「{today_dt.strftime('%Y年%m月%d日')}」を基準日として設定しました。")
+            prac_start_date = today_dt
         else:
-            min_prac_date = datetime.date(2020, 1, 1)
-            max_prac_date = datetime.date(2026, 12, 31)
-            raw_input_date = st.date_input(
-                "カレンダー",
-                value=saved_date,
-                min_value=min_prac_date,
-                max_value=max_prac_date,
-                label_visibility="collapsed",
-                key="prac_start_date_input"
-            )
-            if raw_input_date > today_dt:
-                st.warning(f"⚠️ カレンダーで選択された「{raw_input_date.strftime('%Y年%m月%d日')}」は未来の日付です。市場データが存在しないため、最新の取引日である「{today_dt.strftime('%Y年%m月%d日')}」を基準日として設定しました。")
-                prac_start_date = today_dt
-            else:
-                prac_start_date = raw_input_date
-            st.session_state["prac_start_date"] = prac_start_date
+            prac_start_date = raw_input_date
             
-        # Quick Jump Scenario Presets
-        st.caption(f"📌 設定中: **{prac_start_date.strftime('%Y年%m月%d日')}**")
-        st.markdown("**⚡ 1タップでおすすめ検証シナリオを設定:**")
-        col_sc1, col_sc2 = st.columns(2)
-        with col_sc1:
-            if st.button("🚀 1ヶ月検証 (2026/7月〜)", key="btn_sc_1m", use_container_width=True):
-                st.session_state["prac_start_date"] = today_dt - datetime.timedelta(days=35)
-                st.session_state["prac_duration"] = 20
-                st.rerun()
-            if st.button("🚀 3ヶ月検証 (2026/5月〜)", key="btn_sc_3m", use_container_width=True):
-                st.session_state["prac_start_date"] = today_dt - datetime.timedelta(days=95)
-                st.session_state["prac_duration"] = 60
-                st.rerun()
-        with col_sc2:
-            if st.button("🚀 6ヶ月検証 (2026/2月〜)", key="btn_sc_6m", use_container_width=True):
-                st.session_state["prac_start_date"] = today_dt - datetime.timedelta(days=185)
-                st.session_state["prac_duration"] = 120
-                st.rerun()
-            if st.button("🚀 1年間検証 (2025/8月〜)", key="btn_sc_1y", use_container_width=True):
-                st.session_state["prac_start_date"] = today_dt - datetime.timedelta(days=370)
-                st.session_state["prac_duration"] = 240
-                st.rerun()
+        st.session_state["prac_start_date"] = prac_start_date
         
     with col_s3:
         # Holding Period
