@@ -7884,16 +7884,16 @@ with tab_practice:
         )
         
     with col_s2:
-        # Date Input: Allow choosing between 5 years ago and today (including all dates in 2026!)
-        now_dt = pd.Timestamp.now().date()
-        min_prac_date = now_dt - pd.Timedelta(days=1825) # 5 years ago (e.g. 2021)
-        max_prac_date = now_dt # Up to today (allowing all of 2026!)
-        default_prac_date = now_dt - pd.Timedelta(days=90) # Default to recent 2026 date
+        # Date Input: Explicitly allow all dates from 2020 through 2026
+        min_prac_date = datetime.date(2020, 1, 1)
+        max_prac_date = datetime.date(2026, 12, 31)
+        default_prac_date = datetime.date(2026, 3, 2)
         
+        # If existing session value is invalid, default to 2026
         saved_date = st.session_state.get("prac_start_date", default_prac_date)
         if isinstance(saved_date, pd.Timestamp):
             saved_date = saved_date.date()
-        if saved_date < min_prac_date or saved_date > max_prac_date:
+        if not isinstance(saved_date, datetime.date) or saved_date < min_prac_date or saved_date > max_prac_date:
             saved_date = default_prac_date
             
         prac_start_date = st.date_input(
@@ -7904,6 +7904,28 @@ with tab_practice:
             key="prac_start_date_input"
         )
         st.session_state["prac_start_date"] = prac_start_date
+        
+        # Quick Jump Date Presets
+        st.caption("⚡ 基準日のクイック指定:")
+        col_qj1, col_qj2, col_qj3 = st.columns(3)
+        with col_qj1:
+            if st.button("2026年3月", key="btn_qj_2026_03", use_container_width=True):
+                target_d = datetime.date(2026, 3, 2)
+                st.session_state["prac_start_date"] = target_d
+                st.session_state["prac_start_date_input"] = target_d
+                st.rerun()
+        with col_qj2:
+            if st.button("2026年1月", key="btn_qj_2026_01", use_container_width=True):
+                target_d = datetime.date(2026, 1, 15)
+                st.session_state["prac_start_date"] = target_d
+                st.session_state["prac_start_date_input"] = target_d
+                st.rerun()
+        with col_qj3:
+            if st.button("2025年9月", key="btn_qj_2025_09", use_container_width=True):
+                target_d = datetime.date(2025, 9, 1)
+                st.session_state["prac_start_date"] = target_d
+                st.session_state["prac_start_date_input"] = target_d
+                st.rerun()
         
     with col_s3:
         # Holding Period
