@@ -5653,6 +5653,8 @@ widget_defaults = {
     "scr_filter_bb_re": False,
     "scr_filter_vol_su": False,
     "scr_filter_similarity": False,
+    "scr_similarity_match_days": 20,
+    "scr_similarity_future_days": 20,
     "scr_similarity_days": 20,
     "scr_similarity_pct": 5.0,
     "scr_filter_shape_match": False,
@@ -5681,6 +5683,8 @@ widget_defaults = {
     "prac_filter_bb_re": False,
     "prac_filter_vol_su": False,
     "prac_filter_similarity": False,
+    "prac_similarity_match_days": 20,
+    "prac_similarity_future_days": 20,
     "prac_similarity_days": 20,
     "prac_similarity_pct": 5.0,
     "prac_filter_shape_match": False,
@@ -5712,6 +5716,8 @@ def apply_preset(preset_name):
     st.session_state["scr_filter_bb_re"] = False
     st.session_state["scr_filter_vol_su"] = False
     st.session_state["scr_filter_similarity"] = False
+    st.session_state["scr_similarity_match_days"] = 20
+    st.session_state["scr_similarity_future_days"] = 20
     st.session_state["scr_similarity_days"] = 20
     st.session_state["scr_similarity_pct"] = 5.0
     st.session_state["scr_filter_shape_match"] = False
@@ -5752,8 +5758,8 @@ def apply_preset(preset_name):
     st.session_state["active_preset"] = preset_name
     presets_inv = {
         "カスタム設定": "⚙️ カスタム設定",
-        "大化け成長株": "🚀 大化け成長株 (CANSLIM風)",
-        "高配当割安株": "💰 高配当割安株",
+        "大化け成長株": "🚀 大化け成長株狙い",
+        "高配当割安株": "💰 高配当＆バリュー割安株",
         "逆張り・大底打ち": "🔄 逆張り・大底打ち狙い",
         "急騰ブレイクアウト": "⚡ 急騰ブレイクアウト狙い"
     }
@@ -5774,6 +5780,8 @@ def check_preset_match():
         "scr_filter_gc": False, "scr_filter_macd": False, "scr_filter_rsi_os": False,
         "scr_filter_rsi_ob": False, "scr_filter_bb_re": False, "scr_filter_vol_su": False,
         "scr_filter_similarity": False,
+        "scr_similarity_match_days": 20,
+        "scr_similarity_future_days": 20,
         "scr_similarity_days": 20,
         "scr_similarity_pct": 5.0,
         "scr_filter_shape_match" if st.session_state.get('ui_mode', 'PC') != 'スマホ' else "scr_filter_shape_match_mobile": False
@@ -5822,6 +5830,8 @@ def apply_practice_preset(preset_name):
     st.session_state["prac_filter_bb_re"] = False
     st.session_state["prac_filter_vol_su"] = False
     st.session_state["prac_filter_similarity"] = False
+    st.session_state["prac_similarity_match_days"] = 20
+    st.session_state["prac_similarity_future_days"] = 20
     st.session_state["prac_similarity_days"] = 20
     st.session_state["prac_similarity_pct"] = 5.0
     st.session_state["prac_filter_shape_match"] = False
@@ -5861,6 +5871,8 @@ def check_practice_preset_match():
         "prac_filter_gc": False, "prac_filter_macd": False, "prac_filter_rsi_os": False,
         "prac_filter_rsi_ob": False, "prac_filter_bb_re": False, "prac_filter_vol_su": False,
         "prac_filter_similarity": False,
+        "prac_similarity_match_days": 20,
+        "prac_similarity_future_days": 20,
         "prac_similarity_days": 20,
         "prac_similarity_pct": 5.0,
         "prac_filter_shape_match" if st.session_state.get('ui_mode', 'PC') != 'スマホ' else "prac_filter_shape_match_mobile": False
@@ -6161,12 +6173,14 @@ with tab_screen:
                 st.session_state["scr_filter_similarity"] = False
                 filter_similarity_pattern = False
             else:
-                filter_similarity_pattern = st.checkbox("🔍 類似連動 (過去類似3局面の上昇率フィルタ)", key="scr_filter_similarity", help="直近20日間のチャート形状に類似する過去の局面を直近5年間の歴史データから3つ抽出し、そのすべての局面において指定した営業日後の上昇率が指定値以上となった銘柄のみを抽出します。他フィルタで絞り込んだ後、最後に実行されます。")
+                filter_similarity_pattern = st.checkbox("🔍 類似連動 (過去類似3局面の上昇率フィルタ)", key="scr_filter_similarity", help="直近チャート形状に類似する過去の局面を直近5年間の歴史データから3つ抽出し、そのすべての局面において指定した営業日後の上昇率が指定値以上となった銘柄のみを抽出します。他フィルタで絞り込んだ後、最後に実行されます。")
             if filter_similarity_pattern:
-                similarity_threshold_days = st.slider("   ↳ 参照する営業日後", 5, 60, 20, step=5, key="scr_similarity_days")
-                similarity_threshold_pct = st.slider("   ↳ 必要上昇率 (%)", 0.0, 15.0, 5.0, step=0.5, key="scr_similarity_pct")
+                similarity_match_days = st.slider("   ↳ 照合する直近チャート期間 (営業日)", 5, 60, int(st.session_state.get("scr_similarity_match_days", 20)), step=5, key="scr_similarity_match_days", help="直近何営業日分のチャート形状（波形）を照合元として使用するかを設定します（例: 20日 = 約1ヶ月）。")
+                similarity_future_days = st.slider("   ↳ 参照する未来予測期間 (営業日後)", 5, 60, int(st.session_state.get("scr_similarity_future_days", st.session_state.get("scr_similarity_days", 20))), step=5, key="scr_similarity_future_days", help="過去類似局面から何営業日後に上昇したかを判定するかを設定します（例: 20日後 = 約1ヶ月後）。")
+                similarity_threshold_pct = st.slider("   ↳ 必要上昇率 (%)", 0.0, 15.0, float(st.session_state.get("scr_similarity_pct", 5.0)), step=0.5, key="scr_similarity_pct")
             else:
-                similarity_threshold_days = 20
+                similarity_match_days = 20
+                similarity_future_days = 20
                 similarity_threshold_pct = 5.0
                 
             # Define shape matching filter on mobile
@@ -6287,12 +6301,14 @@ with tab_screen:
                     st.session_state["scr_filter_similarity"] = False
                     filter_similarity_pattern = False
                 else:
-                    filter_similarity_pattern = st.checkbox("🔍 類似連動 (過去類似3局面の上昇率フィルタ)", key="scr_filter_similarity", help="直近20日間のチャート形状に類似する過去の局面を直近5年間の歴史データから3つ抽出し、そのすべての局面において指定した営業日後の上昇率が指定値以上となった銘柄のみを抽出します。他フィルタで絞り込んだ後、最後に実行されます。")
+                    filter_similarity_pattern = st.checkbox("🔍 類似連動 (過去類似3局面の上昇率フィルタ)", key="scr_filter_similarity", help="直近チャート形状に類似する過去の局面を直近5年間の歴史データから3つ抽出し、そのすべての局面において指定した営業日後の上昇率が指定値以上となった銘柄のみを抽出します。他フィルタで絞り込んだ後、最後に実行されます。")
                 if filter_similarity_pattern:
-                    similarity_threshold_days = st.slider("   ↳ 参照する営業日後", 5, 60, 20, step=5, key="scr_similarity_days")
-                    similarity_threshold_pct = st.slider("   ↳ 必要上昇率 (%)", 0.0, 15.0, 5.0, step=0.5, key="scr_similarity_pct")
+                    similarity_match_days = st.slider("   ↳ 照合する直近チャート期間 (営業日)", 5, 60, int(st.session_state.get("scr_similarity_match_days", 20)), step=5, key="scr_similarity_match_days", help="直近何営業日分のチャート形状（波形）を照合元として使用するかを設定します（例: 20日 = 約1ヶ月）。")
+                    similarity_future_days = st.slider("   ↳ 参照する未来予測期間 (営業日後)", 5, 60, int(st.session_state.get("scr_similarity_future_days", st.session_state.get("scr_similarity_days", 20))), step=5, key="scr_similarity_future_days", help="過去類似局面から何営業日後に上昇したかを判定するかを設定します（例: 20日後 = 約1ヶ月後）。")
+                    similarity_threshold_pct = st.slider("   ↳ 必要上昇率 (%)", 0.0, 15.0, float(st.session_state.get("scr_similarity_pct", 5.0)), step=0.5, key="scr_similarity_pct")
                 else:
-                    similarity_threshold_days = 20
+                    similarity_match_days = 20
+                    similarity_future_days = 20
                     similarity_threshold_pct = 5.0
                 
                 filter_shape_match = st.checkbox("📈 チャート形状パターン指定", key="scr_filter_shape_match", help="直近30日間のチャート形状が、指定した特定のパターン（上昇傾向、下降減衰、上昇反転）に類似する銘柄のみを抽出します。")
@@ -6681,7 +6697,8 @@ with tab_screen:
                             if df_5y.empty:
                                 continue
                             
-                            N_len = 20
+                            N_len = similarity_match_days
+                            f_days = similarity_future_days
                             if len(df) < N_len:
                                 continue
                                 
@@ -6690,7 +6707,7 @@ with tab_screen:
                                 df_5y,
                                 target_prices,
                                 N_len=N_len,
-                                forward_days=similarity_threshold_days,
+                                forward_days=f_days,
                                 top_k=3,
                                 min_days_apart=30
                             )
@@ -6701,7 +6718,7 @@ with tab_screen:
                             else:
                                 for m in filtered_matches:
                                     all_prices = m['all_prices']
-                                    if len(all_prices) < N_len + similarity_threshold_days:
+                                    if len(all_prices) < N_len + f_days:
                                         pass_similarity_filter = False
                                         break
                                     price_at_end = all_prices[N_len-1]
@@ -8008,12 +8025,14 @@ with tab_practice:
                 st.session_state["prac_filter_similarity"] = False
                 prac_filter_similarity = False
             else:
-                prac_filter_similarity = st.checkbox("🔍 類似連動 (過去類似3局面の上昇率フィルタ)", key="prac_filter_similarity", help="直近20日間のチャート形状に類似する過去の局面を直近5年間の歴史データから3つ抽出し、そのすべての局面において指定した営業日後の上昇率が指定値以上となった銘柄のみを抽出します。他フィルタで絞り込んだ後、最後に実行されます。")
+                prac_filter_similarity = st.checkbox("🔍 類似連動 (過去類似3局面の上昇率フィルタ)", key="prac_filter_similarity", help="直近チャート形状に類似する過去の局面を過去データから3つ抽出し、そのすべての局面において指定した営業日後の上昇率が指定値以上となった銘柄のみを抽出します。他フィルタで絞り込んだ後、最後に実行されます。")
             if prac_filter_similarity:
-                prac_similarity_days = st.slider("   ↳ 参照する営業日後", 5, 60, 20, step=5, key="prac_similarity_days")
-                prac_similarity_pct = st.slider("   ↳ 必要上昇率 (%)", 0.0, 15.0, 5.0, step=0.5, key="prac_similarity_pct")
+                prac_similarity_match_days = st.slider("   ↳ 照合する直近チャート期間 (営業日)", 5, 60, int(st.session_state.get("prac_similarity_match_days", 20)), step=5, key="prac_similarity_match_days", help="直近何営業日分のチャート波形を照合元として使用するかを設定します。")
+                prac_similarity_future_days = st.slider("   ↳ 参照する未来予測期間 (営業日後)", 5, 60, int(st.session_state.get("prac_similarity_future_days", st.session_state.get("prac_similarity_days", 20))), step=5, key="prac_similarity_future_days", help="過去類似局面から何営業日後に上昇したかを評価します。")
+                prac_similarity_pct = st.slider("   ↳ 必要上昇率 (%)", 0.0, 15.0, float(st.session_state.get("prac_similarity_pct", 5.0)), step=0.5, key="prac_similarity_pct")
             else:
-                prac_similarity_days = 20
+                prac_similarity_match_days = 20
+                prac_similarity_future_days = 20
                 prac_similarity_pct = 5.0
                 
             prac_filter_shape_match = st.checkbox("📈 チャート形状パターン指定", key="prac_filter_shape_match_mobile", help="直近30日間のチャート形状が、指定した特定のパターン（上昇傾向、下降減衰、上昇反転）に類似する銘柄のみを抽出します。")
@@ -8101,10 +8120,12 @@ with tab_practice:
                 else:
                     prac_filter_similarity = st.checkbox("🔍 類似連動 (過去類似3局面の上昇率フィルタ)", key="prac_filter_similarity")
                 if prac_filter_similarity:
-                    prac_similarity_days = st.slider("   ↳ 参照する営業日後", 5, 60, 20, step=5, key="prac_similarity_days")
-                    prac_similarity_pct = st.slider("   ↳ 必要上昇率 (%)", 0.0, 15.0, 5.0, step=0.5, key="prac_similarity_pct")
+                    prac_similarity_match_days = st.slider("   ↳ 照合する直近チャート期間 (営業日)", 5, 60, int(st.session_state.get("prac_similarity_match_days", 20)), step=5, key="prac_similarity_match_days", help="直近何営業日分のチャート波形を照合元として使用するかを設定します。")
+                    prac_similarity_future_days = st.slider("   ↳ 参照する未来予測期間 (営業日後)", 5, 60, int(st.session_state.get("prac_similarity_future_days", st.session_state.get("prac_similarity_days", 20))), step=5, key="prac_similarity_future_days", help="過去類似局面から何営業日後に上昇したかを評価します。")
+                    prac_similarity_pct = st.slider("   ↳ 必要上昇率 (%)", 0.0, 15.0, float(st.session_state.get("prac_similarity_pct", 5.0)), step=0.5, key="prac_similarity_pct")
                 else:
-                    prac_similarity_days = 20
+                    prac_similarity_match_days = 20
+                    prac_similarity_future_days = 20
                     prac_similarity_pct = 5.0
                     
                 prac_filter_shape_match = st.checkbox("📈 チャート形状パターン指定", key="prac_filter_shape_match")
@@ -8152,7 +8173,7 @@ with tab_practice:
                     prac_shape_threshold = 0.80
             
     # Trigger button
-    if st.button("🏋️ 練習用スクリーニングを実行", type="primary", use_container_width=True, key="btn_prac_screening"):
+    if st.button("🚀 過去データでスクリーニング実行", type="primary", key="btn_run_practice_screening", use_container_width=True):
         # Reset portfolio and result view when running a new screening
         st.session_state["prac_portfolio"] = []
         st.session_state["prac_results"] = None
@@ -8203,7 +8224,8 @@ with tab_practice:
                 p_vol = st.session_state.get("prac_filter_vol_su", False)
                 
                 p_similarity = st.session_state.get("prac_filter_similarity", False)
-                p_similarity_days = st.session_state.get("prac_similarity_days", 20) if p_similarity else 20
+                p_similarity_match_days = st.session_state.get("prac_similarity_match_days", 20) if p_similarity else 20
+                p_similarity_future_days = st.session_state.get("prac_similarity_future_days", st.session_state.get("prac_similarity_days", 20)) if p_similarity else 20
                 p_similarity_pct = st.session_state.get("prac_similarity_pct", 5.0) if p_similarity else 5.0
                 
                 is_mobile_mode = st.session_state.get('ui_mode', 'PC') == 'スマホ'
@@ -8247,8 +8269,9 @@ with tab_practice:
                     # Similarity pattern search filter
                     if p_similarity:
                         df_hist = df_sliced
-                        N_len = 20
-                        if len(df_hist) < N_len + p_similarity_days:
+                        N_len = p_similarity_match_days
+                        f_days = p_similarity_future_days
+                        if len(df_hist) < N_len + f_days:
                             continue
                             
                         target_prices = df_hist['Close'].iloc[-N_len:].values
@@ -8256,7 +8279,7 @@ with tab_practice:
                             df_hist,
                             target_prices,
                             N_len=N_len,
-                            forward_days=p_similarity_days,
+                            forward_days=f_days,
                             top_k=3,
                             min_days_apart=30
                         )
@@ -8267,7 +8290,7 @@ with tab_practice:
                         else:
                             for m in filtered_matches:
                                 all_prices = m['all_prices']
-                                if len(all_prices) < N_len + p_similarity_days:
+                                if len(all_prices) < N_len + f_days:
                                     pass_similarity_filter = False
                                     break
                                 price_at_end = all_prices[N_len-1]
