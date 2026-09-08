@@ -4640,18 +4640,20 @@ def render_detail_dashboard(selected_ticker, selected_name, raw_analysis, key_su
      
             # Add virtual sell button directly inside this dashboard!
             if owned_rec and owned_rec["quantity"] > 0:
-                if st.button("仮想売却する", type="secondary", use_container_width=True, key=f"sim_sell_btn_{selected_ticker}{key_suffix}"):
-                    if sim_qty > owned_rec["quantity"]:
-                        st.error(f"保有数量（{int(owned_rec['quantity']):,}株）を超える売却はできません。")
-                    else:
-                        portfolio = load_portfolio()
-                        purchase_records = portfolio.get("purchase_records", [])
-                        sales_records = portfolio.get("sales_records", [])
-                        
-                        target_rec = next((r for r in purchase_records if r["ticker"] == selected_ticker), None)
+                owned_qty = int(owned_rec["quantity"]) if not is_us_stock(selected_ticker) else owned_rec["quantity"]
+                st.markdown(f"💼 **保有中:** `{owned_qty:,} 株` (取得単価: {format_price(owned_rec['purchase_price'], selected_ticker)})")
+                sell_target_qty = min(int(sim_qty), int(owned_rec["quantity"]))
+                sell_btn_label = f"仮想売却する ({sell_target_qty:,}株)" if sell_target_qty < int(owned_rec["quantity"]) else f"保有全株（{int(owned_rec['quantity']):,}株）を売却"
+                if st.button(sell_btn_label, type="secondary", use_container_width=True, key=f"sim_sell_btn_{selected_ticker}{key_suffix}"):
+                    portfolio = load_portfolio()
+                    purchase_records = portfolio.get("purchase_records", [])
+                    sales_records = portfolio.get("sales_records", [])
+                    
+                    target_rec = next((r for r in purchase_records if r["ticker"] == selected_ticker), None)
+                    if target_rec:
                         p_price = target_rec["purchase_price"]
-                        
-                        pl = (current_price_val - p_price) * sim_qty
+                        actual_qty = min(sell_target_qty, int(target_rec["quantity"]))
+                        pl = (current_price_val - p_price) * actual_qty
                         
                         # Convert USD PL to JPY for realized PL total calculation
                         rate = get_usdjpy_rate() if is_us_stock(selected_ticker) else 1.0
@@ -4663,28 +4665,28 @@ def render_detail_dashboard(selected_ticker, selected_name, raw_analysis, key_su
                             "sell_date": datetime.date.today().strftime("%Y-%m-%d"),
                             "purchase_price": float(p_price),
                             "sell_price": float(current_price_val),
-                            "quantity": float(sim_qty),
+                            "quantity": float(actual_qty),
                             "realized_pl": float(pl),
                             "currency": "USD" if is_us_stock(selected_ticker) else "JPY"
                         })
                         
-                        target_rec["quantity"] -= float(sim_qty)
-                        target_rec["invest_amount"] -= float(sim_qty * p_price)
+                        target_rec["quantity"] -= float(actual_qty)
+                        target_rec["invest_amount"] -= float(actual_qty * p_price)
                         
                         if target_rec["quantity"] <= 0:
                             purchase_records.remove(target_rec)
                             
                         portfolio["purchase_records"] = purchase_records
                         portfolio["sales_records"] = sales_records
-                        portfolio["total_realized_pl_jpy"] += float(pl_jpy)
+                        portfolio["total_realized_pl_jpy"] = portfolio.get("total_realized_pl_jpy", 0.0) + float(pl_jpy)
                         
                         if save_portfolio(portfolio):
                             st.session_state['show_sell_dialog'] = {
                                 'name': selected_name,
                                 'ticker': selected_ticker,
-                                'qty': int(sim_qty),
+                                'qty': int(actual_qty),
                                 'price': float(current_price_val),
-                                'total_return': float(sim_qty * current_price_val),
+                                'total_return': float(actual_qty * current_price_val),
                                 'realized_pl': float(pl)
                             }
                             st.rerun()
@@ -7284,6 +7286,9 @@ with tab_favorite:
 # -----------------------------------------------------------------------------
 with tab_simulation:
     st.markdown("### 仮想ポートフォリオ状況")
+    if "flash_sell_msg" in st.session_state:
+        st.success(st.session_state["flash_sell_msg"])
+        del st.session_state["flash_sell_msg"]
     
     # Reload local portfolio data
     portfolio_data = load_portfolio()
@@ -7474,7 +7479,7 @@ with tab_simulation:
         if not records:
             st.info("現在、仮想保有している銘柄はありません。上の『スクリーニング実行と結果分析』タブから評価レポートを表示し、購入ウィジェットから追加してください。")
         else:
-            st.caption("※ 保有銘柄の行をクリックして選択すると、売却手続きが可能です。")
+            st.caption("※ 保有銘柄の行をクリックするか、右側の「売却する保有銘柄を選択」プルダウンから選んで売却手続きを行えます。")
             df_display = df_show.drop(columns=["ID", "raw_pl", "raw_pl_pct"])
             
             # Mobile table column optimization
@@ -7500,64 +7505,143 @@ with tab_simulation:
             )
             selected_portfolio_row_indices = selected_portfolio_rows.get("selection", {}).get("rows", [])
             
+            # Quick ticker selection chips under table
+            if len(records) > 1:
+                st.markdown("<div style='margin-top: 8px;'></div>", unsafe_allow_html=True)
+                st.caption("⚡ 銘柄クイック選択:")
+                quick_cols = st.columns(min(len(records), 4) if not is_mobile else 2)
+                for idx, r in enumerate(records):
+                    qc = quick_cols[idx % len(quick_cols)]
+                    t_code = r["ticker"]
+                    s_name = r["name"][:5] + ".." if len(r["name"]) > 6 else r["name"]
+                    is_active = (st.session_state.get("sell_active_ticker") == t_code)
+                    if qc.button(f"💼 {s_name}", key=f"quick_btn_sel_{t_code}", type="primary" if is_active else "secondary", use_container_width=True):
+                        st.session_state["sell_active_ticker"] = t_code
+                        st.rerun()
+            
     with right_container:
         st.markdown("### 仮想売却")
         
-        if records and selected_portfolio_row_indices and len(selected_portfolio_row_indices) > 0:
-            sell_idx = selected_portfolio_row_indices[0]
-            selected_rec = records[sell_idx]
+        if not records:
+            st.info("現在、保有している銘柄がありません。")
+            st.button("売却を実行する", use_container_width=True, key="sim_sell_btn_disabled", disabled=True)
+        else:
+            owned_tickers = [r["ticker"] for r in records]
             
+            # Map ticker to rich label
+            ticker_labels = {}
+            for r in records:
+                t = r["ticker"]
+                cp = latest_prices.get(t, st.session_state['last_valid_prices'].get(t, r["purchase_price"]))
+                q = int(r["quantity"]) if not is_us_stock(t) else r["quantity"]
+                pl_val = (cp - r["purchase_price"]) * r["quantity"]
+                rate = usdjpy_rate if is_us_stock(t) else 1.0
+                pl_sign = "+" if pl_val >= 0 else ""
+                if is_us_stock(t):
+                    pl_txt = f"{pl_sign}${pl_val:,.2f} ({pl_sign}¥{int(pl_val * rate):,})"
+                else:
+                    pl_txt = f"¥{int(pl_val):+,}"
+                ticker_labels[t] = f"{t} | {r['name']} ({q:,}株 | 損益: {pl_txt})"
+            
+            # If user selected a row in dataframe, synchronize active ticker
+            if selected_portfolio_row_indices and len(selected_portfolio_row_indices) > 0:
+                row_idx = selected_portfolio_row_indices[0]
+                if row_idx < len(df_display_table):
+                    clicked_t = df_display_table.iloc[row_idx]["ティッカー"]
+                    if clicked_t in owned_tickers:
+                        st.session_state["sell_active_ticker"] = clicked_t
+            
+            # Ensure valid active ticker
+            active_ticker = st.session_state.get("sell_active_ticker")
+            if active_ticker not in owned_tickers:
+                active_ticker = owned_tickers[0]
+                st.session_state["sell_active_ticker"] = active_ticker
+                
+            active_idx = owned_tickers.index(active_ticker)
+            
+            selected_ticker = st.selectbox(
+                "売却する保有銘柄を選択:",
+                options=owned_tickers,
+                index=active_idx,
+                format_func=lambda t: ticker_labels.get(t, t),
+                key=f"sim_sell_ticker_select_{active_ticker}"
+            )
+            if selected_ticker != active_ticker:
+                st.session_state["sell_active_ticker"] = selected_ticker
+                st.rerun()
+                
+            selected_rec = next((r for r in records if r["ticker"] == selected_ticker), records[0])
             total_qty = int(selected_rec["quantity"])
-            curr_price = latest_prices.get(selected_rec["ticker"])
-            if curr_price is None or pd.isna(curr_price):
-                curr_price = st.session_state['last_valid_prices'].get(selected_rec["ticker"], selected_rec["purchase_price"])
             
+            curr_price = latest_prices.get(selected_ticker)
+            if curr_price is None or pd.isna(curr_price):
+                curr_price = st.session_state['last_valid_prices'].get(selected_ticker, selected_rec["purchase_price"])
+            
+            # Display detail card
             st.markdown(f"""
             <div style="background-color: var(--secondary-background-color); border: 1px solid var(--border-color); border-radius: 6px; padding: 12px; margin-bottom: 10px; color: var(--text-color);">
                 <div style="display: flex; justify-content: space-between;">
                     <span style="color: var(--text-color); opacity: 0.75;">売却対象:</span>
-                    <span style="font-weight: bold; color: var(--text-color);">{selected_rec['name']} ({selected_rec['ticker']})</span>
+                    <span style="font-weight: bold; color: var(--text-color);">{selected_rec['name']} ({selected_ticker})</span>
                 </div>
                 <div style="display: flex; justify-content: space-between; margin-top: 5px;">
                     <span style="color: var(--text-color); opacity: 0.75;">保有数量:</span>
                     <span style="font-weight: bold; color: var(--text-color);">{total_qty:,} 株</span>
                 </div>
                 <div style="display: flex; justify-content: space-between; margin-top: 5px;">
+                    <span style="color: var(--text-color); opacity: 0.75;">取得単価:</span>
+                    <span style="font-weight: bold; color: var(--text-color);">{format_price(selected_rec['purchase_price'], selected_ticker)}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; margin-top: 5px;">
                     <span style="color: var(--text-color); opacity: 0.75;">現在価格:</span>
-                    <span style="font-weight: bold; color: var(--text-color);">{format_price(curr_price, selected_rec['ticker'])}</span>
+                    <span style="font-weight: bold; color: var(--text-color);">{format_price(curr_price, selected_ticker)}</span>
                 </div>
             </div>
             """, unsafe_allow_html=True)
             
-            # 売却株数の入力 (数値入力方式 / 最小単位1株)
+            # Quick preset buttons for quantity
+            q_c1, q_c2 = st.columns(2)
+            with q_c1:
+                if st.button("🔥 全株売却 (100%)", use_container_width=True, key=f"btn_all_{selected_ticker}"):
+                    st.session_state[f"sell_qty_val_{selected_ticker}"] = total_qty
+                    st.rerun()
+            with q_c2:
+                if st.button("半分売却 (50%)", use_container_width=True, key=f"btn_half_{selected_ticker}"):
+                    st.session_state[f"sell_qty_val_{selected_ticker}"] = max(1, total_qty // 2)
+                    st.rerun()
+                    
+            default_sell_qty = st.session_state.get(f"sell_qty_val_{selected_ticker}", total_qty)
+            if default_sell_qty > total_qty:
+                default_sell_qty = total_qty
+            if default_sell_qty < 1:
+                default_sell_qty = 1
+                
             sell_qty = st.number_input(
                 "売却株数 (株)",
                 min_value=1,
                 max_value=total_qty,
-                value=total_qty,
-                step=1,
+                value=int(default_sell_qty),
+                step=1 if is_us_stock(selected_ticker) else (10 if total_qty >= 10 and total_qty % 10 == 0 else 1),
                 format="%d",
-                key=f"sell_qty_input_{sell_idx}"
+                key=f"sell_qty_input_{selected_ticker}"
             )
+            st.session_state[f"sell_qty_val_{selected_ticker}"] = sell_qty
             
-            # 売却による予想回収額 (現在値 * 売却株数)
             expected_return = sell_qty * curr_price
             original_cost = sell_qty * selected_rec["purchase_price"]
             realized_pl = expected_return - original_cost
             
             pl_color_style = "color: #10b981;" if realized_pl >= 0 else "color: #ef4444;"
             pl_sign = "+" if realized_pl >= 0 else ""
+            rate = get_usdjpy_rate() if is_us_stock(selected_ticker) else 1.0
             
-            ticker = selected_rec["ticker"]
-            rate = get_usdjpy_rate() if is_us_stock(ticker) else 1.0
-            
-            if is_us_stock(ticker):
-                expected_return_str = f"{format_price(expected_return, ticker)} (約 ¥{int(expected_return * rate):,})"
-                realized_pl_str = f"{pl_sign}{format_price(realized_pl, ticker)} ({pl_sign}¥{int(realized_pl * rate):,})"
+            if is_us_stock(selected_ticker):
+                expected_return_str = f"{format_price(expected_return, selected_ticker)} (約 ¥{int(expected_return * rate):,})"
+                realized_pl_str = f"{pl_sign}{format_price(realized_pl, selected_ticker)} ({pl_sign}¥{int(realized_pl * rate):,})"
             else:
-                expected_return_str = format_price(expected_return, ticker)
-                realized_pl_str = f"{pl_sign}{format_price(realized_pl, ticker)}"
-            
+                expected_return_str = format_price(expected_return, selected_ticker)
+                realized_pl_str = f"{pl_sign}{format_price(realized_pl, selected_ticker)}"
+                
             st.markdown(f"""
             <div style="background-color: var(--secondary-background-color); border: 1px solid var(--border-color); border-radius: 6px; padding: 10px 12px; margin-bottom: 15px; font-size: 0.9rem; color: var(--text-color);">
                 <div style="display: flex; justify-content: space-between;">
@@ -7571,50 +7655,55 @@ with tab_simulation:
             </div>
             """, unsafe_allow_html=True)
             
-            if st.button("選択した株数を売却する", use_container_width=True, key="sim_sell_btn", type="primary"):
-                realized_pl_val = (curr_price - selected_rec["purchase_price"]) * sell_qty
+            if st.button("🚀 選択した株数を売却する", use_container_width=True, key="sim_sell_btn", type="primary"):
+                # Always load fresh portfolio from storage
+                portfolio_to_save = load_portfolio()
+                p_records = portfolio_to_save.get("purchase_records", [])
+                s_records = portfolio_to_save.get("sales_records", [])
                 
-                if sell_qty == total_qty:
-                    del_rec = records.pop(sell_idx)
+                target_rec = next((r for r in p_records if r["ticker"] == selected_ticker), None)
+                if not target_rec:
+                    st.error(f"{selected_rec['name']} ({selected_ticker}) の保有レコードが見つかりませんでした。")
                 else:
-                    qty_to_sell = float(sell_qty)
-                    selected_rec["quantity"] -= qty_to_sell
-                    selected_rec["invest_amount"] -= selected_rec["purchase_price"] * qty_to_sell
-                
-                sales = portfolio_data.get("sales_records", [])
-                sales.append({
-                    "ticker": selected_rec["ticker"],
-                    "name": selected_rec["name"],
-                    "sell_date": datetime.date.today().strftime("%Y-%m-%d"),
-                    "purchase_price": float(selected_rec["purchase_price"]),
-                    "sell_price": float(curr_price),
-                    "quantity": float(sell_qty),
-                    "realized_pl": float(realized_pl_val),
-                    "currency": "USD" if is_us_stock(selected_rec["ticker"]) else "JPY"
-                })
-                portfolio_data["sales_records"] = sales
-                
-                # Convert realized PL to JPY for cumulative tracking
-                realized_pl_jpy_val = realized_pl_val * rate
-                portfolio_data["total_realized_pl_jpy"] = portfolio_data.get("total_realized_pl_jpy", 0.0) + realized_pl_jpy_val
-                portfolio_data["purchase_records"] = records
-                
-                if save_portfolio(portfolio_data):
-                    st.session_state['show_sell_dialog'] = {
-                        'name': del_rec['name'] if sell_qty == total_qty else selected_rec['name'],
-                        'ticker': del_rec['ticker'] if sell_qty == total_qty else selected_rec['ticker'],
-                        'qty': int(sell_qty),
-                        'price': float(curr_price),
-                        'total_return': float(expected_return),
-                        'realized_pl': float(realized_pl_val)
-                    }
-                    st.rerun()
-        else:
-            if not records:
-                st.info("保有している銘柄がありません。")
-            else:
-                st.info("保有銘柄一覧から売却したい銘柄の行をクリックして選択してください。")
-            st.button("売却を実行する", use_container_width=True, key="sim_sell_btn_disabled", disabled=True)
+                    actual_sell_qty = min(int(sell_qty), int(target_rec["quantity"]))
+                    realized_pl_val = (curr_price - target_rec["purchase_price"]) * actual_sell_qty
+                    
+                    s_records.append({
+                        "ticker": target_rec["ticker"],
+                        "name": target_rec["name"],
+                        "sell_date": datetime.date.today().strftime("%Y-%m-%d"),
+                        "purchase_price": float(target_rec["purchase_price"]),
+                        "sell_price": float(curr_price),
+                        "quantity": float(actual_sell_qty),
+                        "realized_pl": float(realized_pl_val),
+                        "currency": "USD" if is_us_stock(target_rec["ticker"]) else "JPY"
+                    })
+                    portfolio_to_save["sales_records"] = s_records
+                    
+                    realized_pl_jpy_val = realized_pl_val * rate
+                    portfolio_to_save["total_realized_pl_jpy"] = portfolio_to_save.get("total_realized_pl_jpy", 0.0) + realized_pl_jpy_val
+                    
+                    if actual_sell_qty >= int(target_rec["quantity"]):
+                        p_records.remove(target_rec)
+                    else:
+                        target_rec["quantity"] -= float(actual_sell_qty)
+                        target_rec["invest_amount"] -= float(actual_sell_qty * target_rec["purchase_price"])
+                        
+                    portfolio_to_save["purchase_records"] = p_records
+                    
+                    if save_portfolio(portfolio_to_save):
+                        st.session_state['show_sell_dialog'] = {
+                            'name': target_rec['name'],
+                            'ticker': target_rec['ticker'],
+                            'qty': int(actual_sell_qty),
+                            'price': float(curr_price),
+                            'total_return': float(actual_sell_qty * curr_price),
+                            'realized_pl': float(realized_pl_val)
+                        }
+                        st.session_state['flash_sell_msg'] = f"🎉 **{target_rec['name']} ({target_rec['ticker']})** を {int(actual_sell_qty):,}株 正常に売却しました！（確定損益: {realized_pl_val:+,.0f}円）"
+                        if "sell_active_ticker" in st.session_state:
+                            del st.session_state["sell_active_ticker"]
+                        st.rerun()
 
     # ----------------------------------------------------
     # Portfolio performance timeline chart
