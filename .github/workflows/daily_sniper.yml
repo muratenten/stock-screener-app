@@ -1,0 +1,43 @@
+name: Daily Sniper Screener
+
+on:
+  schedule:
+    # 毎平日の 16:30 JST (UTC 07:30) に実行
+    - cron: '30 7 * * 1-5'
+  workflow_dispatch: # GitHubの画面から手動実行可能
+    inputs:
+      test_mode:
+        description: 'ヒットなしでもテスト通知をLINEに送る'
+        required: false
+        default: false
+        type: boolean
+
+jobs:
+  screen_and_notify:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install Dependencies
+        run: |
+          pip install --upgrade pip
+          pip install yfinance numpy pandas requests
+
+      - name: Run Sniper Screener
+        env:
+          LINE_CHANNEL_ACCESS_TOKEN: ${{ secrets.LINE_CHANNEL_ACCESS_TOKEN }}
+          LINE_USER_ID: ${{ secrets.LINE_USER_ID }}
+        run: |
+          if [ "${{ inputs.test_mode }}" = "true" ]; then
+            python daily_sniper_screener.py --test
+          else
+            python daily_sniper_screener.py
+          fi
