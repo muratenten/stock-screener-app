@@ -97,7 +97,22 @@ def load_tickers_and_fundamentals():
         with open(CACHE_FILE, "r", encoding="utf-8") as f:
             fund_cache = json.load(f).get("data", {})
             
-    return tickers, fund_cache
+    # 3. Japanese Ticker Names Mapping
+    jp_names = {}
+    for fn in ["tse_prime_tickers.json", "tse_all_tickers.json"]:
+        path = os.path.join(BASE_DIR, fn)
+        if os.path.exists(path):
+            try:
+                with open(path, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+                    for k, v in data.items():
+                        if isinstance(v, dict) and "name" in v:
+                            jp_names[k] = v["name"]
+                            jp_names[k.replace(".T", "")] = v["name"]
+            except Exception:
+                pass
+                
+    return tickers, fund_cache, jp_names
 
 def run_sniper_screening(test_mode=False):
     print("=" * 60)
@@ -105,7 +120,7 @@ def run_sniper_screening(test_mode=False):
     print("Target: Nikkei 225 | Match: 60d | Holding: 25d | Thresh: +10.0% | PBR < 1.0")
     print("=" * 60, flush=True)
     
-    tickers, fund_cache = load_tickers_and_fundamentals()
+    tickers, fund_cache, jp_names = load_tickers_and_fundamentals()
     if not tickers:
         print("[ERROR] No tickers loaded. Exiting.")
         return
@@ -128,7 +143,9 @@ def run_sniper_screening(test_mode=False):
                 c_data = fund_cache.get(ticker, {})
                 bps = safe_float(c_data.get('bps'))
                 pbr = safe_float(c_data.get('pbr'))
-                name = c_data.get('name', ticker)
+                # Check Japanese Name
+                jp_name = jp_names.get(ticker) or jp_names.get(ticker.replace('.T', ''))
+                name = jp_name if jp_name else c_data.get('name', ticker)
                 sector = c_data.get('sector', '')
                 
                 if (bps is None or bps <= 0) and pbr and pbr > 0:
@@ -264,28 +281,13 @@ def run_sniper_screening(test_mode=False):
         for s in sniped_stocks:
             print(f"  - {s['ticker']} {s['name']}: PBR {s['pbr']:.2f}倍, 過去3回最小+{s['min_ret']:.1f}%")
             
-        # Compose LINE Message
-        msg = "🎯【スナイパー警報 発令】\n"
-        msg += f"日経225から勝率80%の最高峰スナイプ銘柄を検知しました！（{len(sniped_stocks)}件）\n\n"
-        
-        for idx, s in enumerate(sniped_stocks, 1):
-            msg += f"【銘柄 {idx}】{s['name']}（{s['ticker'].replace('.T', '')}）\n"
-            msg += f"・現在値: {s['last_price']:,.1f}円\n"
-            msg += f"・PBR: {s['pbr']:.2f}倍（1.0倍割れ割安株）\n"
-            msg += f"・業種: {s['sector']}\n"
-            msg += "・過去類似トップ3の反発実績（25日後）:\n"
-            for m_i, m in enumerate(s['matches'], 1):
-                msg += f"   {m_i}) {m['date']}: +{m['ret']:.1f}% (類似度{m['sim']:.1f}%)\n"
-            msg += f"・過去平均上昇率: +{s['avg_ret']:.1f}%\n\n"
-            
-        msg += "━━━━━━━━━━━━━━\n"
-        msg += "【検証バックテスト成績】\n"
-        msg += "・個別勝率: 80.0%（35回中28回勝ち）\n"
-        msg += "・想定保有期間: 25営業日（約1ヶ月強）\n"
-        msg += "・対日経平均 超過α: +7.04%\n"
-        msg += "・平均利益率: +9.37%\n"
-        msg += "━━━━━━━━━━━━━━\n"
-        msg += "👉 確定買いチャンス！ポートフォリオに合わせてご検討ください。"
+        # Compose LINE Message (Simple: ⚠️重要⚠️, Stock & PBR only)
+        msg = "⚠️重要⚠️\n\n"
+        for s in sniped_stocks:
+            code = s['ticker'].replace('.T', '')
+            msg += f"【銘柄】{code} {s['name']}\n"
+            msg += f"【PBR】{s['pbr']:.2f}倍\n\n"
+        msg = msg.strip()
         
         send_line_message(msg)
     else:
