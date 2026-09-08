@@ -281,8 +281,8 @@ def run_sniper_screening(test_mode=False):
         for s in sniped_stocks:
             print(f"  - {s['ticker']} {s['name']}: PBR {s['pbr']:.2f}倍, 過去3回最小+{s['min_ret']:.1f}%")
             
-        # Compose LINE Message (⚠️重要⚠️ + スクリーニングにヒット + 区切り線 + 銘柄名（コード.T） + PBR)
-        msg = "⚠️重要⚠️\n\n"
+        # Compose LINE Message (【重要】 + スクリーニングにヒット + 区切り線 + 銘柄名（コード.T） + PBR)
+        msg = "【重要】\n\n"
         msg += "スクリーニングにヒットする銘柄が見つかりました！\n"
         msg += "━━━━━━━━━━━━━━\n"
         for s in sniped_stocks:
