@@ -3905,6 +3905,15 @@ def render_detail_dashboard(selected_ticker, selected_name, raw_analysis, key_su
                      <div class="metric-value" style="color: {'#16a34a' if metrics['change_pct'] >= 0 else '#dc2626'}">{metrics['change_pct']:.2f}%</div>
                  </div>""", unsafe_allow_html=True)
             with m_col2:
+                pbr_val = metrics.get('pbr')
+                pbr_str = f"{pbr_val:.2f}倍" if pbr_val is not None else "－"
+                pbr_color = "#16a34a" if (pbr_val is not None and pbr_val < 1.0) else "var(--text-color, #1e293b)"
+                pbr_sub = "解散価値割れ (割安)" if (pbr_val is not None and pbr_val < 1.0) else "基準日時点の試算PBR"
+                st.markdown(f"""<div class="card">
+                     <div class="metric-title">基準日PBR</div>
+                     <div class="metric-value" style="color: {pbr_color};">{pbr_str}</div>
+                     <div style="font-size: 0.8rem; color: #64748b; margin-top: 2px;">{pbr_sub}</div>
+                 </div>""", unsafe_allow_html=True)
                 st.markdown(f"""<div class="card" style="border-left: 4px solid {owned_color};">
                      <div class="metric-title">練習用保有状況</div>
                      <div class="metric-value" style="color: {owned_color};">{owned_text}</div>
@@ -3942,7 +3951,7 @@ def render_detail_dashboard(selected_ticker, selected_name, raw_analysis, key_su
     else:
         if is_practice:
             st.markdown(f"#### {selected_name} ({selected_ticker}) の練習用分析ダッシュボード")
-            col1, col2, col3 = st.columns(3)
+            col1, col2, col3, col4 = st.columns(4)
             with col1:
                 st.markdown(f"""<div class="card">
                      <div class="metric-title">基準日株価</div>
@@ -3954,6 +3963,16 @@ def render_detail_dashboard(selected_ticker, selected_name, raw_analysis, key_su
                      <div class="metric-value" style="color: {'#16a34a' if metrics['change_pct'] >= 0 else '#dc2626'}">{metrics['change_pct']:.2f}%</div>
                  </div>""", unsafe_allow_html=True)
             with col3:
+                pbr_val = metrics.get('pbr')
+                pbr_str = f"{pbr_val:.2f}倍" if pbr_val is not None else "－"
+                pbr_color = "#16a34a" if (pbr_val is not None and pbr_val < 1.0) else "var(--text-color, #1e293b)"
+                pbr_sub = "解散価値割れ (割安)" if (pbr_val is not None and pbr_val < 1.0) else "基準日時点の試算PBR"
+                st.markdown(f"""<div class="card">
+                     <div class="metric-title">基準日PBR</div>
+                     <div class="metric-value" style="color: {pbr_color};">{pbr_str}</div>
+                     <div style="font-size: 0.8rem; color: #64748b; margin-top: 2px;">{pbr_sub}</div>
+                 </div>""", unsafe_allow_html=True)
+            with col4:
                 st.markdown(f"""<div class="card" style="border-left: 4px solid {owned_color};">
                      <div class="metric-title">練習用保有状況</div>
                      <div class="metric-value" style="color: {owned_color};">{owned_text}</div>
@@ -5829,6 +5848,7 @@ def apply_practice_preset(preset_name):
     st.session_state["prac_filter_rsi_ob"] = False
     st.session_state["prac_filter_bb_re"] = False
     st.session_state["prac_filter_vol_su"] = False
+    st.session_state["prac_filter_pbr"] = False
     st.session_state["prac_filter_similarity"] = False
     st.session_state["prac_similarity_match_days"] = 20
     st.session_state["prac_similarity_future_days"] = 20
@@ -5870,6 +5890,7 @@ def check_practice_preset_match():
         "prac_min_tech": 0,
         "prac_filter_gc": False, "prac_filter_macd": False, "prac_filter_rsi_os": False,
         "prac_filter_rsi_ob": False, "prac_filter_bb_re": False, "prac_filter_vol_su": False,
+        "prac_filter_pbr": False,
         "prac_filter_similarity": False,
         "prac_similarity_match_days": 20,
         "prac_similarity_future_days": 20,
@@ -7878,7 +7899,7 @@ with tab_practice:
     過去の特定の時点（基準日）にタイムトラベルし、その時点の株価・テクニカル指標をもとにスクリーニングと仮想購入を行い、
     その後の実際の値動きを追跡してトレードの成果を測定（バックテスト）する練習機能です。
     
-    * ※本練習モードでは、過去時点でのバックテストの正確性（先読みバイアスの排除）を担保するため、財務データ（PER、PBR、配当利回り等）は使用せず、純粋なテクニカル指標・株価・出来高およびチャート形状のみでスクリーニングを行います。
+    * ※本練習モードでは、純粋なテクニカル指標・出来高・チャート形状に加え、**基準日時点の試算PBR（基準日株価 ÷ BPS）**による割安度判定・スクリーニングが可能です。
     * 練習用データ取得のため、基準日は **2年前〜1ヶ月前** の範囲から選択してください。
     """)
     
@@ -8021,6 +8042,7 @@ with tab_practice:
             prac_filter_rsi_ob = st.checkbox("RSI 70以上 (買われすぎ/過熱)", key="prac_filter_rsi_ob")
             prac_filter_bb_re = st.checkbox("ボリンジャーバンド -2σ以下", key="prac_filter_bb_re")
             prac_filter_vol_su = st.checkbox("出来高急増 (5日平均 > 25日平均*1.2)", key="prac_filter_vol_su")
+            prac_filter_pbr = st.checkbox("PBR 1.0倍未満 (割安バリュー) のみ", key="prac_filter_pbr", help="基準日時点の試算PBRが1.0倍未満（解散価値割れ）の割安銘柄のみを抽出します。")
             if get_user_tier() == "free":
                 st.checkbox("🔒 類似連動 (プレミアム専用)", value=False, disabled=False, key="prac_filter_similarity_disabled_mobile", help="過去類似3局面の上昇率フィルタ（類似連動）はプレミアムプラン専用機能です。")
                 st.session_state["prac_filter_similarity"] = False
@@ -8114,6 +8136,7 @@ with tab_practice:
                 prac_filter_rsi_ob = st.checkbox("RSI 70以上 (買われすぎ/過熱)", key="prac_filter_rsi_ob")
                 prac_filter_bb_re = st.checkbox("ボリンジャーバンド -2σ以下", key="prac_filter_bb_re")
                 prac_filter_vol_su = st.checkbox("出来高急増 (5日平均 > 25日平均*1.2)", key="prac_filter_vol_su")
+                prac_filter_pbr = st.checkbox("PBR 1.0倍未満 (割安バリュー) のみ", key="prac_filter_pbr", help="基準日時点の試算PBRが1.0倍未満（解散価値割れ）の割安銘柄のみを抽出します。")
                 if get_user_tier() == "free":
                     st.checkbox("🔒 類似連動 (プレミアム専用)", value=False, disabled=False, key="prac_filter_similarity_disabled_pc", help="過去類似3局面の上昇率フィルタ（類似連動）はプレミアムプラン専用機能です。")
                     st.session_state["prac_filter_similarity"] = False
@@ -8201,6 +8224,7 @@ with tab_practice:
                 tickers_list = list(prac_pool.keys())
                 # Download 5 years of history for analysis + practice exit tracking
                 histories = batch_download_histories(tickers_list, period="5y")
+                meta, fund_cache = load_tse_fundamentals_cache()
                 
                 prac_results = []
                 p_start_ts = pd.Timestamp(prac_start_date)
@@ -8266,6 +8290,34 @@ with tab_practice:
                         continue
                         
                     metrics = tech_analysis['metrics']
+                    
+                    # Calculate estimated PBR as of start date: P_start / BPS
+                    cached_fund = fund_cache.get(ticker)
+                    bps = None
+                    cur_pbr = None
+                    if cached_fund:
+                        bps = safe_float(cached_fund.get('bps'))
+                        cur_pbr = safe_float(cached_fund.get('pbr'))
+                        if (bps is None or bps <= 0) and cur_pbr and cur_pbr > 0:
+                            latest_close = float(df['Close'].iloc[-1])
+                            if latest_close > 0:
+                                bps = latest_close / cur_pbr
+
+                    prac_pbr = None
+                    start_price = float(metrics['price'])
+                    if bps and bps > 0 and start_price > 0:
+                        prac_pbr = round(start_price / bps, 2)
+                    elif cur_pbr:
+                        latest_close = float(df['Close'].iloc[-1])
+                        if latest_close > 0:
+                            prac_pbr = round(cur_pbr * (start_price / latest_close), 2)
+
+                    # Store PBR in tech_analysis metrics so dashboard can use it
+                    tech_analysis['metrics']['pbr'] = prac_pbr
+
+                    # PBR filter check (PBR 1.0倍未満)
+                    if p_pbr and (prac_pbr is None or prac_pbr >= 1.0):
+                        continue
                     
                     # Similarity pattern search filter
                     if p_similarity:
@@ -8339,6 +8391,7 @@ with tab_practice:
                         'ティッカー': ticker,
                         '銘柄名': display_name,
                         '基準日株価': metrics['price'],
+                        '基準日PBR': prac_pbr,
                         'テクニカルスコア': tech_analysis['tech_score'],
                         'チャート形状': matched_shape,
                         'full_history': df,
@@ -8366,6 +8419,7 @@ with tab_practice:
                 '銘柄名': r['銘柄名'],
                 'テクニカルスコア': int(r.get('テクニカルスコア', 0)),
                 '基準日株価': float(r.get('基準日株価', 0.0)),
+                '基準日PBR': float(r['基準日PBR']) if r.get('基準日PBR') is not None else None,
                 'チャート形状': r.get('チャート形状', '判定不可'),
             })
             
@@ -8378,6 +8432,8 @@ with tab_practice:
                 "↕️ 並び替え（ソート順）",
                 options=[
                     "🏆 テクニカルスコアが高い順",
+                    "💎 PBRが低い順 (割安バリュー順)",
+                    "🔥 PBRが高い順",
                     "💴 株価が安い順",
                     "🚀 株価が高い順",
                 ],
@@ -8391,6 +8447,10 @@ with tab_practice:
             df_prac_display = df_prac_display.sort_values(by='基準日株価', ascending=True).reset_index(drop=True)
         elif prac_sort == "🚀 株価が高い順":
             df_prac_display = df_prac_display.sort_values(by='基準日株価', ascending=False).reset_index(drop=True)
+        elif prac_sort == "💎 PBRが低い順 (割安バリュー順)":
+            df_prac_display = df_prac_display.sort_values(by='基準日PBR', ascending=True, na_position='last').reset_index(drop=True)
+        elif prac_sort == "🔥 PBRが高い順":
+            df_prac_display = df_prac_display.sort_values(by='基準日PBR', ascending=False, na_position='last').reset_index(drop=True)
         else:
             df_prac_display = df_prac_display.sort_values(by='テクニカルスコア', ascending=False).reset_index(drop=True)
             
@@ -8403,6 +8463,7 @@ with tab_practice:
                 "銘柄名": st.column_config.TextColumn("銘柄名", width="medium"),
                 "テクニカルスコア": st.column_config.NumberColumn("テクニカルスコア (3点)", format="%d / 3"),
                 "基準日株価": st.column_config.NumberColumn("基準日株価", format="¥%d"),
+                "基準日PBR": st.column_config.NumberColumn("基準日PBR", format="%.2f倍"),
                 "チャート形状": st.column_config.TextColumn("チャート形状"),
             },
             on_select="rerun",
@@ -8514,6 +8575,7 @@ with tab_practice:
                         'ticker': t,
                         'name': match_r['銘柄名'],
                         'entry_price': price,
+                        'entry_pbr': match_r.get('基準日PBR'),
                         'quantity': qty,
                         'budget': budget_per_stock,
                         'full_history': match_r['full_history']
@@ -8662,6 +8724,7 @@ with tab_practice:
                     'ティッカー': ticker,
                     '銘柄名': p['name'],
                     '購入日 (価格)': f"{entry_date.strftime('%Y-%m-%d')} ({f'{entry_price:,.1f} 円' if is_jpy else f'${entry_price:,.2f}'})",
+                    '購入時PBR': f"{p['entry_pbr']:.2f}倍" if p.get('entry_pbr') is not None else "－",
                     '売却日 (価格)': f"{exit_date.strftime('%Y-%m-%d')} ({f'{exit_price:,.1f} 円' if is_jpy else f'${exit_price:,.2f}'}){' ⚠️(最終データ)' if is_future_limited else ''}",
                     '損益率 (%)': f"{ret_pct:+.2f}%",
                     '損益額': f"{pl_amount:+,.0f} 円" if is_jpy else f"${pl_amount:+,.2f}"
