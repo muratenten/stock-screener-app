@@ -994,6 +994,19 @@ def get_usdjpy_rate():
         pass
     return 155.0
 
+# Global safe float parsing helper
+def safe_float(val):
+    if val is None or pd.isna(val):
+        return None
+    try:
+        if isinstance(val, str):
+            val = val.replace(',', '').replace('%', '').replace('％', '').replace('倍', '').replace('円', '').strip()
+            if val in ('---', '－', 'None', '', 'N/A'):
+                return None
+        return float(val)
+    except (ValueError, TypeError):
+        return None
+
 # Helper function to format price
 def format_price(price, ticker=None):
     if price is None or pd.isna(price):
