@@ -1165,6 +1165,46 @@ def show_sell_success_dialog(name, ticker, qty, price, total_return, realized_pl
     if st.button("確認して閉じる", type="primary", use_container_width=True, key="dlg_sell_confirm_close_btn"):
         st.rerun()
 
+# Helper for Batch Sell Dialog Popup
+@st.dialog("🎉 まとめて売却完了", width="medium")
+def show_batch_sell_success_dialog(names_summary, count, proceeds_jpy, realized_pl_jpy, sold_names=None):
+    pl_color = "#16a34a" if realized_pl_jpy >= 0 else "#dc2626"
+    pl_sign = "+" if realized_pl_jpy >= 0 else ""
+    
+    names_list_html = ""
+    if sold_names:
+        chips = "".join([f'<span style="background: rgba(37,99,235,0.1); color: #2563eb; padding: 2px 8px; border-radius: 4px; font-size: 0.8rem; margin-right: 5px; margin-bottom: 5px; display: inline-block;">{n}</span>' for n in sold_names])
+        names_list_html = f'<div style="margin-top: 8px;">{chips}</div>'
+    
+    st.markdown(f"""
+    ### **{count}銘柄の一括売却が完了しました！**
+    
+    選択された保有銘柄が仮想シミュレーションから正常に売却されました。
+    {names_list_html}
+    
+    <div style="background-color: var(--secondary-background-color, #f8fafc); border: 1px solid var(--border-color, #e2e8f0); border-radius: 8px; padding: 15px; margin-top: 15px; margin-bottom: 20px; color: var(--text-color, #1e293b);">
+        <!-- 売却銘柄数 -->
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color, #e2e8f0); padding: 10px 0;">
+            <span style="color: var(--text-color, #64748b); opacity: 0.8; font-weight: bold;">売却銘柄数</span>
+            <span style="text-align: right; font-weight: bold; color: var(--text-color, #0f172a);">{count} 銘柄</span>
+        </div>
+        <!-- 売却受取総額 -->
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color, #e2e8f0); padding: 10px 0;">
+            <span style="color: var(--text-color, #64748b); opacity: 0.8; font-weight: bold;">売却受取総額</span>
+            <span style="text-align: right; font-weight: bold; color: #2563eb;">¥{int(proceeds_jpy):,}</span>
+        </div>
+        <!-- 確定実現損益合計 -->
+        <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 0;">
+            <span style="color: var(--text-color, #64748b); font-weight: bold;">確定実現損益合計</span>
+            <span style="text-align: right; font-weight: bold; color: {pl_color}; font-size: 1.2rem;">{pl_sign}¥{int(realized_pl_jpy):,}</span>
+        </div>
+    </div>
+    
+    ※ ポートフォリオの「確定取引（仮想売却）履歴一覧」にて履歴が確認できます。
+    """, unsafe_allow_html=True)
+    if st.button("確認して閉じる", type="primary", use_container_width=True, key="dlg_batch_sell_confirm_close_btn"):
+        st.rerun()
+
 def patch_history_with_fast_info(ticker, df, skip_fast_info=False):
     if df.empty:
         return df
@@ -4862,6 +4902,92 @@ def execute_virtual_sell(ticker, qty_to_sell, curr_price=None):
         return True
     return False
 
+def execute_virtual_sell_batch(tickers_to_sell):
+    if not tickers_to_sell:
+        st.warning("売却する銘柄が選択されていません。")
+        return False
+        
+    portfolio = load_portfolio()
+    p_records = portfolio.get("purchase_records", [])
+    s_records = portfolio.get("sales_records", [])
+    last_prices = portfolio.get("last_valid_prices", {})
+    
+    total_batch_realized_pl_jpy = 0.0
+    total_batch_proceeds_jpy = 0.0
+    sold_names = []
+    tickers_set = set(tickers_to_sell)
+    
+    for ticker in tickers_to_sell:
+        matching = [r for r in p_records if r.get("ticker") == ticker]
+        if not matching:
+            continue
+        rec = matching[0]
+        qty = float(rec.get("quantity", 0))
+        if qty <= 0:
+            continue
+        p_price = float(rec.get("purchase_price", 0))
+        c_price = last_prices.get(ticker)
+        if c_price is None or pd.isna(c_price) or c_price <= 0:
+            c_price = p_price
+        else:
+            c_price = float(c_price)
+            
+        rate = get_usdjpy_rate() if is_us_stock(ticker) else 1.0
+        pl_val = (c_price - p_price) * qty
+        pl_jpy = pl_val * rate
+        proceeds_jpy = (qty * c_price) * rate
+        
+        s_records.append({
+            "ticker": ticker,
+            "name": rec.get("name", ticker),
+            "sell_date": datetime.date.today().strftime("%Y-%m-%d"),
+            "purchase_price": p_price,
+            "sell_price": c_price,
+            "quantity": qty,
+            "realized_pl": float(pl_val),
+            "currency": "USD" if is_us_stock(ticker) else "JPY"
+        })
+        
+        total_batch_realized_pl_jpy += pl_jpy
+        total_batch_proceeds_jpy += proceeds_jpy
+        sold_names.append(rec.get("name", ticker))
+        
+    if not sold_names:
+        st.error("有効な売却対象銘柄がありませんでした。")
+        return False
+        
+    portfolio["purchase_records"] = [r for r in p_records if r.get("ticker") not in tickers_set]
+    portfolio["sales_records"] = s_records
+    portfolio["total_realized_pl_jpy"] = float(portfolio.get("total_realized_pl_jpy", 0.0)) + total_batch_realized_pl_jpy
+    
+    saved = save_portfolio(portfolio)
+    if saved:
+        if "sell_active_ticker" in st.session_state:
+            del st.session_state["sell_active_ticker"]
+        if "sim_batch_multiselect" in st.session_state:
+            del st.session_state["sim_batch_multiselect"]
+        for k in list(st.session_state.keys()):
+            if "sell_qty" in k:
+                del st.session_state[k]
+                
+        sign = "+" if total_batch_realized_pl_jpy >= 0 else ""
+        if len(sold_names) <= 3:
+            names_summary = "、".join(sold_names)
+        else:
+            names_summary = f"{sold_names[0]}、{sold_names[1]} など計{len(sold_names)}銘柄"
+            
+        st.session_state['flash_sell_msg'] = f"🎉 **{names_summary}** を一括売却しました！（受取金額: ¥{int(total_batch_proceeds_jpy):,} / 確定損益: {sign}¥{int(total_batch_realized_pl_jpy):,}）"
+        st.session_state['show_batch_sell_dialog'] = {
+            'names_summary': names_summary,
+            'count': len(sold_names),
+            'proceeds_jpy': total_batch_proceeds_jpy,
+            'realized_pl_jpy': total_batch_realized_pl_jpy,
+            'sold_names': sold_names
+        }
+        st.rerun()
+        return True
+    return False
+
 # CSS styling color coding for tables
 def color_pl_cell(val):
     if isinstance(val, str):
@@ -5694,6 +5820,17 @@ if 'show_sell_dialog' in st.session_state:
         realized_pl=dlg_data['realized_pl']
     )
     del st.session_state['show_sell_dialog']
+
+if 'show_batch_sell_dialog' in st.session_state:
+    dlg_b_data = st.session_state['show_batch_sell_dialog']
+    show_batch_sell_success_dialog(
+        names_summary=dlg_b_data['names_summary'],
+        count=dlg_b_data['count'],
+        proceeds_jpy=dlg_b_data['proceeds_jpy'],
+        realized_pl_jpy=dlg_b_data['realized_pl_jpy'],
+        sold_names=dlg_b_data.get('sold_names', [])
+    )
+    del st.session_state['show_batch_sell_dialog']
 
 # Header
 if st.session_state.get("show_upgrade_dialog_flag"):
@@ -7598,160 +7735,232 @@ with tab_simulation:
                     pl_txt = f"¥{int(pl_val):+,}"
                 ticker_labels[t] = f"{t} | {r['name']} ({q:,}株 | 損益: {pl_txt})"
             
-            # If user selected a row in dataframe, synchronize active ticker
-            if selected_portfolio_row_indices and len(selected_portfolio_row_indices) > 0:
-                row_idx = selected_portfolio_row_indices[0]
-                if row_idx < len(df_display_table):
-                    clicked_t = df_display_table.iloc[row_idx]["ティッカー"]
-                    if clicked_t in owned_tickers:
-                        st.session_state["sell_active_ticker"] = clicked_t
+            tab_batch_sell, tab_single_sell = st.tabs(["📦 まとめて複数売却 (一括)", "🎯 1銘柄ずつ売却"])
             
-            # Ensure valid active ticker
-            active_ticker = st.session_state.get("sell_active_ticker")
-            if active_ticker not in owned_tickers:
-                active_ticker = owned_tickers[0]
-                st.session_state["sell_active_ticker"] = active_ticker
+            with tab_batch_sell:
+                st.caption("売却したい銘柄を選択し、一括で売却処理を実行できます。")
                 
-            active_idx = owned_tickers.index(active_ticker)
-            
-            selected_ticker = st.selectbox(
-                "売却する保有銘柄を選択:",
-                options=owned_tickers,
-                index=active_idx,
-                format_func=lambda t: ticker_labels.get(t, t),
-                key=f"sim_sell_ticker_select_{active_ticker}"
-            )
-            if selected_ticker != active_ticker:
-                st.session_state["sell_active_ticker"] = selected_ticker
-                st.rerun()
-                
-            selected_rec = next((r for r in records if r["ticker"] == selected_ticker), records[0])
-            total_qty = int(selected_rec["quantity"])
-            
-            curr_price = latest_prices.get(selected_ticker)
-            if curr_price is None or pd.isna(curr_price):
-                curr_price = st.session_state['last_valid_prices'].get(selected_ticker, selected_rec["purchase_price"])
-            
-            # Display detail card
-            st.markdown(f"""
-            <div style="background-color: var(--secondary-background-color); border: 1px solid var(--border-color); border-radius: 6px; padding: 12px; margin-bottom: 10px; color: var(--text-color);">
-                <div style="display: flex; justify-content: space-between;">
-                    <span style="color: var(--text-color); opacity: 0.75;">売却対象:</span>
-                    <span style="font-weight: bold; color: var(--text-color);">{selected_rec['name']} ({selected_ticker})</span>
-                </div>
-                <div style="display: flex; justify-content: space-between; margin-top: 5px;">
-                    <span style="color: var(--text-color); opacity: 0.75;">保有数量:</span>
-                    <span style="font-weight: bold; color: var(--text-color);">{total_qty:,} 株</span>
-                </div>
-                <div style="display: flex; justify-content: space-between; margin-top: 5px;">
-                    <span style="color: var(--text-color); opacity: 0.75;">取得単価:</span>
-                    <span style="font-weight: bold; color: var(--text-color);">{format_price(selected_rec['purchase_price'], selected_ticker)}</span>
-                </div>
-                <div style="display: flex; justify-content: space-between; margin-top: 5px;">
-                    <span style="color: var(--text-color); opacity: 0.75;">現在価格:</span>
-                    <span style="font-weight: bold; color: var(--text-color);">{format_price(curr_price, selected_ticker)}</span>
-                </div>
-            </div>
-            """, unsafe_allow_html=True)
-            
-            # ----------------------------------------------------
-            # 100% Sell Option (Primary One-Click Action)
-            # ----------------------------------------------------
-            full_expected_return = total_qty * curr_price
-            full_cost = total_qty * selected_rec["purchase_price"]
-            full_realized_pl = full_expected_return - full_cost
-            full_pl_color = "#10b981" if full_realized_pl >= 0 else "#ef4444"
-            full_pl_sign = "+" if full_realized_pl >= 0 else ""
-            rate = get_usdjpy_rate() if is_us_stock(selected_ticker) else 1.0
-            full_pl_jpy = full_realized_pl * rate
-            
-            if is_us_stock(selected_ticker):
-                full_return_str = f"{format_price(full_expected_return, selected_ticker)} (約 ¥{int(full_expected_return * rate):,})"
-                full_pl_str = f"{full_pl_sign}{format_price(full_realized_pl, selected_ticker)} ({full_pl_sign}¥{int(full_pl_jpy):,})"
-            else:
-                full_return_str = format_price(full_expected_return, selected_ticker)
-                full_pl_str = f"{full_pl_sign}{format_price(full_realized_pl, selected_ticker)}"
-                
-            st.markdown(f"""
-            <div style="background-color: var(--secondary-background-color); border: 1.5px solid #ef4444; border-radius: 8px; padding: 12px; margin-bottom: 12px;">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                    <span style="font-weight: bold; color: #ef4444; font-size: 0.95rem;">🔥 保有全株（100%）の一括売却</span>
-                    <span style="font-size: 0.8rem; background: rgba(239,68,68,0.15); color: #ef4444; padding: 2px 8px; border-radius: 4px; font-weight: bold;">全{total_qty:,}株</span>
-                </div>
-                <div style="display: flex; justify-content: space-between; font-size: 0.88rem;">
-                    <span style="opacity: 0.75;">売却受取総額:</span>
-                    <span style="font-weight: bold;">{full_return_str}</span>
-                </div>
-                <div style="display: flex; justify-content: space-between; font-size: 0.88rem; margin-top: 4px;">
-                    <span style="opacity: 0.75;">確定実現損益:</span>
-                    <span style="font-weight: bold; color: {full_pl_color};">{full_pl_str}</span>
-                </div>
-            </div>
-            """, unsafe_allow_html=True)
-            
-            if st.button(f"🔥 {selected_rec['name']} の全株（{total_qty:,}株）を今すぐ売却", type="primary", use_container_width=True, key=f"sim_sell_all_btn_{selected_ticker}"):
-                execute_virtual_sell(selected_ticker, total_qty, curr_price)
-                
-            # ----------------------------------------------------
-            # Partial Sell Option (Custom Quantity)
-            # ----------------------------------------------------
-            with st.expander("✂️ 保有株数の一部を指定して売却する", expanded=False):
-                st.caption("一部売却する株数を指定してください:")
-                q_c1, q_c2 = st.columns(2)
-                with q_c1:
-                    if st.button("半分 (50%) に設定", use_container_width=True, key=f"set_half_{selected_ticker}"):
-                        st.session_state[f"sell_qty_input_{selected_ticker}"] = max(1, total_qty // 2)
+                # Preset selection buttons
+                bs_c1, bs_c2 = st.columns(2)
+                with bs_c1:
+                    if st.button("全銘柄を選択", use_container_width=True, key="btn_batch_select_all"):
+                        st.session_state["sim_batch_multiselect"] = owned_tickers.copy()
                         st.rerun()
-                with q_c2:
-                    default_unit = 1 if is_us_stock(selected_ticker) else (100 if total_qty >= 100 else 1)
-                    if st.button(f"単元（{default_unit}株）に設定", use_container_width=True, key=f"set_unit_{selected_ticker}"):
-                        st.session_state[f"sell_qty_input_{selected_ticker}"] = default_unit
+                with bs_c2:
+                    if st.button("選択をクリア", use_container_width=True, key="btn_batch_clear_all"):
+                        st.session_state["sim_batch_multiselect"] = []
                         st.rerun()
                         
-                default_sell_qty = st.session_state.get(f"sell_qty_input_{selected_ticker}", max(1, total_qty // 2))
-                if default_sell_qty > total_qty:
-                    default_sell_qty = total_qty
-                if default_sell_qty < 1:
-                    default_sell_qty = 1
+                # Ensure sim_batch_multiselect has a valid initial state in session_state
+                if "sim_batch_multiselect" not in st.session_state:
+                    st.session_state["sim_batch_multiselect"] = owned_tickers.copy()
+                else:
+                    # Filter out tickers that are no longer owned
+                    st.session_state["sim_batch_multiselect"] = [t for t in st.session_state["sim_batch_multiselect"] if t in owned_tickers]
                     
-                sell_qty = st.number_input(
-                    "売却株数 (株)",
-                    min_value=1,
-                    max_value=total_qty,
-                    value=int(default_sell_qty),
-                    step=1 if is_us_stock(selected_ticker) else (10 if total_qty >= 10 and total_qty % 10 == 0 else 1),
-                    format="%d",
-                    key=f"sell_qty_input_{selected_ticker}"
+                selected_batch = st.multiselect(
+                    "一括売却する銘柄を選択:",
+                    options=owned_tickers,
+                    default=st.session_state["sim_batch_multiselect"],
+                    format_func=lambda t: ticker_labels.get(t, t),
+                    key="sim_batch_multiselect"
                 )
                 
-                expected_return = sell_qty * curr_price
-                original_cost = sell_qty * selected_rec["purchase_price"]
-                realized_pl = expected_return - original_cost
-                pl_color_style = "color: #10b981;" if realized_pl >= 0 else "color: #ef4444;"
-                pl_sign = "+" if realized_pl >= 0 else ""
-                
-                if is_us_stock(selected_ticker):
-                    expected_return_str = f"{format_price(expected_return, selected_ticker)} (約 ¥{int(expected_return * rate):,})"
-                    realized_pl_str = f"{pl_sign}{format_price(realized_pl, selected_ticker)} ({pl_sign}¥{int(realized_pl * rate):,})"
+                if not selected_batch:
+                    st.info("💡 上のリストから売却したい銘柄を1つ以上選択してください。（『全銘柄を選択』で全銘柄を一括売却できます）")
+                    st.button("🔥 選択した銘柄を一括売却する", disabled=True, use_container_width=True, key="sim_batch_sell_disabled")
                 else:
-                    expected_return_str = format_price(expected_return, selected_ticker)
-                    realized_pl_str = f"{pl_sign}{format_price(realized_pl, selected_ticker)}"
+                    # Compute batch stats
+                    batch_proceeds = 0.0
+                    batch_pl = 0.0
+                    for t in selected_batch:
+                        rec = next((r for r in records if r["ticker"] == t), None)
+                        if rec:
+                            cp = latest_prices.get(t) or st.session_state['last_valid_prices'].get(t, rec["purchase_price"])
+                            q = rec["quantity"]
+                            rate = usdjpy_rate if is_us_stock(t) else 1.0
+                            batch_proceeds += q * cp * rate
+                            batch_pl += (cp - rec["purchase_price"]) * q * rate
+                            
+                    b_pl_color = "#10b981" if batch_pl >= 0 else "#ef4444"
+                    b_pl_sign = "+" if batch_pl >= 0 else ""
                     
-                st.markdown(f"""
-                <div style="background-color: var(--secondary-background-color); border: 1px solid var(--border-color); border-radius: 6px; padding: 10px 12px; margin-bottom: 12px; font-size: 0.88rem;">
-                    <div style="display: flex; justify-content: space-between;">
-                        <span style="opacity: 0.75;">売却予定金額 ({sell_qty:,}株):</span>
-                        <span style="font-weight: bold;">{expected_return_str}</span>
+                    st.markdown(f"""
+                    <div style="background-color: var(--secondary-background-color); border: 1.5px solid #ef4444; border-radius: 8px; padding: 12px; margin-top: 10px; margin-bottom: 12px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                            <span style="font-weight: bold; color: #ef4444; font-size: 0.95rem;">📦 まとめて売却プレビュー</span>
+                            <span style="font-size: 0.8rem; background: rgba(239,68,68,0.15); color: #ef4444; padding: 2px 8px; border-radius: 4px; font-weight: bold;">{len(selected_batch)} 銘柄選択中</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; font-size: 0.88rem;">
+                            <span style="opacity: 0.75;">売却受取総額:</span>
+                            <span style="font-weight: bold;">¥{int(batch_proceeds):,}</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; font-size: 0.88rem; margin-top: 4px;">
+                            <span style="opacity: 0.75;">確定実現損益合計:</span>
+                            <span style="font-weight: bold; color: {b_pl_color};">{b_pl_sign}¥{int(batch_pl):,}</span>
+                        </div>
                     </div>
-                    <div style="display: flex; justify-content: space-between; margin-top: 4px;">
-                        <span style="opacity: 0.75;">確定実現損益:</span>
-                        <span style="font-weight: bold; {pl_color_style}">{realized_pl_str}</span>
+                    """, unsafe_allow_html=True)
+                    
+                    batch_btn_label = f"🔥 選択した {len(selected_batch)} 銘柄をすべて一括売却する"
+                    if st.button(batch_btn_label, type="primary", use_container_width=True, key="sim_batch_sell_active_btn"):
+                        execute_virtual_sell_batch(selected_batch)
+                        
+            with tab_single_sell:
+                # If user selected a row in dataframe, synchronize active ticker
+                if selected_portfolio_row_indices and len(selected_portfolio_row_indices) > 0:
+                    row_idx = selected_portfolio_row_indices[0]
+                    if row_idx < len(df_display_table):
+                        clicked_t = df_display_table.iloc[row_idx]["ティッカー"]
+                        if clicked_t in owned_tickers:
+                            st.session_state["sell_active_ticker"] = clicked_t
+                
+                # Ensure valid active ticker
+                active_ticker = st.session_state.get("sell_active_ticker")
+                if active_ticker not in owned_tickers:
+                    active_ticker = owned_tickers[0]
+                    st.session_state["sell_active_ticker"] = active_ticker
+                    
+                active_idx = owned_tickers.index(active_ticker)
+                
+                selected_ticker = st.selectbox(
+                    "売却する保有銘柄を選択:",
+                    options=owned_tickers,
+                    index=active_idx,
+                    format_func=lambda t: ticker_labels.get(t, t),
+                    key=f"sim_sell_ticker_select_{active_ticker}"
+                )
+                if selected_ticker != active_ticker:
+                    st.session_state["sell_active_ticker"] = selected_ticker
+                    st.rerun()
+                    
+                selected_rec = next((r for r in records if r["ticker"] == selected_ticker), records[0])
+                total_qty = int(selected_rec["quantity"])
+                
+                curr_price = latest_prices.get(selected_ticker)
+                if curr_price is None or pd.isna(curr_price):
+                    curr_price = st.session_state['last_valid_prices'].get(selected_ticker, selected_rec["purchase_price"])
+                
+                # Display detail card
+                st.markdown(f"""
+                <div style="background-color: var(--secondary-background-color); border: 1px solid var(--border-color); border-radius: 6px; padding: 12px; margin-bottom: 10px; color: var(--text-color);">
+                    <div style="display: flex; justify-content: space-between;">
+                        <span style="color: var(--text-color); opacity: 0.75;">売却対象:</span>
+                        <span style="font-weight: bold; color: var(--text-color);">{selected_rec['name']} ({selected_ticker})</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-top: 5px;">
+                        <span style="color: var(--text-color); opacity: 0.75;">保有数量:</span>
+                        <span style="font-weight: bold; color: var(--text-color);">{total_qty:,} 株</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-top: 5px;">
+                        <span style="color: var(--text-color); opacity: 0.75;">取得単価:</span>
+                        <span style="font-weight: bold; color: var(--text-color);">{format_price(selected_rec['purchase_price'], selected_ticker)}</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-top: 5px;">
+                        <span style="color: var(--text-color); opacity: 0.75;">現在価格:</span>
+                        <span style="font-weight: bold; color: var(--text-color);">{format_price(curr_price, selected_ticker)}</span>
                     </div>
                 </div>
                 """, unsafe_allow_html=True)
                 
-                if st.button(f"🚀 指定した {sell_qty:,}株 を売却する", use_container_width=True, key=f"sim_sell_custom_btn_{selected_ticker}", type="secondary"):
-                    execute_virtual_sell(selected_ticker, sell_qty, curr_price)
+                # ----------------------------------------------------
+                # 100% Sell Option (Primary One-Click Action)
+                # ----------------------------------------------------
+                full_expected_return = total_qty * curr_price
+                full_cost = total_qty * selected_rec["purchase_price"]
+                full_realized_pl = full_expected_return - full_cost
+                full_pl_color = "#10b981" if full_realized_pl >= 0 else "#ef4444"
+                full_pl_sign = "+" if full_realized_pl >= 0 else ""
+                rate = get_usdjpy_rate() if is_us_stock(selected_ticker) else 1.0
+                full_pl_jpy = full_realized_pl * rate
+                
+                if is_us_stock(selected_ticker):
+                    full_return_str = f"{format_price(full_expected_return, selected_ticker)} (約 ¥{int(full_expected_return * rate):,})"
+                    full_pl_str = f"{full_pl_sign}{format_price(full_realized_pl, selected_ticker)} ({full_pl_sign}¥{int(full_pl_jpy):,})"
+                else:
+                    full_return_str = format_price(full_expected_return, selected_ticker)
+                    full_pl_str = f"{full_pl_sign}{format_price(full_realized_pl, selected_ticker)}"
+                    
+                st.markdown(f"""
+                <div style="background-color: var(--secondary-background-color); border: 1.5px solid #ef4444; border-radius: 8px; padding: 12px; margin-bottom: 12px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                        <span style="font-weight: bold; color: #ef4444; font-size: 0.95rem;">🔥 保有全株（100%）の一括売却</span>
+                        <span style="font-size: 0.8rem; background: rgba(239,68,68,0.15); color: #ef4444; padding: 2px 8px; border-radius: 4px; font-weight: bold;">全{total_qty:,}株</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; font-size: 0.88rem;">
+                        <span style="opacity: 0.75;">売却受取総額:</span>
+                        <span style="font-weight: bold;">{full_return_str}</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; font-size: 0.88rem; margin-top: 4px;">
+                        <span style="opacity: 0.75;">確定実現損益:</span>
+                        <span style="font-weight: bold; color: {full_pl_color};">{full_pl_str}</span>
+                    </div>
+                </div>
+                """, unsafe_allow_html=True)
+                
+                if st.button(f"🔥 {selected_rec['name']} の全株（{total_qty:,}株）を今すぐ売却", type="primary", use_container_width=True, key=f"sim_sell_all_btn_{selected_ticker}"):
+                    execute_virtual_sell(selected_ticker, total_qty, curr_price)
+                    
+                # ----------------------------------------------------
+                # Partial Sell Option (Custom Quantity)
+                # ----------------------------------------------------
+                with st.expander("✂️ 保有株数の一部を指定して売却する", expanded=False):
+                    st.caption("一部売却する株数を指定してください:")
+                    q_c1, q_c2 = st.columns(2)
+                    with q_c1:
+                        if st.button("半分 (50%) に設定", use_container_width=True, key=f"set_half_{selected_ticker}"):
+                            st.session_state[f"sell_qty_input_{selected_ticker}"] = max(1, total_qty // 2)
+                            st.rerun()
+                    with q_c2:
+                        default_unit = 1 if is_us_stock(selected_ticker) else (100 if total_qty >= 100 else 1)
+                        if st.button(f"単元（{default_unit}株）に設定", use_container_width=True, key=f"set_unit_{selected_ticker}"):
+                            st.session_state[f"sell_qty_input_{selected_ticker}"] = default_unit
+                            st.rerun()
+                            
+                    default_sell_qty = st.session_state.get(f"sell_qty_input_{selected_ticker}", max(1, total_qty // 2))
+                    if default_sell_qty > total_qty:
+                        default_sell_qty = total_qty
+                    if default_sell_qty < 1:
+                        default_sell_qty = 1
+                        
+                    sell_qty = st.number_input(
+                        "売却株数 (株)",
+                        min_value=1,
+                        max_value=total_qty,
+                        value=int(default_sell_qty),
+                        step=1 if is_us_stock(selected_ticker) else (10 if total_qty >= 10 and total_qty % 10 == 0 else 1),
+                        format="%d",
+                        key=f"sell_qty_input_{selected_ticker}"
+                    )
+                    
+                    expected_return = sell_qty * curr_price
+                    original_cost = sell_qty * selected_rec["purchase_price"]
+                    realized_pl = expected_return - original_cost
+                    pl_color_style = "color: #10b981;" if realized_pl >= 0 else "color: #ef4444;"
+                    pl_sign = "+" if realized_pl >= 0 else ""
+                    
+                    if is_us_stock(selected_ticker):
+                        expected_return_str = f"{format_price(expected_return, selected_ticker)} (約 ¥{int(expected_return * rate):,})"
+                        realized_pl_str = f"{pl_sign}{format_price(realized_pl, selected_ticker)} ({pl_sign}¥{int(realized_pl * rate):,})"
+                    else:
+                        expected_return_str = format_price(expected_return, selected_ticker)
+                        realized_pl_str = f"{pl_sign}{format_price(realized_pl, selected_ticker)}"
+                        
+                    st.markdown(f"""
+                    <div style="background-color: var(--secondary-background-color); border: 1px solid var(--border-color); border-radius: 6px; padding: 10px 12px; margin-bottom: 12px; font-size: 0.88rem;">
+                        <div style="display: flex; justify-content: space-between;">
+                            <span style="opacity: 0.75;">売却予定金額 ({sell_qty:,}株):</span>
+                            <span style="font-weight: bold;">{expected_return_str}</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; margin-top: 4px;">
+                            <span style="opacity: 0.75;">確定実現損益:</span>
+                            <span style="font-weight: bold; {pl_color_style}">{realized_pl_str}</span>
+                        </div>
+                    </div>
+                    """, unsafe_allow_html=True)
+                    
+                    if st.button(f"🚀 指定した {sell_qty:,}株 を売却する", use_container_width=True, key=f"sim_sell_custom_btn_{selected_ticker}", type="secondary"):
+                        execute_virtual_sell(selected_ticker, sell_qty, curr_price)
 
     # ----------------------------------------------------
     # Portfolio performance timeline chart
