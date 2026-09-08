@@ -281,13 +281,15 @@ def run_sniper_screening(test_mode=False):
         for s in sniped_stocks:
             print(f"  - {s['ticker']} {s['name']}: PBR {s['pbr']:.2f}倍, 過去3回最小+{s['min_ret']:.1f}%")
             
-        # Compose LINE Message (⚠️重要⚠️ + スクリーニングにヒット + 銘柄名（コード.T） + PBR)
+        # Compose LINE Message (⚠️重要⚠️ + スクリーニングにヒット + 区切り線 + 銘柄名（コード.T） + PBR)
         msg = "⚠️重要⚠️\n\n"
-        msg += "スクリーニングにヒットする銘柄が見つかりました！\n\n"
+        msg += "スクリーニングにヒットする銘柄が見つかりました！\n"
+        msg += "━━━━━━━━━━━━━━\n"
         for s in sniped_stocks:
             ticker_str = s['ticker'] if '.T' in s['ticker'] else f"{s['ticker']}.T"
             msg += f"【銘柄】{s['name']}（{ticker_str}）\n"
-            msg += f"【PBR】{s['pbr']:.2f}倍\n\n"
+            msg += f"【PBR】{s['pbr']:.2f}倍\n"
+            msg += "━━━━━━━━━━━━━━\n"
         msg = msg.strip()
         
         send_line_message(msg)
