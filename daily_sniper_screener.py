@@ -299,7 +299,13 @@ def run_sniper_screening(
         for s in sniped_stocks:
             ticker_str = s['ticker'] if '.T' in s['ticker'] else f"{s['ticker']}.T"
             pbr_disp = f"{s['pbr']:.2f}倍" if s['pbr'] is not None else "---"
+            price = s.get('last_price')
+            if price is not None:
+                price_str = f"{price:,.1f}円" if (price < 1000 and price != int(price)) else f"{int(round(price)):,}円"
+            else:
+                price_str = "---"
             msg += f"【銘柄】{s['name']}（{ticker_str}）\n"
+            msg += f"【株価】{price_str}\n"
             msg += f"【PBR】{pbr_disp}\n"
             msg += "━━━━━━━━━━━━━━\n"
         result_message = msg.strip()
