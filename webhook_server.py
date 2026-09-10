@@ -23,9 +23,15 @@ from fastapi.staticfiles import StaticFiles
 # Import screener logic
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(BASE_DIR)
-from daily_sniper_screener import run_sniper_screening, send_line_message
+import threading
+from daily_sniper_screener import run_sniper_screening, send_line_message, warm_up_cache
 
 app = FastAPI(title="ZenStock LINE Bot & LIFF")
+
+@app.on_event("startup")
+def startup_event():
+    print("🚀 Server starting: launching background cache pre-warm...")
+    threading.Thread(target=warm_up_cache, daemon=True).start()
 
 # Mount Static Files
 static_dir = os.path.join(BASE_DIR, "static")

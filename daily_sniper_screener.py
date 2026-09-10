@@ -114,38 +114,38 @@ def load_tickers_and_fundamentals():
                 
     return tickers, fund_cache, jp_names
 
-def run_sniper_screening(
-    n_match=60,
-    future_day=25,
-    thresh=10.0,
-    pbr_max=1.0,
-    test_mode=False,
-    target_user_id=None,
-    send_push=True,
-    is_interactive=False
-):
-    pbr_label = f"PBR < {pbr_max:.1f}" if (pbr_max is not None and pbr_max > 0) else "PBR制限なし"
-    print("=" * 60)
-    print("🎯 ZenStock Sniper Screener Starting...")
-    print(f"Target: Nikkei 225 | Match: {n_match}d | Holding: {future_day}d | Thresh: +{thresh:.1f}% | {pbr_label}")
-    print("=" * 60, flush=True)
+# In-memory Price Cache (30 minutes TTL)
+_CACHE_TIMESTAMP = 0
+_CACHED_STOCK_DATA = {}
+_CACHED_STOCK_INFO = {}
+CACHE_TTL = 1800  # 30 minutes
+
+def warm_up_cache():
+    """Pre-warm stock cache in background on server start."""
+    try:
+        tickers, fund_cache, jp_names = load_tickers_and_fundamentals()
+        get_or_fetch_stock_data(tickers, fund_cache, jp_names)
+    except Exception as e:
+        print(f"[WARMUP ERROR] {e}")
+
+def get_or_fetch_stock_data(tickers, fund_cache, jp_names):
+    global _CACHE_TIMESTAMP, _CACHED_STOCK_DATA, _CACHED_STOCK_INFO
+    now = time.time()
     
-    tickers, fund_cache, jp_names = load_tickers_and_fundamentals()
-    if not tickers:
-        print("[ERROR] No tickers loaded. Exiting.")
-        return [], "エラー: 銘柄リストを読み込めませんでした。"
-        
-    print(f"Loaded {len(tickers)} tickers and fundamentals cache.")
-    
-    # 1. Parallel download price history (5 years)
+    # Return in-memory cache if available and fresh
+    if _CACHED_STOCK_DATA and (now - _CACHE_TIMESTAMP < CACHE_TTL):
+        print(f"⚡ [CACHE HIT] Using cached stock data ({len(_CACHED_STOCK_DATA)} stocks, age {int(now - _CACHE_TIMESTAMP)}s).")
+        return _CACHED_STOCK_DATA, _CACHED_STOCK_INFO
+
+    print(f"🔄 [FETCHING] Downloading latest price data for {len(tickers)} stocks...", flush=True)
     stock_data = {}
     stock_info = {}
     
     def fetch_stock(ticker):
         try:
             t = yf.Ticker(ticker)
-            df = t.history(period="5y")
-            if df is not None and not df.empty and len(df) >= 200:
+            df = t.history(period="2y")
+            if df is not None and not df.empty and len(df) >= 150:
                 close = df['Close'].dropna()
                 c_last = float(close.iloc[-1])
                 
@@ -175,9 +175,9 @@ def run_sniper_screening(
             pass
         return ticker, None
 
-    print(f"Fetching latest price and fundamental data for {len(tickers)} stocks...", flush=True)
     t0 = time.time()
-    with ThreadPoolExecutor(max_workers=20) as executor:
+    # Optimized max_workers for low-spec container environments
+    with ThreadPoolExecutor(max_workers=10) as executor:
         results = executor.map(fetch_stock, tickers)
         for ticker, data in results:
             if data is not None:
@@ -186,7 +186,41 @@ def run_sniper_screening(
                 
     print(f"Loaded {len(stock_data)} valid stocks in {time.time()-t0:.1f}s.", flush=True)
     
+    if len(stock_data) >= 50:
+        _CACHED_STOCK_DATA = stock_data
+        _CACHED_STOCK_INFO = stock_info
+        _CACHE_TIMESTAMP = now
+        
+    return stock_data, stock_info
+
+def run_sniper_screening(
+    n_match=60,
+    future_day=25,
+    thresh=10.0,
+    pbr_max=1.0,
+    test_mode=False,
+    target_user_id=None,
+    send_push=True,
+    is_interactive=False
+):
+    pbr_label = f"PBR < {pbr_max:.1f}" if (pbr_max is not None and pbr_max > 0) else "PBR制限なし"
+    print("=" * 60)
+    print("🎯 ZenStock Sniper Screener Starting...")
+    print(f"Target: Nikkei 225 | Match: {n_match}d | Holding: {future_day}d | Thresh: +{thresh:.1f}% | {pbr_label}")
+    print("=" * 60, flush=True)
+    
+    tickers, fund_cache, jp_names = load_tickers_and_fundamentals()
+    if not tickers:
+        print("[ERROR] No tickers loaded. Exiting.")
+        return [], "エラー: 銘柄リストを読み込めませんでした。"
+        
+    print(f"Loaded {len(tickers)} tickers and fundamentals cache.")
+    
+    # 1. Get or fetch price history (using in-memory cache)
+    stock_data, stock_info = get_or_fetch_stock_data(tickers, fund_cache, jp_names)
+    
     # 2. Filter PBR
+
     targets = {}
     for ticker, info in stock_info.items():
         pbr = info['pbr']
