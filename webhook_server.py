@@ -47,6 +47,18 @@ LINE_CHANNEL_SECRET = os.environ.get("LINE_CHANNEL_SECRET", "")
 LINE_LIFF_ID = os.environ.get("LINE_LIFF_ID", "2011538719-L0SX8ZZU")
 USER_PREF_FILE = os.path.join(BASE_DIR, "user_preferences.json")
 
+# In-memory debug logs (last 30 events)
+RECENT_LOGS = []
+
+def add_log(message: str):
+    import datetime
+    timestamp = datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=9))).strftime("%H:%M:%S")
+    entry = f"[{timestamp}] {message}"
+    print(entry, flush=True)
+    RECENT_LOGS.append(entry)
+    if len(RECENT_LOGS) > 30:
+        RECENT_LOGS.pop(0)
+
 def verify_signature(body_bytes: bytes, signature: str) -> bool:
     """Verify LINE Webhook signature if secret is set."""
     if not LINE_CHANNEL_SECRET:
@@ -57,11 +69,15 @@ def verify_signature(body_bytes: bytes, signature: str) -> bool:
         hashlib.sha256
     ).digest()
     expected = base64.b64encode(hash_val).decode('utf-8')
-    return hmac.compare_digest(expected, signature)
+    is_valid = hmac.compare_digest(expected, signature)
+    if not is_valid:
+        add_log(f"⚠️ Signature verification FAILED! expected={expected[:8]}... got={signature[:8]}...")
+    return is_valid
 
 def reply_line_message(reply_token: str, message_text: str):
     """Send immediate reply to user via LINE Reply API."""
     if not reply_token or not LINE_CHANNEL_ACCESS_TOKEN:
+        add_log("⚠️ reply_line_message: missing reply_token or token")
         return False
     url = "https://api.line.me/v2/bot/message/reply"
     headers = {
@@ -79,9 +95,14 @@ def reply_line_message(reply_token: str, message_text: str):
     }
     try:
         res = requests.post(url, headers=headers, json=payload, timeout=10)
-        return res.status_code == 200
+        if res.status_code == 200:
+            add_log(f"✅ Reply sent successfully (token: {reply_token[:8]}...)")
+            return True
+        else:
+            add_log(f"❌ Reply API error: {res.status_code} - {res.text}")
+            return False
     except Exception as e:
-        print(f"[REPLY ERROR] {e}")
+        add_log(f"❌ Reply exception: {e}")
         return False
 
 def save_user_preference(user_id: str, params: dict):
@@ -201,33 +222,55 @@ def api_save_pref(payload: dict):
     send_line_message(save_msg, target_user_id=user_id)
     return {"status": "saved"}
 
+@app.get("/logs", response_class=HTMLResponse)
+def view_logs():
+    logs_html = "".join(f"<div style='padding:6px 0; border-bottom:1px solid #334155;'>{log}</div>" for log in reversed(RECENT_LOGS))
+    return f"""
+    <!DOCTYPE html>
+    <html><head><meta charset='utf-8'><meta name='viewport' content='width=device-width, initial-scale=1.0'><title>ZenStock Logs</title></head>
+    <body style='background:#0f172a; color:#f8fafc; font-family:monospace; padding:20px; font-size:13px;'>
+      <h2>ZenStock Server Debug Logs (Latest {len(RECENT_LOGS)})</h2>
+      <button onclick='location.reload()' style='padding:8px 16px; background:#10b981; color:#fff; border:none; border-radius:6px; cursor:pointer; font-weight:bold; margin-bottom:16px;'>🔄 最新に更新</button>
+      <div>{logs_html if RECENT_LOGS else "<div>No logs recorded yet. Send a message on LINE to test.</div>"}</div>
+    </body></html>
+    """
+
 @app.post("/webhook")
 async def line_webhook(request: Request, background_tasks: BackgroundTasks, x_line_signature: Optional[str] = Header(None)):
     body_bytes = await request.body()
     body_str = body_bytes.decode('utf-8')
 
+    add_log(f"📥 Webhook received ({len(body_bytes)} bytes)")
+
     # Verify signature if secret is present
     if LINE_CHANNEL_SECRET and x_line_signature:
         if not verify_signature(body_bytes, x_line_signature):
+            add_log("❌ Signature mismatch! Rejecting request.")
             raise HTTPException(status_code=400, detail="Invalid signature")
 
     try:
         data = json.loads(body_str)
-    except Exception:
+    except Exception as e:
+        add_log(f"❌ JSON decode error: {e}")
         return JSONResponse({"status": "invalid json"}, status_code=400)
 
     events = data.get("events", [])
+    add_log(f"📨 Events received: {len(events)}")
     for ev in events:
         if ev.get("type") != "message":
+            add_log(f"ℹ️ Non-message event: {ev.get('type')}")
             continue
         msg = ev.get("message", {})
         if msg.get("type") != "text":
+            add_log(f"ℹ️ Non-text message: {msg.get('type')}")
             continue
 
         text = msg.get("text", "").strip()
         reply_token = ev.get("replyToken")
         source = ev.get("source", {})
         user_id = source.get("userId")
+
+        add_log(f"💬 Message from {user_id[:8] if user_id else 'unknown'}: '{text}'")
 
         # 1. Trigger Scan (e.g. "スキャン", "スナイプ", "今すぐ", "スキャン 60 25 10 1")
         if text.startswith("スキャン") or text.startswith("スナイプ") or "スキャン実行" in text:
