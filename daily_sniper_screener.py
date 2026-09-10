@@ -45,10 +45,10 @@ def safe_float(val):
     except (ValueError, TypeError):
         return None
 
-def send_line_message(message_text):
+def send_line_message(message_text, target_user_id=None):
     """Send LINE push message via LINE Messaging API."""
     token = LINE_CHANNEL_ACCESS_TOKEN
-    user_id = LINE_USER_ID
+    user_id = target_user_id or LINE_USER_ID
     
     if not token or not user_id:
         print("[LINE] LINE_CHANNEL_ACCESS_TOKEN or LINE_USER_ID not set. Skipping push notification.")
@@ -72,7 +72,7 @@ def send_line_message(message_text):
     try:
         res = requests.post(url, headers=headers, json=payload, timeout=15)
         if res.status_code == 200:
-            print("[LINE] Notification sent successfully!")
+            print(f"[LINE] Notification sent successfully to {user_id}!")
             return True
         else:
             print(f"[LINE] Failed to send notification: {res.status_code} - {res.text}")
@@ -114,16 +114,26 @@ def load_tickers_and_fundamentals():
                 
     return tickers, fund_cache, jp_names
 
-def run_sniper_screening(test_mode=False):
+def run_sniper_screening(
+    n_match=60,
+    future_day=25,
+    thresh=10.0,
+    pbr_max=1.0,
+    test_mode=False,
+    target_user_id=None,
+    send_push=True,
+    is_interactive=False
+):
+    pbr_label = f"PBR < {pbr_max:.1f}" if (pbr_max is not None and pbr_max > 0) else "PBR制限なし"
     print("=" * 60)
-    print("🎯 ZenStock Daily Sniper Screener Starting...")
-    print("Target: Nikkei 225 | Match: 60d | Holding: 25d | Thresh: +10.0% | PBR < 1.0")
+    print("🎯 ZenStock Sniper Screener Starting...")
+    print(f"Target: Nikkei 225 | Match: {n_match}d | Holding: {future_day}d | Thresh: +{thresh:.1f}% | {pbr_label}")
     print("=" * 60, flush=True)
     
     tickers, fund_cache, jp_names = load_tickers_and_fundamentals()
     if not tickers:
         print("[ERROR] No tickers loaded. Exiting.")
-        return
+        return [], "エラー: 銘柄リストを読み込めませんでした。"
         
     print(f"Loaded {len(tickers)} tickers and fundamentals cache.")
     
@@ -176,32 +186,31 @@ def run_sniper_screening(test_mode=False):
                 
     print(f"Loaded {len(stock_data)} valid stocks in {time.time()-t0:.1f}s.", flush=True)
     
-    # 2. Filter PBR < 1.0
-    pbr_targets = {}
+    # 2. Filter PBR
+    targets = {}
     for ticker, info in stock_info.items():
         pbr = info['pbr']
-        if pbr is not None and pbr < 1.0:
-            pbr_targets[ticker] = info
+        if pbr_max is not None and pbr_max > 0:
+            if pbr is not None and pbr < pbr_max:
+                targets[ticker] = info
+        else:
+            targets[ticker] = info
             
-    print(f"Stocks matching PBR < 1.0 filter: {len(pbr_targets)} / {len(stock_data)}", flush=True)
+    print(f"Stocks matching {pbr_label} filter: {len(targets)} / {len(stock_data)}", flush=True)
     
-    # 3. Pattern Matching (Match 60d, Thresh +10.0%, Future 25d)
-    N_match = 60
-    future_day = 25
-    thresh = 10.0
-    
+    # 3. Pattern Matching
     sniped_stocks = []
     
-    for ticker, info in pbr_targets.items():
+    for ticker, info in targets.items():
         close_series = stock_data[ticker]
         close = close_series.to_numpy(dtype=np.float32)
         total_len = len(close)
         
-        if total_len < N_match + 100:
+        if total_len < n_match + 100:
             continue
             
-        # Target pattern is the most recent 60 trading days
-        target_pattern = close[-N_match:]
+        # Target pattern is the most recent n_match trading days
+        target_pattern = close[-n_match:]
         t_mean = np.mean(target_pattern)
         t_std = np.std(target_pattern)
         if t_std < 1e-6 or np.isnan(t_std):
@@ -209,12 +218,12 @@ def run_sniper_screening(test_mode=False):
         target_norm = (target_pattern - t_mean) / t_std
         
         # Historical search space: up to (last - future_day - 5)
-        search_end = total_len - N_match - future_day - 5
-        if search_end < N_match + 30:
+        search_end = total_len - n_match - future_day - 5
+        if search_end < n_match + 30:
             continue
             
         past_data = close[:search_end]
-        windows = np.lib.stride_tricks.sliding_window_view(past_data, window_shape=N_match)
+        windows = np.lib.stride_tricks.sliding_window_view(past_data, window_shape=n_match)
         w_means = np.mean(windows, axis=1, keepdims=True)
         w_stds = np.std(windows, axis=1, keepdims=True)
         valid_mask = (w_stds[:, 0] > 1e-6) & (~np.isnan(w_stds[:, 0]))
@@ -223,12 +232,12 @@ def run_sniper_screening(test_mode=False):
             
         w_norm = np.zeros_like(windows)
         w_norm[valid_mask] = (windows[valid_mask] - w_means[valid_mask]) / w_stds[valid_mask]
-        dots = np.dot(w_norm, target_norm) / N_match
+        dots = np.dot(w_norm, target_norm) / n_match
         dots[~valid_mask] = -1.0
         
         sorted_indices = np.argsort(dots)[::-1]
         chosen_top = []
-        min_dist = max(20, N_match // 2)
+        min_dist = max(20, n_match // 2)
         for idx in sorted_indices:
             if dots[idx] < 0.5:
                 break
@@ -241,7 +250,7 @@ def run_sniper_screening(test_mode=False):
             p_rets = []
             match_details = []
             for c_idx in chosen_top:
-                p_end = c_idx + N_match - 1
+                p_end = c_idx + n_match - 1
                 p_fut = p_end + future_day
                 sim_score = float(dots[c_idx]) * 100.0
                 if p_fut < len(close):
@@ -260,7 +269,7 @@ def run_sniper_screening(test_mode=False):
                 min_ret = min(p_rets)
                 avg_ret = float(np.mean(p_rets))
                 
-                # SNIPER HIT CONDITION: All 3 matches had >= +10.0% return
+                # SNIPER HIT CONDITION: All 3 matches had >= thresh return
                 if min_ret >= thresh:
                     sniped_stocks.append({
                         'ticker': ticker,
@@ -276,10 +285,12 @@ def run_sniper_screening(test_mode=False):
     print(f"\n[SCAN COMPLETE] Hit Stocks: {len(sniped_stocks)}")
     
     # 4. Process Notification
+    result_message = ""
     if sniped_stocks:
         print(f"🔥 {len(sniped_stocks)} STOCKS TRIGGERED SNIPER CRITERIA! 🔥")
         for s in sniped_stocks:
-            print(f"  - {s['ticker']} {s['name']}: PBR {s['pbr']:.2f}倍, 過去3回最小+{s['min_ret']:.1f}%")
+            pbr_disp = f"{s['pbr']:.2f}倍" if s['pbr'] is not None else "---"
+            print(f"  - {s['ticker']} {s['name']}: PBR {pbr_disp}, 過去3回最小+{s['min_ret']:.1f}%")
             
         # Compose LINE Message (【重要】 + スクリーニングにヒット + 区切り線 + 銘柄名（コード.T） + PBR)
         msg = "【重要】\n\n"
@@ -287,24 +298,57 @@ def run_sniper_screening(test_mode=False):
         msg += "━━━━━━━━━━━━━━\n"
         for s in sniped_stocks:
             ticker_str = s['ticker'] if '.T' in s['ticker'] else f"{s['ticker']}.T"
+            pbr_disp = f"{s['pbr']:.2f}倍" if s['pbr'] is not None else "---"
             msg += f"【銘柄】{s['name']}（{ticker_str}）\n"
-            msg += f"【PBR】{s['pbr']:.2f}倍\n"
+            msg += f"【PBR】{pbr_disp}\n"
             msg += "━━━━━━━━━━━━━━\n"
-        msg = msg.strip()
+        result_message = msg.strip()
         
-        send_line_message(msg)
+        if send_push:
+            send_line_message(result_message, target_user_id=target_user_id)
     else:
-        print("No stocks triggered sniper criteria today. (Condition: PBR < 1.0 & Min Past Return >= +10.0%)")
-        if test_mode:
-            test_msg = "🎯【ZenStock スナイパー通知テスト】\n"
-            test_msg += "LINE Messaging APIの接続テストに成功しました！\n"
-            test_msg += "本日のスクリーニングではスナイプ条件（照合60日×保有25日×+10%×PBR<1.0）の該当銘柄はありませんでした。\n\n"
-            test_msg += "次回、条件を満たす激熱銘柄（勝率80%・平均利益+9.4%）が出現した瞬間に自動通知されます。"
-            send_line_message(test_msg)
+        print(f"No stocks triggered sniper criteria today. (Condition: {pbr_label} & Min Past Return >= +{thresh:.1f}%)")
+        if is_interactive:
+            result_message = f"【ZenStock スキャナー結果】\n━━━━━━━━━━━━━━\n"
+            result_message += f"設定条件:\n"
+            result_message += f"・照合期間: {n_match}日\n"
+            result_message += f"・保有期間: {future_day}日\n"
+            result_message += f"・上昇閾値: +{thresh:.1f}%\n"
+            result_message += f"・PBR条件: {pbr_label}\n"
+            result_message += "━━━━━━━━━━━━━━\n"
+            result_message += "本日、上記条件に合致する銘柄はありませんでした。"
+            if send_push:
+                send_line_message(result_message, target_user_id=target_user_id)
+        elif test_mode:
+            result_message = "🎯【ZenStock スナイパー通知テスト】\n"
+            result_message += "LINE Messaging APIの接続テストに成功しました！\n"
+            result_message += f"本日のスクリーニングではスナイプ条件（照合{n_match}日×保有{future_day}日×+{thresh:.1f}%×{pbr_label}）の該当銘柄はありませんでした。\n\n"
+            result_message += "次回、条件を満たす激熱銘柄が出現した瞬間に自動通知されます。"
+            if send_push:
+                send_line_message(result_message, target_user_id=target_user_id)
+
+    return sniped_stocks, result_message
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="ZenStock Daily Sniper Screener")
     parser.add_argument("--test", action="store_true", help="Send a test LINE message even if no hits")
+    parser.add_argument("--match", type=int, default=60, help="Match window in days (default: 60)")
+    parser.add_argument("--hold", type=int, default=25, help="Holding window in days (default: 25)")
+    parser.add_argument("--thresh", type=float, default=10.0, help="Min return threshold (default: 10.0)")
+    parser.add_argument("--pbr", type=float, default=1.0, help="Max PBR threshold (0 for no limit, default: 1.0)")
+    parser.add_argument("--user", type=str, default=None, help="Target LINE User ID (default: LINE_USER_ID)")
+    parser.add_argument("--interactive", action="store_true", help="Notify user even if 0 hits (for on-demand scans)")
     args = parser.parse_args()
     
-    run_sniper_screening(test_mode=args.test)
+    pbr_arg = None if args.pbr <= 0 else args.pbr
+    run_sniper_screening(
+        n_match=args.match,
+        future_day=args.hold,
+        thresh=args.thresh,
+        pbr_max=pbr_arg,
+        test_mode=args.test,
+        target_user_id=args.user,
+        send_push=True,
+        is_interactive=args.interactive
+    )
+

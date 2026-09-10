@@ -7,3 +7,5 @@ lxml
 beautifulsoup4
 html5lib
 requests
+fastapi>=0.110.0
+uvicorn>=0.28.0

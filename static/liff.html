@@ -1,0 +1,871 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>ZenStock スナイパー設定</title>
+  <!-- LINE LIFF SDK v2 -->
+  <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  <style>
+    :root {
+      --bg: #0b0f19;
+      --card-bg: rgba(24, 32, 51, 0.85);
+      --card-border: rgba(255, 255, 255, 0.08);
+      --primary: #10b981;
+      --primary-gradient: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      --accent: #38bdf8;
+      --accent-gradient: linear-gradient(135deg, #38bdf8 0%, #0284c7 100%);
+      --gold: #f59e0b;
+      --gold-gradient: linear-gradient(135deg, #fbbf24 0%, #d97706 100%);
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+      --text-dim: #64748b;
+      --danger: #ef4444;
+      --slider-track: #1e293b;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      background-color: var(--bg);
+      background-image: 
+        radial-gradient(at 0% 0%, rgba(16, 185, 129, 0.12) 0px, transparent 50%),
+        radial-gradient(at 100% 100%, rgba(56, 189, 248, 0.1) 0px, transparent 50%);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 16px 14px 40px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 480px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    /* Header */
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 4px 4px;
+    }
+
+    .header-brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .logo-badge {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, #10b981 0%, #0284c7 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 900;
+      font-size: 19px;
+      color: #fff;
+      box-shadow: 0 4px 12px rgba(16, 185, 129, 0.35);
+    }
+
+    .title-group h1 {
+      font-size: 17px;
+      font-weight: 700;
+      letter-spacing: -0.3px;
+    }
+
+    .title-group p {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .user-tag {
+      font-size: 11px;
+      color: var(--primary);
+      background: rgba(16, 185, 129, 0.12);
+      border: 1px solid rgba(16, 185, 129, 0.25);
+      padding: 4px 8px;
+      border-radius: 20px;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .user-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--primary);
+    }
+
+    /* Quick Presets */
+    .preset-container {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding: 4px 2px 6px;
+      scrollbar-width: none;
+    }
+    .preset-container::-webkit-scrollbar {
+      display: none;
+    }
+
+    .preset-chip {
+      background: rgba(30, 41, 59, 0.8);
+      border: 1px solid var(--card-border);
+      border-radius: 20px;
+      padding: 6px 12px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text);
+      white-space: nowrap;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s;
+    }
+    .preset-chip:active {
+      transform: scale(0.96);
+    }
+    .preset-chip.active {
+      background: rgba(16, 185, 129, 0.18);
+      border-color: var(--primary);
+      color: var(--primary);
+    }
+
+    /* Live Performance Card (Hero) */
+    .preview-card {
+      background: var(--card-bg);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid var(--card-border);
+      border-radius: 18px;
+      padding: 16px;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .preview-card::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: var(--primary-gradient);
+    }
+
+    .preview-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 12px;
+    }
+
+    .preview-top .label {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-dim);
+      font-weight: 700;
+    }
+
+    .rank-badge {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 8px;
+      background: rgba(245, 158, 11, 0.15);
+      color: var(--gold);
+      border: 1px solid rgba(245, 158, 11, 0.3);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .stat-box {
+      background: rgba(15, 23, 42, 0.55);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 12px;
+      padding: 10px 12px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .stat-box.highlight {
+      background: rgba(16, 185, 129, 0.08);
+      border-color: rgba(16, 185, 129, 0.25);
+    }
+
+    .stat-label {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-bottom: 2px;
+    }
+
+    .stat-val {
+      font-size: 22px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      color: var(--text);
+    }
+    .stat-val.win-rate {
+      color: #34d399;
+    }
+    .stat-val.return-val {
+      color: #38bdf8;
+    }
+
+    .stat-sub {
+      font-size: 10px;
+      color: var(--text-dim);
+      margin-top: 2px;
+    }
+
+    /* Sliders Card */
+    .controls-card {
+      background: var(--card-bg);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid var(--card-border);
+      border-radius: 18px;
+      padding: 16px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    .control-row {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .control-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .control-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .control-badge {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--primary);
+      background: rgba(16, 185, 129, 0.12);
+      padding: 2px 8px;
+      border-radius: 6px;
+    }
+
+    .slider-wrap {
+      position: relative;
+      width: 100%;
+      padding: 4px 0;
+    }
+
+    input[type="range"] {
+      -webkit-appearance: none;
+      width: 100%;
+      height: 7px;
+      border-radius: 4px;
+      background: var(--slider-track);
+      outline: none;
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: #ffffff;
+      border: 3px solid var(--primary);
+      cursor: pointer;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+      transition: transform 0.1s ease;
+    }
+    input[type="range"]::-webkit-slider-thumb:active {
+      transform: scale(1.2);
+    }
+
+    .slider-ticks {
+      display: flex;
+      justify-content: space-between;
+      font-size: 10px;
+      color: var(--text-dim);
+      padding: 2px 4px 0;
+    }
+
+    /* Segment Control for PBR */
+    .segment-control {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      background: var(--slider-track);
+      border-radius: 10px;
+      padding: 3px;
+      gap: 3px;
+    }
+
+    .segment-btn {
+      padding: 8px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-muted);
+      background: transparent;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .segment-btn.active {
+      background: rgba(16, 185, 129, 0.22);
+      color: #34d399;
+      font-weight: 700;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+    }
+
+    /* Actions */
+    .actions-group {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-top: 4px;
+    }
+
+    .btn-main {
+      width: 100%;
+      padding: 14px;
+      border-radius: 14px;
+      border: none;
+      background: var(--primary-gradient);
+      color: #fff;
+      font-size: 15px;
+      font-weight: 800;
+      letter-spacing: 0.2px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      cursor: pointer;
+      box-shadow: 0 6px 18px rgba(16, 185, 129, 0.35);
+      transition: all 0.2s;
+    }
+    .btn-main:active {
+      transform: scale(0.98);
+      filter: brightness(0.9);
+    }
+
+    .btn-sub {
+      width: 100%;
+      padding: 12px;
+      border-radius: 12px;
+      border: 1px solid var(--card-border);
+      background: rgba(30, 41, 59, 0.6);
+      color: var(--text-muted);
+      font-size: 13px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-sub:active {
+      background: rgba(51, 65, 85, 0.6);
+      color: var(--text);
+    }
+
+    /* Status Modal / Toast */
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(100px);
+      background: rgba(15, 23, 42, 0.95);
+      border: 1px solid var(--primary);
+      backdrop-filter: blur(12px);
+      color: #fff;
+      padding: 12px 20px;
+      border-radius: 30px;
+      font-size: 13px;
+      font-weight: 600;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+      opacity: 0;
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .toast.show {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
+    }
+
+    /* Loading Spinner */
+    .spinner {
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <!-- Header -->
+  <header class="header">
+    <div class="header-brand">
+      <div class="logo-badge">Z</div>
+      <div class="title-group">
+        <h1>ZenStock スナイパー</h1>
+        <p>日経225 過去全パターン照合</p>
+      </div>
+    </div>
+    <div class="user-tag">
+      <span class="user-dot"></span>
+      <span id="userTagText">LINE 連携中</span>
+    </div>
+  </header>
+
+  <!-- Quick Presets -->
+  <div class="preset-container">
+    <button class="preset-chip active" id="presetSniper" onclick="applyPreset('sniper')">
+      🎯 最強スナイパー (勝率80%)
+    </button>
+    <button class="preset-chip" id="presetSwing" onclick="applyPreset('swing')">
+      ⚡ 短期急騰スイング
+    </button>
+    <button class="preset-chip" id="presetValue" onclick="applyPreset('value')">
+      💎 中長期バリュースナイプ
+    </button>
+  </div>
+
+  <!-- Live Backtest Performance Preview Card -->
+  <div class="preview-card">
+    <div class="preview-top">
+      <div>
+        <div class="label">Historical Backtest Data</div>
+        <div style="font-size: 13px; font-weight: 600; margin-top: 2px;" id="currentSummaryTitle">
+          照合60日 × 保有25日 × 閾値+10%
+        </div>
+      </div>
+      <div class="rank-badge" id="rankBadge">
+        👑 Sランク神条件
+      </div>
+    </div>
+
+    <div class="stats-grid">
+      <div class="stat-box highlight">
+        <span class="stat-label">過去検証 勝率</span>
+        <span class="stat-val win-rate" id="dispWinRate">80.0%</span>
+        <span class="stat-sub" id="dispSampleCount">検証サンプル 15回</span>
+      </div>
+
+      <div class="stat-box">
+        <span class="stat-label">期待平均利益</span>
+        <span class="stat-val return-val" id="dispReturn">+9.4%</span>
+        <span class="stat-sub" id="dispAlpha">日経超過 +7.0%</span>
+      </div>
+    </div>
+
+    <div style="margin-top: 10px; font-size: 11px; color: var(--text-muted); display: flex; justify-content: space-between; align-items: center;">
+      <span>1回あたり平均ヒット数: <strong id="dispAvgHits" style="color: var(--text);">1.3銘柄</strong></span>
+      <span id="dispPbrFilterStatus" style="color: #34d399;">PBR < 1.0倍 厳選適用中</span>
+    </div>
+  </div>
+
+  <!-- Controls Card -->
+  <div class="controls-card">
+    <!-- Match Window Slider -->
+    <div class="control-row">
+      <div class="control-header">
+        <span class="control-title">🔍 チャート照合期間</span>
+        <span class="control-badge" id="valMatch">60 日間</span>
+      </div>
+      <div class="slider-wrap">
+        <input type="range" id="sliderMatch" min="0" max="8" step="1" value="7" oninput="onParamChange()">
+      </div>
+      <div class="slider-ticks">
+        <span>10日</span>
+        <span>20日</span>
+        <span>30日</span>
+        <span>60日</span>
+        <span>120日</span>
+      </div>
+    </div>
+
+    <!-- Holding Window Slider -->
+    <div class="control-row">
+      <div class="control-header">
+        <span class="control-title">⏳ 想定保有期間</span>
+        <span class="control-badge" id="valHold">25 日間</span>
+      </div>
+      <div class="slider-wrap">
+        <input type="range" id="sliderHold" min="0" max="9" step="1" value="4" oninput="onParamChange()">
+      </div>
+      <div class="slider-ticks">
+        <span>5日</span>
+        <span>15日</span>
+        <span>25日</span>
+        <span>50日</span>
+        <span>120日</span>
+      </div>
+    </div>
+
+    <!-- Threshold Slider -->
+    <div class="control-row">
+      <div class="control-header">
+        <span class="control-title">📈 過去3回すべての上昇閾値</span>
+        <span class="control-badge" id="valThresh">+10.0 %</span>
+      </div>
+      <div class="slider-wrap">
+        <input type="range" id="sliderThresh" min="3.0" max="10.0" step="0.5" value="10.0" oninput="onParamChange()">
+      </div>
+      <div class="slider-ticks">
+        <span>+3.0%</span>
+        <span>+5.0%</span>
+        <span>+7.0%</span>
+        <span>+8.5%</span>
+        <span>+10.0%</span>
+      </div>
+    </div>
+
+    <!-- PBR Filter Segment -->
+    <div class="control-row">
+      <div class="control-header">
+        <span class="control-title">🛡️ バリューフィルター (PBR)</span>
+        <span style="font-size: 11px; color: var(--text-dim);" id="pbrHint">解散価値割れのみ厳選</span>
+      </div>
+      <div class="segment-control">
+        <button class="segment-btn active" id="btnPbr1" onclick="setPbrMode('pbr1')">
+          PBR < 1.0倍（割安厳選）
+        </button>
+        <button class="segment-btn" id="btnPbrNone" onclick="setPbrMode('none')">
+          全銘柄（制限なし）
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Actions -->
+  <div class="actions-group">
+    <button class="btn-main" id="btnScanNow" onclick="triggerScanNow()">
+      <span id="btnScanIcon">🚀</span>
+      <span id="btnScanText">今すぐこの条件でスキャン</span>
+    </button>
+    <button class="btn-sub" onclick="saveAsMorningCondition()">
+      <span>🔔 毎朝10:00の自動通知条件に設定</span>
+    </button>
+  </div>
+</div>
+
+<!-- Toast notification -->
+<div class="toast" id="toast"></div>
+
+<script>
+  // Discrete steps for match and hold days
+  const MATCH_STEPS = [10, 15, 20, 25, 30, 40, 50, 60, 120];
+  const HOLD_STEPS = [5, 10, 15, 20, 25, 30, 40, 50, 60, 120];
+
+  let matrixData = {};
+  let currentPbrMode = 'pbr1'; // 'pbr1' or 'none'
+  let liffInitialized = false;
+  let lineUserId = null;
+
+  // 1. Initialize LIFF
+  async function initLiff() {
+    try {
+      const urlParams = new URLSearchParams(window.location.search);
+      const liffId = urlParams.get('liffId') || 'DEFAULT_LIFF_ID';
+      
+      if (window.liff && liffId !== 'DEFAULT_LIFF_ID') {
+        await liff.init({ liffId });
+        liffInitialized = true;
+        if (liff.isLoggedIn()) {
+          const profile = await liff.getProfile();
+          lineUserId = profile.userId;
+          document.getElementById('userTagText').innerText = profile.displayName ? profile.displayName + " 様" : "LINE 連携中";
+        }
+      } else {
+        console.log("LIFF ID not provided or standard browser mode.");
+      }
+    } catch (err) {
+      console.warn("LIFF init warning:", err);
+    }
+  }
+
+  // 2. Fetch Backtest Matrix JSON
+  async function loadMatrixData() {
+    try {
+      const res = await fetch('/static/sniper_matrix.json');
+      if (res.ok) {
+        matrixData = await res.json();
+        console.log("Matrix loaded successfully:", Object.keys(matrixData).length, "combos");
+      }
+    } catch (e) {
+      console.error("Failed to load sniper_matrix.json:", e);
+    }
+    updateUI();
+  }
+
+  // 3. Sliders & Input Change Handler
+  function onParamChange() {
+    // Clear active preset buttons
+    document.querySelectorAll('.preset-chip').forEach(el => el.classList.remove('active'));
+    updateUI();
+  }
+
+  function setPbrMode(mode) {
+    currentPbrMode = mode;
+    document.getElementById('btnPbr1').classList.toggle('active', mode === 'pbr1');
+    document.getElementById('btnPbrNone').classList.toggle('active', mode === 'none');
+    document.getElementById('pbrHint').innerText = mode === 'pbr1' ? '解散価値割れのみ厳選' : '東証プライム全銘柄対象';
+    document.getElementById('dispPbrFilterStatus').innerText = mode === 'pbr1' ? 'PBR < 1.0倍 厳選適用中' : 'PBR 制限なし（全銘柄）';
+    document.getElementById('dispPbrFilterStatus').style.color = mode === 'pbr1' ? '#34d399' : '#94a3b8';
+    onParamChange();
+  }
+
+  function applyPreset(type) {
+    document.querySelectorAll('.preset-chip').forEach(el => el.classList.remove('active'));
+    
+    if (type === 'sniper') {
+      document.getElementById('presetSniper').classList.add('active');
+      setSliderValue('sliderMatch', MATCH_STEPS.indexOf(60));
+      setSliderValue('sliderHold', HOLD_STEPS.indexOf(25));
+      setSliderValue('sliderThresh', 10.0);
+      setPbrMode('pbr1');
+    } else if (type === 'swing') {
+      document.getElementById('presetSwing').classList.add('active');
+      setSliderValue('sliderMatch', MATCH_STEPS.indexOf(25));
+      setSliderValue('sliderHold', HOLD_STEPS.indexOf(10));
+      setSliderValue('sliderThresh', 7.0);
+      setPbrMode('pbr1');
+    } else if (type === 'value') {
+      document.getElementById('presetValue').classList.add('active');
+      setSliderValue('sliderMatch', MATCH_STEPS.indexOf(60));
+      setSliderValue('sliderHold', HOLD_STEPS.indexOf(60));
+      setSliderValue('sliderThresh', 8.0);
+      setPbrMode('pbr1');
+    }
+    updateUI();
+  }
+
+  function setSliderValue(id, val) {
+    const el = document.getElementById(id);
+    if (el) el.value = val;
+  }
+
+  function getCurrentParams() {
+    const matchIdx = parseInt(document.getElementById('sliderMatch').value, 10);
+    const holdIdx = parseInt(document.getElementById('sliderHold').value, 10);
+    const thresh = parseFloat(document.getElementById('sliderThresh').value);
+    
+    return {
+      matchDays: MATCH_STEPS[matchIdx],
+      holdDays: HOLD_STEPS[holdIdx],
+      thresh: thresh,
+      pbr: currentPbrMode
+    };
+  }
+
+  function updateUI() {
+    const p = getCurrentParams();
+
+    // Update labels
+    document.getElementById('valMatch').innerText = `${p.matchDays} 日間`;
+    document.getElementById('valHold').innerText = `${p.holdDays} 日間`;
+    document.getElementById('valThresh').innerText = `+${p.thresh.toFixed(1)} %`;
+    document.getElementById('currentSummaryTitle').innerText = 
+      `照合${p.matchDays}日 × 保有${p.holdDays}日 × 閾値+${p.thresh.toFixed(1)}%`;
+
+    // Lookup Matrix
+    const key = `${p.matchDays}_${p.holdDays}_${p.thresh.toFixed(1)}_${p.pbr}`;
+    const data = matrixData[key];
+
+    const winRateEl = document.getElementById('dispWinRate');
+    const returnEl = document.getElementById('dispReturn');
+    const alphaEl = document.getElementById('dispAlpha');
+    const sampleEl = document.getElementById('dispSampleCount');
+    const hitsEl = document.getElementById('dispAvgHits');
+    const rankEl = document.getElementById('rankBadge');
+
+    if (data && data.c > 0) {
+      const winRate = data.w;
+      winRateEl.innerText = `${winRate.toFixed(1)}%`;
+      returnEl.innerText = (data.r >= 0 ? `+${data.r.toFixed(1)}%` : `${data.r.toFixed(1)}%`);
+      alphaEl.innerText = `日経超過 ${data.a >= 0 ? `+${data.a.toFixed(1)}%` : `${data.a.toFixed(1)}%`}`;
+      sampleEl.innerText = `検証サンプル ${data.c}回`;
+      hitsEl.innerText = `${data.s.toFixed(1)}銘柄`;
+
+      // Rank Badges
+      if (winRate >= 80.0) {
+        rankEl.innerText = "👑 Sランク神条件";
+        rankEl.style.color = "#f59e0b";
+        rankEl.style.borderColor = "rgba(245, 158, 11, 0.4)";
+      } else if (winRate >= 70.0) {
+        rankEl.innerText = "🔥 Aランク激熱";
+        rankEl.style.color = "#34d399";
+        rankEl.style.borderColor = "rgba(52, 211, 153, 0.4)";
+      } else if (winRate >= 60.0) {
+        rankEl.innerText = "✨ Bランク優秀";
+        rankEl.style.color = "#38bdf8";
+        rankEl.style.borderColor = "rgba(56, 189, 248, 0.4)";
+      } else {
+        rankEl.innerText = "📊 一般条件";
+        rankEl.style.color = "#94a3b8";
+        rankEl.style.borderColor = "rgba(148, 163, 184, 0.3)";
+      }
+    } else {
+      // Fallback
+      winRateEl.innerText = "---%";
+      returnEl.innerText = "---%";
+      alphaEl.innerText = "データ収集中";
+      sampleEl.innerText = "サンプル数少";
+      hitsEl.innerText = "0〜1銘柄";
+      rankEl.innerText = "⚡ 先鋭条件";
+    }
+  }
+
+  // 4. Trigger Scan Now
+  async function triggerScanNow() {
+    const p = getCurrentParams();
+    const btn = document.getElementById('btnScanNow');
+    const icon = document.getElementById('btnScanIcon');
+    const text = document.getElementById('btnScanText');
+
+    btn.disabled = true;
+    icon.innerHTML = '<span class="spinner"></span>';
+    text.innerText = 'スキャン実行を指示中...';
+
+    const pbrText = p.pbr === 'pbr1' ? 'PBR<1.0' : 'PBR制限なし';
+    const scanCommandText = `スキャン ${p.matchDays} ${p.holdDays} ${p.thresh} ${p.pbr === 'pbr1' ? '1' : '0'}`;
+
+    try {
+      // 1. Try sending message via LIFF if inside LINE client
+      if (window.liff && liff.isInClient()) {
+        await liff.sendMessages([
+          {
+            type: 'text',
+            text: scanCommandText
+          }
+        ]);
+        showToast("✅ LINEにスキャン指示を送信しました！");
+        setTimeout(() => {
+          liff.closeWindow();
+        }, 800);
+        return;
+      }
+
+      // 2. Direct API Call (Fallback for web browser / Render backend)
+      const res = await fetch('/api/scan', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          match_days: p.matchDays,
+          hold_days: p.holdDays,
+          thresh: p.thresh,
+          pbr: p.pbr,
+          user_id: lineUserId
+        })
+      });
+
+      if (res.ok) {
+        showToast("🚀 スキャンを開始しました！結果はLINEトークに届きます。");
+      } else {
+        showToast("⚠️ スキャン受付中（LINEに結果を配信予定）");
+      }
+    } catch (e) {
+      console.error(e);
+      showToast("🚀 スキャン指示を送信しました！");
+    } finally {
+      setTimeout(() => {
+        btn.disabled = false;
+        icon.innerText = '🚀';
+        text.innerText = '今すぐこの条件でスキャン';
+      }, 2000);
+    }
+  }
+
+  // 5. Save as Morning Routine
+  async function saveAsMorningCondition() {
+    const p = getCurrentParams();
+    localStorage.setItem('zenstock_morning_params', JSON.stringify(p));
+
+    const saveCommandText = `保存 ${p.matchDays} ${p.holdDays} ${p.thresh} ${p.pbr === 'pbr1' ? '1' : '0'}`;
+
+    try {
+      if (window.liff && liff.isInClient()) {
+        await liff.sendMessages([
+          {
+            type: 'text',
+            text: saveCommandText
+          }
+        ]);
+        showToast("🔔 毎朝10時の通知条件を保存しました！");
+        setTimeout(() => liff.closeWindow(), 800);
+        return;
+      }
+    } catch (e) {
+      console.warn(e);
+    }
+
+    showToast("🔔 毎朝の通知条件をブラウザに保存しました！");
+  }
+
+  function showToast(msg) {
+    const toast = document.getElementById('toast');
+    toast.innerText = msg;
+    toast.classList.add('show');
+    setTimeout(() => {
+      toast.classList.remove('show');
+    }, 3000);
+  }
+
+  // Init sequence
+  window.addEventListener('DOMContentLoaded', async () => {
+    await initLiff();
+    await loadMatrixData();
+  });
+</script>
+
+</body>
+</html>

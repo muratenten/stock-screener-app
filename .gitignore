@@ -2,3 +2,7 @@ __pycache__/
 *.pyc
 .DS_Store
 .streamlit/secrets.toml
+*.log
+scratch/
+virtual_portfolio*.json
+user_preferences.json
