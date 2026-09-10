@@ -38,7 +38,7 @@ LINE_CHANNEL_ACCESS_TOKEN = os.environ.get(
     "+0Ql7i4RQPQM6mDsg1H679hpdIDWRU9clQ3q4XoR9Mgz3es3mhsQJOJNQKHVhVHwO4OmUeQnYxw7cCkXrqzETunIi+VrDX8P19aoBnefzQVKaBSuKDp9kb8rj+QT3rdI4VX7UjaL+K+0NfKW1FWgwQdB04t89/1O/w1cDnyilFU="
 )
 LINE_CHANNEL_SECRET = os.environ.get("LINE_CHANNEL_SECRET", "")
-LINE_LIFF_ID = os.environ.get("LINE_LIFF_ID", "")
+LINE_LIFF_ID = os.environ.get("LINE_LIFF_ID", "2011538719-L0SX8ZZU")
 USER_PREF_FILE = os.path.join(BASE_DIR, "user_preferences.json")
 
 def verify_signature(body_bytes: bytes, signature: str) -> bool:

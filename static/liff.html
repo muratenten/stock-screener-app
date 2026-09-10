@@ -615,9 +615,9 @@
   async function initLiff() {
     try {
       const urlParams = new URLSearchParams(window.location.search);
-      const liffId = urlParams.get('liffId') || 'DEFAULT_LIFF_ID';
+      const liffId = urlParams.get('liffId') || '2011538719-L0SX8ZZU';
       
-      if (window.liff && liffId !== 'DEFAULT_LIFF_ID') {
+      if (window.liff) {
         await liff.init({ liffId });
         liffInitialized = true;
         if (liff.isLoggedIn()) {
