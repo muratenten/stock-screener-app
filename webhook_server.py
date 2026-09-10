@@ -135,8 +135,24 @@ def api_scan(payload: dict, background_tasks: BackgroundTasks):
     thresh = float(payload.get("thresh", 10.0))
     pbr_raw = payload.get("pbr", "pbr1")
     pbr_max = 1.0 if pbr_raw in ("pbr1", 1.0, 1) else None
-    user_id = payload.get("user_id")
+    user_id = payload.get("user_id") or LINE_USER_ID
 
+    pbr_label = f"PBR < {pbr_max:.1f}" if pbr_max else "制限なし"
+    
+    # 1. Send immediate start notification via push
+    start_msg = (
+        f"🎯 スナイパースキャンを開始しました...\n"
+        f"━━━━━━━━━━━━━━\n"
+        f"・照合期間: {match_days}日\n"
+        f"・保有期間: {hold_days}日\n"
+        f"・上昇閾値: +{thresh:.1f}%\n"
+        f"・PBR条件: {pbr_label}\n"
+        f"━━━━━━━━━━━━━━\n"
+        f"約5秒でスクリーニング結果をお届けします！"
+    )
+    send_line_message(start_msg, target_user_id=user_id)
+
+    # 2. Run scan in background and push results
     background_tasks.add_task(
         run_sniper_screening,
         n_match=match_days,
@@ -148,6 +164,36 @@ def api_scan(payload: dict, background_tasks: BackgroundTasks):
         is_interactive=True
     )
     return {"status": "scanning_started", "params": {"match": match_days, "hold": hold_days, "thresh": thresh, "pbr": pbr_max}}
+
+@app.post("/api/save_pref")
+def api_save_pref(payload: dict):
+    match_days = int(payload.get("match_days", 60))
+    hold_days = int(payload.get("hold_days", 25))
+    thresh = float(payload.get("thresh", 10.0))
+    pbr_raw = payload.get("pbr", "pbr1")
+    pbr_max = 1.0 if pbr_raw in ("pbr1", 1.0, 1) else None
+    user_id = payload.get("user_id") or LINE_USER_ID
+
+    save_user_preference(user_id, {
+        "match_days": match_days,
+        "hold_days": hold_days,
+        "thresh": thresh,
+        "pbr": pbr_max
+    })
+
+    pbr_label = f"PBR < {pbr_max:.1f}" if pbr_max else "制限なし"
+    save_msg = (
+        f"🔔 毎朝の通知条件を更新しました！\n"
+        f"━━━━━━━━━━━━━━\n"
+        f"・照合期間: {match_days}日\n"
+        f"・保有期間: {hold_days}日\n"
+        f"・上昇閾値: +{thresh:.1f}%\n"
+        f"・PBR条件: {pbr_label}\n"
+        f"━━━━━━━━━━━━━━\n"
+        f"毎平日 10:00 JST にこの条件で自動検知して通知します。"
+    )
+    send_line_message(save_msg, target_user_id=user_id)
+    return {"status": "saved"}
 
 @app.post("/webhook")
 async def line_webhook(request: Request, background_tasks: BackgroundTasks, x_line_signature: Optional[str] = Header(None)):

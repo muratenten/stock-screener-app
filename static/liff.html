@@ -620,10 +620,19 @@
       if (window.liff) {
         await liff.init({ liffId });
         liffInitialized = true;
+        
+        // Try getting userId from context (instant)
+        try {
+          const ctx = liff.getContext();
+          if (ctx && ctx.userId) lineUserId = ctx.userId;
+        } catch(e){}
+
         if (liff.isLoggedIn()) {
-          const profile = await liff.getProfile();
-          lineUserId = profile.userId;
-          document.getElementById('userTagText').innerText = profile.displayName ? profile.displayName + " 様" : "LINE 連携中";
+          try {
+            const profile = await liff.getProfile();
+            if (profile && profile.userId) lineUserId = profile.userId;
+            document.getElementById('userTagText').innerText = profile.displayName ? profile.displayName + " 様" : "LINE 連携中";
+          } catch(e){}
         }
       } else {
         console.log("LIFF ID not provided or standard browser mode.");
@@ -776,26 +785,17 @@
     icon.innerHTML = '<span class="spinner"></span>';
     text.innerText = 'スキャン実行を指示中...';
 
-    const pbrText = p.pbr === 'pbr1' ? 'PBR<1.0' : 'PBR制限なし';
-    const scanCommandText = `スキャン ${p.matchDays} ${p.holdDays} ${p.thresh} ${p.pbr === 'pbr1' ? '1' : '0'}`;
+    // 1. Get userId reliably
+    let targetUid = lineUserId;
+    if (!targetUid && window.liff) {
+      try {
+        const ctx = liff.getContext();
+        if (ctx && ctx.userId) targetUid = ctx.userId;
+      } catch(e){}
+    }
 
     try {
-      // 1. Try sending message via LIFF if inside LINE client
-      if (window.liff && liff.isInClient()) {
-        await liff.sendMessages([
-          {
-            type: 'text',
-            text: scanCommandText
-          }
-        ]);
-        showToast("✅ LINEにスキャン指示を送信しました！");
-        setTimeout(() => {
-          liff.closeWindow();
-        }, 800);
-        return;
-      }
-
-      // 2. Direct API Call (Fallback for web browser / Render backend)
+      // 2. Direct API Call to backend (100% reliable execution)
       const res = await fetch('/api/scan', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -804,24 +804,40 @@
           hold_days: p.holdDays,
           thresh: p.thresh,
           pbr: p.pbr,
-          user_id: lineUserId
+          user_id: targetUid
         })
       });
 
-      if (res.ok) {
-        showToast("🚀 スキャンを開始しました！結果はLINEトークに届きます。");
-      } else {
-        showToast("⚠️ スキャン受付中（LINEに結果を配信予定）");
+      // 3. Try to leave chat log message if in LINE (ignore error if not allowed)
+      if (window.liff && liff.isInClient()) {
+        try {
+          const pbrText = p.pbr === 'pbr1' ? 'PBR<1.0' : '全銘柄';
+          await liff.sendMessages([
+            {
+              type: 'text',
+              text: `🎯 【スナイパースキャン実行】\n照合:${p.matchDays}日 | 保有:${p.holdDays}日 | 閾値:+${p.thresh}% | ${pbrText}`
+            }
+          ]);
+        } catch (msgErr) {
+          console.warn("sendMessages optional log ignored:", msgErr);
+        }
       }
+
+      showToast("🚀 スキャンを開始しました！約5秒でLINEトークに届きます。");
+      setTimeout(() => {
+        if (window.liff && liff.isInClient()) {
+          liff.closeWindow();
+        }
+      }, 1000);
     } catch (e) {
       console.error(e);
-      showToast("🚀 スキャン指示を送信しました！");
+      showToast("⚠️ スキャン指示を送信しました！");
     } finally {
       setTimeout(() => {
         btn.disabled = false;
         icon.innerText = '🚀';
         text.innerText = '今すぐこの条件でスキャン';
-      }, 2000);
+      }, 3000);
     }
   }
 
@@ -830,25 +846,49 @@
     const p = getCurrentParams();
     localStorage.setItem('zenstock_morning_params', JSON.stringify(p));
 
-    const saveCommandText = `保存 ${p.matchDays} ${p.holdDays} ${p.thresh} ${p.pbr === 'pbr1' ? '1' : '0'}`;
-
-    try {
-      if (window.liff && liff.isInClient()) {
-        await liff.sendMessages([
-          {
-            type: 'text',
-            text: saveCommandText
-          }
-        ]);
-        showToast("🔔 毎朝10時の通知条件を保存しました！");
-        setTimeout(() => liff.closeWindow(), 800);
-        return;
-      }
-    } catch (e) {
-      console.warn(e);
+    let targetUid = lineUserId;
+    if (!targetUid && window.liff) {
+      try {
+        const ctx = liff.getContext();
+        if (ctx && ctx.userId) targetUid = ctx.userId;
+      } catch(e){}
     }
 
-    showToast("🔔 毎朝の通知条件をブラウザに保存しました！");
+    try {
+      await fetch('/api/save_pref', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          match_days: p.matchDays,
+          hold_days: p.holdDays,
+          thresh: p.thresh,
+          pbr: p.pbr,
+          user_id: targetUid
+        })
+      });
+
+      if (window.liff && liff.isInClient()) {
+        try {
+          const pbrText = p.pbr === 'pbr1' ? 'PBR<1.0' : '全銘柄';
+          await liff.sendMessages([
+            {
+              type: 'text',
+              text: `🔔 【毎朝通知条件を更新】\n照合:${p.matchDays}日 | 保有:${p.holdDays}日 | 閾値:+${p.thresh}% | ${pbrText}`
+            }
+          ]);
+        } catch(e){}
+      }
+
+      showToast("🔔 毎朝10:00の通知条件を更新しました！");
+      setTimeout(() => {
+        if (window.liff && liff.isInClient()) {
+          liff.closeWindow();
+        }
+      }, 1000);
+    } catch (e) {
+      console.warn(e);
+      showToast("🔔 条件を保存しました！");
+    }
   }
 
   function showToast(msg) {
