@@ -143,6 +143,11 @@ def index():
         "liff_url": f"https://liff.line.me/{LINE_LIFF_ID}" if LINE_LIFF_ID else "/liff"
     }
 
+@app.get("/health")
+def health():
+    return {"status": "ok"}
+
+
 @app.get("/liff", response_class=HTMLResponse)
 def serve_liff():
     liff_path = os.path.join(static_dir, "liff.html")
