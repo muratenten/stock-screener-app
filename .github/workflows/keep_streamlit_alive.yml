@@ -1,0 +1,31 @@
+name: Keep Streamlit Alive
+
+on:
+  schedule:
+    # 6時間ごと (00:00, 06:00, 12:00, 18:00 UTC) に実行してスリープを完全防止
+    - cron: '0 */6 * * *'
+  workflow_dispatch: # GitHubの画面から手動でいつでも実行可能
+
+jobs:
+  wake_up_streamlit:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install Playwright & Dependencies
+        run: |
+          pip install --upgrade pip
+          pip install playwright
+          playwright install --with-deps chromium
+
+      - name: Run Auto Wake-Up & Keep-Alive Script
+        run: |
+          python .github/scripts/keep_streamlit_alive.py
