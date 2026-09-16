@@ -1,0 +1,38 @@
+name: Keep Render Alive (Backup Ping)
+
+on:
+  schedule:
+    # 10分おきにRenderの /health を叩いてスリープを完全阻止 (UptimeRobotとの二重化)
+    - cron: '*/10 * * * *'
+  workflow_dispatch: # GitHubのWeb画面から手動実行可能
+
+jobs:
+  ping_services:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Ping Render /health Endpoint
+        run: |
+          echo "🚀 Pinging Render /health..."
+          RESPONSE=$(curl -s -w "\nHTTP_STATUS:%{http_code}\nTIME:%{time_total}s" \
+            -H "User-Agent: ZenStock-GitHub-Actions-Keeper/1.0" \
+            "https://stock-screener-app-nt5h.onrender.com/health")
+          
+          echo "$RESPONSE"
+          
+          HTTP_CODE=$(echo "$RESPONSE" | grep "HTTP_STATUS" | cut -d: -f2)
+          if [ "$HTTP_CODE" -eq 200 ]; then
+            echo "✅ Render is awake and healthy! (HTTP 200)"
+          else
+            echo "⚠️ Unexpected HTTP Status: $HTTP_CODE (Retrying in 5s...)"
+            sleep 5
+            curl -i -H "User-Agent: ZenStock-GitHub-Actions-Keeper/1.0" "https://stock-screener-app-nt5h.onrender.com/health"
+          fi
+
+      - name: Ping Streamlit App
+        run: |
+          echo "🚀 Pinging Streamlit..."
+          curl -s -o /dev/null -w "Streamlit HTTP Code: %{http_code}\n" \
+            -H "User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)" \
+            "https://stock-screener-app-crrzltcyekqdt7uulhgpaa.streamlit.app/" || true
