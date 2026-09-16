@@ -125,6 +125,8 @@ def warm_up_cache():
     try:
         tickers, fund_cache, jp_names = load_tickers_and_fundamentals()
         get_or_fetch_stock_data(tickers, fund_cache, jp_names)
+        import gc
+        gc.collect()
     except Exception as e:
         print(f"[WARMUP ERROR] {e}")
 
@@ -366,6 +368,9 @@ def run_sniper_screening(
             result_message += "次回、条件を満たす激熱銘柄が出現した瞬間に自動通知されます。"
             if send_push:
                 send_line_message(result_message, target_user_id=target_user_id)
+
+    import gc
+    gc.collect()
 
     return sniped_stocks, result_message
 
