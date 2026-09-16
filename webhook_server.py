@@ -150,15 +150,22 @@ def get_user_preference(user_id: str) -> dict:
 
 # ================= Endpoints =================
 
-@app.get("/")
-def index():
+@app.api_route("/", methods=["GET", "HEAD"])
+def index(request: Request):
+    global LAST_HEALTH_PING, HEALTH_PING_COUNT
+    now = time.time()
+    LAST_HEALTH_PING = now
+    HEALTH_PING_COUNT += 1
+    ua = request.headers.get("user-agent", "unknown")
+    client_ip = request.client.host if request.client else "unknown"
+    add_log(f"🌐 Root visit #{HEALTH_PING_COUNT} from {ua[:20]} ({client_ip})")
     return {
         "status": "online",
         "app": "ZenStock Sniper LINE Bot & LIFF",
         "liff_url": f"https://liff.line.me/{LINE_LIFF_ID}" if LINE_LIFF_ID else "/liff"
     }
 
-@app.get("/health")
+@app.api_route("/health", methods=["GET", "HEAD"])
 def health(request: Request):
     global LAST_HEALTH_PING, HEALTH_PING_COUNT
     now = time.time()
@@ -173,6 +180,7 @@ def health(request: Request):
         "pings": HEALTH_PING_COUNT,
         "ram_mb": get_memory_mb()
     }
+
 
 
 @app.get("/liff", response_class=HTMLResponse)
