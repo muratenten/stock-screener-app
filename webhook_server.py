@@ -15,6 +15,8 @@ import base64
 import hashlib
 import re
 import requests
+import time
+import resource
 from typing import Optional
 from fastapi import FastAPI, Request, Header, HTTPException, BackgroundTasks
 from fastapi.responses import HTMLResponse, JSONResponse, FileResponse
@@ -27,6 +29,19 @@ import threading
 from daily_sniper_screener import run_sniper_screening, send_line_message, warm_up_cache
 
 app = FastAPI(title="ZenStock LINE Bot & LIFF")
+
+SERVER_START_TIME = time.time()
+LAST_HEALTH_PING = 0
+HEALTH_PING_COUNT = 0
+
+def get_memory_mb():
+    try:
+        rss = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
+        if sys.platform == "darwin":
+            return round(rss / (1024 * 1024), 1)
+        return round(rss / 1024, 1)
+    except Exception:
+        return 0.0
 
 @app.on_event("startup")
 def startup_event():
@@ -47,7 +62,7 @@ LINE_CHANNEL_SECRET = os.environ.get("LINE_CHANNEL_SECRET", "")
 LINE_LIFF_ID = os.environ.get("LINE_LIFF_ID", "2011538719-L0SX8ZZU")
 USER_PREF_FILE = os.path.join(BASE_DIR, "user_preferences.json")
 
-# In-memory debug logs (last 30 events)
+# In-memory debug logs (last 50 events)
 RECENT_LOGS = []
 
 def add_log(message: str):
@@ -56,7 +71,7 @@ def add_log(message: str):
     entry = f"[{timestamp}] {message}"
     print(entry, flush=True)
     RECENT_LOGS.append(entry)
-    if len(RECENT_LOGS) > 30:
+    if len(RECENT_LOGS) > 50:
         RECENT_LOGS.pop(0)
 
 def verify_signature(body_bytes: bytes, signature: str) -> bool:
@@ -144,8 +159,20 @@ def index():
     }
 
 @app.get("/health")
-def health():
-    return {"status": "ok"}
+def health(request: Request):
+    global LAST_HEALTH_PING, HEALTH_PING_COUNT
+    now = time.time()
+    LAST_HEALTH_PING = now
+    HEALTH_PING_COUNT += 1
+    ua = request.headers.get("user-agent", "unknown")
+    client_ip = request.client.host if request.client else "unknown"
+    add_log(f"💓 Ping #{HEALTH_PING_COUNT} from {ua[:20]} ({client_ip})")
+    return {
+        "status": "ok",
+        "uptime_sec": int(now - SERVER_START_TIME),
+        "pings": HEALTH_PING_COUNT,
+        "ram_mb": get_memory_mb()
+    }
 
 
 @app.get("/liff", response_class=HTMLResponse)
@@ -229,14 +256,25 @@ def api_save_pref(payload: dict):
 
 @app.get("/logs", response_class=HTMLResponse)
 def view_logs():
+    now = time.time()
+    uptime_sec = int(now - SERVER_START_TIME)
+    uptime_str = f"{uptime_sec // 3600}時間 {(uptime_sec % 3600) // 60}分 {uptime_sec % 60}秒"
+    last_ping_str = f"{int(now - LAST_HEALTH_PING)}秒前" if LAST_HEALTH_PING > 0 else "まだ受信なし"
+    mem_mb = get_memory_mb()
+
     logs_html = "".join(f"<div style='padding:6px 0; border-bottom:1px solid #334155;'>{log}</div>" for log in reversed(RECENT_LOGS))
     return f"""
     <!DOCTYPE html>
     <html><head><meta charset='utf-8'><meta name='viewport' content='width=device-width, initial-scale=1.0'><title>ZenStock Logs</title></head>
     <body style='background:#0f172a; color:#f8fafc; font-family:monospace; padding:20px; font-size:13px;'>
-      <h2>ZenStock Server Debug Logs (Latest {len(RECENT_LOGS)})</h2>
+      <h2>ZenStock Server Debug Logs</h2>
+      <div style='background:#1e293b; padding:14px; border-radius:8px; margin-bottom:16px; border:1px solid #334155; line-height:1.8;'>
+        <div>⏱️ <b>サーバー稼働時間:</b> {uptime_str}</div>
+        <div>💓 <b>死活監視Ping受信数:</b> {HEALTH_PING_COUNT} 回 (直近: {last_ping_str})</div>
+        <div>🧠 <b>メモリ(RAM)使用量:</b> {mem_mb} MB / 512 MB</div>
+      </div>
       <button onclick='location.reload()' style='padding:8px 16px; background:#10b981; color:#fff; border:none; border-radius:6px; cursor:pointer; font-weight:bold; margin-bottom:16px;'>🔄 最新に更新</button>
-      <div>{logs_html if RECENT_LOGS else "<div>No logs recorded yet. Send a message on LINE to test.</div>"}</div>
+      <div>{logs_html if RECENT_LOGS else "<div>No logs recorded yet.</div>"}</div>
     </body></html>
     """
 
