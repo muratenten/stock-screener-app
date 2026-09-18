@@ -205,48 +205,68 @@ def serve_liff():
         return HTMLResponse(content=html)
     return HTMLResponse(content="<h3>LIFF file not found.</h3>", status_code=404)
 
+def clean_for_json(v):
+    if hasattr(v, 'item'):
+        return v.item()
+    if isinstance(v, list):
+        return [clean_for_json(x) for x in v]
+    if isinstance(v, dict):
+        return {k: clean_for_json(val) for k, val in v.items()}
+    return v
+
 @app.post("/api/scan")
 def api_scan(payload: dict, background_tasks: BackgroundTasks):
-    match_days = int(payload.get("match_days", 50))
-    hold_days = int(payload.get("hold_days", 15))
-    thresh = float(payload.get("thresh", 8.0))
-    pbr_raw = payload.get("pbr", "pbr1")
-    pbr_max = 1.0 if pbr_raw in ("pbr1", 1.0, 1) else None
-    user_id = payload.get("user_id") or LINE_USER_ID
+    try:
+        match_days = int(payload.get("match_days", 50))
+        hold_days = int(payload.get("hold_days", 15))
+        thresh = float(payload.get("thresh", 8.0))
+        pbr_raw = payload.get("pbr", "pbr1")
+        pbr_max = 1.0 if pbr_raw in ("pbr1", 1.0, 1) else None
+        user_id = payload.get("user_id") or LINE_USER_ID
 
-    pbr_label = f"PBR < {pbr_max:.1f}" if pbr_max else "制限なし"
-    
-    # 1. Send immediate start notification via push if LINE user
-    start_msg = (
-        f"🎯 スナイパースキャンを開始しました...\n"
-        f"━━━━━━━━━━━━━━\n"
-        f"・照合期間: {match_days}日\n"
-        f"・保有期間: {hold_days}日\n"
-        f"・上昇閾値: +{thresh:.1f}%\n"
-        f"・PBR条件: {pbr_label}\n"
-        f"━━━━━━━━━━━━━━\n"
-        f"約1秒でスクリーニング結果をお届けします！"
-    )
-    if user_id:
-        send_line_message(start_msg, target_user_id=user_id)
+        pbr_label = f"PBR < {pbr_max:.1f}" if pbr_max else "制限なし"
+        
+        # 1. Send immediate start notification via push if LINE user
+        start_msg = (
+            f"🎯 スナイパースキャンを開始しました...\n"
+            f"━━━━━━━━━━━━━━\n"
+            f"・照合期間: {match_days}日\n"
+            f"・保有期間: {hold_days}日\n"
+            f"・上昇閾値: +{thresh:.1f}%\n"
+            f"・PBR条件: {pbr_label}\n"
+            f"━━━━━━━━━━━━━━\n"
+            f"約1秒でスクリーニング結果をお届けします！"
+        )
+        if user_id:
+            send_line_message(start_msg, target_user_id=user_id)
 
-    # 2. Run scan directly (completes in ~0.1s via disk cache!)
-    sniped_stocks, result_msg = run_sniper_screening(
-        n_match=match_days,
-        future_day=hold_days,
-        thresh=thresh,
-        pbr_max=pbr_max,
-        target_user_id=user_id,
-        send_push=True if user_id else False,
-        is_interactive=True
-    )
-    return {
-        "status": "success",
-        "hit_count": len(sniped_stocks),
-        "stocks": sniped_stocks,
-        "message": result_msg,
-        "params": {"match": match_days, "hold": hold_days, "thresh": thresh, "pbr": pbr_max}
-    }
+        # 2. Run scan directly (completes in ~0.1s via disk cache!)
+        sniped_stocks, result_msg = run_sniper_screening(
+            n_match=match_days,
+            future_day=hold_days,
+            thresh=thresh,
+            pbr_max=pbr_max,
+            target_user_id=user_id,
+            send_push=True if user_id else False,
+            is_interactive=True
+        )
+
+        cleaned_stocks = clean_for_json(sniped_stocks)
+        return {
+            "status": "success",
+            "hit_count": len(cleaned_stocks),
+            "stocks": cleaned_stocks,
+            "message": result_msg,
+            "params": {"match": match_days, "hold": hold_days, "thresh": thresh, "pbr": pbr_max}
+        }
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        add_log(f"❌ api_scan error: {e}")
+        return JSONResponse({
+            "status": "error",
+            "message": f"スキャン実行中にエラーが発生しました: {str(e)}"
+        }, status_code=500)
 
 @app.post("/api/save_pref")
 def api_save_pref(payload: dict):
