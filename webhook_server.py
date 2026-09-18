@@ -262,6 +262,12 @@ def api_save_pref(payload: dict):
     send_line_message(save_msg, target_user_id=user_id)
     return {"status": "saved"}
 
+@app.post("/api/refresh_cache")
+def api_refresh_cache(background_tasks: BackgroundTasks):
+    add_log("🔄 Cache refresh requested via API")
+    background_tasks.add_task(warm_up_cache)
+    return {"status": "refresh_started", "message": "Cache pre-warming started in background"}
+
 @app.get("/logs", response_class=HTMLResponse)
 def view_logs():
     now = time.time()

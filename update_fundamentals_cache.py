@@ -280,6 +280,17 @@ def build_fundamentals_cache(tickers_dict=None, max_workers=25, progress_callbac
         json.dump(payload, f, ensure_ascii=False, indent=2)
         
     print(f"Saved {len(fresh_data)} ticker snapshots to {CACHE_FILE} at {now_str}!")
+
+    # Auto-sync to Render
+    try:
+        from cache_sync import sync_cache_to_render
+        sync_cache_to_render(
+            files=["tse_fundamentals_cache.json"],
+            commit_msg=f"Auto-sync fundamentals cache to Render ({now_str})"
+        )
+    except Exception as e:
+        print(f"ℹ️ Render sync skipped: {e}")
+
     return payload
 
 if __name__ == "__main__":

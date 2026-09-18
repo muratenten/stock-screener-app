@@ -6715,7 +6715,7 @@ with tab_screen:
                 """, unsafe_allow_html=True)
             with col_c_btn:
                 st.markdown("<div style='margin-top: 2px;'></div>", unsafe_allow_html=True)
-                if st.button("🔄 手動更新", key="btn_refresh_fund_cache_inside", use_container_width=True, help="通常は毎週土曜日の深夜に全自動更新されます。必要に応じて今すぐ手動更新することも可能です。"):
+                if st.button("🔄 手動更新", key="btn_refresh_fund_cache_inside", use_container_width=True, help="通常は毎週土曜日の深夜に全自動更新されます。更新後はRender本番サーバーへも自動同期されます。"):
                     prog_container = st.empty()
                     prog_bar = prog_container.progress(0, text="最新の財務データを取得中...")
                     def prog_cb(curr, total):
@@ -6724,8 +6724,20 @@ with tab_screen:
                         import update_fundamentals_cache
                         payload = update_fundamentals_cache.build_fundamentals_cache(max_workers=20, progress_callback=prog_cb)
                         st.cache_data.clear()
+                        
+                        # Auto-sync updated cache to Render
+                        prog_bar.progress(0.95, text="🚀 Render本番サーバーへキャッシュを自動同期中...")
+                        try:
+                            from cache_sync import sync_cache_to_render
+                            sync_ok, sync_msg = sync_cache_to_render(
+                                files=["tse_fundamentals_cache.json", "screener_price_cache.pkl"],
+                                commit_msg=f"Auto-sync updated cache to Render from App ({payload['metadata']['last_updated']})"
+                            )
+                        except Exception as sync_err:
+                            sync_msg = f"同期警告: {sync_err}"
+                            
                         prog_container.empty()
-                        st.success(f"🎉 財務データキャッシュを手動更新しました！（{payload['metadata']['last_updated']}）")
+                        st.success(f"🎉 財務データキャッシュを手動更新し、Render本番へも自動反映しました！（{payload['metadata']['last_updated']}）")
                         st.rerun()
                     except Exception as e:
                         prog_container.empty()

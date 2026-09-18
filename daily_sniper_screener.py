@@ -447,8 +447,15 @@ if __name__ == "__main__":
     parser.add_argument("--pbr", type=float, default=1.0, help="Max PBR threshold (0 for no limit, default: 1.0)")
     parser.add_argument("--user", type=str, default=None, help="Target LINE User ID (default: LINE_USER_ID)")
     parser.add_argument("--interactive", action="store_true", help="Notify user even if 0 hits (for on-demand scans)")
+    parser.add_argument("--refresh-cache", action="store_true", help="Refresh price cache and auto-sync to Render")
     args = parser.parse_args()
     
+    if args.refresh_cache:
+        from cache_sync import refresh_sniper_price_cache
+        ok, msg = refresh_sniper_price_cache(pbr_max=args.pbr if args.pbr > 0 else 1.0, sync_to_render=True)
+        print(f"[RESULT] {msg}")
+        sys.exit(0 if ok else 1)
+        
     pbr_arg = None if args.pbr <= 0 else args.pbr
     run_sniper_screening(
         n_match=args.match,
