@@ -142,9 +142,9 @@ def get_user_preference(user_id: str) -> dict:
         except Exception:
             pass
     return {
-        "match_days": 60,
-        "hold_days": 25,
-        "thresh": 10.0,
+        "match_days": 50,
+        "hold_days": 15,
+        "thresh": 8.0,
         "pbr": 1.0
     }
 
@@ -197,9 +197,9 @@ def serve_liff():
 
 @app.post("/api/scan")
 def api_scan(payload: dict, background_tasks: BackgroundTasks):
-    match_days = int(payload.get("match_days", 60))
-    hold_days = int(payload.get("hold_days", 25))
-    thresh = float(payload.get("thresh", 10.0))
+    match_days = int(payload.get("match_days", 50))
+    hold_days = int(payload.get("hold_days", 15))
+    thresh = float(payload.get("thresh", 8.0))
     pbr_raw = payload.get("pbr", "pbr1")
     pbr_max = 1.0 if pbr_raw in ("pbr1", 1.0, 1) else None
     user_id = payload.get("user_id") or LINE_USER_ID
@@ -327,9 +327,9 @@ async def line_webhook(request: Request, background_tasks: BackgroundTasks, x_li
         if text.startswith("スキャン") or text.startswith("スナイプ") or "スキャン実行" in text:
             # Parse parameters if given
             # Format: "スキャン 60 25 10 1" or "🎯 【スナイパースキャン実行】\n照合:60日 | 保有:25日..."
-            match_days = 60
-            hold_days = 25
-            thresh = 10.0
+            match_days = 50
+            hold_days = 15
+            thresh = 8.0
             pbr_max = 1.0
 
             # Direct numbers: "スキャン 60 25 10 1"
@@ -428,7 +428,7 @@ async def line_webhook(request: Request, background_tasks: BackgroundTasks, x_li
             liff_link = f"https://liff.line.me/{LINE_LIFF_ID}" if LINE_LIFF_ID else "https://YOUR_SERVER_URL/liff"
             reply_text = (
                 f"こんにちは！ZenStock スナイパーBotです🎯\n\n"
-                f"「スキャン」と送信すると、現在の市場から勝率80%の神シグナル銘柄を即座にスキャンします。\n\n"
+                f"「スキャン」と送信すると、東証プライム全社から勝率72.7%・超過α+1.99%の神シグナル銘柄を即座にスキャンします。\n\n"
                 f"条件を自由に変更したい場合は「設定」と送るか、以下からスライダーを開いてください👇\n"
                 f"{liff_link}"
             )

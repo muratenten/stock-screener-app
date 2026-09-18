@@ -6,3 +6,4 @@ __pycache__/
 scratch/
 virtual_portfolio*.json
 user_preferences.json
+*.pkl
