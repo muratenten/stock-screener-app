@@ -496,19 +496,19 @@
     <div class="stats-grid">
       <div class="stat-box highlight">
         <span class="stat-label">過去検証 勝率</span>
-        <span class="stat-val win-rate" id="dispWinRate">80.0%</span>
-        <span class="stat-sub" id="dispSampleCount">検証サンプル 15回</span>
+        <span class="stat-val win-rate" id="dispWinRate">72.7%</span>
+        <span class="stat-sub" id="dispSampleCount">検証サンプル 117回</span>
       </div>
 
       <div class="stat-box">
         <span class="stat-label">期待平均利益</span>
-        <span class="stat-val return-val" id="dispReturn">+9.4%</span>
-        <span class="stat-sub" id="dispAlpha">日経超過 +7.0%</span>
+        <span class="stat-val return-val" id="dispReturn">+4.3%</span>
+        <span class="stat-sub" id="dispAlpha">市場超過 +2.0%</span>
       </div>
     </div>
 
     <div style="margin-top: 10px; font-size: 11px; color: var(--text-muted); display: flex; justify-content: space-between; align-items: center;">
-      <span>1回あたり平均ヒット数: <strong id="dispAvgHits" style="color: var(--text);">1.3銘柄</strong></span>
+      <span>1回あたり平均ヒット数: <strong id="dispAvgHits" style="color: var(--text);">1.9銘柄</strong></span>
       <span id="dispPbrFilterStatus" style="color: #34d399;">PBR < 1.0倍 厳選適用中</span>
     </div>
   </div>
@@ -519,10 +519,10 @@
     <div class="control-row">
       <div class="control-header">
         <span class="control-title">🔍 チャート照合期間</span>
-        <span class="control-badge" id="valMatch">60 日間</span>
+        <span class="control-badge" id="valMatch">50 日間</span>
       </div>
       <div class="slider-wrap">
-        <input type="range" id="sliderMatch" min="0" max="8" step="1" value="7" oninput="onParamChange()">
+        <input type="range" id="sliderMatch" min="0" max="8" step="1" value="6" oninput="onParamChange()">
       </div>
       <div class="slider-ticks">
         <span>10日</span>
@@ -537,10 +537,10 @@
     <div class="control-row">
       <div class="control-header">
         <span class="control-title">⏳ 想定保有期間</span>
-        <span class="control-badge" id="valHold">25 日間</span>
+        <span class="control-badge" id="valHold">15 日間</span>
       </div>
       <div class="slider-wrap">
-        <input type="range" id="sliderHold" min="0" max="9" step="1" value="4" oninput="onParamChange()">
+        <input type="range" id="sliderHold" min="0" max="9" step="1" value="2" oninput="onParamChange()">
       </div>
       <div class="slider-ticks">
         <span>5日</span>
@@ -555,10 +555,10 @@
     <div class="control-row">
       <div class="control-header">
         <span class="control-title">📈 過去3回すべての上昇閾値</span>
-        <span class="control-badge" id="valThresh">+10.0 %</span>
+        <span class="control-badge" id="valThresh">+8.0 %</span>
       </div>
       <div class="slider-wrap">
-        <input type="range" id="sliderThresh" min="3.0" max="10.0" step="0.5" value="10.0" oninput="onParamChange()">
+        <input type="range" id="sliderThresh" min="3.0" max="10.0" step="0.5" value="8.0" oninput="onParamChange()">
       </div>
       <div class="slider-ticks">
         <span>+3.0%</span>
@@ -678,21 +678,21 @@
     
     if (type === 'sniper') {
       document.getElementById('presetSniper').classList.add('active');
+      setSliderValue('sliderMatch', MATCH_STEPS.indexOf(50));
+      setSliderValue('sliderHold', HOLD_STEPS.indexOf(15));
+      setSliderValue('sliderThresh', 8.0);
+      setPbrMode('pbr1');
+    } else if (type === 'swing') {
+      document.getElementById('presetSwing').classList.add('active');
       setSliderValue('sliderMatch', MATCH_STEPS.indexOf(60));
       setSliderValue('sliderHold', HOLD_STEPS.indexOf(25));
       setSliderValue('sliderThresh', 10.0);
       setPbrMode('pbr1');
-    } else if (type === 'swing') {
-      document.getElementById('presetSwing').classList.add('active');
-      setSliderValue('sliderMatch', MATCH_STEPS.indexOf(25));
-      setSliderValue('sliderHold', HOLD_STEPS.indexOf(10));
-      setSliderValue('sliderThresh', 7.0);
-      setPbrMode('pbr1');
     } else if (type === 'value') {
       document.getElementById('presetValue').classList.add('active');
-      setSliderValue('sliderMatch', MATCH_STEPS.indexOf(60));
-      setSliderValue('sliderHold', HOLD_STEPS.indexOf(60));
-      setSliderValue('sliderThresh', 8.0);
+      setSliderValue('sliderMatch', MATCH_STEPS.indexOf(20));
+      setSliderValue('sliderHold', HOLD_STEPS.indexOf(10));
+      setSliderValue('sliderThresh', 8.5);
       setPbrMode('pbr1');
     }
     updateUI();
