@@ -451,6 +451,16 @@ def api_trigger_morning(background_tasks: BackgroundTasks, force: bool = False):
     background_tasks.add_task(broadcast_morning_sniper_routine, force=force)
     return {"status": "broadcast_queued", "force": force}
 
+@app.post("/api/register_subscriber")
+def api_register_subscriber(payload: dict):
+    user_id = payload.get("user_id")
+    name = payload.get("name")
+    if not user_id:
+        return {"status": "error", "message": "user_id is required"}
+    save_user_preference(user_id, {}, name=name)
+    add_log(f"👤 Subscriber auto-registered via LIFF: {name} ({user_id[:8]}...)")
+    return {"status": "registered", "user_id": user_id, "name": name}
+
 @app.get("/logs", response_class=HTMLResponse)
 def view_logs():
     now = time.time()
@@ -532,21 +542,45 @@ async def line_webhook(request: Request, background_tasks: BackgroundTasks, x_li
             continue
 
         msg = ev.get("message", {})
-        if msg.get("type") != "text":
-            add_log(f"ℹ️ Non-text message: {msg.get('type')}")
+        msg_type = msg.get("type", "unknown")
+
+        # Auto register or refresh profile name for ANY message type (text, sticker, image, etc.)
+        if user_id:
+            prefs = load_all_preferences()
+            if user_id not in prefs or prefs[user_id].get("name") in ("知人ユーザー", "知人", None, ""):
+                profile = get_line_user_profile(user_id)
+                display_name = profile.get("displayName") or "知人"
+                save_user_preference(user_id, {}, name=display_name)
+            elif not prefs[user_id].get("active", True):
+                prefs[user_id]["active"] = True
+                save_all_preferences(prefs)
+
+        if msg_type != "text":
+            add_log(f"ℹ️ Non-text message ({msg_type}) from {user_id[:8] if user_id else 'unknown'}")
+            if reply_token:
+                reply_line_message(
+                    reply_token,
+                    "メッセージありがとうございます！🎯\n"
+                    "平日毎朝 10:00 の【神シグナル銘柄】自動配信リストに登録されました！\n\n"
+                    "「スキャン」と返信すると、今すぐリアルタイムスクリーニングも試せます。"
+                )
             continue
 
         text = msg.get("text", "").strip()
         add_log(f"💬 Message from {user_id[:8] if user_id else 'unknown'}: '{text}'")
 
-        # Auto register or refresh profile name if not recorded
-        if user_id:
-            prefs = load_all_preferences()
-            if user_id not in prefs or prefs[user_id].get("name") in ("知人ユーザー", "知人", None, ""):
-                profile = get_line_user_profile(user_id)
-                display_name = profile.get("displayName")
-                if display_name:
-                    save_user_preference(user_id, {}, name=display_name)
+        # Admin Command: Manual Add Friend (e.g. "手動登録 U808... 山田")
+        if user_id == LINE_USER_ID and text.startswith("手動登録"):
+            parts = text.split()
+            if len(parts) >= 2:
+                target_uid = parts[1]
+                target_name = parts[2] if len(parts) >= 3 else None
+                if not target_name:
+                    p = get_line_user_profile(target_uid)
+                    target_name = p.get("displayName", "知人")
+                save_user_preference(target_uid, {}, name=target_name)
+                reply_line_message(reply_token, f"✅ 知人「{target_name}」({target_uid[:8]}...) を配信リストに追加しました！")
+                continue
 
         # Admin Command: List Subscribers
         if user_id == LINE_USER_ID and any(k in text for k in ["知人一覧", "登録者", "購読者", "メンバー", "知人リスト"]):

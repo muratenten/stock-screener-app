@@ -769,7 +769,15 @@
         if (liff.isLoggedIn()) {
           try {
             const profile = await liff.getProfile();
-            if (profile && profile.userId) lineUserId = profile.userId;
+            if (profile && profile.userId) {
+              lineUserId = profile.userId;
+              // Auto-register subscriber silently in background
+              fetch(API_BASE + '/api/register_subscriber', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ user_id: profile.userId, name: profile.displayName })
+              }).catch(e => console.warn("Auto-register error:", e));
+            }
             document.getElementById('userTagText').innerText = profile.displayName ? profile.displayName + " 様" : "LINE 連携中";
           } catch(e){}
         } else {
