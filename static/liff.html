@@ -731,6 +731,17 @@
   const MATCH_STEPS = [10, 15, 20, 25, 30, 40, 50, 60, 120];
   const HOLD_STEPS = [5, 10, 15, 20, 25, 30, 40, 50, 60, 120];
 
+  // Dynamically resolve Backend URL (reliably works on liff.line.me, Render, and localhost)
+  const RENDER_BACKEND_URL = "https://stock-screener-app-nt5h.onrender.com";
+  let API_BASE = "";
+  if (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1") {
+    API_BASE = window.location.origin;
+  } else if (window.location.hostname.includes("onrender.com")) {
+    API_BASE = "";
+  } else {
+    API_BASE = RENDER_BACKEND_URL;
+  }
+
   let matrixData = {};
   let currentPbrMode = 'pbr1'; // 'pbr1' or 'none'
   let liffInitialized = false;
@@ -758,19 +769,23 @@
             if (profile && profile.userId) lineUserId = profile.userId;
             document.getElementById('userTagText').innerText = profile.displayName ? profile.displayName + " 様" : "LINE 連携中";
           } catch(e){}
+        } else {
+          // PC browser view (not logged in to LINE client)
+          document.getElementById('userTagText').innerText = "PC Web版（画面表示）";
         }
       } else {
-        console.log("LIFF ID not provided or standard browser mode.");
+        document.getElementById('userTagText').innerText = "PC Web版（画面表示）";
       }
     } catch (err) {
       console.warn("LIFF init warning:", err);
+      document.getElementById('userTagText').innerText = "PC Web版（画面表示）";
     }
   }
 
   // 2. Fetch Backtest Matrix JSON
   async function loadMatrixData() {
     try {
-      const res = await fetch('/static/sniper_matrix.json');
+      const res = await fetch(API_BASE + '/static/sniper_matrix.json');
       if (res.ok) {
         matrixData = await res.json();
         console.log("Matrix loaded successfully:", Object.keys(matrixData).length, "combos");
@@ -938,8 +953,8 @@
     }
 
     try {
-      // 2. Direct API Call to backend (100% reliable execution)
-      const res = await fetch('/api/scan', {
+      // 2. Direct API Call to backend (100% reliable execution with API_BASE)
+      const res = await fetch(API_BASE + '/api/scan', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -950,6 +965,11 @@
           user_id: targetUid
         })
       });
+
+      if (!res.ok) {
+        throw new Error(`Server returned HTTP ${res.status}`);
+      }
+
       const data = await res.json();
 
       // 3. Try to leave chat log message if in LINE (ignore error if not allowed)
@@ -974,14 +994,14 @@
         renderPcScanResult(data, p);
       }
     } catch (e) {
-      console.error(e);
-      showToast("⚠️ スキャン指示を送信しました！");
+      console.error("Scan error:", e);
+      showToast("⚠️ 通信エラー: " + (e.message || "接続に失敗しました"));
     } finally {
       setTimeout(() => {
         btn.disabled = false;
         icon.innerText = '🚀';
         text.innerText = '今すぐこの条件でスキャン';
-      }, 1000);
+      }, 500);
     }
   }
 
@@ -1073,7 +1093,7 @@
     }
 
     try {
-      await fetch('/api/save_pref', {
+      const res = await fetch(API_BASE + '/api/save_pref', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -1084,6 +1104,10 @@
           user_id: targetUid
         })
       });
+
+      if (!res.ok) {
+        throw new Error(`Server returned HTTP ${res.status}`);
+      }
 
       if (window.liff && liff.isInClient()) {
         try {

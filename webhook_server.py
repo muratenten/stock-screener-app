@@ -21,6 +21,7 @@ from typing import Optional
 from fastapi import FastAPI, Request, Header, HTTPException, BackgroundTasks
 from fastapi.responses import HTMLResponse, JSONResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
+from fastapi.middleware.cors import CORSMiddleware
 
 # Import screener logic
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -29,6 +30,15 @@ import threading
 from daily_sniper_screener import run_sniper_screening, send_line_message, warm_up_cache
 
 app = FastAPI(title="ZenStock LINE Bot & LIFF")
+
+# Enable CORS for LIFF iframe and external origins
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 SERVER_START_TIME = time.time()
 LAST_HEALTH_PING = 0
