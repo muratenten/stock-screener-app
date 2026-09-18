@@ -707,6 +707,9 @@
     <button class="btn-sub" onclick="saveAsMorningCondition()">
       <span>🔔 毎朝10:00の自動通知条件に設定</span>
     </button>
+    <button class="btn-sub" style="border-color: rgba(56, 189, 248, 0.3); color: #38bdf8; background: rgba(56, 189, 248, 0.08);" onclick="shareWithFriends()">
+      <span>🔗 知人に教える（LINE招待リンクをコピー）</span>
+    </button>
   </div>
 </div>
 
@@ -1130,6 +1133,19 @@
     } catch (e) {
       console.warn(e);
       showToast("🔔 条件を保存しました！");
+    }
+  }
+
+  function shareWithFriends() {
+    const inviteUrl = "https://line.me/R/ti/p/@317uxnml";
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(inviteUrl).then(() => {
+        showToast("📋 招待URLをコピーしました！知人にシェアしてください");
+      }).catch(() => {
+        prompt("知人に共有する招待リンクです:", inviteUrl);
+      });
+    } else {
+      prompt("知人に共有する招待リンクです:", inviteUrl);
     }
   }
 

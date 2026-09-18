@@ -57,6 +57,7 @@ def get_memory_mb():
 def startup_event():
     print("🚀 Server starting: launching background cache pre-warm...")
     threading.Thread(target=warm_up_cache, daemon=True).start()
+    start_morning_scheduler()
 
 # Mount Static Files
 static_dir = os.path.join(BASE_DIR, "static")
@@ -131,7 +132,21 @@ def reply_line_message(reply_token: str, message_text: str):
         add_log(f"❌ Reply exception: {e}")
         return False
 
-def save_user_preference(user_id: str, params: dict):
+def get_line_user_profile(user_id: str) -> dict:
+    """Fetch LINE user profile (display name, picture)."""
+    if not LINE_CHANNEL_ACCESS_TOKEN or not user_id:
+        return {}
+    url = f"https://api.line.me/v2/bot/profile/{user_id}"
+    headers = {"Authorization": f"Bearer {LINE_CHANNEL_ACCESS_TOKEN}"}
+    try:
+        res = requests.get(url, headers=headers, timeout=5)
+        if res.status_code == 200:
+            return res.json()
+    except Exception as e:
+        add_log(f"⚠️ Profile API error: {e}")
+    return {}
+
+def load_all_preferences() -> dict:
     prefs = {}
     if os.path.exists(USER_PREF_FILE):
         try:
@@ -139,25 +154,125 @@ def save_user_preference(user_id: str, params: dict):
                 prefs = json.load(f)
         except Exception:
             prefs = {}
-    prefs[user_id] = params
-    with open(USER_PREF_FILE, "w", encoding="utf-8") as f:
-        json.dump(prefs, f, ensure_ascii=False, indent=2)
+    if LINE_USER_ID not in prefs:
+        prefs[LINE_USER_ID] = {
+            "name": "村本拓海 (管理者)",
+            "match_days": 50,
+            "hold_days": 15,
+            "thresh": 8.0,
+            "pbr": 1.0,
+            "active": True,
+            "registered_at": "初期登録"
+        }
+    return prefs
+
+def save_all_preferences(prefs: dict):
+    try:
+        with open(USER_PREF_FILE, "w", encoding="utf-8") as f:
+            json.dump(prefs, f, ensure_ascii=False, indent=2)
+    except Exception as e:
+        add_log(f"⚠️ save_all_preferences error: {e}")
+
+def save_user_preference(user_id: str, params: dict, name: str = None):
+    prefs = load_all_preferences()
+    if user_id not in prefs:
+        prefs[user_id] = {
+            "name": name or "知人ユーザー",
+            "match_days": 50,
+            "hold_days": 15,
+            "thresh": 8.0,
+            "pbr": 1.0,
+            "active": True,
+            "registered_at": time.strftime("%Y-%m-%d %H:%M:%S")
+        }
+    prefs[user_id].update(params)
+    if name and prefs[user_id].get("name") in ("知人ユーザー", None, ""):
+        prefs[user_id]["name"] = name
+    prefs[user_id]["active"] = True
+    save_all_preferences(prefs)
+    add_log(f"👤 Subscriber updated: {prefs[user_id].get('name')} ({user_id[:8]}...)")
 
 def get_user_preference(user_id: str) -> dict:
-    if os.path.exists(USER_PREF_FILE):
-        try:
-            with open(USER_PREF_FILE, "r", encoding="utf-8") as f:
-                prefs = json.load(f)
-                if user_id in prefs:
-                    return prefs[user_id]
-        except Exception:
-            pass
-    return {
+    prefs = load_all_preferences()
+    return prefs.get(user_id, {
         "match_days": 50,
         "hold_days": 15,
         "thresh": 8.0,
         "pbr": 1.0
-    }
+    })
+
+def deactivate_user(user_id: str):
+    prefs = load_all_preferences()
+    if user_id in prefs:
+        prefs[user_id]["active"] = False
+        save_all_preferences(prefs)
+        add_log(f"🚫 Subscriber deactivated (blocked): {user_id[:8]}...")
+
+def broadcast_morning_sniper_routine(force=False):
+    """Execute morning screening and push to all registered active subscribers."""
+    add_log("🌅 [MORNING ROUTINE] Starting morning sniper routine...")
+    prefs = load_all_preferences()
+    active_subscribers = {uid: u for uid, u in prefs.items() if u.get("active", True)}
+    
+    if not active_subscribers:
+        add_log("⚠️ [MORNING ROUTINE] No active subscribers found.")
+        return 0, "配信対象の登録者がいません。"
+        
+    add_log(f"🎯 [MORNING ROUTINE] Target subscribers: {len(active_subscribers)} people")
+    
+    # Run screening with golden default: 50d x 15d x +8.0% x PBR<1.0
+    sniped_stocks, msg = run_sniper_screening(
+        n_match=50,
+        future_day=15,
+        thresh=8.0,
+        pbr_max=1.0,
+        send_push=False,
+        is_interactive=False
+    )
+    
+    sent_count = 0
+    if sniped_stocks or force:
+        for uid, uinfo in active_subscribers.items():
+            uname = uinfo.get("name", "会員")
+            p_msg = f"🌅【毎朝10:00 スナイパーシグナル】\n{uname} 様\n\n" + msg
+            ok = send_line_message(p_msg, target_user_id=uid)
+            if ok:
+                sent_count += 1
+            time.sleep(0.3)
+        add_log(f"✅ [MORNING ROUTINE] Delivered to {sent_count} subscribers successfully!")
+        return sent_count, f"{sent_count}名に朝の通知を配信しました。"
+    else:
+        add_log("ℹ️ [MORNING ROUTINE] No sniper hits today. Notification skipped to avoid spam.")
+        return 0, "本日の条件合致銘柄はありませんでした（無駄な通知をスキップ）。"
+
+def _morning_scheduler_loop():
+    last_run_date = ""
+    add_log("⏰ Morning Routine Scheduler background loop started.")
+    import datetime
+    while True:
+        try:
+            now_utc = datetime.datetime.now(datetime.timezone.utc)
+            now_jst = now_utc + datetime.timedelta(hours=9)
+            
+            # Weekday check: Monday (0) to Friday (4)
+            is_weekday = now_jst.weekday() < 5
+            today_str = now_jst.strftime("%Y-%m-%d")
+            
+            # Trigger at 10:00 AM JST on weekdays
+            if is_weekday and now_jst.hour == 10 and now_jst.minute == 0:
+                if last_run_date != today_str:
+                    last_run_date = today_str
+                    broadcast_morning_sniper_routine()
+                    
+            time.sleep(30)
+        except Exception as e:
+            add_log(f"❌ Scheduler loop error: {e}")
+            time.sleep(60)
+
+def start_morning_scheduler():
+    t = threading.Thread(target=_morning_scheduler_loop, daemon=True, name="MorningRoutineScheduler")
+    t.start()
+
 
 # ================= Endpoints =================
 
@@ -306,6 +421,36 @@ def api_refresh_cache(background_tasks: BackgroundTasks):
     background_tasks.add_task(warm_up_cache)
     return {"status": "refresh_started", "message": "Cache pre-warming started in background"}
 
+@app.get("/api/subscribers")
+def api_subscribers():
+    prefs = load_all_preferences()
+    results = []
+    for uid, info in prefs.items():
+        masked_id = uid[:5] + "..." + uid[-4:] if len(uid) > 10 else uid
+        results.append({
+            "user_id_masked": masked_id,
+            "name": info.get("name", "知人"),
+            "active": info.get("active", True),
+            "registered_at": info.get("registered_at", "初期"),
+            "params": {
+                "match": info.get("match_days", 50),
+                "hold": info.get("hold_days", 15),
+                "thresh": info.get("thresh", 8.0),
+                "pbr": info.get("pbr", 1.0)
+            }
+        })
+    return {
+        "count": len(results),
+        "active_count": sum(1 for r in results if r["active"]),
+        "subscribers": results
+    }
+
+@app.post("/api/trigger_morning_broadcast")
+def api_trigger_morning(background_tasks: BackgroundTasks, force: bool = False):
+    add_log("📢 Manual morning broadcast triggered via API")
+    background_tasks.add_task(broadcast_morning_sniper_routine, force=force)
+    return {"status": "broadcast_queued", "force": force}
+
 @app.get("/logs", response_class=HTMLResponse)
 def view_logs():
     now = time.time()
@@ -352,20 +497,94 @@ async def line_webhook(request: Request, background_tasks: BackgroundTasks, x_li
     events = data.get("events", [])
     add_log(f"📨 Events received: {len(events)}")
     for ev in events:
-        if ev.get("type") != "message":
-            add_log(f"ℹ️ Non-message event: {ev.get('type')}")
+        ev_type = ev.get("type")
+        reply_token = ev.get("replyToken")
+        source = ev.get("source", {})
+        user_id = source.get("userId")
+
+        # Handle Friend Add (follow)
+        if ev_type == "follow":
+            add_log(f"🎉 New friend added: {user_id[:8] if user_id else 'unknown'}")
+            user_name = "知人"
+            if user_id:
+                profile = get_line_user_profile(user_id)
+                user_name = profile.get("displayName") or "知人"
+                save_user_preference(user_id, {}, name=user_name)
+            welcome_msg = (
+                f"こんにちは、{user_name}さん！🎯\n"
+                f"ZenStock スナイパーBotへようこそ。\n\n"
+                f"平日の毎朝 10:00 に、東証プライム全社から過去5年勝率72.7%・超過α+1.99%を誇る【神シグナル銘柄】を自動配信します。\n\n"
+                f"「スキャン」と送信すると、今すぐリアルタイムスクリーニングも実行できます！"
+            )
+            if reply_token:
+                reply_line_message(reply_token, welcome_msg)
             continue
+
+        # Handle Friend Block (unfollow)
+        if ev_type == "unfollow":
+            add_log(f"😢 Friend blocked (unfollow): {user_id[:8] if user_id else 'unknown'}")
+            if user_id:
+                deactivate_user(user_id)
+            continue
+
+        if ev_type != "message":
+            add_log(f"ℹ️ Non-message event: {ev_type}")
+            continue
+
         msg = ev.get("message", {})
         if msg.get("type") != "text":
             add_log(f"ℹ️ Non-text message: {msg.get('type')}")
             continue
 
         text = msg.get("text", "").strip()
-        reply_token = ev.get("replyToken")
-        source = ev.get("source", {})
-        user_id = source.get("userId")
-
         add_log(f"💬 Message from {user_id[:8] if user_id else 'unknown'}: '{text}'")
+
+        # Auto register or refresh profile name if not recorded
+        if user_id:
+            prefs = load_all_preferences()
+            if user_id not in prefs or prefs[user_id].get("name") in ("知人ユーザー", "知人", None, ""):
+                profile = get_line_user_profile(user_id)
+                display_name = profile.get("displayName")
+                if display_name:
+                    save_user_preference(user_id, {}, name=display_name)
+
+        # Admin Command: List Subscribers
+        if user_id == LINE_USER_ID and any(k in text for k in ["知人一覧", "登録者", "購読者", "メンバー", "知人リスト"]):
+            prefs = load_all_preferences()
+            lines = []
+            for i, (uid, info) in enumerate(prefs.items(), 1):
+                status_mark = "✅ 配信ON" if info.get("active", True) else "❌ 配信OFF"
+                reg_date = info.get("registered_at", "")[:10]
+                lines.append(f"{i}. {info.get('name', '知人')} ({status_mark}) [{reg_date}]")
+            list_msg = (
+                f"👥【ZenStock 購読知人一覧】\n"
+                f"合計: {len(prefs)}名 (有効: {sum(1 for u in prefs.values() if u.get('active', True))}名)\n"
+                f"━━━━━━━━━━━━━━\n" +
+                ("\n".join(lines) if lines else "登録者はいません") +
+                f"\n━━━━━━━━━━━━━━\n"
+                f"※平日毎朝10:00に全員へ自動配信されます。\n"
+                f"「朝通知テスト」と送ると全員へ今すぐテスト配信できます。"
+            )
+            reply_line_message(reply_token, list_msg)
+            continue
+
+        # Admin Command: Test Morning Broadcast
+        if user_id == LINE_USER_ID and any(k in text for k in ["朝通知テスト", "一斉配信テスト", "配信テスト"]):
+            reply_line_message(reply_token, "🌅 知人全員への朝通知テスト配信を開始します...")
+            background_tasks.add_task(broadcast_morning_sniper_routine, force=True)
+            continue
+
+        # Invite & Friend Sharing Command
+        if any(k in text for k in ["招待", "友達追加", "友だち追加", "リンク", "シェア", "知人追加"]):
+            invite_msg = (
+                f"🔗【ZenStock 知人招待リンク】\n\n"
+                f"知人や友人に以下のリンクを共有してください👇\n"
+                f"https://line.me/R/ti/p/@317uxnml\n\n"
+                f"💡 友だち追加するだけで自動登録され、平日毎朝10:00に【神シグナル銘柄】が届くようになります。\n"
+                f"（管理者の村本さんは「知人一覧」と送れば登録者数とメンバーを確認できます）"
+            )
+            reply_line_message(reply_token, invite_msg)
+            continue
 
         # 1. Trigger Scan (e.g. "スキャン", "スナイプ", "今すぐ", "スキャン 60 25 10 1")
         if text.startswith("スキャン") or text.startswith("スナイプ") or "スキャン実行" in text:
