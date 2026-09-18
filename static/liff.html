@@ -318,11 +318,22 @@
     }
 
     .slider-ticks {
-      display: flex;
-      justify-content: space-between;
+      position: relative;
+      width: 100%;
+      height: 16px;
       font-size: 10px;
       color: var(--text-dim);
-      padding: 2px 4px 0;
+      margin-top: 2px;
+    }
+    .slider-ticks span {
+      position: absolute;
+      transform: translateX(-50%);
+      white-space: nowrap;
+      transition: color 0.15s, font-weight 0.15s;
+    }
+    .slider-ticks span.active {
+      color: var(--primary);
+      font-weight: 700;
     }
 
     /* Segment Control for PBR */
@@ -457,7 +468,7 @@
       <div class="logo-badge">Z</div>
       <div class="title-group">
         <h1>ZenStock スナイパー</h1>
-        <p>日経225 過去全パターン照合</p>
+        <p>東証プライム全1,529社 過去全パターン照合</p>
       </div>
     </div>
     <div class="user-tag">
@@ -469,13 +480,13 @@
   <!-- Quick Presets -->
   <div class="preset-container">
     <button class="preset-chip active" id="presetSniper" onclick="applyPreset('sniper')">
-      🎯 最強スナイパー (勝率80%)
+      🎯 黄金スナイパー (勝率72.7%)
     </button>
     <button class="preset-chip" id="presetSwing" onclick="applyPreset('swing')">
-      ⚡ 短期急騰スイング
+      ⚡ 本命スイング (超過α+2.9%)
     </button>
     <button class="preset-chip" id="presetValue" onclick="applyPreset('value')">
-      💎 中長期バリュースナイプ
+      💎 短期急反発 (勝率80%)
     </button>
   </div>
 
@@ -483,9 +494,9 @@
   <div class="preview-card">
     <div class="preview-top">
       <div>
-        <div class="label">Historical Backtest Data</div>
+        <div class="label">Historical Backtest Data (東証プライム)</div>
         <div style="font-size: 13px; font-weight: 600; margin-top: 2px;" id="currentSummaryTitle">
-          照合60日 × 保有25日 × 閾値+10%
+          照合50日 × 保有15日 × 閾値+8.0%
         </div>
       </div>
       <div class="rank-badge" id="rankBadge">
@@ -509,7 +520,7 @@
 
     <div style="margin-top: 10px; font-size: 11px; color: var(--text-muted); display: flex; justify-content: space-between; align-items: center;">
       <span>1回あたり平均ヒット数: <strong id="dispAvgHits" style="color: var(--text);">1.9銘柄</strong></span>
-      <span id="dispPbrFilterStatus" style="color: #34d399;">PBR < 1.0倍 厳選適用中</span>
+      <span id="dispPbrFilterStatus" style="color: #34d399;">PBR < 1.0倍 厳選 (636社)</span>
     </div>
   </div>
 
@@ -524,12 +535,13 @@
       <div class="slider-wrap">
         <input type="range" id="sliderMatch" min="0" max="8" step="1" value="6" oninput="onParamChange()">
       </div>
-      <div class="slider-ticks">
-        <span>10日</span>
-        <span>20日</span>
-        <span>30日</span>
-        <span>60日</span>
-        <span>120日</span>
+      <div class="slider-ticks" id="ticksMatch">
+        <span data-val="10" style="left: calc(11px + (100% - 22px) * 0);">10日</span>
+        <span data-val="20" style="left: calc(11px + (100% - 22px) * 0.25);">20日</span>
+        <span data-val="30" style="left: calc(11px + (100% - 22px) * 0.5);">30日</span>
+        <span data-val="50" style="left: calc(11px + (100% - 22px) * 0.75);">50日</span>
+        <span data-val="60" style="left: calc(11px + (100% - 22px) * 0.875);">60日</span>
+        <span data-val="120" style="left: calc(11px + (100% - 22px) * 1);">120日</span>
       </div>
     </div>
 
@@ -542,12 +554,13 @@
       <div class="slider-wrap">
         <input type="range" id="sliderHold" min="0" max="9" step="1" value="2" oninput="onParamChange()">
       </div>
-      <div class="slider-ticks">
-        <span>5日</span>
-        <span>15日</span>
-        <span>25日</span>
-        <span>50日</span>
-        <span>120日</span>
+      <div class="slider-ticks" id="ticksHold">
+        <span data-val="5" style="left: calc(11px + (100% - 22px) * 0);">5日</span>
+        <span data-val="10" style="left: calc(11px + (100% - 22px) * 0.1111);">10日</span>
+        <span data-val="15" style="left: calc(11px + (100% - 22px) * 0.2222);">15日</span>
+        <span data-val="25" style="left: calc(11px + (100% - 22px) * 0.4444);">25日</span>
+        <span data-val="50" style="left: calc(11px + (100% - 22px) * 0.7778);">50日</span>
+        <span data-val="120" style="left: calc(11px + (100% - 22px) * 1);">120日</span>
       </div>
     </div>
 
@@ -560,12 +573,12 @@
       <div class="slider-wrap">
         <input type="range" id="sliderThresh" min="3.0" max="10.0" step="0.5" value="8.0" oninput="onParamChange()">
       </div>
-      <div class="slider-ticks">
-        <span>+3.0%</span>
-        <span>+5.0%</span>
-        <span>+7.0%</span>
-        <span>+8.5%</span>
-        <span>+10.0%</span>
+      <div class="slider-ticks" id="ticksThresh">
+        <span data-val="3.0" style="left: calc(11px + (100% - 22px) * 0);">+3.0%</span>
+        <span data-val="5.0" style="left: calc(11px + (100% - 22px) * 0.2857);">+5.0%</span>
+        <span data-val="7.0" style="left: calc(11px + (100% - 22px) * 0.5714);">+7.0%</span>
+        <span data-val="8.0" style="left: calc(11px + (100% - 22px) * 0.7143);">+8.0%</span>
+        <span data-val="10.0" style="left: calc(11px + (100% - 22px) * 1);">+10.0%</span>
       </div>
     </div>
 
@@ -573,14 +586,14 @@
     <div class="control-row">
       <div class="control-header">
         <span class="control-title">🛡️ バリューフィルター (PBR)</span>
-        <span style="font-size: 11px; color: var(--text-dim);" id="pbrHint">解散価値割れのみ厳選</span>
+        <span style="font-size: 11px; color: var(--text-dim);" id="pbrHint">解散価値割れのみ厳選 (636社)</span>
       </div>
       <div class="segment-control">
         <button class="segment-btn active" id="btnPbr1" onclick="setPbrMode('pbr1')">
-          PBR < 1.0倍（割安厳選）
+          PBR < 1.0倍（割安636社）
         </button>
         <button class="segment-btn" id="btnPbrNone" onclick="setPbrMode('none')">
-          全銘柄（制限なし）
+          全銘柄（プライム1,529社）
         </button>
       </div>
     </div>
@@ -726,6 +739,11 @@
     document.getElementById('currentSummaryTitle').innerText = 
       `照合${p.matchDays}日 × 保有${p.holdDays}日 × 閾値+${p.thresh.toFixed(1)}%`;
 
+    // Highlight current slider ticks
+    highlightTicks('ticksMatch', p.matchDays);
+    highlightTicks('ticksHold', p.holdDays);
+    highlightTicks('ticksThresh', p.thresh.toFixed(1));
+
     // Lookup Matrix
     const key = `${p.matchDays}_${p.holdDays}_${p.thresh.toFixed(1)}_${p.pbr}`;
     const data = matrixData[key];
@@ -741,7 +759,7 @@
       const winRate = data.w;
       winRateEl.innerText = `${winRate.toFixed(1)}%`;
       returnEl.innerText = (data.r >= 0 ? `+${data.r.toFixed(1)}%` : `${data.r.toFixed(1)}%`);
-      alphaEl.innerText = `日経超過 ${data.a >= 0 ? `+${data.a.toFixed(1)}%` : `${data.a.toFixed(1)}%`}`;
+      alphaEl.innerText = `市場超過 ${data.a >= 0 ? `+${data.a.toFixed(1)}%` : `${data.a.toFixed(1)}%`}`;
       sampleEl.innerText = `検証サンプル ${data.c}回`;
       hitsEl.innerText = `${data.s.toFixed(1)}銘柄`;
 
@@ -772,6 +790,19 @@
       hitsEl.innerText = "0〜1銘柄";
       rankEl.innerText = "⚡ 先鋭条件";
     }
+  }
+
+  function highlightTicks(containerId, currentVal) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    container.querySelectorAll('span').forEach(span => {
+      const val = span.getAttribute('data-val');
+      if (val === String(currentVal) || parseFloat(val) === parseFloat(currentVal)) {
+        span.classList.add('active');
+      } else {
+        span.classList.remove('active');
+      }
+    });
   }
 
   // 4. Trigger Scan Now
