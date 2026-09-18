@@ -206,7 +206,7 @@ def api_scan(payload: dict, background_tasks: BackgroundTasks):
 
     pbr_label = f"PBR < {pbr_max:.1f}" if pbr_max else "制限なし"
     
-    # 1. Send immediate start notification via push
+    # 1. Send immediate start notification via push if LINE user
     start_msg = (
         f"🎯 スナイパースキャンを開始しました...\n"
         f"━━━━━━━━━━━━━━\n"
@@ -215,22 +215,28 @@ def api_scan(payload: dict, background_tasks: BackgroundTasks):
         f"・上昇閾値: +{thresh:.1f}%\n"
         f"・PBR条件: {pbr_label}\n"
         f"━━━━━━━━━━━━━━\n"
-        f"約5秒でスクリーニング結果をお届けします！"
+        f"約1秒でスクリーニング結果をお届けします！"
     )
-    send_line_message(start_msg, target_user_id=user_id)
+    if user_id:
+        send_line_message(start_msg, target_user_id=user_id)
 
-    # 2. Run scan in background and push results
-    background_tasks.add_task(
-        run_sniper_screening,
+    # 2. Run scan directly (completes in ~0.1s via disk cache!)
+    sniped_stocks, result_msg = run_sniper_screening(
         n_match=match_days,
         future_day=hold_days,
         thresh=thresh,
         pbr_max=pbr_max,
         target_user_id=user_id,
-        send_push=True,
+        send_push=True if user_id else False,
         is_interactive=True
     )
-    return {"status": "scanning_started", "params": {"match": match_days, "hold": hold_days, "thresh": thresh, "pbr": pbr_max}}
+    return {
+        "status": "success",
+        "hit_count": len(sniped_stocks),
+        "stocks": sniped_stocks,
+        "message": result_msg,
+        "params": {"match": match_days, "hold": hold_days, "thresh": thresh, "pbr": pbr_max}
+    }
 
 @app.post("/api/save_pref")
 def api_save_pref(payload: dict):

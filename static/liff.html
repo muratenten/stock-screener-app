@@ -457,6 +457,105 @@
     @keyframes spin {
       to { transform: rotate(360deg); }
     }
+
+    /* PC Result Modal */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.8);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      z-index: 200;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s ease;
+    }
+    .modal-overlay.open {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .modal-card {
+      background: #182033;
+      border: 1px solid rgba(16, 185, 129, 0.35);
+      border-radius: 18px;
+      width: 100%;
+      max-width: 440px;
+      max-height: 85vh;
+      overflow-y: auto;
+      padding: 20px;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.7);
+      transform: translateY(20px);
+      transition: transform 0.25s ease;
+    }
+    .modal-overlay.open .modal-card {
+      transform: translateY(0);
+    }
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      padding-bottom: 10px;
+    }
+    .modal-header h3 {
+      font-size: 16px;
+      font-weight: 700;
+      color: #34d399;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .btn-close-modal {
+      background: rgba(255,255,255,0.08);
+      border: none;
+      color: #94a3b8;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .hit-item {
+      background: rgba(15, 23, 42, 0.7);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 12px;
+      padding: 12px;
+      margin-bottom: 10px;
+    }
+    .hit-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: #f8fafc;
+      margin-bottom: 4px;
+    }
+    .hit-meta {
+      font-size: 12px;
+      color: #94a3b8;
+      display: flex;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+    .match-row {
+      font-size: 11px;
+      color: #cbd5e1;
+      background: rgba(30, 41, 59, 0.6);
+      padding: 5px 8px;
+      border-radius: 6px;
+      margin-top: 4px;
+      display: flex;
+      justify-content: space-between;
+    }
   </style>
 </head>
 <body>
@@ -613,6 +712,19 @@
 
 <!-- Toast notification -->
 <div class="toast" id="toast"></div>
+
+<!-- PC / Web Direct Scan Result Modal -->
+<div class="modal-overlay" id="scanResultModal" onclick="closeScanModal(event)">
+  <div class="modal-card" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <h3 id="modalTitle">🎯 スキャン結果</h3>
+      <button class="btn-close-modal" onclick="closeScanModal()">✕</button>
+    </div>
+    <div id="modalBody" style="font-size: 13px; color: var(--text);">
+      <!-- Dynamic hit stocks render here -->
+    </div>
+  </div>
+</div>
 
 <script>
   // Discrete steps for match and hold days
@@ -838,6 +950,7 @@
           user_id: targetUid
         })
       });
+      const data = await res.json();
 
       // 3. Try to leave chat log message if in LINE (ignore error if not allowed)
       if (window.liff && liff.isInClient()) {
@@ -852,14 +965,14 @@
         } catch (msgErr) {
           console.warn("sendMessages optional log ignored:", msgErr);
         }
-      }
-
-      showToast("🚀 スキャンを開始しました！約5秒でLINEトークに届きます。");
-      setTimeout(() => {
-        if (window.liff && liff.isInClient()) {
+        showToast("🚀 スキャン完了！LINEトークに届きます。");
+        setTimeout(() => {
           liff.closeWindow();
-        }
-      }, 1000);
+        }, 1000);
+      } else {
+        // PC / Web direct view: Render result modal on screen!
+        renderPcScanResult(data, p);
+      }
     } catch (e) {
       console.error(e);
       showToast("⚠️ スキャン指示を送信しました！");
@@ -868,8 +981,82 @@
         btn.disabled = false;
         icon.innerText = '🚀';
         text.innerText = '今すぐこの条件でスキャン';
-      }, 3000);
+      }, 1000);
     }
+  }
+
+  function renderPcScanResult(data, p) {
+    const modal = document.getElementById('scanResultModal');
+    const title = document.getElementById('modalTitle');
+    const body = document.getElementById('modalBody');
+    if (!modal || !title || !body) return;
+
+    const pbrText = p.pbr === 'pbr1' ? 'PBR < 1.0倍' : '全銘柄';
+    const count = data.stocks ? data.stocks.length : 0;
+
+    title.innerHTML = `🎯 スキャン結果 (${count}銘柄検出)`;
+
+    if (!data.stocks || data.stocks.length === 0) {
+      body.innerHTML = `
+        <div style="text-align: center; padding: 20px 0;">
+          <div style="font-size: 36px; margin-bottom: 8px;">🔍</div>
+          <div style="font-weight: 700; color: #f8fafc; margin-bottom: 6px;">条件に合致する銘柄はありませんでした</div>
+          <div style="font-size: 11px; color: #94a3b8; line-height: 1.6;">
+            照合: ${p.matchDays}日 | 保有: ${p.holdDays}日 | 閾値: +${p.thresh.toFixed(1)}% | ${pbrText}<br>
+            閾値を下げるか、照合期間を変更してお試しください。
+          </div>
+        </div>
+      `;
+    } else {
+      let html = `
+        <div style="margin-bottom: 12px; font-size: 11px; color: #94a3b8;">
+          条件: 照合${p.matchDays}日 × 保有${p.holdDays}日 × 閾値+${p.thresh.toFixed(1)}% (${pbrText})
+        </div>
+      `;
+
+      data.stocks.forEach(s => {
+        const priceStr = s.last_price ? `${Math.round(s.last_price).toLocaleString()}円` : '---';
+        const pbrStr = s.pbr ? `${s.pbr.toFixed(2)}倍` : '---';
+        
+        let matchesHtml = '';
+        if (s.matches && s.matches.length > 0) {
+          matchesHtml = '<div style="margin-top: 8px;"><div style="font-size: 10px; color: #94a3b8; margin-bottom: 2px;">過去3回の相似チャート上昇実績:</div>';
+          s.matches.forEach((m, i) => {
+            matchesHtml += `
+              <div class="match-row">
+                <span>第${i+1}回 (${m.date})</span>
+                <strong style="color: #34d399;">+${m.ret.toFixed(1)}%</strong>
+              </div>
+            `;
+          });
+          matchesHtml += '</div>';
+        }
+
+        html += `
+          <div class="hit-item">
+            <div class="hit-title">${s.name} <span style="font-size: 12px; color: #38bdf8;">(${s.ticker})</span></div>
+            <div class="hit-meta">
+              <span>株価: <strong style="color:#f8fafc;">${priceStr}</strong></span>
+              <span>PBR: <strong style="color:#34d399;">${pbrStr}</strong></span>
+              <span>最小上昇: <strong style="color:#fbbf24;">+${s.min_ret.toFixed(1)}%</strong></span>
+            </div>
+            ${matchesHtml}
+          </div>
+        `;
+      });
+
+      body.innerHTML = html;
+    }
+
+    modal.classList.add('open');
+  }
+
+  function closeScanModal(e) {
+    if (e && e.target && e.target !== document.getElementById('scanResultModal') && !e.target.classList.contains('btn-close-modal')) {
+      return;
+    }
+    const modal = document.getElementById('scanResultModal');
+    if (modal) modal.classList.remove('open');
   }
 
   // 5. Save as Morning Routine
