@@ -70,6 +70,7 @@ LINE_CHANNEL_ACCESS_TOKEN = os.environ.get(
 )
 LINE_CHANNEL_SECRET = os.environ.get("LINE_CHANNEL_SECRET", "")
 LINE_LIFF_ID = os.environ.get("LINE_LIFF_ID", "2011538719-L0SX8ZZU")
+LINE_USER_ID = os.environ.get("LINE_USER_ID", "U808d7431c75b1a6dded4e6be45447e27")
 USER_PREF_FILE = os.path.join(BASE_DIR, "user_preferences.json")
 
 # In-memory debug logs (last 50 events)
@@ -222,22 +223,23 @@ def api_scan(payload: dict, background_tasks: BackgroundTasks):
         thresh = float(payload.get("thresh", 8.0))
         pbr_raw = payload.get("pbr", "pbr1")
         pbr_max = 1.0 if pbr_raw in ("pbr1", 1.0, 1) else None
-        user_id = payload.get("user_id") or LINE_USER_ID
+        raw_uid = payload.get("user_id")
+        user_id = raw_uid if (raw_uid and str(raw_uid).strip()) else None
 
         pbr_label = f"PBR < {pbr_max:.1f}" if pbr_max else "制限なし"
         
-        # 1. Send immediate start notification via push if LINE user
-        start_msg = (
-            f"🎯 スナイパースキャンを開始しました...\n"
-            f"━━━━━━━━━━━━━━\n"
-            f"・照合期間: {match_days}日\n"
-            f"・保有期間: {hold_days}日\n"
-            f"・上昇閾値: +{thresh:.1f}%\n"
-            f"・PBR条件: {pbr_label}\n"
-            f"━━━━━━━━━━━━━━\n"
-            f"約1秒でスクリーニング結果をお届けします！"
-        )
+        # 1. Send immediate start notification via push only if from LINE client
         if user_id:
+            start_msg = (
+                f"🎯 スナイパースキャンを開始しました...\n"
+                f"━━━━━━━━━━━━━━\n"
+                f"・照合期間: {match_days}日\n"
+                f"・保有期間: {hold_days}日\n"
+                f"・上昇閾値: +{thresh:.1f}%\n"
+                f"・PBR条件: {pbr_label}\n"
+                f"━━━━━━━━━━━━━━\n"
+                f"約1秒でスクリーニング結果をお届けします！"
+            )
             send_line_message(start_msg, target_user_id=user_id)
 
         # 2. Run scan directly (completes in ~0.1s via disk cache!)
@@ -247,7 +249,7 @@ def api_scan(payload: dict, background_tasks: BackgroundTasks):
             thresh=thresh,
             pbr_max=pbr_max,
             target_user_id=user_id,
-            send_push=True if user_id else False,
+            send_push=bool(user_id),
             is_interactive=True
         )
 
