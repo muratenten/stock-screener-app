@@ -25,7 +25,7 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 CACHE_FILE = os.path.join(BASE_DIR, "tse_fundamentals_cache.json")
 PRIME_TICKERS_FILE = os.path.join(BASE_DIR, "tse_prime_tickers.json")
 DISK_PRICE_CACHE = os.path.join(BASE_DIR, "screener_price_cache.pkl")
-DISK_CACHE_TTL = 3600  # 1 hour disk cache
+DISK_CACHE_TTL = 86400 * 3  # 3 days disk cache
 
 # LINE Credentials (from env vars or default)
 LINE_CHANNEL_ACCESS_TOKEN = os.environ.get(
@@ -152,17 +152,18 @@ def get_or_fetch_stock_data(tickers, fund_cache, jp_names, pbr_max=1.0):
         print(f"⚡ [MEMORY CACHE HIT] Using in-memory stock data ({len(_CACHED_STOCK_DATA)} stocks, age {int(now - _CACHE_TIMESTAMP)}s).")
         return _CACHED_STOCK_DATA, _CACHED_STOCK_INFO
 
-    # 2. Return disk cache if fresh
+    # 2. Return disk cache if available
     if os.path.exists(DISK_PRICE_CACHE):
         try:
             mtime = os.path.getmtime(DISK_PRICE_CACHE)
-            if now - mtime < DISK_CACHE_TTL:
-                with open(DISK_PRICE_CACHE, "rb") as f:
-                    cached = pickle.load(f)
-                    _CACHED_STOCK_DATA = cached['data']
-                    _CACHED_STOCK_INFO = cached['info']
-                    _CACHE_TIMESTAMP = mtime
-                print(f"⚡ [DISK CACHE HIT] Loaded {len(_CACHED_STOCK_DATA)} stocks from {DISK_PRICE_CACHE} (age {int(now - mtime)}s).")
+            with open(DISK_PRICE_CACHE, "rb") as f:
+                cached = pickle.load(f)
+                _CACHED_STOCK_DATA = cached['data']
+                _CACHED_STOCK_INFO = cached['info']
+                _CACHE_TIMESTAMP = mtime
+            print(f"⚡ [DISK CACHE HIT] Loaded {len(_CACHED_STOCK_DATA)} stocks from {DISK_PRICE_CACHE} (age {int(now - mtime)}s).")
+            if len(_CACHED_STOCK_DATA) >= 30:
+                # Return immediately for instant zero-wait execution
                 return _CACHED_STOCK_DATA, _CACHED_STOCK_INFO
         except Exception as e:
             print(f"[DISK CACHE READ ERROR] {e}")

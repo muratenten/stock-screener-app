@@ -7,3 +7,4 @@ scratch/
 virtual_portfolio*.json
 user_preferences.json
 *.pkl
+!screener_price_cache.pkl
