@@ -348,8 +348,27 @@ def render_upgrade_banner(reason_text):
     # Generate dynamic Stripe Payment Link with client_reference_id
     stripe_link_base = st.secrets.get("stripe_payment_link", "https://buy.stripe.com/mock_premium_upgrade")
     user_key = st.session_state.get('user_key', 'default')
+    is_guest = not user_key or user_key in ('default', 'guest') or str(user_key).startswith('guest_')
+    stripe_link_base = st.secrets.get("stripe_payment_link", "https://buy.stripe.com/7sY28tdfCegN5K8a6fc3m01")
     stripe_link = f"{stripe_link_base}?client_reference_id={user_key}"
     
+    if is_guest:
+        action_html = """
+        <div style="background: rgba(239, 68, 68, 0.12); border: 1px solid rgba(239, 68, 68, 0.35); border-radius: 10px; padding: 14px; margin-top: 14px; color: #fca5a5; font-size: 0.9rem; line-height: 1.6;">
+            ⚠️ <b>プレミアム登録にはアカウントが必要です</b><br>
+            ゲスト状態では決済データを保存できません。まずサイドバーから<b>「Googleでログイン」</b>を行ってからアップグレードにお進みください。
+        </div>
+        """
+    else:
+        action_html = f"""
+        <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-top: 14px;">
+            <a href="{stripe_link}" target="_blank" style="text-decoration: none; display: inline-flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #a855f7 0%, #ec4899 100%); color: white; font-weight: bold; padding: 12px 24px; border-radius: 9999px; font-size: 0.95rem; box-shadow: 0 4px 6px -1px rgba(168, 85, 247, 0.4); transition: transform 0.2s;">
+                👑 プレミアムプランにアップグレード (月額 980円〜)
+            </a>
+            <span style="font-size: 0.8rem; opacity: 0.7;">※決済完了後、自動的に制限が解除されます。</span>
+        </div>
+        """
+
     st.markdown(f"""
     <div style="padding: 24px; border-radius: 16px; {card_style} margin: 20px 0; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);">
         <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
@@ -362,7 +381,7 @@ def render_upgrade_banner(reason_text):
             {reason_text}<br>
             プレミアムプランに加入すると、制限なしにすべての機能をご利用いただけます。
         </p>
-        <div style="background: rgba(255, 255, 255, 0.05); padding: 12px 16px; border-radius: 8px; margin-bottom: 20px; border: 1px solid rgba(255, 255, 255, 0.1);">
+        <div style="background: rgba(255, 255, 255, 0.05); padding: 12px 16px; border-radius: 8px; margin-bottom: 12px; border: 1px solid rgba(255, 255, 255, 0.1);">
             <div style="font-weight: 600; font-size: 0.9rem; margin-bottom: 8px; color: #d8b4fe;">🎁 プレミアム特典：</div>
             <ul style="margin: 0; padding-left: 20px; font-size: 0.85rem; line-height: 1.5; opacity: 0.85;">
                 <li>過去練習モード（タイムトラベル）の結果表示：<b>無制限</b></li>
@@ -371,29 +390,39 @@ def render_upgrade_banner(reason_text):
                 <li>AIによるチャート類似度分析・予測アドバイス：<b>解放</b></li>
             </ul>
         </div>
-        <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
-            <a href="{stripe_link}" target="_top" style="text-decoration: none; display: inline-flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #a855f7 0%, #ec4899 100%); color: white; font-weight: bold; padding: 12px 24px; border-radius: 9999px; font-size: 0.95rem; box-shadow: 0 4px 6px -1px rgba(168, 85, 247, 0.4); transition: transform 0.2s;">
-                👑 プレミアムプランにアップグレード (月額 980円)
-            </a>
-            <span style="font-size: 0.8rem; opacity: 0.7;">※決済完了後、自動的に制限が解除されます。</span>
-        </div>
+        {action_html}
     </div>
     """, unsafe_allow_html=True)
 
 @st.dialog("👑 プレミアムプランのご案内", width="medium")
 def show_upgrade_dialog():
-    stripe_link = st.secrets.get("stripe_payment_link", "https://buy.stripe.com/mock_premium_upgrade")
-    if "user_key" in st.session_state:
-        user_key = st.session_state["user_key"]
-        if "?" in stripe_link:
-            stripe_link += f"&client_reference_id={user_key}"
-        else:
-            stripe_link += f"?client_reference_id={user_key}"
+    user_key = st.session_state.get('user_key', 'default')
+    is_guest = not user_key or user_key in ('default', 'guest') or str(user_key).startswith('guest_')
+    stripe_link_base = st.secrets.get("stripe_payment_link", "https://buy.stripe.com/7sY28tdfCegN5K8a6fc3m01")
+    stripe_link = f"{stripe_link_base}?client_reference_id={user_key}"
             
+    if is_guest:
+        btn_html = """
+        <div style="background: rgba(239, 68, 68, 0.12); border: 1px solid rgba(239, 68, 68, 0.35); border-radius: 10px; padding: 14px; margin-top: 14px; color: #fca5a5; font-size: 0.9rem; line-height: 1.6; text-align: left;">
+            ⚠️ <b>プレミアム登録にはアカウントが必要です</b><br>
+            ゲスト状態では決済データを紐付けることができません。<br>
+            まずサイドバー上部の<b>「Googleでログイン」</b>を行ってからアップグレードにお進みください。
+        </div>
+        """
+    else:
+        btn_html = f"""
+        <div style="display: flex; flex-direction: column; gap: 8px; align-items: center; margin-top: 15px; margin-bottom: 15px;">
+            <a href="{stripe_link}" target="_blank" style="text-decoration: none; width: 100%; display: inline-flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #a855f7 0%, #ec4899 100%); color: white; font-weight: bold; padding: 14px 20px; border-radius: 9999px; font-size: 1rem; box-shadow: 0 4px 6px -1px rgba(168, 85, 247, 0.4); text-align: center;">
+                👑 プレミアムプランにアップグレード (月額 980円〜)
+            </a>
+            <span style="font-size: 0.8rem; opacity: 0.7; margin-top: 5px; color: var(--text-color);">※決済完了後、自動的に制限が解除されます。</span>
+        </div>
+        """
+
     st.markdown(f"""
     <div style="padding: 10px 0; font-family: sans-serif;">
         <p style="font-size: 1.05rem; font-weight: bold; margin-bottom: 12px; color: #a855f7;">
-            プレミアムプラン（月額 980円）にアップグレードすると、すべての制限が解除されます！
+            プレミアムプランにアップグレードすると、すべての制限が解除されます！
         </p>
         <div style="background: rgba(168, 85, 247, 0.05); border-left: 4px solid #a855f7; padding: 15px; border-radius: 4px; margin-bottom: 20px;">
             <p style="font-weight: bold; margin-top: 0; font-size: 0.95rem; color: var(--text-color);">👑 プレミアムプラン限定特典：</p>
@@ -404,12 +433,7 @@ def show_upgrade_dialog():
                 <li>AIによるチャート類似度分析・予測アドバイス：<b>解放</b></li>
             </ul>
         </div>
-        <div style="display: flex; flex-direction: column; gap: 8px; align-items: center; margin-top: 15px; margin-bottom: 15px;">
-            <a href="{stripe_link}" target="_top" style="text-decoration: none; width: 100%; display: inline-flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #a855f7 0%, #ec4899 100%); color: white; font-weight: bold; padding: 14px 20px; border-radius: 9999px; font-size: 1rem; box-shadow: 0 4px 6px -1px rgba(168, 85, 247, 0.4); text-align: center;">
-                👑 プレミアムプランにアップグレード (月額 980円)
-            </a>
-            <span style="font-size: 0.8rem; opacity: 0.7; margin-top: 5px; color: var(--text-color);">※決済完了後、自動的に制限が解除されます。</span>
-        </div>
+        {btn_html}
     </div>
     """, unsafe_allow_html=True)
     
@@ -477,7 +501,7 @@ if os.path.exists(logo_path):
         pass
 logo_data_uri = f"data:image/png;base64,{logo_b64}" if logo_b64 else ""
 
-# Inject high-res favicon, apple-touch-icon, and manifest into HTML head
+# Inject high-res favicon, apple-touch-icon, PWA manifest, and credit removal script
 if logo_data_uri:
     st.markdown(
         f"""
@@ -487,9 +511,11 @@ if logo_data_uri:
             <link rel="apple-touch-icon" sizes="180x180" href="{logo_data_uri}">
             <link rel="apple-touch-icon-precomposed" href="{logo_data_uri}">
             <link rel="shortcut icon" href="{logo_data_uri}">
-            <meta name="apple-mobile-web-app-title" content="zenstock">
-            <meta name="application-name" content="zenstock">
-            <meta name="theme-color" content="#2563eb">
+            <meta name="apple-mobile-web-app-title" content="ZenStock">
+            <meta name="application-name" content="ZenStock">
+            <meta name="apple-mobile-web-app-capable" content="yes">
+            <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+            <meta name="theme-color" content="#0b0f19">
         </head>
         <script>
             (function() {{
@@ -503,6 +529,34 @@ if logo_data_uri:
                     appleIcon.href = "{logo_data_uri}";
                     document.head.appendChild(appleIcon);
                 }}
+
+                // Aggressive Streamlit Community Cloud badge and header/footer cleanup
+                function cleanStreamlitBadges() {{
+                    var selectors = [
+                        'footer',
+                        '#MainMenu',
+                        'header',
+                        '.stDeployButton',
+                        '[data-testid="stToolbar"]',
+                        '[data-testid="stDecoration"]',
+                        '[data-testid="stStatusWidget"]',
+                        '[class*="viewerBadge"]',
+                        '[class*="manageApp"]',
+                        'div[data-testid="stBottomBlockContainer"]',
+                        'a[href*="streamlit.io"]'
+                    ];
+                    selectors.forEach(function(sel) {{
+                        document.querySelectorAll(sel).forEach(function(el) {{
+                            if (el && el.parentNode) {{
+                                el.style.setProperty('display', 'none', 'important');
+                                el.style.setProperty('visibility', 'hidden', 'important');
+                            }}
+                        }});
+                    }});
+                }}
+                window.addEventListener('DOMContentLoaded', cleanStreamlitBadges);
+                window.addEventListener('load', cleanStreamlitBadges);
+                setInterval(cleanStreamlitBadges, 300);
             }})();
         </script>
         """,
@@ -535,6 +589,22 @@ dataframe_filter = "invert(0.94) hue-rotate(180deg)" if is_dark else "none"
 
 st.markdown(f"""
 <style>
+    /* Completely hide Streamlit header, footer, MainMenu, deploy buttons, and badges */
+    #MainMenu {visibility: hidden !important; display: none !important;}
+    header {visibility: hidden !important; display: none !important;}
+    footer {visibility: hidden !important; display: none !important;}
+    .stDeployButton {display: none !important;}
+    [data-testid="stToolbar"] {visibility: hidden !important; display: none !important;}
+    [data-testid="stDecoration"] {display: none !important;}
+    [data-testid="stStatusWidget"] {visibility: hidden !important; display: none !important;}
+    .viewerBadge_container__r5tak, [class*="viewerBadge"] {display: none !important;}
+    div[data-testid="stBottomBlockContainer"] {display: none !important;}
+
+    /* Remove extra top margin caused by hidden header */
+    .stAppViewContainer > .main {
+        padding-top: 1.2rem !important;
+    }
+
     /* CSS theme overrides on root */
     :root, .stApp {{
         --background-color: {bg_color};
@@ -9266,3 +9336,24 @@ if st.session_state.get('ls_needs_sync', False):
         st.session_state['ls_needs_sync'] = False
         st.toast("💾 データをブラウザに自動保存しました。")
         st.rerun()
+
+# --- Professional Brand Footer & Legal Disclaimer ---
+footer_border = "rgba(255, 255, 255, 0.08)" if is_dark else "rgba(0, 0, 0, 0.08)"
+footer_text = "#64748b" if is_dark else "#94a3b8"
+
+st.markdown(f"""
+<div style="margin-top: 60px; padding: 28px 16px 20px; border-top: 1px solid {footer_border}; text-align: center; font-size: 0.82rem; color: {footer_text}; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.8;">
+    <div style="margin-bottom: 6px; font-weight: 700; letter-spacing: 0.5px;">
+        <span style="color: {primary_color};">ZenStock</span> Screener & Analytics Platform
+    </div>
+    <div style="margin-bottom: 8px; font-size: 0.8rem;">
+        <span>© 2026 ZenStock. All Rights Reserved.</span>
+        <span style="margin: 0 8px; opacity: 0.4;">|</span>
+        <span>東証プライム・過去5年幾何学パターン分析</span>
+    </div>
+    <div style="font-size: 0.74rem; opacity: 0.75; max-width: 760px; margin: 0 auto; line-height: 1.5;">
+        【免責事項】本サービスは過去の市場データに基づく統計的・幾何学的パターン分析結果を提供するツールであり、特定の有価証券の売買を推奨・助言・勧誘するものではありません。投資の最終判断はご自身の責任において行ってください。
+    </div>
+</div>
+""", unsafe_allow_html=True)
+

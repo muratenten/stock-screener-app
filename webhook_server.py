@@ -469,6 +469,145 @@ def api_register_subscriber(payload: dict):
     add_log(f"👤 Subscriber auto-registered via LIFF: {name} ({user_id[:8]}...)")
     return {"status": "registered", "user_id": user_id, "name": name}
 
+# ================= Stripe Webhook & Firestore Sync =================
+FIREBASE_PROJECT_ID = os.environ.get("FIREBASE_PROJECT_ID", "zenstock-screener")
+FIREBASE_API_KEY = os.environ.get("FIREBASE_API_KEY", "AIzaSyDyq0O937Xeyc7dhNQqh8HL01KkjZuCwUI")
+STRIPE_WEBHOOK_SECRET = os.environ.get("STRIPE_WEBHOOK_SECRET", "")
+PROCESSED_STRIPE_EVENTS = set()
+
+def update_user_tier_in_firebase(user_key: str, tier: str = "premium") -> bool:
+    """Update user's tier field in Firebase Firestore and local preference store."""
+    if not user_key or user_key in ("default", "guest", ""):
+        return False
+        
+    # Always persist locally for instant and resilient lookup
+    save_user_preference(user_key, {"tier": tier})
+    clean_k = user_key.replace("firebase_", "").replace("line_", "")
+    if clean_k != user_key:
+        save_user_preference(clean_k, {"tier": tier})
+
+    url = f"https://firestore.googleapis.com/v1/projects/{FIREBASE_PROJECT_ID}/databases/(default)/documents/portfolios/{user_key}?updateMask.fieldPaths=tier"
+    if FIREBASE_API_KEY:
+        url += f"&key={FIREBASE_API_KEY}"
+    body = {
+        "fields": {
+            "tier": {"stringValue": tier}
+        }
+    }
+    headers = {"Content-Type": "application/json"}
+    try:
+        res = requests.patch(url, headers=headers, json=body, timeout=10)
+        if res.status_code in (200, 201):
+            add_log(f"✅ [FIREBASE] Successfully updated {user_key} to tier='{tier}'")
+            return True
+        elif res.status_code == 404:
+            # Create document if not exists
+            url_create = f"https://firestore.googleapis.com/v1/projects/{FIREBASE_PROJECT_ID}/databases/(default)/documents/portfolios/{user_key}"
+            if FIREBASE_API_KEY:
+                url_create += f"?key={FIREBASE_API_KEY}"
+            body_create = {
+                "fields": {
+                    "tier": {"stringValue": tier},
+                    "portfolio_data": {"stringValue": "{}"},
+                    "display_name": {"stringValue": user_key}
+                }
+            }
+            res_c = requests.post(url_create, headers=headers, json=body_create, timeout=10)
+            if res_c.status_code in (200, 201):
+                add_log(f"✅ [FIREBASE] Created new document for {user_key} with tier='{tier}'")
+                return True
+        add_log(f"⚠️ [FIREBASE] HTTP {res.status_code}: {res.text[:100]} (Local preference fallback saved)")
+    except Exception as e:
+        add_log(f"❌ [FIREBASE EXCEPTION] {e} (Local preference fallback saved)")
+    return True
+
+@app.get("/api/user_tier")
+def api_get_user_tier(user_key: str):
+    """Query user's subscription tier for PC app and LIFF."""
+    if not user_key or user_key in ("default", "guest", ""):
+        return {"user_key": user_key, "tier": "free"}
+
+    # Admin privilege check
+    if user_key in ("google_111998389463136687256", "takkun", "line_Uf3de8f9ba3463f32a3e05b3e019b22f4", "U808d7431c75b1a6dded4e6be45447e27") or "111998389463136687256" in user_key:
+        return {"user_key": user_key, "tier": "premium"}
+
+    prefs = load_all_preferences()
+    if user_key in prefs and prefs[user_key].get("tier") == "premium":
+        return {"user_key": user_key, "tier": "premium"}
+
+    clean_k = user_key.replace("firebase_", "").replace("line_", "")
+    if clean_k in prefs and prefs[clean_k].get("tier") == "premium":
+        return {"user_key": user_key, "tier": "premium"}
+
+    return {"user_key": user_key, "tier": "free"}
+
+@app.post("/api/stripe_webhook")
+async def stripe_webhook(request: Request):
+    """Handle Stripe Subscription & Checkout events to automatically grant premium tier."""
+    body_bytes = await request.body()
+    sig_header = request.headers.get("stripe-signature")
+    event = None
+
+    if STRIPE_WEBHOOK_SECRET and sig_header:
+        try:
+            import stripe
+            event = stripe.Webhook.construct_event(
+                body_bytes, sig_header, STRIPE_WEBHOOK_SECRET
+            )
+        except Exception as e:
+            add_log(f"❌ Stripe signature verification failed: {e}")
+            raise HTTPException(status_code=400, detail="Invalid Stripe signature")
+    else:
+        try:
+            event = json.loads(body_bytes.decode("utf-8"))
+        except Exception as e:
+            add_log(f"❌ Stripe invalid JSON: {e}")
+            raise HTTPException(status_code=400, detail="Invalid JSON payload")
+
+    event_id = event.get("id")
+    if event_id:
+        if event_id in PROCESSED_STRIPE_EVENTS:
+            add_log(f"ℹ️ [STRIPE] Event {event_id} already processed. Skipping.")
+            return {"status": "already_processed"}
+        PROCESSED_STRIPE_EVENTS.add(event_id)
+        if len(PROCESSED_STRIPE_EVENTS) > 500:
+            PROCESSED_STRIPE_EVENTS.clear()
+
+    event_type = event.get("type", "")
+    add_log(f"💳 [STRIPE EVENT] Received: {event_type}")
+
+    # 1. Checkout completed (subscription started)
+    if event_type == "checkout.session.completed":
+        session = event.get("data", {}).get("object", {})
+        client_ref_id = session.get("client_reference_id")
+        customer_email = session.get("customer_details", {}).get("email") or session.get("customer_email")
+        
+        add_log(f"💳 Checkout completed: client_ref_id={client_ref_id}, email={customer_email}")
+        if client_ref_id and client_ref_id not in ("default", "guest", ""):
+            ok = update_user_tier_in_firebase(client_ref_id, "premium")
+            if ok:
+                add_log(f"🎉 User {client_ref_id} successfully upgraded to PREMIUM in Firestore!")
+            
+            # If LINE user ID, also send LINE push
+            if client_ref_id.startswith("line_") or client_ref_id.startswith("U"):
+                clean_uid = client_ref_id.replace("line_", "")
+                save_user_preference(clean_uid, {"tier": "premium"})
+                send_line_message(
+                    "🎉 プレミアムプランへのご登録ありがとうございます！\n"
+                    "PCアプリ（過去チャート無制限練習など）およびLINEでの全機能がアンロックされました！",
+                    target_user_id=clean_uid
+                )
+
+    # 2. Subscription cancelled or payment failed
+    elif event_type in ("customer.subscription.deleted", "invoice.payment_failed"):
+        obj = event.get("data", {}).get("object", {})
+        client_ref_id = obj.get("metadata", {}).get("client_reference_id") or obj.get("client_reference_id")
+        if client_ref_id and client_ref_id not in ("default", "guest", ""):
+            add_log(f"⚠️ Subscription ended/failed for {client_ref_id}. Downgrading to free...")
+            update_user_tier_in_firebase(client_ref_id, "free")
+
+    return {"status": "success"}
+
 @app.get("/logs", response_class=HTMLResponse)
 def view_logs():
     now = time.time()
