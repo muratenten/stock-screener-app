@@ -6219,22 +6219,10 @@ def apply_preset(preset_name):
         st.session_state["scr_min_fund"] = 2
         st.session_state["scr_filter_vol_su"] = True
         st.session_state["scr_filter_gc"] = True
-    elif preset_name == "LINEスナイパー":
-        st.session_state["pending_market"] = "東証プライム (全上場銘柄 - 動的取得)"
-        st.session_state["scr_min_total"] = 0
-        st.session_state["scr_min_tech"] = 0
-        st.session_state["scr_min_fund"] = 0
-        st.session_state["scr_filter_pbr"] = True
-        st.session_state["scr_filter_similarity"] = True
-        st.session_state["scr_similarity_match_days"] = 50
-        st.session_state["scr_similarity_future_days"] = 15
-        st.session_state["scr_similarity_days"] = 15
-        st.session_state["scr_similarity_pct"] = 8.0
         
     st.session_state["active_preset"] = preset_name
     presets_inv = {
         "カスタム設定": "⚙️ カスタム設定",
-        "LINEスナイパー": "🎯 LINEスナイパー (急騰狙い)",
         "大化け成長株": "🚀 大化け成長株狙い",
         "高配当割安株": "💰 高配当＆バリュー割安株",
         "逆張り・大底打ち": "🔄 逆張り・大底打ち狙い",
@@ -6286,16 +6274,6 @@ def check_preset_match():
         expected.update({
             "scr_min_total": 5, "scr_min_tech": 2, "scr_min_fund": 2,
             "scr_filter_vol_su": True, "scr_filter_gc": True
-        })
-    elif curr == "LINEスナイパー":
-        expected.update({
-            "scr_min_total": 0, "scr_min_tech": 0, "scr_min_fund": 0,
-            "scr_filter_pbr": True,
-            "scr_filter_similarity": True,
-            "scr_similarity_match_days": 50,
-            "scr_similarity_future_days": 15,
-            "scr_similarity_days": 15,
-            "scr_similarity_pct": 8.0
         })
         
     mismatch = False
@@ -6594,7 +6572,6 @@ with tab_screen:
             st.markdown("**💡 スクリーニング・プリセット選択**")
             presets = {
                 "⚙️ カスタム設定": "カスタム設定",
-                "🎯 LINEスナイパー (急騰狙い)": "LINEスナイパー",
                 "🚀 大化け成長株 (CANSLIM風)": "大化け成長株",
                 "💰 高配当割安株": "高配当割安株",
                 "🔄 逆張り・大底打ち狙い": "逆張り・大底打ち",
@@ -6721,13 +6698,9 @@ with tab_screen:
                 shape_threshold = 0.80
         else:
             st.markdown('<div style="font-weight: bold; font-size: 0.95rem; color: var(--text-color); margin-bottom: 8px;">💡 スクリーニング・プリセット選択:</div>', unsafe_allow_html=True)
-            col_p0, col_p1, col_p2, col_p3, col_p4, col_p5 = st.columns(6)
+            col_p1, col_p2, col_p3, col_p4, col_p5 = st.columns(5)
             curr_preset = st.session_state.get("active_preset", "カスタム設定")
             
-            with col_p0:
-                if st.button("🎯 LINEスナイパー", key="btn_preset_sniper", use_container_width=True, type="primary" if curr_preset == "LINEスナイパー" else "secondary", help="LINE通知と完全連動！東証プライム・PBR<1.0・過去急騰パターン合致率100%（勝率72.7%スイング戦略）の銘柄を即座に抽出します。"):
-                    apply_preset("LINEスナイパー")
-                    st.rerun()
             with col_p1:
                 if st.button("⚙️ カスタム設定", key="btn_preset_custom", use_container_width=True, type="primary" if curr_preset == "カスタム設定" else "secondary"):
                     apply_preset("カスタム設定")
@@ -7018,8 +6991,8 @@ with tab_screen:
             
         # Start button
         if start_screening_clicked:
-            # Check if LINE Sniper mode is active
-            is_sniper_active = (st.session_state.get("active_preset") == "LINEスナイパー") or (
+            # Check if high-probability sniper criteria are matched
+            is_sniper_active = (
                 filter_similarity_pattern and 
                 similarity_match_days == 50 and 
                 similarity_future_days == 15 and 
@@ -7029,7 +7002,7 @@ with tab_screen:
             )
             
             if is_sniper_active:
-                with st.spinner("🎯 LINEスナイパー高速スキャン実行中（東証プライム・勝率72.7%スイング判定）..."):
+                with st.spinner("🎯 高勝率急騰パターン高速スキャン実行中（東証プライム・勝率72.7%スイング判定）..."):
                     import daily_sniper_screener as dss
                     sniped_list, sniper_msg = dss.run_sniper_screening(
                         n_match=50,
@@ -7104,15 +7077,15 @@ with tab_screen:
                                 '配当利回り (%)': float(metrics['dividend_yield']) if metrics.get('dividend_yield') is not None else None,
                                 '優待利回り (%)': float(y_yield_val) if (y_has and y_yield_val > 0) else (0.0 if y_has else None),
                                 '株主優待': (", ".join(y_cats[:2])) if y_has else 'なし',
-                                'テーマ/タグ': "🎯 LINEスナイパー急騰候補, 東証プライム, PBR割安",
+                                'テーマ/タグ': "🎯 急騰スナイパー候補, 東証プライム, PBR割安",
                                 'raw_data': analysis
                             })
                             
                     st.session_state['screening_results'] = sniper_results
                     if sniper_results:
-                        st.toast(f"🎯 LINEスナイパー条件に合致する {len(sniper_results)} 銘柄を検出しました！")
+                        st.toast(f"🎯 高勝率急騰パターンに合致する {len(sniper_results)} 銘柄を検出しました！")
                     else:
-                        st.toast("🎯 本日はLINEスナイパー条件に合致する銘柄はありませんでした。")
+                        st.toast("🎯 条件に合致するスナイパー急騰銘柄はありませんでした。")
                     st.rerun()
 
             with st.spinner("株価データ及び企業財務データを取得中..."):
