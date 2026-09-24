@@ -126,50 +126,88 @@ _CACHED_STOCK_DATA = {}
 _CACHED_STOCK_INFO = {}
 CACHE_TTL = 1800  # 30 minutes
 
-def warm_up_cache():
-    """Pre-warm stock cache in background on server start."""
+def is_cache_fresh(stock_data: dict) -> bool:
+    """Check if cached stock data includes recent market date (not stale)."""
+    if not stock_data or len(stock_data) < 30:
+        return False
+    try:
+        sample_key = next(iter(stock_data))
+        series = stock_data[sample_key]
+        if series is None or len(series) == 0:
+            return False
+        latest_dt = series.index[-1]
+        
+        if hasattr(latest_dt, 'date'):
+            latest_date = latest_dt.date()
+        else:
+            latest_date = pd.to_datetime(latest_dt).date()
+            
+        import datetime
+        now_jst = datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=9))).date()
+        diff_days = (now_jst - latest_date).days
+        weekday = now_jst.weekday()
+        # Monday (0) or Sunday (6) can have Friday's data (3-4 days gap)
+        allowed_gap = 4 if weekday in (0, 6) else 2
+        
+        is_fresh = diff_days <= allowed_gap
+        if not is_fresh:
+            print(f"⚠️ [STALE CACHE DETECTED] Cache latest date is {latest_date} (today is {now_jst}, gap={diff_days}d). Refresh required.")
+        return is_fresh
+    except Exception as e:
+        print(f"⚠️ [CACHE FRESHNESS CHECK ERROR] {e}")
+        return False
+
+def warm_up_cache(force=False):
+    """Pre-warm and refresh stock cache in background on server start or scheduled routine."""
     try:
         tickers, fund_cache, jp_names = load_tickers_and_fundamentals()
-        get_or_fetch_stock_data(tickers, fund_cache, jp_names, pbr_max=1.0)
+        get_or_fetch_stock_data(tickers, fund_cache, jp_names, pbr_max=1.0, force_refresh=force)
         import gc
         gc.collect()
     except Exception as e:
         print(f"[WARMUP ERROR] {e}")
 
-def get_or_fetch_stock_data(tickers, fund_cache, jp_names, pbr_max=1.0):
+def get_or_fetch_stock_data(tickers, fund_cache, jp_names, pbr_max=1.0, force_refresh=False):
     """
-    Optimized stock data fetching:
-      1. Memory cache check (0s)
-      2. Disk cache check (0.01s)
-      3. Pre-PBR filtering: only download stocks that could qualify for PBR < pbr_max (reducing 1,500 to ~500)
-      4. Parallel download with 20 workers
+    Optimized stock data fetching with freshness validation:
+      1. Memory cache check (only if fresh and not force_refresh)
+      2. Disk cache check (only if market date is fresh and not force_refresh)
+      3. Auto-download latest prices via parallel yfinance if cache is stale or missing
     """
     global _CACHE_TIMESTAMP, _CACHED_STOCK_DATA, _CACHED_STOCK_INFO
     now = time.time()
     
-    # 1. Return in-memory cache if fresh
-    if _CACHED_STOCK_DATA and (now - _CACHE_TIMESTAMP < CACHE_TTL):
-        print(f"⚡ [MEMORY CACHE HIT] Using in-memory stock data ({len(_CACHED_STOCK_DATA)} stocks, age {int(now - _CACHE_TIMESTAMP)}s).")
-        return _CACHED_STOCK_DATA, _CACHED_STOCK_INFO
+    # 1. Return in-memory cache if fresh & market date is current
+    if not force_refresh and _CACHED_STOCK_DATA and (now - _CACHE_TIMESTAMP < CACHE_TTL):
+        if is_cache_fresh(_CACHED_STOCK_DATA):
+            print(f"⚡ [MEMORY CACHE HIT] Using fresh in-memory stock data ({len(_CACHED_STOCK_DATA)} stocks).")
+            return _CACHED_STOCK_DATA, _CACHED_STOCK_INFO
+        else:
+            print("🔄 [MEMORY CACHE STALE] In-memory cache is outdated. Proceeding to disk/fresh fetch...")
 
-    # 2. Return disk cache if available
-    if os.path.exists(DISK_PRICE_CACHE):
+    # 2. Return disk cache if available AND fresh
+    if not force_refresh and os.path.exists(DISK_PRICE_CACHE):
         try:
             mtime = os.path.getmtime(DISK_PRICE_CACHE)
             with open(DISK_PRICE_CACHE, "rb") as f:
                 cached = pickle.load(f)
-                _CACHED_STOCK_DATA = cached['data']
-                _CACHED_STOCK_INFO = cached['info']
+                d_data = cached.get('data', {})
+                d_info = cached.get('info', {})
+                
+            if len(d_data) >= 30 and is_cache_fresh(d_data):
+                _CACHED_STOCK_DATA = d_data
+                _CACHED_STOCK_INFO = d_info
                 _CACHE_TIMESTAMP = mtime
-            print(f"⚡ [DISK CACHE HIT] Loaded {len(_CACHED_STOCK_DATA)} stocks from {DISK_PRICE_CACHE} (age {int(now - mtime)}s).")
-            if len(_CACHED_STOCK_DATA) >= 30:
-                # Return immediately for instant zero-wait execution
+                sample_k = next(iter(d_data))
+                latest_d = d_data[sample_k].index[-1].strftime('%Y-%m-%d')
+                print(f"⚡ [DISK CACHE HIT] Loaded {len(_CACHED_STOCK_DATA)} stocks from disk cache (latest date: {latest_d}).")
                 return _CACHED_STOCK_DATA, _CACHED_STOCK_INFO
+            else:
+                print("🔄 [DISK CACHE STALE] Disk cache contains outdated market date. Triggering fresh download...")
         except Exception as e:
             print(f"[DISK CACHE READ ERROR] {e}")
 
     # 3. SPEED OPTIMIZATION: Pre-PBR Filter
-    # Filter out stocks that definitely have PBR >= pbr_max in fundamentals cache
     target_tickers = []
     if pbr_max is not None and pbr_max > 0:
         for t in tickers:
@@ -182,13 +220,12 @@ def get_or_fetch_stock_data(tickers, fund_cache, jp_names, pbr_max=1.0):
             elif bps is not None and bps > 0:
                 target_tickers.append(t)
             else:
-                # Include tickers without fundamental info to avoid missing candidates
                 target_tickers.append(t)
         print(f"🚀 [PRE-PBR FILTER] Filtered {len(tickers)} Prime stocks down to {len(target_tickers)} candidates (PBR < {pbr_max:.1f}).")
     else:
         target_tickers = tickers
 
-    print(f"🔄 [PARALLEL FETCH] Downloading latest 2-year prices for {len(target_tickers)} candidates (20 workers)...", flush=True)
+    print(f"🔄 [PARALLEL FETCH] Downloading latest prices for {len(target_tickers)} candidates (25 workers)...", flush=True)
     stock_data = {}
     stock_info = {}
     
@@ -226,7 +263,7 @@ def get_or_fetch_stock_data(tickers, fund_cache, jp_names, pbr_max=1.0):
         return ticker, None
 
     t0 = time.time()
-    with ThreadPoolExecutor(max_workers=20) as executor:
+    with ThreadPoolExecutor(max_workers=25) as executor:
         results = executor.map(fetch_stock, target_tickers)
         for ticker, data in results:
             if data is not None:
@@ -258,7 +295,8 @@ def run_sniper_screening(
     test_mode=False,
     target_user_id=None,
     send_push=True,
-    is_interactive=False
+    is_interactive=False,
+    force_refresh=False
 ):
     """
     Execute sniper screening:
@@ -278,7 +316,7 @@ def run_sniper_screening(
         return [], "エラー: 銘柄リストを読み込めませんでした。"
         
     # 1. Fetch or get cached stock data with pre-PBR filtering
-    stock_data, stock_info = get_or_fetch_stock_data(tickers, fund_cache, jp_names, pbr_max=pbr_max)
+    stock_data, stock_info = get_or_fetch_stock_data(tickers, fund_cache, jp_names, pbr_max=pbr_max, force_refresh=force_refresh)
     
     # 2. Strict PBR verification with current price
     targets = {}

@@ -247,6 +247,7 @@ def broadcast_morning_sniper_routine(force=False):
 
 def _morning_scheduler_loop():
     last_run_date = ""
+    last_warmup_date = ""
     add_log("⏰ Morning Routine Scheduler background loop started.")
     import datetime
     while True:
@@ -258,7 +259,14 @@ def _morning_scheduler_loop():
             is_weekday = now_jst.weekday() < 5
             today_str = now_jst.strftime("%Y-%m-%d")
             
-            # Trigger at 10:00 AM JST on weekdays
+            # 1. Pre-warm & refresh cache at 09:55 AM JST on weekdays (5 mins before broadcast)
+            if is_weekday and now_jst.hour == 9 and now_jst.minute == 55:
+                if last_warmup_date != today_str:
+                    last_warmup_date = today_str
+                    add_log("🌅 [SCHEDULER 09:55] Running pre-broadcast cache refresh with latest market data...")
+                    warm_up_cache(force=True)
+
+            # 2. Trigger broadcast at 10:00 AM JST on weekdays
             if is_weekday and now_jst.hour == 10 and now_jst.minute == 0:
                 if last_run_date != today_str:
                     last_run_date = today_str
@@ -417,9 +425,9 @@ def api_save_pref(payload: dict):
 
 @app.post("/api/refresh_cache")
 def api_refresh_cache(background_tasks: BackgroundTasks):
-    add_log("🔄 Cache refresh requested via API")
-    background_tasks.add_task(warm_up_cache)
-    return {"status": "refresh_started", "message": "Cache pre-warming started in background"}
+    add_log("🔄 Cache refresh requested via API (force=True)")
+    background_tasks.add_task(warm_up_cache, force=True)
+    return {"status": "refresh_started", "message": "Latest stock data download started in background"}
 
 @app.get("/api/subscribers")
 def api_subscribers():
@@ -606,6 +614,12 @@ async def line_webhook(request: Request, background_tasks: BackgroundTasks, x_li
         if user_id == LINE_USER_ID and any(k in text for k in ["朝通知テスト", "一斉配信テスト", "配信テスト"]):
             reply_line_message(reply_token, "🌅 知人全員への朝通知テスト配信を開始します...")
             background_tasks.add_task(broadcast_morning_sniper_routine, force=True)
+            continue
+
+        # Admin Command: Force Cache Refresh
+        if user_id == LINE_USER_ID and any(k in text for k in ["キャッシュ更新", "データ更新", "最新データ更新", "株価更新"]):
+            reply_line_message(reply_token, "🔄 最新の株価データを市場からダウンロードし、キャッシュを更新しています（約15秒）...")
+            background_tasks.add_task(warm_up_cache, force=True)
             continue
 
         # Invite & Friend Sharing Command
