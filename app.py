@@ -462,7 +462,11 @@ def show_upgrade_dialog():
         else:
             st.warning("ログイン状態が確認できません。")
 
-@st.dialog("📱 LINE連携（毎朝のスナイパー急騰速報）", width="medium")
+LINE_SVG_PATH = "M19.365 9.863c.349 0 .63.285.63.631 0 .345-.281.63-.63.63H17.61v1.125h1.755c.349 0 .63.283.63.63 0 .344-.281.629-.63.629h-2.386c-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63h2.386c.346 0 .627.285.627.63 0 .349-.281.63-.63.63H17.61v1.125h1.755zm-3.855 3.016c0 .27-.174.51-.432.596-.064.021-.133.031-.199.031-.211 0-.391-.09-.51-.25l-2.443-3.317v2.94c0 .344-.279.629-.631.629-.346 0-.626-.285-.626-.629V8.108c0-.27.173-.51.43-.595.06-.023.136-.033.194-.033.195 0 .375.104.495.254l2.462 3.33V8.108c0-.345.282-.63.63-.63.345 0 .63.285.63.63v4.771zm-5.741 0c0 .344-.282.629-.631.629-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63.346 0 .628.285.628.63v4.771zm-2.466.629H4.917c-.345 0-.63-.285-.63-.629V8.108c0-.345.285-.63.63-.63.348 0 .63.285.63.63v4.141h1.756c.348 0 .629.283.629.63 0 .344-.282.629-.629.629M24 10.314C24 4.943 18.615.572 12 .572S0 4.943 0 10.314c0 4.811 4.27 8.842 10.035 9.608.391.082.923.258 1.058.59.12.301.079.766.038 1.08l-.164 1.02c-.045.301-.24 1.186 1.049.645 1.291-.539 6.916-4.078 9.436-6.975C23.176 14.393 24 12.458 24 10.314"
+LINE_OFFICIAL_SVG_GREEN = f'<svg style="width: 20px; height: 20px; vertical-align: middle; fill: #06c755; display: inline-block; flex-shrink: 0;" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="{LINE_SVG_PATH}" /></svg>'
+LINE_OFFICIAL_SVG_WHITE = f'<svg style="width: 20px; height: 20px; vertical-align: middle; fill: #ffffff; display: inline-block; flex-shrink: 0;" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="{LINE_SVG_PATH}" /></svg>'
+
+@st.dialog("LINE連携（毎朝のスナイパー急騰速報）", width="medium")
 def show_line_link_dialog():
     u_key = st.session_state.get('user_key', 'default')
     line_link_url = f"https://line.me/R/oaMessage/@317uxnml/?連携_{u_key}"
@@ -471,9 +475,11 @@ def show_line_link_dialog():
         <p><b>平日の毎朝10:00</b>に東証プライム全1,529銘柄から自動検出される【勝率72.7%スナイパー銘柄】の速報をLINEで受け取れます。</p>
         
         <div style="background: rgba(6, 199, 85, 0.08); border: 1.5px solid #06c755; border-radius: 12px; padding: 16px; margin: 15px 0; text-align: center;">
-            <p style="font-weight: bold; margin-top: 0; color: #06c755; font-size: 1rem;">👇 スマホ・LINEアプリからワンタップ連携</p>
-            <a href="{line_link_url}" target="_blank" style="text-decoration: none; display: inline-flex; align-items: center; justify-content: center; background: #06c755; color: white; font-weight: bold; padding: 12px 24px; border-radius: 9999px; font-size: 0.95rem; box-shadow: 0 4px 6px -1px rgba(6, 199, 85, 0.3);">
-                💬 LINEを開いて連携メッセージを送信
+            <p style="font-weight: bold; margin-top: 0; color: #06c755; font-size: 1rem; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                {LINE_OFFICIAL_SVG_GREEN} スマホ・LINEアプリからワンタップ連携
+            </p>
+            <a href="{line_link_url}" target="_blank" style="text-decoration: none; display: inline-flex; align-items: center; justify-content: center; gap: 8px; background: #06c755; color: white; font-weight: bold; padding: 12px 24px; border-radius: 9999px; font-size: 0.95rem; box-shadow: 0 4px 6px -1px rgba(6, 199, 85, 0.3);">
+                {LINE_OFFICIAL_SVG_WHITE} <span>LINEを開いて連携メッセージを送信</span>
             </a>
             <p style="font-size: 0.8rem; opacity: 0.8; margin-top: 8px; margin-bottom: 0;">※タップするとLINEが開きます。自動入力された「連携_{u_key}」をそのまま送信するだけで完了します。</p>
         </div>
@@ -5961,17 +5967,17 @@ is_admin_acc = (
 has_linked_line = bool(st.session_state.get("user_line_id")) or user_is_line_account or is_admin_acc
 
 if has_linked_line:
-    st.sidebar.markdown("""
-    <div style="background: rgba(34, 197, 94, 0.08); border: 1px solid rgba(34, 197, 94, 0.3); border-radius: 8px; padding: 8px 12px; margin-top: 8px; margin-bottom: 12px; font-size: 0.8rem; display: flex; align-items: center; gap: 8px;">
-        <span style="color: #22c55e; font-size: 1.1rem;">✅</span>
+    st.sidebar.markdown(f"""
+    <div style="background: rgba(6, 199, 85, 0.08); border: 1px solid rgba(6, 199, 85, 0.3); border-radius: 8px; padding: 8px 12px; margin-top: 8px; margin-bottom: 12px; font-size: 0.8rem; display: flex; align-items: center; gap: 8px;">
+        {LINE_OFFICIAL_SVG_GREEN}
         <div style="line-height: 1.3;">
-            <b style="color: #22c55e;">LINE連携中</b><br>
+            <b style="color: #06c755;">LINE連携中</b><br>
             <span style="opacity: 0.75; font-size: 0.75rem;">毎朝のスナイパー急騰通知を受信中</span>
         </div>
     </div>
     """, unsafe_allow_html=True)
 else:
-    if st.sidebar.button("📱 LINE連携（毎朝の速報を受信）", use_container_width=True, key="sidebar_line_link_btn"):
+    if st.sidebar.button("LINE連携（毎朝の速報を受信）", use_container_width=True, key="sidebar_line_link_btn"):
         show_line_link_dialog()
 
 st.sidebar.caption("💡 別のIDに切り替える、または初期画面に戻るには下のボタンからログアウトしてください。")
@@ -6209,9 +6215,9 @@ has_line = bool(st.session_state.get("user_line_id")) or is_line_acc or is_admin
 if not has_line:
     col_q1, col_q2 = st.columns([3, 1])
     with col_q1:
-        st.markdown("""
-        <div style="background: rgba(6, 199, 85, 0.08); border: 1px solid rgba(6, 199, 85, 0.35); border-radius: 10px; padding: 7px 12px; margin-top: 8px; font-size: 0.84rem; display: flex; align-items: center; gap: 8px;">
-            <span style="font-size: 1.15rem;">📱</span>
+        st.markdown(f"""
+        <div style="background: rgba(6, 199, 85, 0.08); border: 1px solid rgba(6, 199, 85, 0.35); border-radius: 10px; padding: 7px 12px; margin-top: 8px; font-size: 0.84rem; display: flex; align-items: center; gap: 10px;">
+            {LINE_OFFICIAL_SVG_GREEN}
             <div style="line-height: 1.35;">
                 <b style="color: #06c755;">LINE連携が未設定です</b><br>
                 <span style="opacity: 0.8; font-size: 0.78rem;">平日の毎朝10:00に勝率72.7%スナイパー急騰速報をLINEへ自動配信します</span>
@@ -6220,14 +6226,14 @@ if not has_line:
         """, unsafe_allow_html=True)
     with col_q2:
         st.markdown("<div style='margin-top: 8px;'></div>", unsafe_allow_html=True)
-        if st.button("💬 LINE連携", use_container_width=True, key="header_quick_line_link_btn"):
+        if st.button("LINE連携", use_container_width=True, key="header_quick_line_link_btn"):
             show_line_link_dialog()
 else:
-    st.markdown("""
-    <div style="background: rgba(34, 197, 94, 0.07); border: 1px solid rgba(34, 197, 94, 0.25); border-radius: 8px; padding: 5px 12px; margin-top: 8px; font-size: 0.78rem; display: inline-flex; align-items: center; gap: 6px;">
-        <span style="color: #22c55e;">✅</span>
-        <span style="color: #22c55e; font-weight: bold;">LINE連携中</span>
-        <span style="opacity: 0.7;">（毎朝10:00のスナイパー急騰通知を受信中）</span>
+    st.markdown(f"""
+    <div style="background: rgba(6, 199, 85, 0.08); border: 1px solid rgba(6, 199, 85, 0.25); border-radius: 9999px; padding: 5px 14px; margin-top: 8px; font-size: 0.8rem; display: inline-flex; align-items: center; gap: 8px;">
+        {LINE_OFFICIAL_SVG_GREEN}
+        <b style="color: #06c755;">LINE連携中</b>
+        <span style="opacity: 0.75; font-size: 0.76rem;">（毎朝10:00のスナイパー急騰通知を受信中）</span>
     </div>
     """, unsafe_allow_html=True)
 
