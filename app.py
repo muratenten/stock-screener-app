@@ -6220,7 +6220,7 @@ def apply_preset(preset_name):
         st.session_state["scr_filter_vol_su"] = True
         st.session_state["scr_filter_gc"] = True
     elif preset_name == "LINEスナイパー":
-        st.session_state["scr_market"] = "東証プライム (全上場銘柄 - 動的取得)"
+        st.session_state["pending_market"] = "東証プライム (全上場銘柄 - 動的取得)"
         st.session_state["scr_min_total"] = 0
         st.session_state["scr_min_tech"] = 0
         st.session_state["scr_min_fund"] = 0
@@ -6410,6 +6410,9 @@ with tab_screen:
     
     is_mobile = st.session_state.get('ui_mode', 'PC') == 'スマホ'
     
+    if "pending_market" in st.session_state:
+        st.session_state["scr_market"] = st.session_state.pop("pending_market")
+        
     if is_mobile:
         market = st.selectbox(
             "全体集合（スクリーニング対象）の選択",
