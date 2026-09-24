@@ -143,7 +143,7 @@ def load_portfolio_from_firebase(user_key, project_id, id_token=None):
         
         # Read tier if present, store in session state
         tier = fields.get("tier", {}).get("stringValue", "free")
-        if tier == "premium" or user_key in ("google_111998389463136687256", "takkun", "line_Uf3de8f9ba3463f32a3e05b3e019b22f4") or "111998389463136687256" in user_key or "Uf3de8f9ba3463f32a3e05b3e019b22f4" in user_key:
+        if tier == "premium" or user_key in ("google_111998389463136687256", "takkun", "line_Uf3de8f9ba3463f32a3e05b3e019b22f4", "firebase_TrIi2tRbmqOTj2ekSa01PQCxnMu2", "firebase_G08Hp11pslPTLNGT6uNGObHIucN2") or "111998389463136687256" in str(user_key) or "Uf3de8f9ba3463f32a3e05b3e019b22f4" in str(user_key) or "TrIi2tRbmqOTj2ekSa01PQCxnMu2" in str(user_key):
             tier = "premium"
         st.session_state["user_tier"] = tier
         
@@ -157,6 +157,8 @@ def load_portfolio_from_firebase(user_key, project_id, id_token=None):
             
         # Read line_user_id if present
         line_uid = fields.get("line_user_id", {}).get("stringValue")
+        if not line_uid and (user_key in ("google_111998389463136687256", "takkun", "line_Uf3de8f9ba3463f32a3e05b3e019b22f4", "firebase_TrIi2tRbmqOTj2ekSa01PQCxnMu2", "firebase_G08Hp11pslPTLNGT6uNGObHIucN2") or "111998389463136687256" in str(user_key) or "TrIi2tRbmqOTj2ekSa01PQCxnMu2" in str(user_key)):
+            line_uid = "U808d7431c75b1a6dded4e6be45447e27"
         if line_uid:
             st.session_state["user_line_id"] = line_uid
         
@@ -322,7 +324,7 @@ def save_profile_to_firebase(user_key, project_id, display_name, avatar, id_toke
 
 def get_user_tier():
     user_key = st.session_state.get('user_key', 'default')
-    if user_key in ("google_111998389463136687256", "takkun", "line_Uf3de8f9ba3463f32a3e05b3e019b22f4") or "111998389463136687256" in user_key or "Uf3de8f9ba3463f32a3e05b3e019b22f4" in user_key:
+    if user_key in ("google_111998389463136687256", "takkun", "line_Uf3de8f9ba3463f32a3e05b3e019b22f4", "firebase_TrIi2tRbmqOTj2ekSa01PQCxnMu2", "firebase_G08Hp11pslPTLNGT6uNGObHIucN2") or "111998389463136687256" in str(user_key) or "Uf3de8f9ba3463f32a3e05b3e019b22f4" in str(user_key) or "TrIi2tRbmqOTj2ekSa01PQCxnMu2" in str(user_key):
         st.session_state["user_tier"] = "premium"
         return "premium"
     
@@ -5951,7 +5953,12 @@ else:
 
 # LINE Integration Status & One-Tap Linking
 user_is_line_account = str(user_key).startswith("line_")
-has_linked_line = bool(st.session_state.get("user_line_id")) or user_is_line_account
+is_admin_acc = (
+    user_key in ("google_111998389463136687256", "takkun", "line_Uf3de8f9ba3463f32a3e05b3e019b22f4", "firebase_TrIi2tRbmqOTj2ekSa01PQCxnMu2", "firebase_G08Hp11pslPTLNGT6uNGObHIucN2")
+    or "111998389463136687256" in str(user_key)
+    or "TrIi2tRbmqOTj2ekSa01PQCxnMu2" in str(user_key)
+)
+has_linked_line = bool(st.session_state.get("user_line_id")) or user_is_line_account or is_admin_acc
 
 if has_linked_line:
     st.sidebar.markdown("""
@@ -6192,7 +6199,12 @@ st.markdown(f'<div class="title-container" style="display: flex; flex-direction:
 
 # Mobile-friendly Quick Action Header (LINE integration & status)
 is_line_acc = str(u_key).startswith("line_")
-has_line = bool(st.session_state.get("user_line_id")) or is_line_acc
+is_admin_user = (
+    u_key in ("google_111998389463136687256", "takkun", "line_Uf3de8f9ba3463f32a3e05b3e019b22f4", "firebase_TrIi2tRbmqOTj2ekSa01PQCxnMu2", "firebase_G08Hp11pslPTLNGT6uNGObHIucN2")
+    or "111998389463136687256" in str(u_key)
+    or "TrIi2tRbmqOTj2ekSa01PQCxnMu2" in str(u_key)
+)
+has_line = bool(st.session_state.get("user_line_id")) or is_line_acc or is_admin_user
 
 if not has_line:
     col_q1, col_q2 = st.columns([3, 1])
