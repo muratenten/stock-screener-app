@@ -154,6 +154,11 @@ def load_portfolio_from_firebase(user_key, project_id, id_token=None):
         avatar = fields.get("avatar", {}).get("stringValue")
         if avatar:
             st.session_state["user_avatar"] = avatar
+            
+        # Read line_user_id if present
+        line_uid = fields.get("line_user_id", {}).get("stringValue")
+        if line_uid:
+            st.session_state["user_line_id"] = line_uid
         
         # Parse portfolio data and immediately sync to local disk cache & session state
         if portfolio_str:
@@ -427,6 +432,7 @@ def show_upgrade_dialog():
         <div style="background: rgba(168, 85, 247, 0.05); border-left: 4px solid #a855f7; padding: 15px; border-radius: 4px; margin-bottom: 20px;">
             <p style="font-weight: bold; margin-top: 0; font-size: 0.95rem; color: var(--text-color);">👑 プレミアムプラン限定特典：</p>
             <ul style="margin: 0; padding-left: 20px; font-size: 0.88rem; line-height: 1.6; opacity: 0.9; color: var(--text-color);">
+                <li>📱 <b>LINE急騰スナイパー速報（毎朝10:00）：銘柄名・コードをフル開示</b></li>
                 <li>過去練習モード（タイムトラベル）の結果表示：<b>無制限</b></li>
                 <li>類似連動フィルタ・類似パターン検索：<b>すべて解放</b></li>
                 <li>保有銘柄（シミュレーション購入）：<b>無制限（無料版は10個まで）</b></li>
@@ -453,6 +459,73 @@ def show_upgrade_dialog():
                     st.error("まだ決済データが反映されていないか、無料プランのままです。決済後、約10〜30秒ほど待ってから再度お試しください。")
         else:
             st.warning("ログイン状態が確認できません。")
+
+@st.dialog("📱 LINE連携（毎朝のスナイパー急騰速報）", width="medium")
+def show_line_link_dialog():
+    u_key = st.session_state.get('user_key', 'default')
+    line_link_url = f"https://line.me/R/oaMessage/@317uxnml/?連携_{u_key}"
+    st.markdown(f"""
+    <div style="font-size: 0.92rem; line-height: 1.6;">
+        <p><b>平日の毎朝10:00</b>に東証プライム全1,529銘柄から自動検出される【勝率72.7%スナイパー銘柄】の速報をLINEで受け取れます。</p>
+        
+        <div style="background: rgba(6, 199, 85, 0.08); border: 1.5px solid #06c755; border-radius: 12px; padding: 16px; margin: 15px 0; text-align: center;">
+            <p style="font-weight: bold; margin-top: 0; color: #06c755; font-size: 1rem;">👇 スマホ・LINEアプリからワンタップ連携</p>
+            <a href="{line_link_url}" target="_blank" style="text-decoration: none; display: inline-flex; align-items: center; justify-content: center; background: #06c755; color: white; font-weight: bold; padding: 12px 24px; border-radius: 9999px; font-size: 0.95rem; box-shadow: 0 4px 6px -1px rgba(6, 199, 85, 0.3);">
+                💬 LINEを開いて連携メッセージを送信
+            </a>
+            <p style="font-size: 0.8rem; opacity: 0.8; margin-top: 8px; margin-bottom: 0;">※タップするとLINEが開きます。自動入力された「連携_{u_key}」をそのまま送信するだけで完了します。</p>
+        </div>
+
+        <div style="background: rgba(255, 255, 255, 0.05); border-radius: 8px; padding: 12px 14px; font-size: 0.85rem; border: 1px solid rgba(255, 255, 255, 0.1);">
+            <b>💻 PCブラウザからご利用の場合（手動入力）:</b><br>
+            LINE公式アカウント（<b>@317uxnml</b>）を友だち追加し、トークに以下の合言葉を送信してください：<br>
+            <div style="background: rgba(0,0,0,0.25); padding: 8px 12px; border-radius: 6px; font-family: monospace; font-weight: bold; color: #38bdf8; margin-top: 6px; user-select: all;">
+                連携 {u_key}
+            </div>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+@st.dialog("📄 特定商取引法に基づく表記", width="medium")
+def show_tokusho_dialog():
+    st.markdown("""
+    <div style="font-size: 0.85rem; line-height: 1.6; color: var(--text-color);">
+        <table style="width: 100%; border-collapse: collapse; margin-top: 6px;">
+            <tr style="border-bottom: 1px solid rgba(255,255,255,0.1);">
+                <th style="padding: 8px 4px; text-align: left; width: 35%; opacity: 0.8;">サービス名</th>
+                <td style="padding: 8px 4px;">ZenStock スクリーナー</td>
+            </tr>
+            <tr style="border-bottom: 1px solid rgba(255,255,255,0.1);">
+                <th style="padding: 8px 4px; text-align: left; opacity: 0.8;">販売事業者</th>
+                <td style="padding: 8px 4px;">ZenStock 運営事務局（代表: 村本拓海）</td>
+            </tr>
+            <tr style="border-bottom: 1px solid rgba(255,255,255,0.1);">
+                <th style="padding: 8px 4px; text-align: left; opacity: 0.8;">連絡先メール</th>
+                <td style="padding: 8px 4px;">zenstock.contact@gmail.com</td>
+            </tr>
+            <tr style="border-bottom: 1px solid rgba(255,255,255,0.1);">
+                <th style="padding: 8px 4px; text-align: left; opacity: 0.8;">販売価格</th>
+                <td style="padding: 8px 4px;">月額 980円（税込）</td>
+            </tr>
+            <tr style="border-bottom: 1px solid rgba(255,255,255,0.1);">
+                <th style="padding: 8px 4px; text-align: left; opacity: 0.8;">支払方法</th>
+                <td style="padding: 8px 4px;">クレジットカード決済（Stripe）</td>
+            </tr>
+            <tr style="border-bottom: 1px solid rgba(255,255,255,0.1);">
+                <th style="padding: 8px 4px; text-align: left; opacity: 0.8;">役務の提供時期</th>
+                <td style="padding: 8px 4px;">決済完了後、即時にプレミアム機能をご利用いただけます。</td>
+            </tr>
+            <tr style="border-bottom: 1px solid rgba(255,255,255,0.1);">
+                <th style="padding: 8px 4px; text-align: left; opacity: 0.8;">解約・返金について</th>
+                <td style="padding: 8px 4px;">アプリ内サイドバー「サブスクリプションの管理・解約」リンクよりいつでも即時解約いただけます。次回更新日以降の請求は発生しません。サービスの性質上、日割り等の返金は対応しておりません。</td>
+            </tr>
+            <tr>
+                <th style="padding: 8px 4px; text-align: left; opacity: 0.8;">免責事項</th>
+                <td style="padding: 8px 4px;">本サービスは客観的な市場データの分析・スクリーニング機能を提供するものであり、投資助言や個別銘柄の売買推奨を行うものではありません。投資判断は必ず自己責任で行ってください。</td>
+            </tr>
+        </table>
+    </div>
+    """, unsafe_allow_html=True)
 
 
 def check_and_increment_practice_runs(increment=False):
@@ -5872,17 +5945,39 @@ else:
     </div>
     """, unsafe_allow_html=True)
 
-st.sidebar.caption("💡 別のIDに切り替える、または初期画面に戻るには下のボタンからログアウトしてください。")
+# LINE Integration Status & One-Tap Linking
+user_is_line_account = str(user_key).startswith("line_")
+has_linked_line = bool(st.session_state.get("user_line_id")) or user_is_line_account
 
+if has_linked_line:
+    st.sidebar.markdown("""
+    <div style="background: rgba(34, 197, 94, 0.08); border: 1px solid rgba(34, 197, 94, 0.3); border-radius: 8px; padding: 8px 12px; margin-top: 8px; margin-bottom: 12px; font-size: 0.8rem; display: flex; align-items: center; gap: 8px;">
+        <span style="color: #22c55e; font-size: 1.1rem;">✅</span>
+        <div style="line-height: 1.3;">
+            <b style="color: #22c55e;">LINE連携中</b><br>
+            <span style="opacity: 0.75; font-size: 0.75rem;">毎朝のスナイパー急騰通知を受信中</span>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+else:
+    if st.sidebar.button("📱 LINE連携（毎朝の速報を受信）", use_container_width=True, key="sidebar_line_link_btn"):
+        show_line_link_dialog()
+
+st.sidebar.caption("💡 別のIDに切り替える、または初期画面に戻るには下のボタンからログアウトしてください。")
 
 if st.sidebar.button("🚪 ログアウト (ログイン画面に戻る)", use_container_width=True, key="sidebar_logout_btn"):
     st.query_params["user"] = "default"
     st.session_state['user_key'] = "default"
     st.session_state.pop('user_display_name', None)
     st.session_state.pop('user_avatar', None)
+    st.session_state.pop('user_line_id', None)
     st.session_state.pop('firebase_id_token', None)
     st.session_state.pop('firebase_local_id', None)
     st.rerun()
+
+# Tokusho footer link in sidebar
+if st.sidebar.button("📄 特定商取引法に基づく表記", use_container_width=True, key="sidebar_tokusho_btn"):
+    show_tokusho_dialog()
 
 # --- localStorage Auto-Restore & Sync Setup ---
 if 'ls_loaded_keys' not in st.session_state:

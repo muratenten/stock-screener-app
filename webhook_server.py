@@ -208,8 +208,95 @@ def deactivate_user(user_id: str):
         save_all_preferences(prefs)
         add_log(f"🚫 Subscriber deactivated (blocked): {user_id[:8]}...")
 
+def is_line_user_premium(line_user_id: str) -> bool:
+    """Check if a LINE user is premium (directly, by admin, or through linked web account)."""
+    if not line_user_id:
+        return False
+    # Admin master check
+    if line_user_id in ("google_111998389463136687256", "takkun", "line_Uf3de8f9ba3463f32a3e05b3e019b22f4", "U808d7431c75b1a6dded4e6be45447e27") or "111998389463136687256" in line_user_id:
+        return True
+        
+    prefs = load_all_preferences()
+    info = prefs.get(line_user_id, {})
+    if info.get("tier") == "premium":
+        return True
+        
+    # Check linked web user
+    linked_web = info.get("linked_web_user")
+    if linked_web:
+        if linked_web in prefs and prefs[linked_web].get("tier") == "premium":
+            return True
+        if linked_web in ("google_111998389463136687256", "takkun") or "111998389463136687256" in linked_web:
+            return True
+        # Check Firestore
+        try:
+            url = f"https://firestore.googleapis.com/v1/projects/{FIREBASE_PROJECT_ID}/databases/(default)/documents/portfolios/{linked_web}"
+            if FIREBASE_API_KEY:
+                url += f"?key={FIREBASE_API_KEY}"
+            res = requests.get(url, timeout=5)
+            if res.status_code == 200:
+                doc = res.json()
+                t = doc.get("fields", {}).get("tier", {}).get("stringValue", "")
+                if t == "premium":
+                    save_user_preference(line_user_id, {"tier": "premium"})
+                    return True
+        except Exception:
+            pass
+    return False
+
+def build_premium_sniper_msg(sniped_stocks, user_name="会員", n_match=50, future_day=15, thresh=8.0, pbr_label="PBR < 1.0"):
+    msg = f"🎯【毎朝スナイパー厳選シグナル（プレミアム）】\n{user_name} 様\n\n"
+    msg += f"東証プライム全1,529社中、本日スナイパー条件を満たした銘柄です：\n"
+    msg += "━━━━━━━━━━━━━━\n"
+    for s in sniped_stocks:
+        ticker_str = s['ticker'] if '.T' in s['ticker'] else f"{s['ticker']}.T"
+        pbr_disp = f"{s['pbr']:.2f}倍" if s.get('pbr') is not None else "---"
+        price = s.get('last_price')
+        if price is not None:
+            price_str = f"{price:,.1f}円" if (price < 1000 and price != int(price)) else f"{int(round(price)):,}円"
+        else:
+            price_str = "---"
+        sector_str = s.get('sector') or 'プライム'
+        msg += f"【銘柄】{s['name']}（{ticker_str}）\n"
+        msg += f"【業種】{sector_str}\n"
+        msg += f"【株価】{price_str}\n"
+        msg += f"【PBR】{pbr_disp}\n"
+        msg += f"【過去3回上昇】最小+{s['min_ret']:.1f}%（平均+{s['avg_ret']:.1f}%）\n"
+        msg += "━━━━━━━━━━━━━━\n"
+    msg += f"💡 戦略条件:\n"
+    msg += f"・照合期間: {n_match}日（約2.5ヶ月）\n"
+    msg += f"・保有期間: {future_day}日（約3週間）\n"
+    msg += f"・過去5年実績: 勝率72.7% / 超過α+1.99%\n\n"
+    msg += "📱 Webアプリで過去チャート波形やシミュレーションを確認:\n"
+    msg += "https://stock-screener-app-crrzltcyekqdt7uulhgpaa.streamlit.app/"
+    return msg.strip()
+
+def build_free_sniper_msg(sniped_stocks, user_name="会員", n_match=50, future_day=15, thresh=8.0, pbr_label="PBR < 1.0"):
+    msg = f"🌅【東証プライム・急騰スナイパー検知（無料版）】\n{user_name} 様\n\n"
+    msg += f"本日、過去5年勝率72.7%・超過α+1.99%の\n"
+    msg += f"神シグナル条件に合致する銘柄が出現しました！\n"
+    msg += "━━━━━━━━━━━━━━\n"
+    for i, s in enumerate(sniped_stocks, 1):
+        pbr_disp = f"{s['pbr']:.2f}倍" if s.get('pbr') is not None else "---"
+        sector_str = s.get('sector') or '東証プライム'
+        price = s.get('last_price')
+        if price:
+            p_bracket = f"{int(price // 500 * 500):,}円〜{int((price // 500 + 1) * 500):,}円台"
+        else:
+            p_bracket = "プライム価格帯"
+        msg += f"【銘柄候補 #{i}】🔒 プレミアム限定\n"
+        msg += f"【業種】{sector_str}\n"
+        msg += f"【株価帯】{p_bracket}\n"
+        msg += f"【PBR】{pbr_disp} (解散価値割れ割安)\n"
+        msg += f"【過去3回上昇】最小+{s['min_ret']:.1f}%（平均+{s['avg_ret']:.1f}%）\n"
+        msg += "━━━━━━━━━━━━━━\n"
+    msg += "🔒 銘柄名・コード・詳細波形分析はプレミアム会員限定です。\n\n"
+    msg += "👇 今すぐ銘柄名を確認してプレミアムに登録する\n"
+    msg += "https://stock-screener-app-crrzltcyekqdt7uulhgpaa.streamlit.app/?source=line"
+    return msg.strip()
+
 def broadcast_morning_sniper_routine(force=False):
-    """Execute morning screening and push to all registered active subscribers."""
+    """Execute morning screening and push to all registered active subscribers with tier-based messages."""
     add_log("🌅 [MORNING ROUTINE] Starting morning sniper routine...")
     prefs = load_all_preferences()
     active_subscribers = {uid: u for uid, u in prefs.items() if u.get("active", True)}
@@ -221,7 +308,7 @@ def broadcast_morning_sniper_routine(force=False):
     add_log(f"🎯 [MORNING ROUTINE] Target subscribers: {len(active_subscribers)} people")
     
     # Run screening with golden default: 50d x 15d x +8.0% x PBR<1.0
-    sniped_stocks, msg = run_sniper_screening(
+    sniped_stocks, raw_msg = run_sniper_screening(
         n_match=50,
         future_day=15,
         thresh=8.0,
@@ -234,16 +321,60 @@ def broadcast_morning_sniper_routine(force=False):
     if sniped_stocks or force:
         for uid, uinfo in active_subscribers.items():
             uname = uinfo.get("name", "会員")
-            p_msg = f"🌅【毎朝10:00 スナイパーシグナル】\n{uname} 様\n\n" + msg
+            is_prem = is_line_user_premium(uid)
+            
+            if sniped_stocks:
+                if is_prem:
+                    p_msg = build_premium_sniper_msg(sniped_stocks, user_name=uname)
+                else:
+                    p_msg = build_free_sniper_msg(sniped_stocks, user_name=uname)
+            else:
+                p_msg = f"🌅【毎朝10:00 スナイパーシグナル】\n{uname} 様\n\n本日、勝率72.7%スナイパー条件を満たす銘柄はありませんでした。"
+
             ok = send_line_message(p_msg, target_user_id=uid)
             if ok:
                 sent_count += 1
             time.sleep(0.3)
-        add_log(f"✅ [MORNING ROUTINE] Delivered to {sent_count} subscribers successfully!")
+        add_log(f"✅ [MORNING ROUTINE] Delivered to {sent_count} subscribers successfully (Tier-separated)!")
         return sent_count, f"{sent_count}名に朝の通知を配信しました。"
     else:
         add_log("ℹ️ [MORNING ROUTINE] No sniper hits today. Notification skipped to avoid spam.")
         return 0, "本日の条件合致銘柄はありませんでした（無駄な通知をスキップ）。"
+
+def run_and_push_sniper_for_user(target_user_id: str, match_days: int = 50, hold_days: int = 15, thresh: float = 8.0, pbr_max = 1.0):
+    """Run sniper scan and send appropriate free/premium message to a specific LINE user."""
+    sniped_stocks, _ = run_sniper_screening(
+        n_match=match_days,
+        future_day=hold_days,
+        thresh=thresh,
+        pbr_max=pbr_max,
+        target_user_id=target_user_id,
+        send_push=False,
+        is_interactive=True
+    )
+    is_prem = is_line_user_premium(target_user_id)
+    prefs = load_all_preferences()
+    uinfo = prefs.get(target_user_id, {})
+    uname = uinfo.get("name", "会員")
+    pbr_label = f"PBR < {pbr_max:.1f}" if pbr_max else "制限なし"
+
+    if sniped_stocks:
+        if is_prem:
+            msg = build_premium_sniper_msg(sniped_stocks, user_name=uname, n_match=match_days, future_day=hold_days, thresh=thresh, pbr_label=pbr_label)
+        else:
+            msg = build_free_sniper_msg(sniped_stocks, user_name=uname, n_match=match_days, future_day=hold_days, thresh=thresh, pbr_label=pbr_label)
+    else:
+        msg = (
+            f"【ZenStock スキャナー結果】\n━━━━━━━━━━━━━━\n"
+            f"設定条件:\n"
+            f"・照合期間: {match_days}日\n"
+            f"・保有期間: {hold_days}日\n"
+            f"・上昇閾値: +{thresh:.1f}%\n"
+            f"・PBR条件: {pbr_label}\n"
+            f"━━━━━━━━━━━━━━\n"
+            f"本日、上記条件に合致する銘柄はありませんでした。"
+        )
+    send_line_message(msg, target_user_id=target_user_id)
 
 def _morning_scheduler_loop():
     last_run_date = ""
@@ -541,6 +672,106 @@ def api_get_user_tier(user_key: str):
 
     return {"user_key": user_key, "tier": "free"}
 
+def get_line_user_id_for_web_user(web_user_key: str) -> str:
+    """Find associated LINE user ID for a web user key."""
+    if not web_user_key or web_user_key in ("default", "guest", ""):
+        return None
+    # 1. Search in local preferences
+    prefs = load_all_preferences()
+    for uid, uinfo in prefs.items():
+        if uinfo.get("linked_web_user") == web_user_key:
+            return uid
+    # 2. Query Firestore document
+    try:
+        url = f"https://firestore.googleapis.com/v1/projects/{FIREBASE_PROJECT_ID}/databases/(default)/documents/portfolios/{web_user_key}"
+        if FIREBASE_API_KEY:
+            url += f"?key={FIREBASE_API_KEY}"
+        res = requests.get(url, timeout=5)
+        if res.status_code == 200:
+            doc = res.json()
+            line_uid = doc.get("fields", {}).get("line_user_id", {}).get("stringValue")
+            if line_uid:
+                return line_uid
+    except Exception as e:
+        add_log(f"⚠️ get_line_user_id_for_web_user error: {e}")
+    return None
+
+def link_web_user_with_line(web_user_key: str, line_user_id: str) -> dict:
+    """Pair a web user (Google/Firebase) with a LINE user ID, syncing tier bidirectionally."""
+    clean_web = web_user_key.strip()
+    clean_line = line_user_id.strip()
+    if not clean_web or not clean_line:
+        return {"status": "error", "message": "Missing key"}
+
+    # Ensure LINE subscriber exists in local prefs
+    prefs = load_all_preferences()
+    if clean_line not in prefs:
+        profile = get_line_user_profile(clean_line)
+        name = profile.get("displayName") or "知人"
+        save_user_preference(clean_line, {}, name=name)
+
+    # Check if web user is premium in Firestore
+    web_is_prem = False
+    if clean_web in ("google_111998389463136687256", "takkun") or "111998389463136687256" in clean_web:
+        web_is_prem = True
+    else:
+        try:
+            url = f"https://firestore.googleapis.com/v1/projects/{FIREBASE_PROJECT_ID}/databases/(default)/documents/portfolios/{clean_web}"
+            if FIREBASE_API_KEY:
+                url += f"?key={FIREBASE_API_KEY}"
+            res = requests.get(url, timeout=5)
+            if res.status_code == 200:
+                doc = res.json()
+                t = doc.get("fields", {}).get("tier", {}).get("stringValue", "")
+                if t == "premium":
+                    web_is_prem = True
+        except Exception as e:
+            add_log(f"⚠️ link error fetching web user doc: {e}")
+
+    line_is_prem = is_line_user_premium(clean_line)
+    final_tier = "premium" if (web_is_prem or line_is_prem) else "free"
+
+    # Save to local prefs
+    save_user_preference(clean_line, {
+        "linked_web_user": clean_web,
+        "tier": final_tier
+    })
+    save_user_preference(clean_web, {"tier": final_tier})
+
+    # Update Firestore document with line_user_id and final_tier
+    url_patch = f"https://firestore.googleapis.com/v1/projects/{FIREBASE_PROJECT_ID}/databases/(default)/documents/portfolios/{clean_web}?updateMask.fieldPaths=line_user_id&updateMask.fieldPaths=tier"
+    if FIREBASE_API_KEY:
+        url_patch += f"&key={FIREBASE_API_KEY}"
+    body = {
+        "fields": {
+            "line_user_id": {"stringValue": clean_line},
+            "tier": {"stringValue": final_tier}
+        }
+    }
+    headers = {"Content-Type": "application/json"}
+    try:
+        requests.patch(url_patch, headers=headers, json=body, timeout=10)
+        add_log(f"🔗 [ACCOUNT LINKED] Web '{clean_web}' ⇄ LINE '{clean_line[:8]}...' (tier={final_tier})")
+    except Exception as e:
+        add_log(f"⚠️ [LINK FIRESTORE PATCH ERROR] {e}")
+
+    return {
+        "status": "success",
+        "web_user_key": clean_web,
+        "line_user_id": clean_line,
+        "tier": final_tier
+    }
+
+@app.post("/api/link_line")
+def api_link_line(payload: dict):
+    """API endpoint to link web user and line user."""
+    web_user_key = payload.get("web_user_key")
+    line_user_id = payload.get("line_user_id")
+    if not web_user_key or not line_user_id:
+        return JSONResponse({"status": "error", "message": "web_user_key and line_user_id required"}, status_code=400)
+    res = link_web_user_with_line(web_user_key, line_user_id)
+    return res
+
 @app.post("/api/stripe_webhook")
 async def stripe_webhook(request: Request):
     """Handle Stripe Subscription & Checkout events to automatically grant premium tier."""
@@ -588,14 +819,21 @@ async def stripe_webhook(request: Request):
             if ok:
                 add_log(f"🎉 User {client_ref_id} successfully upgraded to PREMIUM in Firestore!")
             
-            # If LINE user ID, also send LINE push
+            # Find associated LINE UID (if payment was made via web or LINE)
+            target_line_uid = None
             if client_ref_id.startswith("line_") or client_ref_id.startswith("U"):
-                clean_uid = client_ref_id.replace("line_", "")
-                save_user_preference(clean_uid, {"tier": "premium"})
+                target_line_uid = client_ref_id.replace("line_", "")
+            else:
+                target_line_uid = get_line_user_id_for_web_user(client_ref_id)
+
+            if target_line_uid:
+                save_user_preference(target_line_uid, {"tier": "premium"})
                 send_line_message(
-                    "🎉 プレミアムプランへのご登録ありがとうございます！\n"
-                    "PCアプリ（過去チャート無制限練習など）およびLINEでの全機能がアンロックされました！",
-                    target_user_id=clean_uid
+                    "🎉 プレミアムプランへのご登録ありがとうございます！\n\n"
+                    "👑 PCアプリ（過去チャート無制限練習・類似連動全解放）および\n"
+                    "📱 毎朝のスナイパー急騰速報（銘柄名フル開示）がすべてアンロックされました！\n\n"
+                    "平日の毎朝10:00に、条件合致した銘柄名を完全開示でお届けします。お楽しみに！🎯",
+                    target_user_id=target_line_uid
                 )
 
     # 2. Subscription cancelled or payment failed
@@ -605,6 +843,10 @@ async def stripe_webhook(request: Request):
         if client_ref_id and client_ref_id not in ("default", "guest", ""):
             add_log(f"⚠️ Subscription ended/failed for {client_ref_id}. Downgrading to free...")
             update_user_tier_in_firebase(client_ref_id, "free")
+            # Also downgrade linked LINE user
+            target_line_uid = get_line_user_id_for_web_user(client_ref_id)
+            if target_line_uid:
+                save_user_preference(target_line_uid, {"tier": "free"})
 
     return {"status": "success"}
 
@@ -773,6 +1015,31 @@ async def line_webhook(request: Request, background_tasks: BackgroundTasks, x_li
             reply_line_message(reply_token, invite_msg)
             continue
 
+        # Account Link Command (e.g. "連携 google_111998389463136687256" or "連携_google_xxx")
+        if text.startswith("連携"):
+            raw_key = text.replace("連携_", "").replace("連携", "").strip()
+            if raw_key:
+                res = link_web_user_with_line(raw_key, user_id)
+                tier_label = "👑 プレミアム会員" if res.get("tier") == "premium" else "🌱 無料会員"
+                tier_desc = (
+                    "Webアプリのプレミアム権限とLINEが同期されました！\n平日の毎朝10:00に、スナイパー急騰銘柄（銘柄名フル開示）をお届けします🎯"
+                    if res.get("tier") == "premium" else
+                    "WebアカウントとLINEが正常にペアリングされました。\nWebアプリでプレミアムに加入されると、LINE側も自動で銘柄名フル開示に昇格します！"
+                )
+                link_reply = (
+                    f"🎉【LINE連携が完了しました！】\n"
+                    f"━━━━━━━━━━━━━━\n"
+                    f"・Webアカウント: {raw_key}\n"
+                    f"・ステータス: {tier_label}\n"
+                    f"━━━━━━━━━━━━━━\n"
+                    f"{tier_desc}"
+                )
+                reply_line_message(reply_token, link_reply)
+                continue
+            else:
+                reply_line_message(reply_token, "⚠️ 連携するWebアカウントIDが指定されていません。\nWebアプリ画面の「LINE連携」ボタンから送信してください。")
+                continue
+
         # 1. Trigger Scan (e.g. "スキャン", "スナイプ", "今すぐ", "スキャン 60 25 10 1")
         if text.startswith("スキャン") or text.startswith("スナイプ") or "スキャン実行" in text:
             # Parse parameters if given
@@ -812,16 +1079,14 @@ async def line_webhook(request: Request, background_tasks: BackgroundTasks, x_li
             )
             reply_line_message(reply_token, reply_text)
 
-            # Background task
+            # Background task (Sends tier-separated msg: free gets teaser, premium gets full names)
             background_tasks.add_task(
-                run_sniper_screening,
-                n_match=match_days,
-                future_day=hold_days,
-                thresh=thresh,
-                pbr_max=pbr_max,
+                run_and_push_sniper_for_user,
                 target_user_id=user_id,
-                send_push=True,
-                is_interactive=True
+                match_days=match_days,
+                hold_days=hold_days,
+                thresh=thresh,
+                pbr_max=pbr_max
             )
 
         # 2. Save preference (e.g. "保存 60 25 10 1")
