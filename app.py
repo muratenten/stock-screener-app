@@ -590,15 +590,15 @@ dataframe_filter = "invert(0.94) hue-rotate(180deg)" if is_dark else "none"
 st.markdown(f"""
 <style>
     /* Completely hide Streamlit header, footer, MainMenu, deploy buttons, and badges */
-    #MainMenu {visibility: hidden !important; display: none !important;}
-    header {visibility: hidden !important; display: none !important;}
-    footer {visibility: hidden !important; display: none !important;}
-    .stDeployButton {display: none !important;}
-    [data-testid="stToolbar"] {visibility: hidden !important; display: none !important;}
-    [data-testid="stDecoration"] {display: none !important;}
-    [data-testid="stStatusWidget"] {visibility: hidden !important; display: none !important;}
-    .viewerBadge_container__r5tak, [class*="viewerBadge"] {display: none !important;}
-    div[data-testid="stBottomBlockContainer"] {display: none !important;}
+    #MainMenu {{visibility: hidden !important; display: none !important;}}
+    header {{visibility: hidden !important; display: none !important;}}
+    footer {{visibility: hidden !important; display: none !important;}}
+    .stDeployButton {{display: none !important;}}
+    [data-testid="stToolbar"] {{visibility: hidden !important; display: none !important;}}
+    [data-testid="stDecoration"] {{display: none !important;}}
+    [data-testid="stStatusWidget"] {{visibility: hidden !important; display: none !important;}}
+    .viewerBadge_container__r5tak, [class*="viewerBadge"] {{display: none !important;}}
+    div[data-testid="stBottomBlockContainer"] {{display: none !important;}}
 
     /* Remove extra top margin caused by hidden header */
     .stAppViewContainer > .main {
