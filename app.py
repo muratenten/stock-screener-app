@@ -601,9 +601,9 @@ st.markdown(f"""
     div[data-testid="stBottomBlockContainer"] {{display: none !important;}}
 
     /* Remove extra top margin caused by hidden header */
-    .stAppViewContainer > .main {
+    .stAppViewContainer > .main {{
         padding-top: 1.2rem !important;
-    }
+    }}
 
     /* CSS theme overrides on root */
     :root, .stApp {{
