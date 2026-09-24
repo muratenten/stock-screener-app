@@ -592,13 +592,16 @@ st.markdown(f"""
     /* Completely hide Streamlit header, footer, MainMenu, deploy buttons, and badges */
     #MainMenu {{visibility: hidden !important; display: none !important;}}
     header {{visibility: hidden !important; display: none !important;}}
-    footer {{visibility: hidden !important; display: none !important;}}
+    footer, [data-testid="stFooter"] {{visibility: hidden !important; display: none !important; height: 0px !important;}}
     .stDeployButton {{display: none !important;}}
     [data-testid="stToolbar"] {{visibility: hidden !important; display: none !important;}}
     [data-testid="stDecoration"] {{display: none !important;}}
     [data-testid="stStatusWidget"] {{visibility: hidden !important; display: none !important;}}
     .viewerBadge_container__r5tak, [class*="viewerBadge"] {{display: none !important;}}
+    [class*="embeddedAppMetaInfoBar"] {{display: none !important; visibility: hidden !important; height: 0px !important;}}
+    [class*="manageApp"] {{display: none !important;}}
     div[data-testid="stBottomBlockContainer"] {{display: none !important;}}
+    button[title*="fullscreen" i], button[title*="View fullscreen"], button[title*="全画面" i] {{display: none !important;}}
 
     /* Remove extra top margin caused by hidden header */
     .stAppViewContainer > .main {{
@@ -1010,7 +1013,7 @@ st.markdown(f"""
 
 """, unsafe_allow_html=True)
 
-# Inject global Javascript for premium button styling
+# Inject global Javascript for premium button styling and Streamlit Cloud footer removal
 st.components.v1.html("""
 <script>
     const parentDoc = window.parent.document;
@@ -1048,8 +1051,79 @@ st.components.v1.html("""
             }
         });
     }
-    setInterval(applyStyles, 150);
+
+    function purgeStreamlitBadges() {
+        const selectors = [
+            'footer',
+            '[data-testid="stFooter"]',
+            '[class*="viewerBadge"]',
+            '[class*="embeddedAppMetaInfoBar"]',
+            '[class*="manageApp"]',
+            '.viewerBadge_container__r5tak',
+            '[data-testid="stToolbar"]',
+            '[data-testid="stDecoration"]',
+            '[data-testid="stStatusWidget"]',
+            '#MainMenu',
+            'header',
+            '.stDeployButton',
+            'button[title*="fullscreen" i]',
+            'button[title*="View fullscreen"]',
+            'button[title*="全画面" i]',
+            'div[data-testid="stBottomBlockContainer"]'
+        ];
+        
+        const docs = [];
+        try { if (document) docs.push(document); } catch(e){}
+        try { if (window.parent && window.parent.document && !docs.includes(window.parent.document)) docs.push(window.parent.document); } catch(e){}
+        try { if (window.top && window.top.document && !docs.includes(window.top.document)) docs.push(window.top.document); } catch(e){}
+
+        docs.forEach(doc => {
+            try {
+                selectors.forEach(sel => {
+                    doc.querySelectorAll(sel).forEach(el => {
+                        el.style.setProperty('display', 'none', 'important');
+                        el.style.setProperty('visibility', 'hidden', 'important');
+                        el.style.setProperty('height', '0px', 'important');
+                        el.style.setProperty('max-height', '0px', 'important');
+                        el.style.setProperty('opacity', '0', 'important');
+                        el.style.setProperty('pointer-events', 'none', 'important');
+                    });
+                });
+
+                // Remove elements containing "Built with Streamlit" or "Fullscreen"
+                const walker = doc.createTreeWalker(doc.body, NodeFilter.SHOW_TEXT, null, false);
+                let node;
+                const targets = [];
+                while (node = walker.nextNode()) {
+                    const text = node.nodeValue || '';
+                    if (text.includes('Built with Streamlit') || text.includes('Fullscreen')) {
+                        let p = node.parentElement;
+                        while (p && p !== doc.body) {
+                            if (p.tagName === 'FOOTER' || p.tagName === 'DIV' || p.tagName === 'A' || p.tagName === 'BUTTON') {
+                                targets.push(p);
+                                break;
+                            }
+                            p = p.parentElement;
+                        }
+                    }
+                }
+                targets.forEach(t => {
+                    try {
+                        t.style.setProperty('display', 'none', 'important');
+                        t.style.setProperty('visibility', 'hidden', 'important');
+                        t.style.setProperty('height', '0px', 'important');
+                    } catch(e){}
+                });
+            } catch(e) {}
+        });
+    }
+
+    setInterval(() => {
+        applyStyles();
+        purgeStreamlitBadges();
+    }, 150);
     applyStyles();
+    purgeStreamlitBadges();
 </script>
 """, height=0, width=0)
 
@@ -5488,8 +5562,103 @@ if query_user == "default":
         flex-shrink: 0 !important;
         vertical-align: middle !important;
     }
+    /* Completely hide Streamlit header, footer, MainMenu, deploy buttons, and badges in portal */
+    #MainMenu {visibility: hidden !important; display: none !important;}
+    header {visibility: hidden !important; display: none !important;}
+    footer, [data-testid="stFooter"] {visibility: hidden !important; display: none !important; height: 0px !important;}
+    .stDeployButton {display: none !important;}
+    [data-testid="stToolbar"] {visibility: hidden !important; display: none !important;}
+    [data-testid="stDecoration"] {display: none !important;}
+    [data-testid="stStatusWidget"] {visibility: hidden !important; display: none !important;}
+    .viewerBadge_container__r5tak, [class*="viewerBadge"] {display: none !important;}
+    [class*="embeddedAppMetaInfoBar"] {display: none !important; visibility: hidden !important; height: 0px !important;}
+    [class*="manageApp"] {display: none !important;}
+    div[data-testid="stBottomBlockContainer"] {display: none !important;}
+    button[title*="fullscreen" i], button[title*="View fullscreen"], button[title*="全画面" i] {display: none !important;}
+
+    /* Bottom viewport safety mask to cover any host-level footer bar */
+    .stApp::after {
+        content: "";
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        width: 100vw;
+        height: 48px;
+        background: {portal_bg};
+        backdrop-filter: blur(15px);
+        -webkit-backdrop-filter: blur(15px);
+        z-index: 999998;
+        pointer-events: none;
+    }
     </style>
     """).replace("{portal_bg}", portal_bg), unsafe_allow_html=True)
+    
+    # Active JS badge & footer purger for login page
+    st.components.v1.html("""
+    <script>
+    function purgePortalBadges() {
+        const selectors = [
+            'footer',
+            '[data-testid="stFooter"]',
+            '[class*="viewerBadge"]',
+            '[class*="embeddedAppMetaInfoBar"]',
+            '[class*="manageApp"]',
+            '.viewerBadge_container__r5tak',
+            '[data-testid="stToolbar"]',
+            '[data-testid="stDecoration"]',
+            '[data-testid="stStatusWidget"]',
+            '#MainMenu',
+            'header',
+            '.stDeployButton',
+            'button[title*="fullscreen" i]',
+            'button[title*="View fullscreen"]',
+            'button[title*="全画面" i]',
+            'div[data-testid="stBottomBlockContainer"]'
+        ];
+        const docs = [];
+        try { if (document) docs.push(document); } catch(e){}
+        try { if (window.parent && window.parent.document && !docs.includes(window.parent.document)) docs.push(window.parent.document); } catch(e){}
+        try { if (window.top && window.top.document && !docs.includes(window.top.document)) docs.push(window.top.document); } catch(e){}
+
+        docs.forEach(doc => {
+            try {
+                selectors.forEach(sel => {
+                    doc.querySelectorAll(sel).forEach(el => {
+                        el.style.setProperty('display', 'none', 'important');
+                        el.style.setProperty('visibility', 'hidden', 'important');
+                        el.style.setProperty('height', '0px', 'important');
+                        el.remove();
+                    });
+                });
+                const walker = doc.createTreeWalker(doc.body, NodeFilter.SHOW_TEXT, null, false);
+                let node;
+                const targets = [];
+                while (node = walker.nextNode()) {
+                    const text = node.nodeValue || '';
+                    if (text.includes('Built with Streamlit') || text.includes('Fullscreen')) {
+                        let p = node.parentElement;
+                        while (p && p !== doc.body) {
+                            if (p.tagName === 'FOOTER' || p.tagName === 'DIV' || p.tagName === 'A' || p.tagName === 'BUTTON') {
+                                targets.push(p);
+                                break;
+                            }
+                            p = p.parentElement;
+                        }
+                    }
+                }
+                targets.forEach(t => {
+                    try {
+                        t.style.setProperty('display', 'none', 'important');
+                        t.remove();
+                    } catch(e){}
+                });
+            } catch(e){}
+        });
+    }
+    setInterval(purgePortalBadges, 150);
+    purgePortalBadges();
+    </script>
+    """, height=0, width=0)
     
     if is_mobile:
         col_w1, col_w2, col_w3 = st.columns([0.02, 0.96, 0.02])
