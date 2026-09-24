@@ -497,7 +497,7 @@ def show_tokusho_dialog():
             </tr>
             <tr style="border-bottom: 1px solid rgba(255,255,255,0.1);">
                 <th style="padding: 8px 4px; text-align: left; opacity: 0.8;">販売事業者</th>
-                <td style="padding: 8px 4px;">ZenStock 運営事務局（代表: 村本拓海）</td>
+                <td style="padding: 8px 4px;">ZenStock 運営事務局<br><span style="font-size: 0.75rem; opacity: 0.75;">※氏名・所在地等の詳細については、特定商取引法に基づき請求があった場合に遅滞なく電磁的記録（メール等）にて提供いたします。</span></td>
             </tr>
             <tr style="border-bottom: 1px solid rgba(255,255,255,0.1);">
                 <th style="padding: 8px 4px; text-align: left; opacity: 0.8;">連絡先メール</th>
@@ -5883,6 +5883,10 @@ if query_user == "default":
                 ```
                 """)
                 
+        st.markdown("<div style='margin-top: 30px; text-align: center;'></div>", unsafe_allow_html=True)
+        if st.button("📄 特定商取引法に基づく表記", key="portal_tokusho_btn"):
+            show_tokusho_dialog()
+            
         st.stop()
 
 # ---------------------------------------------------------
@@ -6185,6 +6189,35 @@ else:
 logo_header_html = f'<img src="{logo_data_uri}" style="width: 42px; height: 42px; border-radius: 11px; box-shadow: 0 2px 10px rgba(37,99,235,0.2); border: 1px solid rgba(226,232,240,0.8); background: #ffffff; object-fit: contain; padding: 2px;" />' if logo_data_uri else ""
 
 st.markdown(f'<div class="title-container" style="display: flex; flex-direction: column; gap: 6px;"><div style="display: flex; align-items: center; gap: 14px; flex-wrap: wrap;">{logo_header_html}<div class="title-text" style="margin: 0; line-height: 1;">ZenStockScreener</div>{badge_html}</div><div class="subtitle-text" style="margin-top: 4px;">AI分析とファンダメンタルズ指標による日本株上昇期待銘柄の選定システム</div></div>', unsafe_allow_html=True)
+
+# Mobile-friendly Quick Action Header (LINE integration & status)
+is_line_acc = str(u_key).startswith("line_")
+has_line = bool(st.session_state.get("user_line_id")) or is_line_acc
+
+if not has_line:
+    col_q1, col_q2 = st.columns([3, 1])
+    with col_q1:
+        st.markdown("""
+        <div style="background: rgba(6, 199, 85, 0.08); border: 1px solid rgba(6, 199, 85, 0.35); border-radius: 10px; padding: 7px 12px; margin-top: 8px; font-size: 0.84rem; display: flex; align-items: center; gap: 8px;">
+            <span style="font-size: 1.15rem;">📱</span>
+            <div style="line-height: 1.35;">
+                <b style="color: #06c755;">LINE連携が未設定です</b><br>
+                <span style="opacity: 0.8; font-size: 0.78rem;">平日の毎朝10:00に勝率72.7%スナイパー急騰速報をLINEへ自動配信します</span>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+    with col_q2:
+        st.markdown("<div style='margin-top: 8px;'></div>", unsafe_allow_html=True)
+        if st.button("💬 LINE連携", use_container_width=True, key="header_quick_line_link_btn"):
+            show_line_link_dialog()
+else:
+    st.markdown("""
+    <div style="background: rgba(34, 197, 94, 0.07); border: 1px solid rgba(34, 197, 94, 0.25); border-radius: 8px; padding: 5px 12px; margin-top: 8px; font-size: 0.78rem; display: inline-flex; align-items: center; gap: 6px;">
+        <span style="color: #22c55e;">✅</span>
+        <span style="color: #22c55e; font-weight: bold;">LINE連携中</span>
+        <span style="opacity: 0.7;">（毎朝10:00のスナイパー急騰通知を受信中）</span>
+    </div>
+    """, unsafe_allow_html=True)
 
 # Persistent purchase success alert
 if 'purchase_success_msg' in st.session_state:
