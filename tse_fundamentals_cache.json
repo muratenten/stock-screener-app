@@ -1,6 +1,6 @@
 {
   "metadata": {
-    "last_updated": "2026-09-20 05:20:14",
+    "last_updated": "2026-09-27 05:52:07",
     "total_tickers": 1326,
     "version": "1.0"
   },
@@ -24,7 +24,7 @@
       "eps_growth": -28.799999999999997,
       "sector": "Consumer Cyclical",
       "industry": "Residential Construction",
-      "market_cap": 84268572672.0
+      "market_cap": 84500480000.0
     },
     "1414.T": {
       "ticker": "1414.T",
@@ -45,7 +45,7 @@
       "eps_growth": 7.9,
       "sector": "Industrials",
       "industry": "Engineering & Construction",
-      "market_cap": 252470493184.0
+      "market_cap": 253773955072.0
     },
     "1301.T": {
       "ticker": "1301.T",
@@ -66,7 +66,7 @@
       "eps_growth": 28.499999999999996,
       "sector": "Consumer Defensive",
       "industry": "Packaged Foods",
-      "market_cap": 55716622336.0
+      "market_cap": 56013619200.0
     },
     "1332.T": {
       "ticker": "1332.T",
@@ -87,7 +87,7 @@
       "eps_growth": 17.2,
       "sector": "Consumer Defensive",
       "industry": "Packaged Foods",
-      "market_cap": 352705150976.0
+      "market_cap": 351188779008.0
     },
     "1375.T": {
       "ticker": "1375.T",
@@ -108,7 +108,7 @@
       "eps_growth": null,
       "sector": "Consumer Defensive",
       "industry": "Packaged Foods",
-      "market_cap": 47021850624.0
+      "market_cap": 46942085120.0
     },
     "1605.T": {
       "ticker": "1605.T",
@@ -129,7 +129,7 @@
       "eps_growth": 62.9,
       "sector": "Energy",
       "industry": "Oil & Gas E&P",
-      "market_cap": 4524691423232.0
+      "market_cap": 4459937660928.0
     },
     "1720.T": {
       "ticker": "1720.T",
@@ -150,7 +150,7 @@
       "eps_growth": 36.5,
       "sector": "Industrials",
       "industry": "Engineering & Construction",
-      "market_cap": 131885039616.0
+      "market_cap": 129759576064.0
     },
     "1417.T": {
       "ticker": "1417.T",
@@ -171,7 +171,7 @@
       "eps_growth": null,
       "sector": "Industrials",
       "industry": "Engineering & Construction",
-      "market_cap": 312722358272.0
+      "market_cap": 311764418560.0
     },
     "1662.T": {
       "ticker": "1662.T",
@@ -192,7 +192,7 @@
       "eps_growth": -79.4,
       "sector": "Energy",
       "industry": "Oil & Gas E&P",
-      "market_cap": 493822640128.0
+      "market_cap": 482046672896.0
     },
     "1518.T": {
       "ticker": "1518.T",
@@ -213,7 +213,7 @@
       "eps_growth": 76.2,
       "sector": "Energy",
       "industry": "Thermal Coal",
-      "market_cap": 85016199168.0
+      "market_cap": 85164310528.0
     },
     "1377.T": {
       "ticker": "1377.T",
@@ -234,7 +234,7 @@
       "eps_growth": 87.4,
       "sector": "Consumer Defensive",
       "industry": "Farm Products",
-      "market_cap": 185840533504.0
+      "market_cap": 184997724160.0
     },
     "1663.T": {
       "ticker": "1663.T",
@@ -255,7 +255,7 @@
       "eps_growth": -9.0,
       "sector": "Utilities",
       "industry": "Utilities - Regulated Gas",
-      "market_cap": 103424745472.0
+      "market_cap": 102463152128.0
     },
     "1515.T": {
       "ticker": "1515.T",
@@ -276,7 +276,7 @@
       "eps_growth": 46.2,
       "sector": "Basic Materials",
       "industry": "Copper",
-      "market_cap": 274206457856.0
+      "market_cap": 255322800128.0
     },
     "1721.T": {
       "ticker": "1721.T",
@@ -297,7 +297,7 @@
       "eps_growth": 48.6,
       "sector": "Industrials",
       "industry": "Engineering & Construction",
-      "market_cap": 671611092992.0
+      "market_cap": 640136511488.0
     },
     "1762.T": {
       "ticker": "1762.T",
@@ -318,7 +318,7 @@
       "eps_growth": 309.5,
       "sector": "Industrials",
       "industry": "Engineering & Construction",
-      "market_cap": 148326678528.0
+      "market_cap": 146933940224.0
     },
     "1429.T": {
       "ticker": "1429.T",
@@ -339,7 +339,7 @@
       "eps_growth": 5.6000000000000005,
       "sector": "Industrials",
       "industry": "Engineering & Construction",
-      "market_cap": 25631143936.0
+      "market_cap": 25984899072.0
     },
     "1719.T": {
       "ticker": "1719.T",
@@ -360,7 +360,7 @@
       "eps_growth": 34.8,
       "sector": "Industrials",
       "industry": "Engineering & Construction",
-      "market_cap": 300509528064.0
+      "market_cap": 297528754176.0
     },
     "1433.T": {
       "ticker": "1433.T",
@@ -381,7 +381,7 @@
       "eps_growth": null,
       "sector": "Industrials",
       "industry": "Engineering & Construction",
-      "market_cap": 10672361472.0
+      "market_cap": 10707847168.0
     },
     "1379.T": {
       "ticker": "1379.T",
@@ -402,7 +402,7 @@
       "eps_growth": -66.8,
       "sector": "Consumer Defensive",
       "industry": "Farm Products",
-      "market_cap": 67002421248.0
+      "market_cap": 66657370112.0
     },
     "1766.T": {
       "ticker": "1766.T",
@@ -423,7 +423,7 @@
       "eps_growth": -8.6,
       "sector": "Real Estate",
       "industry": "Real Estate Services",
-      "market_cap": 147642105856.0
+      "market_cap": 147420086272.0
     },
     "1333.T": {
       "ticker": "1333.T",
@@ -444,7 +444,7 @@
       "eps_growth": -47.199999999999996,
       "sector": "Consumer Defensive",
       "industry": "Packaged Foods",
-      "market_cap": 195404414976.0
+      "market_cap": 195177627648.0
     },
     "1786.T": {
       "ticker": "1786.T",
@@ -465,7 +465,7 @@
       "eps_growth": -70.5,
       "sector": "Industrials",
       "industry": "Engineering & Construction",
-      "market_cap": 45793107968.0
+      "market_cap": 45278580736.0
     },
     "1780.T": {
       "ticker": "1780.T",
@@ -486,7 +486,7 @@
       "eps_growth": -2.8000000000000003,
       "sector": "Industrials",
       "industry": "Engineering & Construction",
-      "market_cap": 27621443584.0
+      "market_cap": 27288877056.0
     },
     "1773.T": {
       "ticker": "1773.T",
@@ -528,7 +528,7 @@
       "eps_growth": 17.9,
       "sector": "Industrials",
       "industry": "Engineering & Construction",
-      "market_cap": 2300872491008.0
+      "market_cap": 2268524183552.0
     },
     "1833.T": {
       "ticker": "1833.T",
@@ -549,7 +549,7 @@
       "eps_growth": -7.000000000000001,
       "sector": "Industrials",
       "industry": "Engineering & Construction",
-      "market_cap": 207173140480.0
+      "market_cap": 206455046144.0
     },
     "1803.T": {
       "ticker": "1803.T",
@@ -570,7 +570,7 @@
       "eps_growth": 398.20000000000005,
       "sector": "Industrials",
       "industry": "Engineering & Construction",
-      "market_cap": 1600494764032.0
+      "market_cap": 1500039610368.0
     },
     "1808.T": {
       "ticker": "1808.T",
@@ -591,7 +591,7 @@
       "eps_growth": 73.5,
       "sector": "Consumer Cyclical",
       "industry": "Residential Construction",
-      "market_cap": 723852918784.0
+      "market_cap": 723455574016.0
     },
     "1802.T": {
       "ticker": "1802.T",
@@ -612,7 +612,7 @@
       "eps_growth": 122.30000000000001,
       "sector": "Industrials",
       "industry": "Engineering & Construction",
-      "market_cap": 2119320469504.0
+      "market_cap": 2108321693696.0
     },
     "1813.T": {
       "ticker": "1813.T",
@@ -633,7 +633,7 @@
       "eps_growth": 0.2,
       "sector": "Industrials",
       "industry": "Engineering & Construction",
-      "market_cap": 46285369344.0
+      "market_cap": 45755097088.0
     },
     "1814.T": {
       "ticker": "1814.T",
@@ -654,7 +654,7 @@
       "eps_growth": 192.70000000000002,
       "sector": "Real Estate",
       "industry": "Real Estate - Development",
-      "market_cap": 37423108096.0
+      "market_cap": 37886390272.0
     },
     "1801.T": {
       "ticker": "1801.T",
@@ -675,7 +675,7 @@
       "eps_growth": 9.3,
       "sector": "Industrials",
       "industry": "Engineering & Construction",
-      "market_cap": 2057175040000.0
+      "market_cap": 2027018387456.0
     },
     "1871.T": {
       "ticker": "1871.T",
@@ -696,7 +696,7 @@
       "eps_growth": 22.0,
       "sector": "Industrials",
       "industry": "Engineering & Construction",
-      "market_cap": 102113214464.0
+      "market_cap": 103283703808.0
     },
     "1852.T": {
       "ticker": "1852.T",
@@ -717,7 +717,7 @@
       "eps_growth": 59.599999999999994,
       "sector": "Industrials",
       "industry": "Engineering & Construction",
-      "market_cap": 73112739840.0
+      "market_cap": 72549097472.0
     },
     "1879.T": {
       "ticker": "1879.T",
@@ -738,7 +738,7 @@
       "eps_growth": 4.3999999999999995,
       "sector": "Industrials",
       "industry": "Engineering & Construction",
-      "market_cap": 135520190464.0
+      "market_cap": 136748466176.0
     },
     "1887.T": {
       "ticker": "1887.T",
@@ -759,7 +759,7 @@
       "eps_growth": 175.7,
       "sector": "Industrials",
       "industry": "Engineering & Construction",
-      "market_cap": 43888492544.0
+      "market_cap": 43489505280.0
     },
     "1860.T": {
       "ticker": "1860.T",
@@ -780,7 +780,7 @@
       "eps_growth": 237.6,
       "sector": "Industrials",
       "industry": "Engineering & Construction",
-      "market_cap": 449536458752.0
+      "market_cap": 441395347456.0
     },
     "1815.T": {
       "ticker": "1815.T",
@@ -801,7 +801,7 @@
       "eps_growth": 49.9,
       "sector": "Industrials",
       "industry": "Engineering & Construction",
-      "market_cap": 63037333504.0
+      "market_cap": 63594565632.0
     },
     "1861.T": {
       "ticker": "1861.T",
@@ -822,7 +822,7 @@
       "eps_growth": 24.7,
       "sector": "Industrials",
       "industry": "Engineering & Construction",
-      "market_cap": 225509212160.0
+      "market_cap": 222450302976.0
     },
     "1878.T": {
       "ticker": "1878.T",
@@ -843,7 +843,7 @@
       "eps_growth": -0.1,
       "sector": "Real Estate",
       "industry": "Real Estate - Diversified",
-      "market_cap": 1091854598144.0
+      "market_cap": 1074916556800.0
     },
     "1882.T": {
       "ticker": "1882.T",
@@ -864,7 +864,7 @@
       "eps_growth": null,
       "sector": "Industrials",
       "industry": "Engineering & Construction",
-      "market_cap": 74394214400.0
+      "market_cap": 74856292352.0
     },
     "1820.T": {
       "ticker": "1820.T",
@@ -885,7 +885,7 @@
       "eps_growth": 182.0,
       "sector": "Industrials",
       "industry": "Engineering & Construction",
-      "market_cap": 224468992000.0
+      "market_cap": 223442403328.0
     },
     "1835.T": {
       "ticker": "1835.T",
@@ -906,7 +906,7 @@
       "eps_growth": -3.3000000000000003,
       "sector": "Industrials",
       "industry": "Engineering & Construction",
-      "market_cap": 136389066752.0
+      "market_cap": 135183605760.0
     },
     "1885.T": {
       "ticker": "1885.T",
@@ -927,7 +927,7 @@
       "eps_growth": 9.2,
       "sector": "Industrials",
       "industry": "Engineering & Construction",
-      "market_cap": 169276735488.0
+      "market_cap": 166879494144.0
     },
     "1873.T": {
       "ticker": "1873.T",
@@ -969,7 +969,7 @@
       "eps_growth": 14.899999999999999,
       "sector": "Industrials",
       "industry": "Engineering & Construction",
-      "market_cap": 94697455616.0
+      "market_cap": 94481547264.0
     },
     "1888.T": {
       "ticker": "1888.T",
@@ -990,7 +990,7 @@
       "eps_growth": 10.475,
       "sector": "Industrials",
       "industry": "Engineering & Construction",
-      "market_cap": 47096299520.0
+      "market_cap": 47988514816.0
     },
     "1893.T": {
       "ticker": "1893.T",
@@ -1011,7 +1011,7 @@
       "eps_growth": 6.1,
       "sector": "Industrials",
       "industry": "Engineering & Construction",
-      "market_cap": 427661492224.0
+      "market_cap": 410495549440.0
     },
     "1898.T": {
       "ticker": "1898.T",
@@ -1032,7 +1032,7 @@
       "eps_growth": -49.6,
       "sector": "Industrials",
       "industry": "Engineering & Construction",
-      "market_cap": 54618521600.0
+      "market_cap": 54581886976.0
     },
     "1899.T": {
       "ticker": "1899.T",
@@ -1053,7 +1053,7 @@
       "eps_growth": 115.39999999999999,
       "sector": "Industrials",
       "industry": "Engineering & Construction",
-      "market_cap": 76011569152.0
+      "market_cap": 77544710144.0
     },
     "1925.T": {
       "ticker": "1925.T",
@@ -1074,7 +1074,7 @@
       "eps_growth": 9.0,
       "sector": "Real Estate",
       "industry": "Real Estate - Development",
-      "market_cap": 2823864713216.0
+      "market_cap": 2819527802880.0
     },
     "1911.T": {
       "ticker": "1911.T",
@@ -1095,7 +1095,7 @@
       "eps_growth": -64.3,
       "sector": "Consumer Cyclical",
       "industry": "Residential Construction",
-      "market_cap": 752067477504.0
+      "market_cap": 748388417536.0
     },
     "1934.T": {
       "ticker": "1934.T",
@@ -1116,7 +1116,7 @@
       "eps_growth": 152.4,
       "sector": "Industrials",
       "industry": "Engineering & Construction",
-      "market_cap": 181470543872.0
+      "market_cap": 180302872576.0
     },
     "1929.T": {
       "ticker": "1929.T",
@@ -1137,7 +1137,7 @@
       "eps_growth": 28.7,
       "sector": "Industrials",
       "industry": "Engineering & Construction",
-      "market_cap": 51835478016.0
+      "market_cap": 51710169088.0
     },
     "1928.T": {
       "ticker": "1928.T",
@@ -1158,7 +1158,7 @@
       "eps_growth": -2.4,
       "sector": "Consumer Cyclical",
       "industry": "Residential Construction",
-      "market_cap": 2172151398400.0
+      "market_cap": 2184470986752.0
     },
     "1926.T": {
       "ticker": "1926.T",
@@ -1179,7 +1179,7 @@
       "eps_growth": 24.9,
       "sector": "Industrials",
       "industry": "Engineering & Construction",
-      "market_cap": 161132232704.0
+      "market_cap": 160516440064.0
     },
     "1961.T": {
       "ticker": "1961.T",
@@ -1200,7 +1200,7 @@
       "eps_growth": 146.5,
       "sector": "Industrials",
       "industry": "Engineering & Construction",
-      "market_cap": 387061415936.0
+      "market_cap": 393025617920.0
     },
     "1938.T": {
       "ticker": "1938.T",
@@ -1221,7 +1221,7 @@
       "eps_growth": 21.256,
       "sector": "Industrials",
       "industry": "Engineering & Construction",
-      "market_cap": 64801132544.0
+      "market_cap": 65346306048.0
     },
     "1951.T": {
       "ticker": "1951.T",
@@ -1242,7 +1242,7 @@
       "eps_growth": 90.3,
       "sector": "Industrials",
       "industry": "Engineering & Construction",
-      "market_cap": 532861157376.0
+      "market_cap": 531844661248.0
     },
     "1950.T": {
       "ticker": "1950.T",
@@ -1263,7 +1263,7 @@
       "eps_growth": 144.1,
       "sector": "Industrials",
       "industry": "Infrastructure Operations",
-      "market_cap": 240784932864.0
+      "market_cap": 239325626368.0
     },
     "1959.T": {
       "ticker": "1959.T",
@@ -1284,7 +1284,7 @@
       "eps_growth": 9.0,
       "sector": "Industrials",
       "industry": "Engineering & Construction",
-      "market_cap": 572032548864.0
+      "market_cap": 573871620096.0
     },
     "1944.T": {
       "ticker": "1944.T",
@@ -1305,7 +1305,7 @@
       "eps_growth": 137.1,
       "sector": "Industrials",
       "industry": "Engineering & Construction",
-      "market_cap": 1139693846528.0
+      "market_cap": 1150549622784.0
     },
     "1945.T": {
       "ticker": "1945.T",
@@ -1326,7 +1326,7 @@
       "eps_growth": 13.4,
       "sector": "Industrials",
       "industry": "Engineering & Construction",
-      "market_cap": 72233795584.0
+      "market_cap": 71074078720.0
     },
     "1963.T": {
       "ticker": "1963.T",
@@ -1347,7 +1347,7 @@
       "eps_growth": 107.2,
       "sector": "Industrials",
       "industry": "Engineering & Construction",
-      "market_cap": 565126365184.0
+      "market_cap": 560284827648.0
     },
     "1942.T": {
       "ticker": "1942.T",
@@ -1368,7 +1368,7 @@
       "eps_growth": 7.000000000000001,
       "sector": "Industrials",
       "industry": "Engineering & Construction",
-      "market_cap": 1103134326784.0
+      "market_cap": 1124826873856.0
     },
     "1939.T": {
       "ticker": "1939.T",
@@ -1389,7 +1389,7 @@
       "eps_growth": 86.2,
       "sector": "Industrials",
       "industry": "Engineering & Construction",
-      "market_cap": 109011607552.0
+      "market_cap": 111141666816.0
     },
     "1930.T": {
       "ticker": "1930.T",
@@ -1410,7 +1410,7 @@
       "eps_growth": 87.9,
       "sector": "Industrials",
       "industry": "Engineering & Construction",
-      "market_cap": 44224081920.0
+      "market_cap": 44306587648.0
     },
     "1941.T": {
       "ticker": "1941.T",
@@ -1431,7 +1431,7 @@
       "eps_growth": 6.1,
       "sector": "Industrials",
       "industry": "Engineering & Construction",
-      "market_cap": 272653893632.0
+      "market_cap": 276359872512.0
     },
     "1952.T": {
       "ticker": "1952.T",
@@ -1452,7 +1452,7 @@
       "eps_growth": 73.0,
       "sector": "Industrials",
       "industry": "Building Products & Equipment",
-      "market_cap": 147583860736.0
+      "market_cap": 147128352768.0
     },
     "1946.T": {
       "ticker": "1946.T",
@@ -1473,7 +1473,7 @@
       "eps_growth": 111.9,
       "sector": "Industrials",
       "industry": "Engineering & Construction",
-      "market_cap": 210484019200.0
+      "market_cap": 210016698368.0
     },
     "1968.T": {
       "ticker": "1968.T",
@@ -1494,7 +1494,7 @@
       "eps_growth": 108.3,
       "sector": "Industrials",
       "industry": "Engineering & Construction",
-      "market_cap": 161421000704.0
+      "market_cap": 159338561536.0
     },
     "1964.T": {
       "ticker": "1964.T",
@@ -1515,7 +1515,7 @@
       "eps_growth": null,
       "sector": "Industrials",
       "industry": "Specialty Industrial Machinery",
-      "market_cap": 27436822528.0
+      "market_cap": 27471730688.0
     },
     "1975.T": {
       "ticker": "1975.T",
@@ -1536,7 +1536,7 @@
       "eps_growth": 10.7,
       "sector": "Industrials",
       "industry": "Engineering & Construction",
-      "market_cap": 101303304192.0
+      "market_cap": 103632117760.0
     },
     "1969.T": {
       "ticker": "1969.T",
@@ -1557,7 +1557,7 @@
       "eps_growth": -28.000000000000004,
       "sector": "Industrials",
       "industry": "Building Products & Equipment",
-      "market_cap": 616756477952.0
+      "market_cap": 618065100800.0
     },
     "1976.T": {
       "ticker": "1976.T",
