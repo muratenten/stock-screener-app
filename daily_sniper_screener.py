@@ -143,19 +143,26 @@ def is_cache_fresh(stock_data: dict) -> bool:
             latest_date = pd.to_datetime(latest_dt).date()
             
         import datetime
-        now_jst = datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=9))).date()
+        now_dt = datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=9)))
+        now_jst = now_dt.date()
         diff_days = (now_jst - latest_date).days
         weekday = now_jst.weekday()
-        # Monday (0) can accept Friday (3 days gap). Sunday (6) is 2 days. Saturday (5) is 1 day.
-        # Weekdays Tuesday-Friday (1-4) should have at most 1 day gap (yesterday's data).
+        
+        # 1. Monday (0) accepts Friday (3 days gap). Thursday (4 days) is strictly STALE.
+        # 2. Tuesday (1) accepts Monday (1 day gap) or Friday (4 days gap if Monday was holiday or market not closed).
+        # 3. Sunday (6) accepts Friday (2 days gap).
+        # 4. Saturday (5) accepts Friday (1 day gap).
+        # 5. Wed-Fri (2-4) accepts yesterday (1 day gap) or 2 days for mid-week holidays.
         if weekday == 0:
-            allowed_gap = 3  # Friday was 3 days ago. Thursday (4 days) is strictly STALE!
+            allowed_gap = 3
+        elif weekday == 1:
+            allowed_gap = 4
         elif weekday == 6:
-            allowed_gap = 2  # Friday was 2 days ago.
+            allowed_gap = 2
         elif weekday == 5:
-            allowed_gap = 1  # Friday was 1 day ago.
+            allowed_gap = 1
         else:
-            allowed_gap = 1  # Yesterday was 1 day ago.
+            allowed_gap = 2
         
         is_fresh = diff_days <= allowed_gap
         if not is_fresh:
@@ -240,7 +247,7 @@ def get_or_fetch_stock_data(tickers, fund_cache, jp_names, pbr_max=1.0, force_re
     def fetch_stock(ticker):
         try:
             t = yf.Ticker(ticker)
-            df = t.history(period="2y")
+            df = t.history(period="5y")
             if df is not None and not df.empty and len(df) >= 120:
                 close = df['Close'].dropna()
                 c_last = float(close.iloc[-1])

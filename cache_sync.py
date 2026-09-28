@@ -125,7 +125,7 @@ def refresh_sniper_price_cache(pbr_max=1.0, max_workers=20, sync_to_render=True,
     def fetch_stock(ticker):
         try:
             t = yf.Ticker(ticker)
-            df = t.history(period="2y")
+            df = t.history(period="5y")
             if df is not None and not df.empty and len(df) >= 120:
                 close = df['Close'].dropna()
                 c_last = float(close.iloc[-1])
