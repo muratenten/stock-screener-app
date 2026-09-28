@@ -6264,10 +6264,10 @@ widget_defaults = {
     "scr_filter_bb_re": False,
     "scr_filter_vol_su": False,
     "scr_filter_similarity": False,
-    "scr_similarity_match_days": 20,
-    "scr_similarity_future_days": 20,
-    "scr_similarity_days": 20,
-    "scr_similarity_pct": 5.0,
+    "scr_similarity_match_days": 50,
+    "scr_similarity_future_days": 15,
+    "scr_similarity_days": 15,
+    "scr_similarity_pct": 8.0,
     "scr_filter_shape_match": False,
     "scr_filter_shape_match_mobile": False,
     "active_preset": "カスタム設定",
@@ -6791,13 +6791,13 @@ with tab_screen:
             else:
                 filter_similarity_pattern = st.checkbox("🔍 類似連動 (過去類似3局面の上昇率フィルタ)", key="scr_filter_similarity", help="直近チャート形状に類似する過去の局面を直近5年間の歴史データから3つ抽出し、そのすべての局面において指定した営業日後の上昇率が指定値以上となった銘柄のみを抽出します。他フィルタで絞り込んだ後、最後に実行されます。")
             if filter_similarity_pattern:
-                similarity_match_days = st.slider("   ↳ 照合する直近チャート期間 (営業日)", 5, 120, int(st.session_state.get("scr_similarity_match_days", 20)), step=5, key="scr_similarity_match_days", help="直近何営業日分のチャート形状（波形）を照合元として使用するかを設定します（例: 20日 = 約1ヶ月、60日 = 約3ヶ月、120日 = 約半年）。")
-                similarity_future_days = st.slider("   ↳ 参照する未来予測期間 (営業日後)", 5, 120, int(st.session_state.get("scr_similarity_future_days", st.session_state.get("scr_similarity_days", 20))), step=5, key="scr_similarity_future_days", help="過去類似局面から何営業日後に上昇したかを判定するかを設定します（例: 20日後 = 約1ヶ月後、60日後 = 約3ヶ月後、120日後 = 約半年後）。")
-                similarity_threshold_pct = st.slider("   ↳ 必要上昇率 (%)", 0.0, 15.0, float(st.session_state.get("scr_similarity_pct", 5.0)), step=0.5, key="scr_similarity_pct")
+                similarity_match_days = st.slider("   ↳ 照合する直近チャート期間 (営業日)", 5, 120, int(st.session_state.get("scr_similarity_match_days", 50)), step=5, key="scr_similarity_match_days", help="直近何営業日分のチャート形状（波形）を照合元として使用するかを設定します（推奨: 50日 = 約2.5ヶ月）。")
+                similarity_future_days = st.slider("   ↳ 参照する未来予測期間 (営業日後)", 5, 120, int(st.session_state.get("scr_similarity_future_days", st.session_state.get("scr_similarity_days", 15))), step=5, key="scr_similarity_future_days", help="過去類似局面から何営業日後に上昇したかを判定するかを設定します（推奨: 15日後 = 約3週間）。")
+                similarity_threshold_pct = st.slider("   ↳ 必要上昇率 (%)", 0.0, 15.0, float(st.session_state.get("scr_similarity_pct", 8.0)), step=0.5, key="scr_similarity_pct", help="過去類似局面のすべてで達成しているべき最小上昇率を設定します（推奨: +8.0%）。")
             else:
-                similarity_match_days = 20
-                similarity_future_days = 20
-                similarity_threshold_pct = 5.0
+                similarity_match_days = 50
+                similarity_future_days = 15
+                similarity_threshold_pct = 8.0
                 
             # Define shape matching filter on mobile
             filter_shape_match = st.checkbox("📈 チャート形状パターン指定", key="scr_filter_shape_match_mobile", help="直近30日間のチャート形状が、指定した特定のパターン（上昇傾向、下降減衰、上昇反転）に類似する銘柄のみを抽出します。")
@@ -6919,13 +6919,13 @@ with tab_screen:
                 else:
                     filter_similarity_pattern = st.checkbox("🔍 類似連動 (過去類似3局面の上昇率フィルタ)", key="scr_filter_similarity", help="直近チャート形状に類似する過去の局面を直近5年間の歴史データから3つ抽出し、そのすべての局面において指定した営業日後の上昇率が指定値以上となった銘柄のみを抽出します。他フィルタで絞り込んだ後、最後に実行されます。")
                 if filter_similarity_pattern:
-                    similarity_match_days = st.slider("   ↳ 照合する直近チャート期間 (営業日)", 5, 120, int(st.session_state.get("scr_similarity_match_days", 20)), step=5, key="scr_similarity_match_days", help="直近何営業日分のチャート形状（波形）を照合元として使用するかを設定します（例: 20日 = 約1ヶ月、60日 = 約3ヶ月、120日 = 約半年）。")
-                    similarity_future_days = st.slider("   ↳ 参照する未来予測期間 (営業日後)", 5, 120, int(st.session_state.get("scr_similarity_future_days", st.session_state.get("scr_similarity_days", 20))), step=5, key="scr_similarity_future_days", help="過去類似局面から何営業日後に上昇したかを判定するかを設定します（例: 20日後 = 約1ヶ月後、60日後 = 約3ヶ月後、120日後 = 約半年後）。")
-                    similarity_threshold_pct = st.slider("   ↳ 必要上昇率 (%)", 0.0, 15.0, float(st.session_state.get("scr_similarity_pct", 5.0)), step=0.5, key="scr_similarity_pct")
+                    similarity_match_days = st.slider("   ↳ 照合する直近チャート期間 (営業日)", 5, 120, int(st.session_state.get("scr_similarity_match_days", 50)), step=5, key="scr_similarity_match_days", help="直近何営業日分のチャート形状（波形）を照合元として使用するかを設定します（推奨: 50日 = 約2.5ヶ月）。")
+                    similarity_future_days = st.slider("   ↳ 参照する未来予測期間 (営業日後)", 5, 120, int(st.session_state.get("scr_similarity_future_days", st.session_state.get("scr_similarity_days", 15))), step=5, key="scr_similarity_future_days", help="過去類似局面から何営業日後に上昇したかを判定するかを設定します（推奨: 15日後 = 約3週間）。")
+                    similarity_threshold_pct = st.slider("   ↳ 必要上昇率 (%)", 0.0, 15.0, float(st.session_state.get("scr_similarity_pct", 8.0)), step=0.5, key="scr_similarity_pct", help="過去類似局面のすべてで達成しているべき最小上昇率を設定します（推奨: +8.0%）。")
                 else:
-                    similarity_match_days = 20
-                    similarity_future_days = 20
-                    similarity_threshold_pct = 5.0
+                    similarity_match_days = 50
+                    similarity_future_days = 15
+                    similarity_threshold_pct = 8.0
                 
                 filter_shape_match = st.checkbox("📈 チャート形状パターン指定", key="scr_filter_shape_match", help="直近30日間のチャート形状が、指定した特定のパターン（上昇傾向、下降減衰、上昇反転）に類似する銘柄のみを抽出します。")
                 if filter_shape_match:
@@ -7227,11 +7227,13 @@ with tab_screen:
                                 'raw_data': analysis
                             })
                             
+                    m_date = sniped_list[0].get('market_date', '最新') if sniped_list else "最新"
                     st.session_state['screening_results'] = sniper_results
+                    st.session_state['sniper_market_date'] = m_date
                     if sniper_results:
-                        st.toast(f"🎯 高勝率急騰パターンに合致する {len(sniper_results)} 銘柄を検出しました！")
+                        st.toast(f"🎯 高勝率急騰パターンに合致する {len(sniper_results)} 銘柄を検出しました！（基準日: {m_date}）")
                     else:
-                        st.toast("🎯 条件に合致するスナイパー急騰銘柄はありませんでした。")
+                        st.toast("🎯 本日、条件に合致するスナイパー急騰銘柄はありませんでした。")
                     st.rerun()
 
             with st.spinner("株価データ及び企業財務データを取得中..."):

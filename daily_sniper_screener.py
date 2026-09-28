@@ -146,12 +146,20 @@ def is_cache_fresh(stock_data: dict) -> bool:
         now_jst = datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=9))).date()
         diff_days = (now_jst - latest_date).days
         weekday = now_jst.weekday()
-        # Monday (0) or Sunday (6) can have Friday's data (3-4 days gap)
-        allowed_gap = 4 if weekday in (0, 6) else 2
+        # Monday (0) can accept Friday (3 days gap). Sunday (6) is 2 days. Saturday (5) is 1 day.
+        # Weekdays Tuesday-Friday (1-4) should have at most 1 day gap (yesterday's data).
+        if weekday == 0:
+            allowed_gap = 3  # Friday was 3 days ago. Thursday (4 days) is strictly STALE!
+        elif weekday == 6:
+            allowed_gap = 2  # Friday was 2 days ago.
+        elif weekday == 5:
+            allowed_gap = 1  # Friday was 1 day ago.
+        else:
+            allowed_gap = 1  # Yesterday was 1 day ago.
         
         is_fresh = diff_days <= allowed_gap
         if not is_fresh:
-            print(f"⚠️ [STALE CACHE DETECTED] Cache latest date is {latest_date} (today is {now_jst}, gap={diff_days}d). Refresh required.")
+            print(f"⚠️ [STALE CACHE DETECTED] Cache latest date is {latest_date} (today is {now_jst}, gap={diff_days}d > allowed={allowed_gap}d). Refresh required.")
         return is_fresh
     except Exception as e:
         print(f"⚠️ [CACHE FRESHNESS CHECK ERROR] {e}")
@@ -318,6 +326,14 @@ def run_sniper_screening(
     # 1. Fetch or get cached stock data with pre-PBR filtering
     stock_data, stock_info = get_or_fetch_stock_data(tickers, fund_cache, jp_names, pbr_max=pbr_max, force_refresh=force_refresh)
     
+    latest_market_date = "---"
+    if stock_data:
+        try:
+            sample_series = next(iter(stock_data.values()))
+            latest_market_date = sample_series.index[-1].strftime('%Y/%m/%d')
+        except Exception:
+            pass
+            
     # 2. Strict PBR verification with current price
     targets = {}
     for ticker, info in stock_info.items():
@@ -409,6 +425,7 @@ def run_sniper_screening(
                         'pbr': info['pbr'],
                         'min_ret': min_ret,
                         'avg_ret': avg_ret,
+                        'market_date': latest_market_date,
                         'matches': match_details
                     })
 
@@ -442,6 +459,7 @@ def run_sniper_screening(
             msg += f"【過去3回上昇】最小+{s['min_ret']:.1f}%（平均+{s['avg_ret']:.1f}%）\n"
             msg += "━━━━━━━━━━━━━━\n"
         msg += f"💡 戦略条件:\n"
+        msg += f"・データ基準日: {latest_market_date}\n"
         msg += f"・照合期間: {n_match}日（約2.5ヶ月）\n"
         msg += f"・保有期間: {future_day}日（約3週間）\n"
         msg += f"・過去5年実績: 個別勝率72.7% / バスケ70.5% / 超過α+1.99% / 利益+4.28%\n"
@@ -454,6 +472,7 @@ def run_sniper_screening(
         if is_interactive:
             result_message = f"【ZenStock スキャナー結果】\n━━━━━━━━━━━━━━\n"
             result_message += f"設定条件:\n"
+            result_message += f"・データ基準日: {latest_market_date}\n"
             result_message += f"・照合期間: {n_match}日（約2.5ヶ月）\n"
             result_message += f"・保有期間: {future_day}日（約3週間）\n"
             result_message += f"・上昇閾値: +{thresh:.1f}%\n"
@@ -466,7 +485,8 @@ def run_sniper_screening(
         elif test_mode:
             result_message = "🎯【ZenStock プライムスナイパー通知テスト】\n"
             result_message += "LINE Messaging APIの接続テストに成功しました！\n"
-            result_message += f"本日のスクリーニング（東証プライム全社・照合{n_match}日×保有{future_day}日×+{thresh:.1f}%×{pbr_label}）では該当銘柄はありませんでした。\n\n"
+            result_message += f"本日のスクリーニング（東証プライム全社・照合{n_match}日×保有{future_day}日×+{thresh:.1f}%×{pbr_label}）では該当銘柄はありませんでした。\n"
+            result_message += f"（データ基準日: {latest_market_date}）\n\n"
             result_message += "次回、条件を満たす勝率72.7%の神シグナル銘柄が出現した瞬間に自動通知されます。"
             if send_push:
                 send_line_message(result_message, target_user_id=target_user_id)

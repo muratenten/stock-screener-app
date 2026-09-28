@@ -318,28 +318,28 @@ def broadcast_morning_sniper_routine(force=False):
     )
     
     sent_count = 0
-    if sniped_stocks or force:
-        for uid, uinfo in active_subscribers.items():
-            uname = uinfo.get("name", "会員")
-            is_prem = is_line_user_premium(uid)
-            
-            if sniped_stocks:
-                if is_prem:
-                    p_msg = build_premium_sniper_msg(sniped_stocks, user_name=uname)
-                else:
-                    p_msg = build_free_sniper_msg(sniped_stocks, user_name=uname)
+    for uid, uinfo in active_subscribers.items():
+        uname = uinfo.get("name", "会員")
+        is_prem = is_line_user_premium(uid)
+        
+        if sniped_stocks:
+            if is_prem:
+                p_msg = build_premium_sniper_msg(sniped_stocks, user_name=uname)
             else:
-                p_msg = f"🌅【毎朝10:00 スナイパーシグナル】\n{uname} 様\n\n本日、勝率72.7%スナイパー条件を満たす銘柄はありませんでした。"
+                p_msg = build_free_sniper_msg(sniped_stocks, user_name=uname)
+        else:
+            p_msg = (
+                f"🌅【毎朝10:00 スナイパーシグナル】\n{uname} 様\n\n"
+                f"本日、勝率72.7%スナイパー条件（東証プライム・照合50日×保有15日×上昇+8.0%×PBR<1.0）を満たす銘柄はありませんでした。\n\n"
+                f"💡 投資規律を守り、無理なエントリーを見送る日です。"
+            )
 
-            ok = send_line_message(p_msg, target_user_id=uid)
-            if ok:
-                sent_count += 1
-            time.sleep(0.3)
-        add_log(f"✅ [MORNING ROUTINE] Delivered to {sent_count} subscribers successfully (Tier-separated)!")
-        return sent_count, f"{sent_count}名に朝の通知を配信しました。"
-    else:
-        add_log("ℹ️ [MORNING ROUTINE] No sniper hits today. Notification skipped to avoid spam.")
-        return 0, "本日の条件合致銘柄はありませんでした（無駄な通知をスキップ）。"
+        ok = send_line_message(p_msg, target_user_id=uid)
+        if ok:
+            sent_count += 1
+        time.sleep(0.3)
+    add_log(f"✅ [MORNING ROUTINE] Delivered to {sent_count} subscribers successfully (Tier-separated)!")
+    return sent_count, f"{sent_count}名に朝の通知を配信しました。"
 
 def run_and_push_sniper_for_user(target_user_id: str, match_days: int = 50, hold_days: int = 15, thresh: float = 8.0, pbr_max = 1.0):
     """Run sniper scan and send appropriate free/premium message to a specific LINE user."""
