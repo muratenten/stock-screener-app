@@ -124,23 +124,31 @@ def load_tickers_and_fundamentals():
 _CACHE_TIMESTAMP = 0
 _CACHED_STOCK_DATA = {}
 _CACHED_STOCK_INFO = {}
+_CACHED_DATES = []
 CACHE_TTL = 1800  # 30 minutes
 
 def is_cache_fresh(stock_data: dict) -> bool:
     """Check if cached stock data includes recent market date (not stale)."""
+    global _CACHED_DATES
     if not stock_data or len(stock_data) < 30:
         return False
     try:
-        sample_key = next(iter(stock_data))
-        series = stock_data[sample_key]
-        if series is None or len(series) == 0:
-            return False
-        latest_dt = series.index[-1]
-        
-        if hasattr(latest_dt, 'date'):
-            latest_date = latest_dt.date()
+        latest_date = None
+        if _CACHED_DATES and len(_CACHED_DATES) > 0:
+            latest_date = pd.to_datetime(_CACHED_DATES[-1]).date()
         else:
-            latest_date = pd.to_datetime(latest_dt).date()
+            sample_key = next(iter(stock_data))
+            series = stock_data[sample_key]
+            if series is None or len(series) == 0:
+                return False
+            if hasattr(series, 'index'):
+                latest_dt = series.index[-1]
+                latest_date = latest_dt.date() if hasattr(latest_dt, 'date') else pd.to_datetime(latest_dt).date()
+            else:
+                return True
+                
+        if not latest_date:
+            return True
             
         import datetime
         now_dt = datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=9)))
@@ -189,7 +197,7 @@ def get_or_fetch_stock_data(tickers, fund_cache, jp_names, pbr_max=1.0, force_re
       2. Disk cache check (only if market date is fresh and not force_refresh)
       3. Auto-download latest prices via parallel yfinance if cache is stale or missing
     """
-    global _CACHE_TIMESTAMP, _CACHED_STOCK_DATA, _CACHED_STOCK_INFO
+    global _CACHE_TIMESTAMP, _CACHED_STOCK_DATA, _CACHED_STOCK_INFO, _CACHED_DATES
     now = time.time()
     
     # 1. Return in-memory cache if fresh & market date is current
@@ -208,13 +216,13 @@ def get_or_fetch_stock_data(tickers, fund_cache, jp_names, pbr_max=1.0, force_re
                 cached = pickle.load(f)
                 d_data = cached.get('data', {})
                 d_info = cached.get('info', {})
+                _CACHED_DATES = cached.get('dates', [])
                 
             if len(d_data) >= 30 and is_cache_fresh(d_data):
                 _CACHED_STOCK_DATA = d_data
                 _CACHED_STOCK_INFO = d_info
                 _CACHE_TIMESTAMP = mtime
-                sample_k = next(iter(d_data))
-                latest_d = d_data[sample_k].index[-1].strftime('%Y-%m-%d')
+                latest_d = _CACHED_DATES[-1] if _CACHED_DATES else "最新"
                 print(f"⚡ [DISK CACHE HIT] Loaded {len(_CACHED_STOCK_DATA)} stocks from disk cache (latest date: {latest_d}).")
                 return _CACHED_STOCK_DATA, _CACHED_STOCK_INFO
             else:
@@ -289,14 +297,35 @@ def get_or_fetch_stock_data(tickers, fund_cache, jp_names, pbr_max=1.0, force_re
     print(f"⚡ [FETCH COMPLETE] Loaded {len(stock_data)} stocks in {fetch_time:.1f}s!", flush=True)
     
     if len(stock_data) >= 30:
-        _CACHED_STOCK_DATA = stock_data
+        dates_list = []
+        try:
+            sample_k = next(iter(stock_data))
+            sample_s = stock_data[sample_k]
+            if hasattr(sample_s, 'index'):
+                dates_list = sample_s.index.strftime('%Y/%m/%d').tolist()
+        except Exception:
+            pass
+            
+        compact_data = {}
+        for k, v in stock_data.items():
+            if hasattr(v, 'to_numpy'):
+                compact_data[k] = v.to_numpy(dtype=np.float32)
+            else:
+                compact_data[k] = np.array(v, dtype=np.float32)
+
+        for k, inf in stock_info.items():
+            if 'close' in inf:
+                del inf['close']
+
+        _CACHED_DATES = dates_list
+        _CACHED_STOCK_DATA = compact_data
         _CACHED_STOCK_INFO = stock_info
         _CACHE_TIMESTAMP = now
-        # Persist to disk cache
+        # Persist to disk cache (compact float32 format: ~3MB)
         try:
             with open(DISK_PRICE_CACHE, "wb") as f:
-                pickle.dump({'data': stock_data, 'info': stock_info}, f)
-            print(f"💾 Saved {len(stock_data)} stocks to disk cache: {DISK_PRICE_CACHE}")
+                pickle.dump({'data': compact_data, 'info': stock_info, 'dates': dates_list}, f, protocol=pickle.HIGHEST_PROTOCOL)
+            print(f"💾 Saved {len(compact_data)} stocks to disk cache: {DISK_PRICE_CACHE} (compact float32 format, {len(dates_list)} days)")
         except Exception as e:
             print(f"[DISK CACHE WRITE ERROR] {e}")
         
@@ -318,6 +347,7 @@ def run_sniper_screening(
       - Default: 50d match x 15d future x +8.0% thresh x PBR < 1.0
       - Historical Stats: Individual Win Rate 72.65%, Basket Win Rate 70.49%, Alpha +1.99%, Avg Return +4.28%
     """
+    global _CACHED_DATES
     t_start = time.time()
     pbr_label = f"PBR < {pbr_max:.1f}" if (pbr_max is not None and pbr_max > 0) else "PBR制限なし"
     print("=" * 60)
@@ -357,8 +387,8 @@ def run_sniper_screening(
     sniped_stocks = []
     
     for ticker, info in targets.items():
-        close_series = stock_data[ticker]
-        close = close_series.to_numpy(dtype=np.float32)
+        raw_close = stock_data[ticker]
+        close = raw_close if isinstance(raw_close, np.ndarray) else (raw_close.to_numpy(dtype=np.float32) if hasattr(raw_close, 'to_numpy') else np.array(raw_close, dtype=np.float32))
         total_len = len(close)
         
         if total_len < n_match + 80:
@@ -409,7 +439,12 @@ def run_sniper_screening(
                 if p_fut < len(close):
                     ret = (close[p_fut] - close[p_end]) / close[p_end] * 100.0
                     p_rets.append(ret)
-                    date_end = close_series.index[p_end].strftime('%Y/%m/%d')
+                    if _CACHED_DATES and p_end < len(_CACHED_DATES):
+                        date_end = _CACHED_DATES[p_end]
+                    elif hasattr(raw_close, 'index'):
+                        date_end = raw_close.index[p_end].strftime('%Y/%m/%d')
+                    else:
+                        date_end = "---"
                     match_details.append({
                         'date': date_end,
                         'ret': ret,
