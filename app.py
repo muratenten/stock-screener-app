@@ -7137,24 +7137,44 @@ with tab_screen:
             
         # Start button
         if start_screening_clicked:
-            # Check if high-probability sniper criteria are matched
-            is_sniper_active = (
+            # Fast vectorized engine can execute with ANY match/future/thresh settings
+            # as long as no other conflicting technical/fundamental filters are active!
+            has_conflicting_filters = any([
+                filter_golden_cross,
+                filter_macd_cross,
+                filter_rsi_oversold,
+                filter_rsi_overbought,
+                filter_bb_rebound,
+                filter_volume_surge,
+                filter_shape_match,
+                filter_yutai,
+                filter_per,
+                filter_roe,
+                filter_dividend,
+                filter_rev_growth,
+                filter_eps_growth,
+            ])
+            is_fast_similarity_active = (
                 filter_similarity_pattern and 
-                similarity_match_days == 50 and 
-                similarity_future_days == 15 and 
-                similarity_threshold_pct == 8.0 and 
-                filter_pbr and 
-                "東証プライム" in market
+                "東証プライム" in market and 
+                not has_conflicting_filters
             )
             
-            if is_sniper_active:
-                with st.spinner("🎯 高勝率急騰パターン高速スキャン実行中（東証プライム・勝率72.7%スイング判定）..."):
+            if is_fast_similarity_active:
+                n_m = int(similarity_match_days)
+                f_d = int(similarity_future_days)
+                th = float(similarity_threshold_pct)
+                p_max = 1.0 if filter_pbr else None
+                is_golden_sniper = (n_m == 50 and f_d == 15 and th == 8.0 and filter_pbr)
+                
+                sp_text = "🎯 高勝率急騰パターン高速スキャン実行中（東証プライム・勝率72.7%スイング判定）..." if is_golden_sniper else f"🎯 類似連動 高速パターン照合中（照合{n_m}日 × 保有{f_d}日後 × 閾値+{th:.1f}%）..."
+                with st.spinner(sp_text):
                     import daily_sniper_screener as dss
                     sniped_list, sniper_msg = dss.run_sniper_screening(
-                        n_match=50,
-                        future_day=15,
-                        thresh=8.0,
-                        pbr_max=1.0,
+                        n_match=n_m,
+                        future_day=f_d,
+                        thresh=th,
+                        pbr_max=p_max,
                         send_push=False,
                         force_refresh=False
                     )
@@ -7210,7 +7230,7 @@ with tab_screen:
                                 'ティッカー': ticker,
                                 '銘柄名': display_name,
                                 '総合スコア (10点)': total_score,
-                                'チャート形状': f"🎯 スナイパー合致 (過去最小+{s['min_ret']:.1f}%)",
+                                'チャート形状': f"🎯 スナイパー合致 (過去最小+{s['min_ret']:.1f}%)" if is_golden_sniper else f"🔍 類似連動合致 (過去最小+{s['min_ret']:.1f}%)",
                                 'テクニカルスコア (3点)': tech_score,
                                 'ファンダスコア (7点)': fund_score,
                                 '株価': float(metrics['price']) if metrics.get('price') is not None else float(s.get('last_price', 0.0)),
@@ -7223,7 +7243,7 @@ with tab_screen:
                                 '配当利回り (%)': float(metrics['dividend_yield']) if metrics.get('dividend_yield') is not None else None,
                                 '優待利回り (%)': float(y_yield_val) if (y_has and y_yield_val > 0) else (0.0 if y_has else None),
                                 '株主優待': (", ".join(y_cats[:2])) if y_has else 'なし',
-                                'テーマ/タグ': "🎯 急騰スナイパー候補, 東証プライム, PBR割安",
+                                'テーマ/タグ': "🎯 急騰スナイパー候補, 東証プライム, PBR割安" if is_golden_sniper else f"🔍 類似連動（照合{n_m}日/保有{f_d}日）, 東証プライム",
                                 'raw_data': analysis
                             })
                             
@@ -7231,9 +7251,9 @@ with tab_screen:
                     st.session_state['screening_results'] = sniper_results
                     st.session_state['sniper_market_date'] = m_date
                     if sniper_results:
-                        st.toast(f"🎯 高勝率急騰パターンに合致する {len(sniper_results)} 銘柄を検出しました！（基準日: {m_date}）")
+                        st.toast(f"🎯 類似連動パターンに合致する {len(sniper_results)} 銘柄を検出しました！（基準日: {m_date}）")
                     else:
-                        st.toast("🎯 本日、条件に合致するスナイパー急騰銘柄はありませんでした。")
+                        st.toast(f"🎯 条件（照合{n_m}日×保有{f_d}日後×+{th:.1f}%）に合致する銘柄はありませんでした。")
                     st.rerun()
 
             with st.spinner("株価データ及び企業財務データを取得中..."):
