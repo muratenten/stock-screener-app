@@ -27,6 +27,7 @@ from fastapi.middleware.cors import CORSMiddleware
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(BASE_DIR)
 import threading
+import sniper_position_manager as spm
 from daily_sniper_screener import run_sniper_screening, send_line_message, warm_up_cache
 
 app = FastAPI(title="ZenStock LINE Bot & LIFF")
@@ -317,6 +318,15 @@ def broadcast_morning_sniper_routine(force=False):
         is_interactive=False
     )
     
+    # Record newly sniped stocks into positions store (15-trading-day exit tracking)
+    if sniped_stocks:
+        try:
+            new_pos_count = spm.record_sniper_positions(sniped_stocks)
+            if new_pos_count > 0:
+                add_log(f"🎯 [SNIPER POSITION] Recorded {new_pos_count} new positions for 3-week exit tracking.")
+        except Exception as e:
+            add_log(f"⚠️ [SNIPER POSITION] Error recording positions: {e}")
+
     sent_count = 0
     for uid, uinfo in active_subscribers.items():
         uname = uinfo.get("name", "会員")
@@ -340,6 +350,72 @@ def broadcast_morning_sniper_routine(force=False):
         time.sleep(0.3)
     add_log(f"✅ [MORNING ROUTINE] Delivered to {sent_count} subscribers successfully (Tier-separated)!")
     return sent_count, f"{sent_count}名に朝の通知を配信しました。"
+
+def broadcast_noon_exit_routine(force=False, test_user_id=None):
+    """
+    Check sniper positions that reached 15 trading days (~3 weeks),
+    fetch real-time market exit prices, and broadcast exit signals to subscribers at 12:00 PM JST.
+    """
+    add_log("🕛 [NOON EXIT ROUTINE] Checking positions due for 3-week exit signal...")
+    due_items = spm.check_due_exits_and_fetch_prices()
+    
+    if not due_items and not force:
+        add_log("ℹ️ [NOON EXIT ROUTINE] No positions due for exit today.")
+        return 0, "本日手仕舞い期日の銘柄はありません。"
+        
+    prefs = load_all_preferences()
+    active_subscribers = {uid: u for uid, u in prefs.items() if u.get("active", True)}
+    
+    if test_user_id:
+        active_subscribers = {test_user_id: prefs.get(test_user_id, {})}
+        
+    if not active_subscribers:
+        add_log("⚠️ [NOON EXIT ROUTINE] No active subscribers found.")
+        return 0, "配信対象の登録者がいません。"
+
+    # If force/test with no actual due items, create a sample simulation item
+    is_simulated = False
+    if not due_items and force:
+        is_simulated = True
+        due_items = [{
+            "id": "7244_test",
+            "ticker": "7244.T",
+            "name": "市光工業",
+            "sector": "自動車部品",
+            "entry_date": "2026-09-15",
+            "target_exit_date": "2026-10-06",
+            "entry_price": 542.0,
+            "current_price": 598.0,
+            "diff_price": 56.0,
+            "return_pct": 10.33,
+            "elapsed_trading_days": 15,
+            "target_trading_days": 15,
+            "pbr": 0.65
+        }]
+
+    add_log(f"🎯 [NOON EXIT ROUTINE] Broadcasting {len(due_items)} due positions to {len(active_subscribers)} subscribers")
+    
+    sent_count = 0
+    for uid, uinfo in active_subscribers.items():
+        uname = uinfo.get("name", "会員")
+        is_prem = is_line_user_premium(uid)
+        
+        if is_prem:
+            msg = spm.build_noon_exit_msg_premium(due_items, user_name=uname)
+        else:
+            msg = spm.build_noon_exit_msg_free(due_items, user_name=uname)
+            
+        ok = send_line_message(msg, target_user_id=uid)
+        if ok:
+            sent_count += 1
+        time.sleep(0.3)
+        
+    # Mark positions as exited unless this was just a simulation test
+    if not test_user_id and due_items and not is_simulated:
+        spm.mark_positions_as_exited(due_items)
+        
+    add_log(f"✅ [NOON EXIT ROUTINE] Delivered noon exit signals to {sent_count} subscribers!")
+    return sent_count, f"{sent_count}名に売却シグナル通知を配信しました。"
 
 def run_and_push_sniper_for_user(target_user_id: str, match_days: int = 50, hold_days: int = 15, thresh: float = 8.0, pbr_max = 1.0):
     """Run sniper scan and send appropriate free/premium message to a specific LINE user."""
@@ -379,7 +455,8 @@ def run_and_push_sniper_for_user(target_user_id: str, match_days: int = 50, hold
 def _morning_scheduler_loop():
     last_run_date = ""
     last_warmup_date = ""
-    add_log("⏰ Morning Routine Scheduler background loop started.")
+    last_noon_date = ""
+    add_log("⏰ Morning & Noon Routine Scheduler background loop started.")
     import datetime
     while True:
         try:
@@ -397,11 +474,18 @@ def _morning_scheduler_loop():
                     add_log("🌅 [SCHEDULER 09:55] Running pre-broadcast cache refresh with latest market data...")
                     warm_up_cache(force=True)
 
-            # 2. Trigger broadcast at 10:00 AM JST on weekdays
+            # 2. Trigger morning screening broadcast at 10:00 AM JST on weekdays
             if is_weekday and now_jst.hour == 10 and now_jst.minute == 0:
                 if last_run_date != today_str:
                     last_run_date = today_str
                     broadcast_morning_sniper_routine()
+
+            # 3. Trigger 3-week exit signal broadcast at 12:00 PM JST on weekdays (after morning session close)
+            if is_weekday and now_jst.hour == 12 and now_jst.minute == 0:
+                if last_noon_date != today_str:
+                    last_noon_date = today_str
+                    add_log("🕛 [SCHEDULER 12:00] Triggering 3-week sniper exit signal broadcast...")
+                    broadcast_noon_exit_routine()
                     
             time.sleep(30)
         except Exception as e:
@@ -588,6 +672,24 @@ def api_subscribers():
 def api_trigger_morning(background_tasks: BackgroundTasks, force: bool = False):
     add_log("📢 Manual morning broadcast triggered via API")
     background_tasks.add_task(broadcast_morning_sniper_routine, force=force)
+    return {"status": "broadcast_queued", "force": force}
+
+@app.get("/api/sniper_positions")
+def api_sniper_positions():
+    """Get active sniper positions and summary status."""
+    positions = spm.load_positions()
+    summary = spm.get_positions_summary()
+    return {
+        "status": "ok",
+        "positions": positions,
+        "summary": summary
+    }
+
+@app.post("/api/trigger_noon_exit")
+def api_trigger_noon_exit(background_tasks: BackgroundTasks, force: bool = False):
+    """Manually trigger 12:00 noon exit broadcast."""
+    add_log("📢 Manual noon exit broadcast triggered via API")
+    background_tasks.add_task(broadcast_noon_exit_routine, force=force)
     return {"status": "broadcast_queued", "force": force}
 
 @app.post("/api/register_subscriber")
@@ -997,10 +1099,25 @@ async def line_webhook(request: Request, background_tasks: BackgroundTasks, x_li
             background_tasks.add_task(broadcast_morning_sniper_routine, force=True)
             continue
 
+        # Admin Command: Test Noon Exit Broadcast
+        if user_id == LINE_USER_ID and any(k in text for k in ["売却テスト", "12時テスト", "お昼テスト", "手仕舞いテスト", "期日テスト"]):
+            reply_line_message(reply_token, "🕛 12:00売却シグナル通知のテスト配信を開始します...")
+            background_tasks.add_task(broadcast_noon_exit_routine, force=True, test_user_id=user_id)
+            continue
+
         # Admin Command: Force Cache Refresh
         if user_id == LINE_USER_ID and any(k in text for k in ["キャッシュ更新", "データ更新", "最新データ更新", "株価更新"]):
             reply_line_message(reply_token, "🔄 最新の株価データを市場からダウンロードし、キャッシュを更新しています（約15秒）...")
             background_tasks.add_task(warm_up_cache, force=True)
+            continue
+
+        # Positions / Holdings Query Command (e.g. "保有", "ポジション", "売却予定", "手仕舞い", "保有銘柄")
+        if any(k in text for k in ["保有", "ポジション", "売却予定", "手仕舞い", "保有状況", "保有銘柄", "残り日数"]):
+            prefs = load_all_preferences()
+            uinfo = prefs.get(user_id, {})
+            uname = uinfo.get("name", "会員")
+            holding_msg = spm.build_holding_summary_msg(user_name=uname)
+            reply_line_message(reply_token, holding_msg)
             continue
 
         # Invite & Friend Sharing Command
