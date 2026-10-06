@@ -1300,6 +1300,67 @@ def calculate_bollinger_bands(series, period=20, std_dev=2):
     lower_band = rolling_mean - (rolling_std * std_dev)
     return upper_band, rolling_mean, lower_band
 
+# Helper for Purchase Confirmation Dialog
+@st.dialog("📋 仮想購入（デモトレード）内容の確認", width="medium")
+def show_purchase_confirmation_dialog(name, ticker, qty, price, total_cost, is_us=False, existing_qty=0.0, existing_price=0.0):
+    extra_info_html = ""
+    if existing_qty > 0 and existing_price > 0:
+        new_qty = existing_qty + qty
+        new_invest_amount = (existing_qty * existing_price) + total_cost
+        new_price = new_invest_amount / new_qty
+        old_qty_str = f"{int(existing_qty):,}" if not is_us else f"{existing_qty:,.2f}"
+        new_qty_str = f"{int(new_qty):,}" if not is_us else f"{new_qty:,.2f}"
+        
+        extra_info_html = f"""
+        <div style="background-color: rgba(59, 130, 246, 0.08); border: 1px dashed #3b82f6; border-radius: 6px; padding: 10px; margin-top: 10px; font-size: 0.88rem;">
+            <div style="color: #2563eb; font-weight: bold; margin-bottom: 4px;">💡 既存ポジションへの追加購入</div>
+            <div>現在保有: <b>{old_qty_str}株</b> (平均取得単価: {format_price(existing_price, ticker)})</div>
+            <div style="margin-top: 2px;">約定後の合計: <b>{new_qty_str}株</b> (新・平均取得単価: <b style="color: #16a34a;">{format_price(new_price, ticker)}</b>)</div>
+        </div>
+        """
+        
+    st.markdown(f"""
+    以下の条件でデモトレードの**買い注文（購入登録）**を実行します。  
+    **買値（約定単価）や購入株数に間違いがないかご確認ください。**
+    
+    <div style="background-color: var(--secondary-background-color, #f8fafc); border: 1px solid var(--border-color, #e2e8f0); border-radius: 8px; padding: 15px; margin-top: 12px; margin-bottom: 15px; color: var(--text-color, #1e293b);">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 1px solid var(--border-color, #e2e8f0); padding: 8px 0;">
+            <span style="color: var(--text-color, #64748b); opacity: 0.8; font-weight: bold; min-width: 100px;">購入銘柄</span>
+            <span style="text-align: right; font-weight: bold; color: var(--text-color, #0f172a);">{name} ({ticker})</span>
+        </div>
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color, #e2e8f0); padding: 8px 0;">
+            <span style="color: var(--text-color, #64748b); opacity: 0.8;">買値 (市場価格)</span>
+            <span style="text-align: right; font-weight: bold; color: #16a34a; font-size: 1.15rem;">{format_price(price, ticker)}</span>
+        </div>
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color, #e2e8f0); padding: 8px 0;">
+            <span style="color: var(--text-color, #64748b); opacity: 0.8;">購入株数</span>
+            <span style="text-align: right; font-weight: bold; color: var(--text-color, #0f172a);">{qty:,} 株</span>
+        </div>
+        <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 0;">
+            <span style="color: var(--text-color, #64748b); opacity: 0.8; font-weight: bold;">概算購入代金</span>
+            <span style="text-align: right; font-weight: bold; color: #2563eb; font-size: 1.2rem;">{format_price(total_cost, ticker)}</span>
+        </div>
+        {extra_info_html}
+    </div>
+    """, unsafe_allow_html=True)
+    
+    c_btn1, c_btn2 = st.columns([1.5, 1])
+    with c_btn1:
+        if st.button("✅ この買値・株数で購入を確定する", type="primary", use_container_width=True, key="dlg_confirm_buy_btn"):
+            ok = execute_virtual_purchase(ticker, name, qty, price, total_cost)
+            if ok:
+                st.session_state['show_purchase_dialog'] = {
+                    'name': name,
+                    'ticker': ticker,
+                    'qty': qty,
+                    'price': price,
+                    'total_cost': total_cost
+                }
+                st.rerun()
+    with c_btn2:
+        if st.button("キャンセル", type="secondary", use_container_width=True, key="dlg_cancel_buy_btn"):
+            st.rerun()
+
 # Helper for Dialog Popup
 @st.dialog("🎉 仮想購入（デモトレード登録）完了", width="medium")
 def show_purchase_success_dialog(name, ticker, qty, price, total_cost):
@@ -4875,41 +4936,17 @@ def render_detail_dashboard(selected_ticker, selected_name, raw_analysis, key_su
                 render_upgrade_banner("デモトレード保有銘柄数の制限（最大10銘柄）に達しました。")
             elif st.button("仮想購入する", type="primary", use_container_width=True, key=f"sim_purchase_btn_{selected_ticker}{key_suffix}"):
                 existing_rec = next((r for r in purchase_records if r["ticker"] == selected_ticker), None)
-                if existing_rec:
-                    old_qty = existing_rec["quantity"]
-                    old_price = existing_rec["purchase_price"]
-                    new_qty = old_qty + sim_qty
-                    new_invest_amount = (old_qty * old_price) + (sim_qty * current_price_val)
-                    new_price = new_invest_amount / new_qty
-                    
-                    existing_rec["quantity"] = float(new_qty)
-                    existing_rec["purchase_price"] = float(new_price)
-                    existing_rec["invest_amount"] = float(new_invest_amount)
-                    existing_rec["purchase_date"] = datetime.date.today().strftime("%Y-%m-%d")
-                else:
-                    purchase_records.append({
-                        "ticker": selected_ticker,
-                        "name": selected_name,
-                        "purchase_date": datetime.date.today().strftime("%Y-%m-%d"),
-                        "purchase_price": float(current_price_val),
-                        "invest_amount": float(total_cost),
-                        "quantity": float(sim_qty)
-                    })
-                
-                portfolio["purchase_records"] = purchase_records
-                last_prices = portfolio.get("last_valid_prices", {})
-                last_prices[selected_ticker] = float(current_price_val)
-                portfolio["last_valid_prices"] = last_prices
-                
-                if save_portfolio(portfolio):
-                    st.session_state['show_purchase_dialog'] = {
-                        'name': selected_name,
-                        'ticker': selected_ticker,
-                        'qty': int(sim_qty),
-                        'price': float(current_price_val),
-                        'total_cost': float(total_cost)
-                    }
-                    st.rerun()
+                st.session_state['confirm_purchase_dialog'] = {
+                    'name': selected_name,
+                    'ticker': selected_ticker,
+                    'qty': int(sim_qty),
+                    'price': float(current_price_val),
+                    'total_cost': float(total_cost),
+                    'is_us': is_us_stock(selected_ticker),
+                    'existing_qty': float(existing_rec["quantity"]) if existing_rec else 0.0,
+                    'existing_price': float(existing_rec["purchase_price"]) if existing_rec else 0.0
+                }
+                st.rerun()
      
             # Add virtual sell button directly inside this dashboard!
             if owned_rec and owned_rec["quantity"] > 0:
@@ -5042,6 +5079,100 @@ def save_portfolio_cache_only(data):
         return True
     except Exception:
         return False
+
+def execute_virtual_purchase(ticker, name, qty, price, total_cost=None):
+    """Execute virtual stock purchase, update average cost basis, and persist."""
+    portfolio = load_portfolio()
+    purchase_records = portfolio.get("purchase_records", [])
+    existing_rec = next((r for r in purchase_records if r["ticker"] == ticker), None)
+    
+    qty = float(qty)
+    price = float(price)
+    if total_cost is None:
+        total_cost = qty * price
+    else:
+        total_cost = float(total_cost)
+        
+    if existing_rec:
+        old_qty = float(existing_rec.get("quantity", 0))
+        old_price = float(existing_rec.get("purchase_price", 0))
+        new_qty = old_qty + qty
+        new_invest_amount = (old_qty * old_price) + total_cost
+        new_price = new_invest_amount / new_qty if new_qty > 0 else price
+        
+        existing_rec["quantity"] = float(new_qty)
+        existing_rec["purchase_price"] = float(new_price)
+        existing_rec["invest_amount"] = float(new_invest_amount)
+        existing_rec["purchase_date"] = datetime.date.today().strftime("%Y-%m-%d")
+    else:
+        purchase_records.append({
+            "ticker": ticker,
+            "name": name,
+            "purchase_date": datetime.date.today().strftime("%Y-%m-%d"),
+            "purchase_price": float(price),
+            "invest_amount": float(total_cost),
+            "quantity": float(qty)
+        })
+        
+    portfolio["purchase_records"] = purchase_records
+    last_prices = portfolio.get("last_valid_prices", {})
+    last_prices[ticker] = float(price)
+    portfolio["last_valid_prices"] = last_prices
+    
+    return save_portfolio(portfolio)
+
+def check_and_apply_stock_splits(portfolio):
+    """
+    Check if any owned stock had corporate stock splits after purchase_date.
+    If detected, adjust quantity (* split_ratio) and purchase_price (/ split_ratio)
+    so that cost basis and P&L accurately reflect reality.
+    """
+    records = portfolio.get("purchase_records", [])
+    if not records:
+        return []
+    
+    adjusted_messages = []
+    modified = False
+    
+    for rec in records:
+        ticker = rec.get("ticker")
+        p_date_str = rec.get("purchase_date")
+        if not ticker or not p_date_str:
+            continue
+        try:
+            t = yf.Ticker(ticker)
+            splits = t.splits
+            if splits is not None and not splits.empty:
+                applied_splits = rec.get("applied_splits", [])
+                
+                for split_dt, split_ratio in splits.items():
+                    split_date_str = split_dt.strftime("%Y-%m-%d")
+                    # Check if split occurred strictly after purchase date and not yet applied
+                    if split_date_str > p_date_str and split_date_str not in applied_splits:
+                        split_ratio = float(split_ratio)
+                        if split_ratio > 0 and split_ratio != 1.0:
+                            old_qty = float(rec.get("quantity", 0))
+                            old_price = float(rec.get("purchase_price", 0))
+                            if old_qty > 0 and old_price > 0:
+                                new_qty = old_qty * split_ratio
+                                new_price = old_price / split_ratio
+                                
+                                rec["quantity"] = float(new_qty)
+                                rec["purchase_price"] = float(new_price)
+                                applied_splits.append(split_date_str)
+                                rec["applied_splits"] = applied_splits
+                                modified = True
+                                
+                                ratio_str = f"1:{int(split_ratio)}" if split_ratio.is_integer() else f"1:{split_ratio}"
+                                msg = f"🔔 **【株式分割の自動反映】** {rec.get('name', ticker)} ({ticker}) が {split_date_str} に {ratio_str} 分割されたため、保有株数を {int(old_qty):,}株 ➔ {int(new_qty):,}株、平均取得単価を {format_price(old_price, ticker)} ➔ {format_price(new_price, ticker)} に自動調整しました。"
+                                adjusted_messages.append(msg)
+        except Exception as e:
+            pass
+            
+    if modified:
+        save_portfolio(portfolio)
+        
+    return adjusted_messages
 
 def execute_virtual_sell(ticker, qty_to_sell, curr_price=None):
     portfolio = load_portfolio()
@@ -6148,6 +6279,21 @@ portfolio_data = load_portfolio()
 
 
 # UI LAYOUT
+# Check if we need to show the purchase confirmation dialog
+if 'confirm_purchase_dialog' in st.session_state:
+    c_data = st.session_state['confirm_purchase_dialog']
+    show_purchase_confirmation_dialog(
+        name=c_data['name'],
+        ticker=c_data['ticker'],
+        qty=c_data['qty'],
+        price=c_data['price'],
+        total_cost=c_data['total_cost'],
+        is_us=c_data.get('is_us', False),
+        existing_qty=c_data.get('existing_qty', 0.0),
+        existing_price=c_data.get('existing_price', 0.0)
+    )
+    del st.session_state['confirm_purchase_dialog']
+
 # Check if we need to show the purchase dialog
 if 'show_purchase_dialog' in st.session_state:
     dlg_data = st.session_state['show_purchase_dialog']
@@ -8003,6 +8149,14 @@ with tab_simulation:
     
     # Reload local portfolio data
     portfolio_data = load_portfolio()
+    
+    # Auto-check and apply corporate stock splits (e.g. Tokio Marine 1:15 split)
+    split_alerts = check_and_apply_stock_splits(portfolio_data)
+    if split_alerts:
+        for s_msg in split_alerts:
+            st.info(s_msg)
+        portfolio_data = load_portfolio()
+        
     records = portfolio_data.get("purchase_records", [])
     sales_records = portfolio_data.get("sales_records", [])
     cached_prices = portfolio_data.get("last_valid_prices", {})
@@ -8228,6 +8382,91 @@ with tab_simulation:
                     is_active = (st.session_state.get("sell_active_ticker") == t_code)
                     if qc.button(f"💼 {s_name}", key=f"quick_btn_sel_{t_code}", type="primary" if is_active else "secondary", use_container_width=True):
                         st.session_state["sell_active_ticker"] = t_code
+                        st.rerun()
+                        
+            # Manual Edit & Corporate Action (Stock Split) Adjuster
+            st.markdown("<div style='margin-top: 15px;'></div>", unsafe_allow_html=True)
+            with st.expander("✏️ 保有銘柄の買値（取得単価）・株数を修正する / 株式分割補正", expanded=False):
+                st.markdown("""
+                <div style="font-size: 0.85rem; color: #64748b; margin-bottom: 10px;">
+                    💡 株式分割や過去の約定単価のズレがある場合、こちらから現在の取得単価や保有株数を正しい数値に直接修正できます。
+                </div>
+                """, unsafe_allow_html=True)
+                
+                owned_t_list = [r["ticker"] for r in records]
+                edit_t = st.selectbox(
+                    "修正する保有銘柄を選択:",
+                    options=owned_t_list,
+                    format_func=lambda t: f"{t} | {next((r['name'] for r in records if r['ticker'] == t), t)}",
+                    key="sim_edit_pos_ticker_sel"
+                )
+                edit_rec = next((r for r in records if r["ticker"] == edit_t), None)
+                if edit_rec:
+                    cur_q = float(edit_rec.get("quantity", 0))
+                    cur_p = float(edit_rec.get("purchase_price", 0))
+                    
+                    c_ed1, c_ed2 = st.columns(2)
+                    with c_ed1:
+                        price_step = 0.1 if is_us_stock(edit_t) else 1.0
+                        new_p_val = st.number_input(
+                            f"平均取得単価 ({'USD' if is_us_stock(edit_t) else '円'})",
+                            value=float(cur_p),
+                            min_value=0.01,
+                            step=price_step,
+                            format="%.2f" if is_us_stock(edit_t) or cur_p < 100 else "%.1f",
+                            key=f"edit_p_inp_{edit_t}"
+                        )
+                    with c_ed2:
+                        qty_step = 1.0 if is_us_stock(edit_t) else (100.0 if cur_q >= 100 else 1.0)
+                        new_q_val = st.number_input(
+                            "保有株数 (株)",
+                            value=float(cur_q),
+                            min_value=1.0,
+                            step=qty_step,
+                            key=f"edit_q_inp_{edit_t}"
+                        )
+                        
+                    # Preset Split Buttons
+                    st.caption("⚡ 株式分割ワンクリック補正 (株数×倍率 / 単価÷倍率):")
+                    sp1, sp2, sp3, sp4 = st.columns(4)
+                    with sp1:
+                        if st.button("1:15分割\n(東京海上等)", key=f"sp_15_{edit_t}", use_container_width=True):
+                            edit_rec["quantity"] = float(cur_q * 15)
+                            edit_rec["purchase_price"] = float(cur_p / 15)
+                            save_portfolio(portfolio_data)
+                            st.success(f"1:15分割を反映しました！（株数: {int(cur_q * 15):,}株 / 取得単価: {format_price(cur_p / 15, edit_t)}）")
+                            st.rerun()
+                    with sp2:
+                        if st.button("1:3分割", key=f"sp_3_{edit_t}", use_container_width=True):
+                            edit_rec["quantity"] = float(cur_q * 3)
+                            edit_rec["purchase_price"] = float(cur_p / 3)
+                            save_portfolio(portfolio_data)
+                            st.success(f"1:3分割を反映しました！（株数: {int(cur_q * 3):,}株 / 取得単価: {format_price(cur_p / 3, edit_t)}）")
+                            st.rerun()
+                    with sp3:
+                        if st.button("1:2分割", key=f"sp_2_{edit_t}", use_container_width=True):
+                            edit_rec["quantity"] = float(cur_q * 2)
+                            edit_rec["purchase_price"] = float(cur_p / 2)
+                            save_portfolio(portfolio_data)
+                            st.success(f"1:2分割を反映しました！（株数: {int(cur_q * 2):,}株 / 取得単価: {format_price(cur_p / 2, edit_t)}）")
+                            st.rerun()
+                    with sp4:
+                        if st.button("1:5分割", key=f"sp_5_{edit_t}", use_container_width=True):
+                            edit_rec["quantity"] = float(cur_q * 5)
+                            edit_rec["purchase_price"] = float(cur_p / 5)
+                            save_portfolio(portfolio_data)
+                            st.success(f"1:5分割を反映しました！（株数: {int(cur_q * 5):,}株 / 取得単価: {format_price(cur_p / 5, edit_t)}）")
+                            st.rerun()
+                            
+                    calc_new_inv = new_p_val * new_q_val
+                    st.markdown(f"<div style='font-size: 0.85rem; color: #64748b; margin-top: 5px; margin-bottom: 8px;'>修正後の総投資額: <b>{format_price(calc_new_inv, edit_t)}</b> (修正前: {format_price(edit_rec.get('invest_amount', 0), edit_t)})</div>", unsafe_allow_html=True)
+                    
+                    if st.button("💾 この取得単価・株数で更新する", type="primary", use_container_width=True, key=f"btn_apply_edit_{edit_t}"):
+                        edit_rec["purchase_price"] = float(new_p_val)
+                        edit_rec["quantity"] = float(new_q_val)
+                        edit_rec["invest_amount"] = float(calc_new_inv)
+                        save_portfolio(portfolio_data)
+                        st.success(f"✅ {edit_rec['name']} の取得単価を {format_price(new_p_val, edit_t)}、保有株数を {int(new_q_val):,}株 に更新しました！")
                         st.rerun()
             
     with right_container:
