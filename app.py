@@ -1320,55 +1320,69 @@ st.components.v1.html("""
         'credit-card': '<svg class="feather-icon" viewBox="0 0 24 24"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect><line x1="1" y1="10" x2="23" y2="10"></line></svg>',
         'coffee': '<svg class="feather-icon" viewBox="0 0 24 24"><path d="M18 8h1a4 4 0 0 1 0 8h-1"></path><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"></path><line x1="6" y1="1" x2="6" y2="4"></line><line x1="10" y1="1" x2="10" y2="4"></line><line x1="14" y1="1" x2="14" y2="4"></line></svg>',
         'shopping-bag': '<svg class="feather-icon" viewBox="0 0 24 24"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path><line x1="3" y1="6" x2="21" y2="6"></line><path d="M16 10a4 4 0 0 1-8 0"></path></svg>',
-        'send': '<svg class="feather-icon" viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>'
+        'send': '<svg class="feather-icon" viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>',
+        'user': '<svg class="feather-icon" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>',
+        'cpu': '<svg class="feather-icon" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2" ry="2"></rect><rect x="9" y="9" width="6" height="6"></rect><line x1="9" y1="1" x2="9" y2="4"></line><line x1="15" y1="1" x2="15" y2="4"></line><line x1="9" y1="20" x2="9" y2="23"></line><line x1="15" y1="20" x2="15" y2="23"></line><line x1="20" y1="9" x2="23" y2="9"></line><line x1="20" y1="14" x2="23" y2="14"></line><line x1="1" y1="9" x2="4" y2="9"></line><line x1="1" y1="14" x2="4" y2="14"></line></svg>',
+        'dollar-sign': '<svg class="feather-icon" viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>',
+        'globe': '<svg class="feather-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>',
+        'cloud': '<svg class="feather-icon" viewBox="0 0 24 24"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"></path></svg>',
+        'home': '<svg class="feather-icon" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>',
+        'layers': '<svg class="feather-icon" viewBox="0 0 24 24"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg>',
+        'log-out': '<svg class="feather-icon" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>',
+        'tag': '<svg class="feather-icon" viewBox="0 0 24 24"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7.01" y2="7"></line></svg>',
+        'save': '<svg class="feather-icon" viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>',
+        'folder': '<svg class="feather-icon" viewBox="0 0 24 24"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>',
+        'download': '<svg class="feather-icon" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>',
+        'edit-2': '<svg class="feather-icon" viewBox="0 0 24 24"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg>',
+        'truck': '<svg class="feather-icon" viewBox="0 0 24 24"><rect x="1" y="3" width="15" height="13"></rect><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon><circle cx="5.5" cy="18.5" r="2.5"></circle><circle cx="18.5" cy="18.5" r="2.5"></circle></svg>',
+        'image': '<svg class="feather-icon" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>',
+        'play': '<svg class="feather-icon" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>',
+        'arrow-right': '<svg class="feather-icon" viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>',
+        'x': '<svg class="feather-icon" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>',
+        'scissors': '<svg class="feather-icon" viewBox="0 0 24 24"><circle cx="6" cy="6" r="3"></circle><circle cx="6" cy="18" r="3"></circle><line x1="20" y1="4" x2="8.12" y2="15.88"></line><line x1="14.47" y1="14.48" x2="20" y2="20"></line><line x1="8.12" y1="8.12" x2="12" y2="12"></line></svg>',
+        'disc': '<svg class="feather-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="3"></circle></svg>'
     };
 
     const emojiFeatherMap = {
-        '🔍': 'search',
-        '🔎': 'search',
-        '⭐': 'star',
-        '🌟': 'star',
+        '🔍': 'search', '🔎': 'search',
+        '⭐': 'star', '☆': 'star', '🌟': 'star', '✨': 'star',
         '💼': 'briefcase',
-        '📈': 'trending-up',
-        '📉': 'trending-down',
+        '📈': 'trending-up', '📉': 'trending-down',
         '📊': 'bar-chart-2',
-        '🏋️': 'activity',
-        '📚': 'book-open',
-        '⚙️': 'settings',
-        '🛠️': 'settings',
+        '🏋': 'activity', '⚡': 'zap', '🔥': 'activity',
+        '📚': 'book-open', '📖': 'book-open', '📰': 'file-text',
+        '⚙': 'settings', '🛠': 'settings',
         '📱': 'smartphone',
         '💻': 'monitor',
-        '👑': 'award',
+        '👑': 'award', '🏆': 'award', '💎': 'award',
         '🔄': 'refresh-cw',
         '✅': 'check-circle',
-        '⚠️': 'alert-triangle',
+        '⚠': 'alert-triangle',
         '🚨': 'alert-circle',
         '💡': 'zap',
-        '📄': 'file-text',
-        '📋': 'clipboard',
-        '🔐': 'lock',
-        '🔒': 'lock',
-        '🔑': 'key',
-        '🎁': 'gift',
-        '🗑️': 'trash-2',
+        '📄': 'file-text', '📋': 'clipboard', '✏': 'edit-2',
+        '🔐': 'lock', '🔒': 'lock', '🔑': 'key', '🚪': 'log-out',
+        '🎁': 'gift', '🎟': 'tag', '🆓': 'tag',
+        '🗑': 'trash-2',
         '➕': 'plus',
         '🔔': 'bell',
         '🎯': 'target',
-        '📦': 'package',
+        '📦': 'package', '📥': 'download', '💾': 'save', '📂': 'folder',
         '🎉': 'award',
-        '👁️': 'eye',
-        '🛡️': 'shield',
+        '👁': 'eye',
+        '🛡': 'shield',
         '📅': 'calendar',
-        '⏰': 'clock',
+        '🕒': 'clock',
         '🚀': 'zap',
-        '🔥': 'activity',
-        '💎': 'award',
-        '💳': 'credit-card',
-        '☕': 'coffee',
-        '🍔': 'coffee',
-        '🍱': 'coffee',
-        '🛍️': 'shopping-bag',
-        '✈️': 'send'
+        '💳': 'credit-card', '💰': 'dollar-sign', '💴': 'dollar-sign',
+        '👤': 'user', '🤖': 'cpu', '🌐': 'globe', '☁': 'cloud',
+        '☕': 'coffee', '🍔': 'coffee', '🍱': 'coffee', '🍽': 'coffee', '🍎': 'coffee',
+        '🛍': 'shopping-bag', '👕': 'shopping-bag', '💄': 'shopping-bag',
+        '✈': 'send', '🚗': 'truck',
+        '🎨': 'image', '🎮': 'play',
+        '🏢': 'home', '🏭': 'layers',
+        '➔': 'arrow-right', '✖': 'x', '✂': 'scissors',
+        '🟢': 'disc'
     };
 
     // Replace UI emojis with crisp Feather vector SVG icons
@@ -1382,10 +1396,18 @@ st.components.v1.html("""
             '[data-testid="stExpander"] summary',
             '[data-testid="stAlert"]',
             '[data-testid="stToast"]',
+            '[data-baseweb="select"]',
+            '[data-baseweb="menu"]',
+            'li[role="option"]',
+            '[data-testid="stRadio"] label',
+            '[data-testid="stCheckbox"] label',
+            '[data-testid="stMetric"]',
+            '[role="dialog"]',
+            'div.stMarkdown',
+            'p',
             '.login-section-title',
             '.login-info-title',
-            '.login-intro-text',
-            'p'
+            '.login-intro-text'
         ];
         
         const elements = doc.querySelectorAll(targetSelectors.join(','));
@@ -1406,8 +1428,9 @@ st.components.v1.html("""
                 }
                 const val = n.nodeValue;
                 if (!val) continue;
+                const cleanVal = val.replace(/\ufe0f/g, '');
                 for (const em of Object.keys(emojiFeatherMap)) {
-                    if (val.includes(em)) {
+                    if (cleanVal.includes(em)) {
                         textNodes.push(n);
                         break;
                     }
@@ -1424,11 +1447,17 @@ st.components.v1.html("""
                 
                 let replacedHtml = text;
                 for (const [em, iconName] of Object.entries(emojiFeatherMap)) {
-                    if (replacedHtml.includes(em)) {
-                        const svg = featherSvgMap[iconName] || (window.parent.feather && window.parent.feather.icons[iconName] ? window.parent.feather.icons[iconName].toSvg({ class: 'feather-icon', width: 16, height: 16 }) : '');
-                        if (svg) {
-                            const iconSpan = `<span class="feather-wrapper" data-feather-replaced="${iconName}">${svg}</span>`;
-                            replacedHtml = replacedHtml.split(em).join(iconSpan);
+                    const emWithVar = em + '\ufe0f';
+                    const emWithoutVar = em;
+                    
+                    const svg = featherSvgMap[iconName] || (window.parent.feather && window.parent.feather.icons[iconName] ? window.parent.feather.icons[iconName].toSvg({ class: 'feather-icon', width: 16, height: 16 }) : '');
+                    if (svg) {
+                        const iconSpan = `<span class="feather-wrapper" data-feather-replaced="${iconName}">${svg}</span>`;
+                        if (replacedHtml.includes(emWithVar)) {
+                            replacedHtml = replacedHtml.split(emWithVar).join(iconSpan);
+                        }
+                        if (replacedHtml.includes(emWithoutVar)) {
+                            replacedHtml = replacedHtml.split(emWithoutVar).join(iconSpan);
                         }
                     }
                 }
