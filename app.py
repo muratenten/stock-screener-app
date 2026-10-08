@@ -645,31 +645,48 @@ if logo_data_uri:
     )
 
 # Inject premium custom CSS dynamically based on theme selection
-bg_color = "#0b0f19" if is_dark else "#f8fafc"
-card_bg = "#151d30" if is_dark else "#ffffff"
-text_color = "#e2e8f0" if is_dark else "#1e293b" # Softer text color for dark mode to prevent eye strain
-primary_color = "#3b82f6" if is_dark else "#2563eb"
-border_color = "#1e293b" if is_dark else "#e2e8f0"
-unselected_btn_bg = "#0b0f19" if is_dark else "#e2e8f0" # Dark black background for unselected buttons in dark mode, soft grey in light mode
-title_bg = "linear-gradient(135deg, #151d30 0%, #0b0f19 100%)" if is_dark else "linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%)"
-title_border = "#1e293b" if is_dark else "#cbd5e1"
-title_text_color = "#3b82f6" if is_dark else "#1e3a8a"
-subtitle_text_color = "#94a3b8" if is_dark else "#475569"
+# Inject Material-UI (MUI v5) custom CSS dynamically based on theme selection
+bg_color = "#121212" if is_dark else "#f4f6f8" # MUI canvas background
+card_bg = "#1e1e1e" if is_dark else "#ffffff" # MUI Paper surface
+text_color = "rgba(255, 255, 255, 0.87)" if is_dark else "rgba(0, 0, 0, 0.87)" # MUI Text Primary
+secondary_text_color = "rgba(255, 255, 255, 0.60)" if is_dark else "rgba(0, 0, 0, 0.60)" # MUI Text Secondary
+primary_color = "#90caf9" if is_dark else "#1976d2" # MUI Primary Blue
+primary_dark = "#42a5f5" if is_dark else "#1565c0"
+border_color = "rgba(255, 255, 255, 0.12)" if is_dark else "rgba(0, 0, 0, 0.12)" # MUI Divider
+unselected_btn_bg = "#1e1e1e" if is_dark else "#ffffff"
+title_bg = "linear-gradient(135deg, #1e1e1e 0%, #121212 100%)" if is_dark else "linear-gradient(135deg, #ffffff 0%, #f4f6f8 100%)"
+title_border = "rgba(255, 255, 255, 0.12)" if is_dark else "rgba(0, 0, 0, 0.08)"
+title_text_color = "#90caf9" if is_dark else "#1976d2"
+subtitle_text_color = "rgba(255, 255, 255, 0.60)" if is_dark else "rgba(0, 0, 0, 0.60)"
 
 # Theme-aware styling for selectbox tags (pills) to ensure excellent contrast
-tag_bg = "#2563eb"
-tag_border = "#1d4ed8"
+tag_bg = "#1976d2"
+tag_border = "#1565c0"
 tag_text = "#ffffff"
 
-# Specific colors for Glide Data Grid (st.dataframe) to make it black-based in dark mode
-gdg_bg_cell = "#0b0f19" if is_dark else "#ffffff"
-gdg_bg_header = "#05070c" if is_dark else "#f8fafc"
-gdg_bg_cell_hover = "#151d30" if is_dark else "#f8fafc"
-gdg_bg_header_hover = "#151d30" if is_dark else "#ffffff"
+# Specific colors for Glide Data Grid (st.dataframe)
+gdg_bg_cell = "#121212" if is_dark else "#ffffff"
+gdg_bg_header = "#1e1e1e" if is_dark else "#f8fafc"
+gdg_bg_cell_hover = "#242526" if is_dark else "#f4f6f8"
+gdg_bg_header_hover = "#242526" if is_dark else "#f1f5f9"
 dataframe_filter = "invert(0.94) hue-rotate(180deg)" if is_dark else "none"
 
 st.markdown(f"""
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Noto+Sans+JP:wght@400;500;700&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" rel="stylesheet">
 <style>
+    /* ==========================================================================
+       Material-UI (MUI v5) Design System Theme
+       ========================================================================== */
+    
+    /* Typography Global Reset (MUI Standard: Roboto + Noto Sans JP) */
+    html, body, [class*="css"], .stApp, button, input, select, textarea, div, span, p, h1, h2, h3, h4, h5, h6 {{
+        font-family: 'Roboto', 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif !important;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+    }}
+
     /* Completely hide Streamlit header, footer, MainMenu, deploy buttons, and badges */
     #MainMenu {{visibility: hidden !important; display: none !important;}}
     header {{visibility: hidden !important; display: none !important;}}
@@ -698,6 +715,23 @@ st.markdown(f"""
         --border-color: {border_color};
         --unselected-button-bg: {unselected_btn_bg};
         
+        /* MUI Design Tokens */
+        --mui-primary: {primary_color};
+        --mui-primary-dark: {primary_dark};
+        --mui-text-primary: {text_color};
+        --mui-text-secondary: {secondary_text_color};
+        --mui-divider: {border_color};
+        --mui-paper: {card_bg};
+        --mui-shadow-1: 0px 2px 1px -1px rgba(0,0,0,0.2), 0px 1px 1px 0px rgba(0,0,0,0.14), 0px 1px 3px 0px rgba(0,0,0,0.12);
+        --mui-shadow-2: 0px 3px 1px -2px rgba(0,0,0,0.2), 0px 2px 2px 0px rgba(0,0,0,0.14), 0px 1px 5px 0px rgba(0,0,0,0.12);
+        --mui-shadow-3: 0px 3px 3px -2px rgba(0,0,0,0.2), 0px 3px 4px 0px rgba(0,0,0,0.14), 0px 1px 8px 0px rgba(0,0,0,0.12);
+        --mui-shadow-4: 0px 2px 4px -1px rgba(0,0,0,0.2), 0px 4px 5px 0px rgba(0,0,0,0.14), 0px 1px 10px 0px rgba(0,0,0,0.12);
+        --mui-shadow-8: 0px 5px 5px -3px rgba(0,0,0,0.2), 0px 8px 10px 1px rgba(0,0,0,0.14), 0px 3px 14px 2px rgba(0,0,0,0.12);
+        --mui-radius-sm: 4px;
+        --mui-radius-md: 8px;
+        --mui-radius-lg: 12px;
+        --mui-radius-pill: 16px;
+        
         /* Streamlit Generic Theme Variable Overrides */
         --theme-background-color: {bg_color};
         --theme-secondary-background-color: {card_bg};
@@ -717,7 +751,7 @@ st.markdown(f"""
         --gdg-text-medium: {text_color} !important;
         --gdg-border-color: {border_color} !important;
         --gdg-accent-color: {primary_color} !important;
-        --gdg-accent-light: rgba(59, 130, 246, 0.12) !important;
+        --gdg-accent-light: rgba(25, 118, 210, 0.12) !important;
     }}
     
     /* Target Glide Data Grid elements specifically */
@@ -733,7 +767,7 @@ st.markdown(f"""
         --gdg-text-medium: {text_color} !important;
         --gdg-border-color: {border_color} !important;
         --gdg-accent-color: {primary_color} !important;
-        --gdg-accent-light: rgba(59, 130, 246, 0.12) !important;
+        --gdg-accent-light: rgba(25, 118, 210, 0.12) !important;
         filter: {dataframe_filter} !important;
     }}
     
@@ -743,119 +777,134 @@ st.markdown(f"""
         color: {text_color} !important;
     }}
     
-    /* Styling headers and blocks */
+    /* MUI Paper / Card Containers */
     .title-container {{
         background: {title_bg};
-        border-radius: 12px;
-        padding: 25px;
-        margin-bottom: 25px;
+        border-radius: var(--mui-radius-lg);
+        padding: 24px 28px;
+        margin-bottom: 24px;
         border: 1px solid {title_border};
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        box-shadow: var(--mui-shadow-2);
     }}
     .title-text {{
-        font-family: 'Outfit', sans-serif;
+        font-family: 'Roboto', 'Noto Sans JP', sans-serif !important;
         color: {title_text_color} !important;
-        font-weight: 800 !important;
-        font-size: 2.5rem !important;
+        font-weight: 700 !important;
+        font-size: 2.3rem !important;
+        letter-spacing: -0.02em !important;
         margin: 0 !important;
         display: block !important;
     }}
     .subtitle-text {{
         color: {subtitle_text_color} !important;
-        font-size: 1.1rem !important;
-        margin-top: 10px !important;
+        font-size: 1.05rem !important;
+        margin-top: 8px !important;
         margin-bottom: 0 !important;
         display: block !important;
+        font-weight: 400 !important;
     }}
     .card {{
         background: {card_bg};
-        border-radius: 10px;
+        border-radius: var(--mui-radius-md);
         padding: 20px;
         border: 1px solid {border_color};
         margin-bottom: 20px;
-        box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.03);
+        box-shadow: var(--mui-shadow-1);
         color: {text_color};
+        transition: box-shadow 300ms cubic-bezier(0.4, 0, 0.2, 1) 0ms, transform 200ms ease;
+    }}
+    .card:hover {{
+        box-shadow: var(--mui-shadow-3);
     }}
     .metric-title {{
-        color: {'#94a3b8' if is_dark else '#64748b'};
-        font-size: 0.85rem;
-        margin-bottom: 5px;
+        color: {secondary_text_color};
+        font-size: 0.875rem;
+        font-weight: 500;
+        letter-spacing: 0.01071em;
+        margin-bottom: 6px;
     }}
     .metric-value {{
-        font-size: 1.5rem;
-        font-weight: bold;
+        font-size: 1.6rem;
+        font-weight: 700;
         color: {text_color};
+        letter-spacing: -0.01em;
     }}
     .metric-accent {{
-        color: {'#10b981' if is_dark else '#16a34a'};
+        color: {'#81c784' if is_dark else '#2e7d32'};
     }}
+    
+    /* ==========================================================================
+       MUI Button Components
+       ========================================================================== */
     /* Base style for premium list buttons */
     button.premium-list-btn {{
         display: flex !important;
         align-items: center !important;
-        border-radius: 12px !important;
-        font-weight: 600 !important;
+        border-radius: var(--mui-radius-md) !important;
+        font-weight: 500 !important;
         border: 1px solid {border_color} !important;
         background: {card_bg} !important;
         color: {text_color} !important;
-        box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05) !important;
-        transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        box-shadow: var(--mui-shadow-1) !important;
+        transition: background-color 250ms cubic-bezier(0.4, 0, 0.2, 1) 0ms, box-shadow 250ms cubic-bezier(0.4, 0, 0.2, 1) 0ms, border-color 250ms cubic-bezier(0.4, 0, 0.2, 1) 0ms, transform 150ms ease !important;
         margin-bottom: 8px !important;
         width: 100% !important;
         white-space: nowrap !important;
         overflow: hidden !important;
         text-overflow: ellipsis !important;
+        letter-spacing: 0.02857em !important;
     }}
-    /* Centered styling for shape toggle buttons */
     button.premium-list-btn.premium-center {{
         text-align: center !important;
         justify-content: center !important;
-        padding: 8px 4px !important;
-        font-size: 0.8rem !important;
+        padding: 8px 6px !important;
+        font-size: 0.8125rem !important;
     }}
-    /* Left-aligned styling for portfolio and watchlist buttons */
     button.premium-list-btn.premium-left {{
         text-align: left !important;
         justify-content: flex-start !important;
-        padding: 14px 18px !important;
-        font-size: 0.92rem !important;
+        padding: 12px 18px !important;
+        font-size: 0.875rem !important;
     }}
-    /* Hover effect */
     button.premium-list-btn:hover {{
         border-color: {primary_color} !important;
-        background-color: {'#1e293b' if is_dark else '#f8fafc'} !important;
+        background-color: {'rgba(144, 202, 249, 0.08)' if is_dark else 'rgba(25, 118, 210, 0.04)'} !important;
         color: {primary_color} !important;
-        transform: translateY(-2px) !important;
-        box-shadow: 0 4px 12px -2px rgba(37, 99, 235, 0.12) !important;
+        box-shadow: var(--mui-shadow-3) !important;
+        transform: translateY(-1px) !important;
     }}
-    /* Active selected style (Primary button override) */
     button.premium-list-btn.premium-active {{
         border-color: {primary_color} !important;
-        background: linear-gradient(135deg, {primary_color} 0%, {'#1d4ed8' if not is_dark else '#2563eb'} 100%) !important;
+        background: {primary_color} !important;
         color: #ffffff !important;
-        box-shadow: 0 4px 14px 0 rgba(37, 99, 235, 0.3) !important;
+        box-shadow: var(--mui-shadow-3) !important;
     }}
     button.premium-list-btn.premium-active:hover {{
-        background: linear-gradient(135deg, {'#1d4ed8' if not is_dark else '#2563eb'} 0%, {'#1e40af' if not is_dark else '#1d4ed8'} 100%) !important;
+        background: {primary_dark} !important;
         color: #ffffff !important;
-        transform: translateY(-2px) !important;
-        box-shadow: 0 6px 18px 0 rgba(37, 99, 235, 0.4) !important;
+        box-shadow: var(--mui-shadow-4) !important;
     }}
     
-    /* Native Streamlit Base Buttons (Secondary) */
+    /* Native Streamlit Secondary Buttons (MUI Outlined Button) */
     div.stButton > button, div.stDownloadButton > button, [data-testid="stBaseButton-secondary"] button {{
-        background: var(--unselected-button-bg) !important;
+        background-color: transparent !important;
         color: var(--text-color) !important;
         border: 1px solid var(--border-color) !important;
-        transition: all 0.2s ease !important;
+        border-radius: var(--mui-radius-sm) !important;
+        padding: 7px 18px !important;
+        font-size: 0.875rem !important;
+        font-weight: 500 !important;
+        letter-spacing: 0.02857em !important;
+        box-shadow: none !important;
+        transition: background-color 250ms cubic-bezier(0.4, 0, 0.2, 1) 0ms, box-shadow 250ms cubic-bezier(0.4, 0, 0.2, 1) 0ms, border-color 250ms cubic-bezier(0.4, 0, 0.2, 1) 0ms !important;
     }}
     div.stButton > button:hover, div.stDownloadButton > button:hover, [data-testid="stBaseButton-secondary"] button:hover {{
         border-color: var(--primary-color) !important;
         color: var(--primary-color) !important;
-        background: var(--background-color) !important;
+        background-color: {'rgba(144, 202, 249, 0.08)' if is_dark else 'rgba(25, 118, 210, 0.04)'} !important;
     }}
     
-    /* Native Streamlit Primary Buttons (Flat Clean Blue, No Shadows) */
+    /* Native Streamlit Primary Buttons (MUI Contained Button) */
     [data-testid="stBaseButton-primary"],
     button[data-testid="stBaseButton-primary"],
     div.stButton > button[kind="primary"],
@@ -863,27 +912,28 @@ st.markdown(f"""
     div.stButton > button[data-testid="stBaseButton-primary"],
     div.stButton > button.st-emotion-cache-16idsys,
     div.stButton > button.st-emotion-cache-1f81d1z {{
-        background-color: #2563eb !important;
-        background: #2563eb !important;
+        background-color: {primary_color} !important;
+        background: {primary_color} !important;
         color: #ffffff !important;
-        font-weight: 600 !important;
-        font-size: 1.02rem !important;
+        font-weight: 500 !important;
+        font-size: 0.875rem !important;
+        letter-spacing: 0.02857em !important;
         border: none !important;
-        border-radius: 8px !important;
-        box-shadow: none !important;
+        border-radius: var(--mui-radius-sm) !important;
+        box-shadow: var(--mui-shadow-2) !important;
         outline: none !important;
-        transition: background-color 0.15s ease !important;
-        padding: 0.6rem 1.4rem !important;
+        transition: background-color 250ms cubic-bezier(0.4, 0, 0.2, 1) 0ms, box-shadow 250ms cubic-bezier(0.4, 0, 0.2, 1) 0ms, border-color 250ms cubic-bezier(0.4, 0, 0.2, 1) 0ms !important;
+        padding: 8px 22px !important;
     }}
     [data-testid="stBaseButton-primary"]:hover,
     button[data-testid="stBaseButton-primary"]:hover,
     div.stButton > button[kind="primary"]:hover,
     div.stButton > button[type="primary"]:hover,
     div.stButton > button[data-testid="stBaseButton-primary"]:hover {{
-        background-color: #1d4ed8 !important;
-        background: #1d4ed8 !important;
+        background-color: {primary_dark} !important;
+        background: {primary_dark} !important;
         color: #ffffff !important;
-        box-shadow: none !important;
+        box-shadow: var(--mui-shadow-4) !important;
         transform: none !important;
     }}
     [data-testid="stBaseButton-primary"] p,
@@ -891,40 +941,48 @@ st.markdown(f"""
     div.stButton > button[kind="primary"] p,
     div.stButton > button[type="primary"] p {{
         color: #ffffff !important;
-        font-weight: 600 !important;
-        font-size: 1.02rem !important;
+        font-weight: 500 !important;
+        font-size: 0.875rem !important;
+        letter-spacing: 0.02857em !important;
     }}
     
-    /* Text Inputs, Number Inputs, Date Inputs, Textareas */
+    /* ==========================================================================
+       MUI Input Fields (Outlined Textfield / Select / NumberInput)
+       ========================================================================== */
     div[data-testid="stTextInput"] input, div[data-testid="stNumberInput"] input, div[data-testid="stDateInput"] input, textarea {{
-        background-color: {'#1e293b' if is_dark else '#f8fafc'} !important;
+        background-color: {'#1e1e1e' if is_dark else '#ffffff'} !important;
         color: var(--text-color) !important;
-        border: 1.5px solid {'#475569' if is_dark else '#94a3b8'} !important;
-        border-radius: 8px !important;
-        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
+        border: 1px solid {'rgba(255, 255, 255, 0.23)' if is_dark else 'rgba(0, 0, 0, 0.23)'} !important;
+        border-radius: var(--mui-radius-sm) !important;
+        padding: 9px 14px !important;
+        font-size: 0.9375rem !important;
+        transition: border-color 200ms cubic-bezier(0.0, 0, 0.2, 1) 0ms, box-shadow 200ms cubic-bezier(0.0, 0, 0.2, 1) 0ms !important;
+    }}
+    div[data-testid="stTextInput"] input:hover, div[data-testid="stNumberInput"] input:hover, div[data-testid="stDateInput"] input:hover, textarea:hover {{
+        border-color: {'rgba(255, 255, 255, 0.87)' if is_dark else 'rgba(0, 0, 0, 0.87)'} !important;
     }}
     div[data-testid="stTextInput"] input:focus, div[data-testid="stNumberInput"] input:focus, div[data-testid="stDateInput"] input:focus, textarea:focus {{
-        border-color: #2563eb !important;
-        box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2) !important;
+        border: 2px solid {primary_color} !important;
+        box-shadow: none !important;
+        outline: none !important;
     }}
     
-    /* Selectbox (BaseWeb dropdown select) - high contrast crisp border */
+    /* MUI Selectbox (BaseWeb dropdown select) */
     div[data-baseweb="select"] > div {{
-        background-color: {'#1e293b' if is_dark else '#f8fafc'} !important;
+        background-color: {'#1e1e1e' if is_dark else '#ffffff'} !important;
         color: var(--text-color) !important;
-        border: 1.5px solid {'#475569' if is_dark else '#94a3b8'} !important;
-        border-radius: 8px !important;
-        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
+        border: 1px solid {'rgba(255, 255, 255, 0.23)' if is_dark else 'rgba(0, 0, 0, 0.23)'} !important;
+        border-radius: var(--mui-radius-sm) !important;
+        transition: border-color 200ms cubic-bezier(0.0, 0, 0.2, 1) 0ms !important;
     }}
     div[data-baseweb="select"] > div:hover {{
-        border-color: #2563eb !important;
-        box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15) !important;
+        border-color: {'rgba(255, 255, 255, 0.87)' if is_dark else 'rgba(0, 0, 0, 0.87)'} !important;
     }}
     div[data-baseweb="select"] [data-baseweb="icon"] {{
-        color: {'#cbd5e1' if is_dark else '#475569'} !important;
+        color: {secondary_text_color} !important;
     }}
     
-    /* Fix multiselect tag (pill) readability: bright blue background and crisp white text */
+    /* MUI Chip / Tags */
     [data-baseweb="tag"],
     span[data-baseweb="tag"],
     div[data-baseweb="tag"],
@@ -942,12 +1000,17 @@ st.markdown(f"""
     div[class*="tag"],
     div[class*="Tag"],
     [data-baseweb="tag"] span[title] {{
-        background-color: #2563eb !important;
-        background: #2563eb !important;
-        border: 1px solid #1d4ed8 !important;
-        border-radius: 6px !important;
+        background-color: {primary_color} !important;
+        background: {primary_color} !important;
+        border: none !important;
+        border-radius: var(--mui-radius-pill) !important;
         color: #ffffff !important;
         -webkit-text-fill-color: #ffffff !important;
+        height: 28px !important;
+        font-size: 0.8125rem !important;
+        font-weight: 500 !important;
+        letter-spacing: 0.01071em !important;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.12) !important;
     }}
     [data-baseweb="tag"] *,
     span[data-baseweb="tag"] *,
@@ -967,7 +1030,7 @@ st.markdown(f"""
     span[class*="Tag"] * {{
         color: #ffffff !important;
         fill: #ffffff !important;
-        font-weight: 600 !important;
+        font-weight: 500 !important;
         -webkit-text-fill-color: #ffffff !important;
     }}
     [data-baseweb="tag"] svg,
@@ -989,88 +1052,113 @@ st.markdown(f"""
         stroke: #ffffff !important;
     }}
     
-    /* Dropdown menu list styling */
+    /* MUI Menu Listbox */
     ul[role="listbox"] {{
         background-color: var(--secondary-background-color) !important;
         border: 1px solid var(--border-color) !important;
+        border-radius: var(--mui-radius-sm) !important;
+        box-shadow: var(--mui-shadow-8) !important;
     }}
     li[role="option"] {{
         background-color: var(--secondary-background-color) !important;
         color: var(--text-color) !important;
-        transition: all 0.15s ease !important;
+        font-size: 0.875rem !important;
+        padding: 8px 16px !important;
+        transition: background-color 150ms ease !important;
     }}
     li[role="option"]:hover, li[role="option"][aria-selected="true"] {{
-        background-color: var(--background-color) !important;
+        background-color: {'rgba(144, 202, 249, 0.12)' if is_dark else 'rgba(25, 118, 210, 0.08)'} !important;
         color: var(--primary-color) !important;
     }}
     
-    /* Tabs styling */
+    /* ==========================================================================
+       MUI Tabs & Tab Indicator
+       ========================================================================== */
     button[data-baseweb="tab"] {{
-        color: var(--text-color) !important;
-        border-bottom-width: 2px !important;
-        transition: all 0.2s ease !important;
-        opacity: 0.55 !important;
+        color: {secondary_text_color} !important;
+        font-weight: 500 !important;
+        font-size: 0.875rem !important;
+        letter-spacing: 0.02857em !important;
+        border-bottom: 2px solid transparent !important;
+        padding: 12px 18px !important;
+        transition: color 250ms cubic-bezier(0.4, 0, 0.2, 1) 0ms, border-color 250ms cubic-bezier(0.4, 0, 0.2, 1) 0ms !important;
+        opacity: 0.7 !important;
     }}
     button[data-baseweb="tab"] div {{
-        color: var(--text-color) !important;
+        color: {secondary_text_color} !important;
     }}
     button[data-baseweb="tab"]:hover {{
-        opacity: 0.85 !important;
+        opacity: 1 !important;
+        color: var(--primary-color) !important;
     }}
     button[data-baseweb="tab"][aria-selected="true"] {{
-        border-bottom-color: var(--primary-color) !important;
+        border-bottom: 2px solid var(--primary-color) !important;
         opacity: 1 !important;
+        background-color: {'rgba(144, 202, 249, 0.04)' if is_dark else 'rgba(25, 118, 210, 0.04)'} !important;
     }}
     button[data-baseweb="tab"][aria-selected="true"] div {{
         color: var(--primary-color) !important;
         font-weight: 600 !important;
     }}
     div[role="tablist"] {{
-        border-bottom-color: var(--border-color) !important;
+        border-bottom: 1px solid var(--border-color) !important;
     }}
     
-    /* Expanders styling */
+    /* ==========================================================================
+       MUI Accordion (Expander)
+       ========================================================================== */
     [data-testid="stExpander"] {{
         background-color: var(--secondary-background-color) !important;
         border: 1px solid var(--border-color) !important;
-        border-radius: 8px !important;
+        border-radius: var(--mui-radius-sm) !important;
+        box-shadow: var(--mui-shadow-1) !important;
+        transition: box-shadow 200ms ease !important;
+    }}
+    [data-testid="stExpander"]:hover {{
+        box-shadow: var(--mui-shadow-2) !important;
     }}
     [data-testid="stExpander"] * {{
         color: var(--text-color) !important;
     }}
     
-    /* Sidebar styling overrides */
+    /* ==========================================================================
+       MUI Sidebar (Drawer)
+       ========================================================================== */
     [data-testid="stSidebar"] {{
         background-color: var(--secondary-background-color) !important;
         border-right: 1px solid var(--border-color) !important;
+        box-shadow: 1px 0px 5px rgba(0,0,0,0.05) !important;
     }}
     [data-testid="stSidebar"] * {{
         color: var(--text-color) !important;
     }}
-    /* Ensure radio label text etc doesn't get messed up */
     [data-testid="stSidebar"] div[data-testid="stWidgetLabel"] p {{
         color: var(--text-color) !important;
-        opacity: 0.95;
+        font-weight: 500 !important;
+        letter-spacing: 0.01071em;
     }}
     
-    /* Segmented Control Styling */
+    /* ==========================================================================
+       MUI Segmented Control (ToggleButtonGroup)
+       ========================================================================== */
     div[data-testid="stButtonGroup"] {{
         background: transparent !important;
+        border-radius: var(--mui-radius-sm) !important;
     }}
     div[data-testid="stButtonGroup"] button[data-testid^="stBaseButton-segmented_control"] {{
         background: var(--unselected-button-bg) !important;
-        color: var(--text-color) !important;
-        opacity: 0.6 !important;
+        color: {secondary_text_color} !important;
         border: 1px solid var(--border-color) !important;
+        font-weight: 500 !important;
+        font-size: 0.8125rem !important;
+        letter-spacing: 0.02857em !important;
         transition: all 0.2s ease !important;
     }}
     div[data-testid="stButtonGroup"] button[data-testid^="stBaseButton-segmented_control"]:hover {{
         border-color: var(--primary-color) !important;
         color: var(--primary-color) !important;
-        opacity: 0.9 !important;
-        background: var(--background-color) !important;
+        background: {'rgba(144, 202, 249, 0.08)' if is_dark else 'rgba(25, 118, 210, 0.04)'} !important;
     }}
-    /* Selected segment */
     div[data-testid="stButtonGroup"] button[data-testid="stBaseButton-segmented_controlActive"],
     div[data-testid="stButtonGroup"] button[aria-checked="true"],
     div[data-testid="stButtonGroup"] button[aria-selected="true"],
@@ -1078,8 +1166,8 @@ st.markdown(f"""
         background: var(--primary-color) !important;
         background-color: var(--primary-color) !important;
         color: #ffffff !important;
-        opacity: 1 !important;
         border-color: var(--primary-color) !important;
+        box-shadow: var(--mui-shadow-2) !important;
     }}
     div[data-testid="stButtonGroup"] button[data-testid^="stBaseButton-segmented_control"] * {{
         color: var(--text-color) !important;
@@ -1089,6 +1177,16 @@ st.markdown(f"""
     div[data-testid="stButtonGroup"] button[aria-selected="true"] *,
     div[data-testid="stButtonGroup"] button[aria-pressed="true"] * {{
         color: #ffffff !important;
+    }}
+
+    /* ==========================================================================
+       MUI Dialog / Modal
+       ========================================================================== */
+    [data-testid="stModal"] > div, div[role="dialog"] {{
+        border-radius: var(--mui-radius-lg) !important;
+        box-shadow: var(--mui-shadow-8) !important;
+        background-color: var(--secondary-background-color) !important;
+        border: 1px solid var(--border-color) !important;
     }}
 </style>
 
@@ -5658,75 +5756,80 @@ if query_user == "default":
         }
     }
     [data-testid="stForm"] {
-        background: rgba(255, 255, 255, 0.75) !important;
-        padding: 35px !important;
-        border-radius: 20px !important;
-        box-shadow: 0 20px 45px rgba(30, 41, 59, 0.06) !important;
-        border: 1px solid rgba(255, 255, 255, 0.6) !important;
-        backdrop-filter: blur(15px) !important;
-        -webkit-backdrop-filter: blur(15px) !important;
-        margin-bottom: 25px !important;
+        background: #ffffff !important;
+        padding: 32px !important;
+        border-radius: 8px !important;
+        box-shadow: 0px 3px 3px -2px rgba(0,0,0,0.2), 0px 3px 4px 0px rgba(0,0,0,0.14), 0px 1px 8px 0px rgba(0,0,0,0.12) !important;
+        border: 1px solid rgba(0, 0, 0, 0.12) !important;
+        margin-bottom: 24px !important;
         position: relative !important;
         z-index: 1 !important;
     }
     .login-title-glow {
-        font-size: 2.5rem !important;
-        font-weight: 900 !important;
-        background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 50%, #3b82f6 100%) !important;
-        -webkit-background-clip: text !important;
-        -webkit-text-fill-color: transparent !important;
+        font-family: 'Roboto', 'Noto Sans JP', sans-serif !important;
+        font-size: 2.25rem !important;
+        font-weight: 700 !important;
+        color: #1976d2 !important;
+        background: none !important;
+        -webkit-text-fill-color: initial !important;
         text-align: center !important;
-        margin-top: 30px !important;
-        margin-bottom: 5px !important;
-        letter-spacing: -0.8px !important;
+        margin-top: 24px !important;
+        margin-bottom: 6px !important;
+        letter-spacing: -0.01562em !important;
         display: block !important;
     }
     .login-subtitle-glow {
-        font-size: 1.05rem !important;
-        color: #64748b !important;
+        font-family: 'Roboto', 'Noto Sans JP', sans-serif !important;
+        font-size: 1rem !important;
+        color: rgba(0, 0, 0, 0.60) !important;
         text-align: center !important;
-        margin-bottom: 35px !important;
-        font-weight: 500 !important;
+        margin-bottom: 32px !important;
+        font-weight: 400 !important;
+        letter-spacing: 0.00938em !important;
         display: block !important;
     }
     .login-header-section {
-        border-bottom: 1.5px solid #f1f5f9;
-        padding-bottom: 18px;
-        margin-bottom: 22px;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.12);
+        padding-bottom: 16px;
+        margin-bottom: 20px;
     }
     .login-section-title {
-        font-size: 1.35rem;
-        font-weight: 800;
-        color: #0f172a;
+        font-family: 'Roboto', 'Noto Sans JP', sans-serif;
+        font-size: 1.25rem;
+        font-weight: 500;
+        color: rgba(0, 0, 0, 0.87);
         text-align: center;
-        margin-bottom: 10px;
-        letter-spacing: -0.3px;
+        margin-bottom: 8px;
+        letter-spacing: 0.0075em;
     }
     .login-intro-text {
-        font-size: 0.92rem;
-        color: #475569;
-        line-height: 1.6;
+        font-family: 'Roboto', 'Noto Sans JP', sans-serif;
+        font-size: 0.875rem;
+        color: rgba(0, 0, 0, 0.60);
+        line-height: 1.5;
         text-align: center;
         margin: 0;
     }
     .login-info-box {
-        background: #f8fafc;
-        border-left: 4px solid #3b82f6;
-        padding: 15px;
-        border-radius: 8px;
-        margin-top: 20px;
-        margin-bottom: 10px;
+        background: #f4f6f8;
+        border-left: 4px solid #1976d2;
+        padding: 14px 16px;
+        border-radius: 4px;
+        margin-top: 16px;
+        margin-bottom: 12px;
     }
     .login-info-title {
-        font-size: 0.85rem;
-        font-weight: 700;
-        color: #1e3a8a;
+        font-family: 'Roboto', 'Noto Sans JP', sans-serif;
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: #1976d2;
         display: block;
         margin-bottom: 4px;
     }
     .login-info-text {
-        font-size: 0.8rem;
-        color: #475569;
+        font-family: 'Roboto', 'Noto Sans JP', sans-serif;
+        font-size: 0.8125rem;
+        color: rgba(0, 0, 0, 0.60);
         line-height: 1.5;
         display: block;
     }
@@ -5736,28 +5839,29 @@ if query_user == "default":
         justify-content: center !important;
         gap: 10px !important;
         width: 100% !important;
-        padding: 10px 15px !important;
-        border-radius: 10px !important;
-        font-size: 0.9rem !important;
-        font-weight: 600 !important;
+        padding: 9px 16px !important;
+        border-radius: 4px !important;
+        font-family: 'Roboto', 'Noto Sans JP', sans-serif !important;
+        font-size: 0.875rem !important;
+        font-weight: 500 !important;
+        letter-spacing: 0.02857em !important;
         text-decoration: none !important;
-        transition: all 0.2s ease !important;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.04) !important;
+        transition: background-color 250ms cubic-bezier(0.4, 0, 0.2, 1) 0ms, box-shadow 250ms cubic-bezier(0.4, 0, 0.2, 1) 0ms, border-color 250ms cubic-bezier(0.4, 0, 0.2, 1) 0ms !important;
+        box-shadow: 0px 2px 1px -1px rgba(0,0,0,0.2), 0px 1px 1px 0px rgba(0,0,0,0.14), 0px 1px 3px 0px rgba(0,0,0,0.12) !important;
         border: 1px solid transparent !important;
         cursor: pointer !important;
         box-sizing: border-box !important;
-        margin-bottom: 10px !important;
+        margin-bottom: 12px !important;
         text-align: center !important;
     }
     .google-btn {
         background-color: #ffffff !important;
-        color: #374151 !important;
-        border: 1.5px solid #e5e7eb !important;
+        color: rgba(0, 0, 0, 0.87) !important;
+        border: 1px solid rgba(0, 0, 0, 0.12) !important;
     }
     .google-btn:hover {
-        background-color: #f9fafb !important;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.07) !important;
-        transform: translateY(-1px) !important;
+        background-color: rgba(0, 0, 0, 0.04) !important;
+        box-shadow: 0px 3px 3px -2px rgba(0,0,0,0.2), 0px 3px 4px 0px rgba(0,0,0,0.14), 0px 1px 8px 0px rgba(0,0,0,0.12) !important;
     }
     .line-btn {
         background-color: #06c755 !important;
@@ -5765,8 +5869,7 @@ if query_user == "default":
     }
     .line-btn:hover {
         background-color: #05b34c !important;
-        box-shadow: 0 4px 12px rgba(6, 199, 85, 0.2) !important;
-        transform: translateY(-1px) !important;
+        box-shadow: 0px 3px 3px -2px rgba(6, 199, 85, 0.3), 0px 3px 4px 0px rgba(6, 199, 85, 0.2), 0px 1px 8px 0px rgba(6, 199, 85, 0.15) !important;
     }
     .social-icon {
         width: 18px !important;
@@ -5917,8 +6020,8 @@ if query_user == "default":
         target_frame = "_blank"
         
         st.markdown("""
-        <div style="background: rgba(255, 255, 255, 0.75) !important; padding: 25px 35px 15px 35px !important; border-radius: 20px !important; box-shadow: 0 10px 30px rgba(30, 41, 59, 0.04) !important; border: 1px solid rgba(255, 255, 255, 0.6) !important; backdrop-filter: blur(15px) !important; -webkit-backdrop-filter: blur(15px) !important; margin-bottom: 20px; position: relative; z-index: 1;">
-            <h3 class="login-section-title" style="margin-bottom: 15px; font-size: 1.15rem; color: #1e293b;">🔐 アカウントでログイン</h3>
+        <div style="background: #ffffff !important; padding: 20px 24px 14px 24px !important; border-radius: 8px !important; box-shadow: 0px 2px 1px -1px rgba(0,0,0,0.2), 0px 1px 1px 0px rgba(0,0,0,0.14), 0px 1px 3px 0px rgba(0,0,0,0.12) !important; border: 1px solid rgba(0, 0, 0, 0.12) !important; margin-bottom: 20px; position: relative; z-index: 1;">
+            <h3 class="login-section-title" style="margin-bottom: 12px; font-family: 'Roboto', 'Noto Sans JP', sans-serif; font-size: 1.125rem; font-weight: 500; color: rgba(0, 0, 0, 0.87);">🔐 アカウントでログイン</h3>
         </div>
         """, unsafe_allow_html=True)
         
