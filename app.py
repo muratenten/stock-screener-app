@@ -674,17 +674,56 @@ dataframe_filter = "invert(0.94) hue-rotate(180deg)" if is_dark else "none"
 st.markdown(f"""
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Noto+Sans+JP:wght@400;500;700&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Noto+Sans+JP:wght@400;500;700&family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" rel="stylesheet">
 <style>
     /* ==========================================================================
        Material-UI (MUI v5) Design System Theme
        ========================================================================== */
     
-    /* Typography Global Reset (MUI Standard: Roboto + Noto Sans JP) */
-    html, body, [class*="css"], .stApp, button, input, select, textarea, div, span, p, h1, h2, h3, h4, h5, h6 {{
-        font-family: 'Roboto', 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif !important;
+    /* Typography Global (MUI Standard: Roboto + Noto Sans JP) */
+    html, body, .stApp {{
+        font-family: 'Roboto', 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
         -webkit-font-smoothing: antialiased;
         -moz-osx-font-smoothing: grayscale;
+    }}
+
+    p, h1, h2, h3, h4, h5, h6, label {{
+        font-family: 'Roboto', 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    }}
+
+    button:not([data-testid*="Icon"]):not([data-testid*="icon"]), 
+    input, 
+    select, 
+    textarea {{
+        font-family: 'Roboto', 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    }}
+
+    /* CRITICAL: Preserve Streamlit and Material icon fonts so ligatures render as icons */
+    [data-testid*="stIcon"],
+    [data-testid="stIconMaterial"],
+    [data-testid="stExpanderToggleIcon"],
+    [data-testid*="Icon"],
+    [data-testid*="icon"],
+    [data-baseweb="icon"],
+    [class*="material-symbols"],
+    [class*="material-icons"],
+    .material-symbols-rounded,
+    .material-symbols-outlined,
+    .material-icons,
+    span[translate="no"],
+    [data-testid="stIconMaterial"] * {{
+        font-family: "Material Symbols Rounded", "Material Symbols Outlined", "Material Icons" !important;
+        font-style: normal !important;
+        font-weight: normal !important;
+        letter-spacing: normal !important;
+        text-transform: none !important;
+        display: inline-block !important;
+        white-space: nowrap !important;
+        word-wrap: normal !important;
+        direction: ltr !important;
+        font-feature-settings: 'liga' 1 !important;
+        -webkit-font-feature-settings: 'liga' 1 !important;
+        -webkit-font-smoothing: antialiased !important;
     }}
 
     /* Completely hide Streamlit header, footer, MainMenu, deploy buttons, and badges */
