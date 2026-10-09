@@ -671,7 +671,7 @@ gdg_bg_cell_hover = "#242526" if is_dark else "#f4f6f8"
 gdg_bg_header_hover = "#242526" if is_dark else "#f1f5f9"
 dataframe_filter = "invert(0.94) hue-rotate(180deg)" if is_dark else "none"
 
-st.markdown(f"""
+st.html(f"""
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Noto+Sans+JP:wght@400;500;700&family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" rel="stylesheet">
@@ -1266,8 +1266,7 @@ st.markdown(f"""
         border: 1px solid var(--border-color) !important;
     }}
 </style>
-
-""", unsafe_allow_html=True)
+""")
 
 # Inject global Javascript for Feather Icons replacement, premium button styling and badge removal
 st.components.v1.html("""
@@ -4765,7 +4764,7 @@ def render_detail_dashboard(selected_ticker, selected_name, raw_analysis, key_su
     local_bg_color = "#0b0f19" if local_is_dark else "#f8fafc"
 
     # CSS styling to stretch st.segmented_control to full width and make buttons equal width
-    st.markdown(f"""
+    st.html(f"""
     <style>
     div[data-testid="stButtonGroup"] {{
         width: 100% !important;
@@ -4845,7 +4844,7 @@ def render_detail_dashboard(selected_ticker, selected_name, raw_analysis, key_su
         color: #ffffff !important;
     }}
     </style>
-    """, unsafe_allow_html=True)
+    """)
 
     # Use st.segmented_control to completely avoid tab reset on rerun
     if is_practice:
@@ -5962,7 +5961,7 @@ if query_user == "default":
     # WELCOME PORTAL PAGE (Shown when no user ID is set)
     # ---------------------------------------------------------
     portal_bg = "#0b0f19" if is_dark else "#f8fafc"
-    st.markdown(("""
+    st.html(("""
     <div class="portal-bg-container">
         <div class="portal-blob portal-blob-1"></div>
         <div class="portal-blob portal-blob-2"></div>
@@ -6218,7 +6217,7 @@ if query_user == "default":
         pointer-events: none;
     }
     </style>
-    """).replace("{portal_bg}", portal_bg), unsafe_allow_html=True)
+    """).replace("{portal_bg}", portal_bg))
     
     # Active JS badge & footer purger and Feather Icons for login page
     st.components.v1.html("""
