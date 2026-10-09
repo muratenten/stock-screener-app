@@ -659,6 +659,15 @@ title_border = "rgba(255, 255, 255, 0.12)" if is_dark else "rgba(0, 0, 0, 0.08)"
 title_text_color = "#90caf9" if is_dark else "#1976d2"
 subtitle_text_color = "rgba(255, 255, 255, 0.60)" if is_dark else "rgba(0, 0, 0, 0.60)"
 
+# Unified Financial Gain/Loss Colors
+color_gain = "#34d399" if is_dark else "#059669" # Rich Emerald Green
+color_gain_bg = "rgba(16, 185, 129, 0.22)" if is_dark else "rgba(16, 185, 129, 0.12)"
+color_gain_border = "rgba(52, 211, 153, 0.35)" if is_dark else "rgba(16, 185, 129, 0.28)"
+
+color_loss = "#f87171" if is_dark else "#dc2626" # Ruby Rose Red
+color_loss_bg = "rgba(239, 68, 68, 0.22)" if is_dark else "rgba(239, 68, 68, 0.12)"
+color_loss_border = "rgba(248, 113, 113, 0.35)" if is_dark else "rgba(239, 68, 68, 0.28)"
+
 # Theme-aware styling for selectbox tags (pills) to ensure excellent contrast
 tag_bg = "#1976d2"
 tag_border = "#1565c0"
@@ -769,7 +778,15 @@ st.html(f"""
         --mui-radius-sm: 4px;
         --mui-radius-md: 8px;
         --mui-radius-lg: 12px;
-        --mui-radius-pill: 16px;
+        --mui-radius-pill: 9999px;
+        
+        /* Unified Financial Gain/Loss Design Tokens */
+        --color-gain: {color_gain};
+        --color-gain-bg: {color_gain_bg};
+        --color-gain-border: {color_gain_border};
+        --color-loss: {color_loss};
+        --color-loss-bg: {color_loss_bg};
+        --color-loss-border: {color_loss_border};
         
         /* Streamlit Generic Theme Variable Overrides */
         --theme-background-color: {bg_color};
@@ -898,22 +915,137 @@ st.html(f"""
     }}
     .card:hover {{
         box-shadow: var(--mui-shadow-3);
+        transform: translateY(-2px);
     }}
     .metric-title {{
         color: {secondary_text_color};
-        font-size: 0.875rem;
-        font-weight: 500;
-        letter-spacing: 0.01071em;
+        font-size: 0.8125rem;
+        font-weight: 600;
+        letter-spacing: 0.02em;
+        text-transform: uppercase;
         margin-bottom: 6px;
     }}
     .metric-value {{
-        font-size: 1.6rem;
+        font-size: 1.65rem;
         font-weight: 700;
         color: {text_color};
-        letter-spacing: -0.01em;
+        letter-spacing: -0.015em;
+        font-variant-numeric: tabular-nums lining-nums !important;
+        -webkit-font-feature-settings: 'tnum' 1, 'lnum' 1 !important;
+        font-feature-settings: 'tnum' 1, 'lnum' 1 !important;
     }}
     .metric-accent {{
-        color: {'#81c784' if is_dark else '#2e7d32'};
+        color: {color_gain};
+    }}
+
+    /* ==========================================================================
+       Financial Typography: Tabular Figures (等幅数字)
+       ========================================================================== */
+    .metric-value,
+    .tabular-nums,
+    [data-testid="stMetricValue"],
+    div[data-testid="stMetricValue"] *,
+    div[data-testid="stMetricDelta"],
+    span[data-testid="stMetricDelta"],
+    .pill-badge,
+    td,
+    .stDataFrame td,
+    .data-table-num {{
+        font-variant-numeric: tabular-nums lining-nums !important;
+        -webkit-font-feature-settings: 'tnum' 1, 'lnum' 1 !important;
+        font-feature-settings: 'tnum' 1, 'lnum' 1 !important;
+    }}
+
+    /* ==========================================================================
+       Financial Pill Badges (増減ピルバッジ)
+       ========================================================================== */
+    .pill-badge {{
+        display: inline-flex !important;
+        align-items: center !important;
+        gap: 3px !important;
+        padding: 3px 10px !important;
+        border-radius: var(--mui-radius-pill) !important;
+        font-size: 0.8125rem !important;
+        font-weight: 600 !important;
+        line-height: 1.3 !important;
+        font-variant-numeric: tabular-nums lining-nums !important;
+        letter-spacing: 0.01em !important;
+        transition: all 0.2s ease !important;
+        vertical-align: middle !important;
+        white-space: nowrap !important;
+    }}
+    .pill-gain {{
+        background-color: var(--color-gain-bg) !important;
+        color: var(--color-gain) !important;
+        border: 1px solid var(--color-gain-border) !important;
+    }}
+    .pill-loss {{
+        background-color: var(--color-loss-bg) !important;
+        color: var(--color-loss) !important;
+        border: 1px solid var(--color-loss-border) !important;
+    }}
+
+    /* Streamlit Native st.metric KPI Card Enhancement */
+    div[data-testid="stMetric"] {{
+        background: {card_bg} !important;
+        border: 1px solid {border_color} !important;
+        border-radius: var(--mui-radius-md) !important;
+        padding: 16px 20px !important;
+        box-shadow: var(--mui-shadow-1) !important;
+        transition: box-shadow 250ms ease, transform 200ms ease !important;
+    }}
+    div[data-testid="stMetric"]:hover {{
+        box-shadow: var(--mui-shadow-3) !important;
+        transform: translateY(-2px) !important;
+    }}
+    div[data-testid="stMetricLabel"] {{
+        font-size: 0.8125rem !important;
+        font-weight: 600 !important;
+        color: {secondary_text_color} !important;
+        letter-spacing: 0.02em !important;
+        text-transform: uppercase !important;
+        margin-bottom: 4px !important;
+    }}
+    div[data-testid="stMetricValue"] {{
+        font-size: 1.75rem !important;
+        font-weight: 700 !important;
+        color: {text_color} !important;
+        font-variant-numeric: tabular-nums lining-nums !important;
+    }}
+    div[data-testid="stMetricDelta"] {{
+        display: inline-flex !important;
+        align-items: center !important;
+        padding: 3px 10px !important;
+        border-radius: var(--mui-radius-pill) !important;
+        font-size: 0.8125rem !important;
+        font-weight: 600 !important;
+        margin-top: 6px !important;
+        font-variant-numeric: tabular-nums lining-nums !important;
+        width: fit-content !important;
+    }}
+    div[data-testid="stMetricDelta"][data-direction="normal"],
+    div[data-testid="stMetricDelta"]:has(svg[color*="green"]),
+    div[data-testid="stMetricDelta"]:has(svg path[d*="up" i]) {{
+        background-color: var(--color-gain-bg) !important;
+        color: var(--color-gain) !important;
+        border: 1px solid var(--color-gain-border) !important;
+    }}
+    div[data-testid="stMetricDelta"][data-direction="normal"] *,
+    div[data-testid="stMetricDelta"]:has(svg[color*="green"]) * {{
+        color: var(--color-gain) !important;
+        fill: var(--color-gain) !important;
+    }}
+    div[data-testid="stMetricDelta"][data-direction="down"],
+    div[data-testid="stMetricDelta"]:has(svg[color*="red"]),
+    div[data-testid="stMetricDelta"]:has(svg path[d*="down" i]) {{
+        background-color: var(--color-loss-bg) !important;
+        color: var(--color-loss) !important;
+        border: 1px solid var(--color-loss-border) !important;
+    }}
+    div[data-testid="stMetricDelta"][data-direction="down"] *,
+    div[data-testid="stMetricDelta"]:has(svg[color*="red"]) * {{
+        color: var(--color-loss) !important;
+        fill: var(--color-loss) !important;
     }}
     
     /* ==========================================================================
@@ -1860,12 +1992,12 @@ def show_sell_success_dialog(name, ticker, qty, price, total_return, realized_pl
         <!-- 売却受取金額 -->
         <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color, #e2e8f0); padding: 10px 0;">
             <span style="color: var(--text-color, #64748b); opacity: 0.8; min-width: 100px; flex-shrink: 0; text-align: left;">売却受取金額</span>
-            <span style="text-align: right; font-weight: bold; color: #2563eb;">{total_return_str}</span>
+            <span class="tabular-nums" style="text-align: right; font-weight: bold; color: var(--mui-primary, #1976d2);">{total_return_str}</span>
         </div>
         <!-- 確定実現損益 -->
         <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 0;">
             <span style="color: var(--text-color, #64748b); font-weight: bold; min-width: 100px; flex-shrink: 0; text-align: left;">確定実現損益</span>
-            <span style="text-align: right; font-weight: bold; color: {pl_color}; font-size: 1.2rem;">{realized_pl_str}</span>
+            <span class="tabular-nums" style="text-align: right; font-weight: bold; color: {pl_color}; font-size: 1.25rem;">{realized_pl_str}</span>
         </div>
     </div>
     
@@ -1877,12 +2009,12 @@ def show_sell_success_dialog(name, ticker, qty, price, total_return, realized_pl
 # Helper for Batch Sell Dialog Popup
 @st.dialog("🎉 まとめて売却完了", width="medium")
 def show_batch_sell_success_dialog(names_summary, count, proceeds_jpy, realized_pl_jpy, sold_names=None):
-    pl_color = "#16a34a" if realized_pl_jpy >= 0 else "#dc2626"
+    pl_color = "var(--color-gain)" if realized_pl_jpy >= 0 else "var(--color-loss)"
     pl_sign = "+" if realized_pl_jpy >= 0 else ""
     
     names_list_html = ""
     if sold_names:
-        chips = "".join([f'<span style="background: rgba(37,99,235,0.1); color: #2563eb; padding: 2px 8px; border-radius: 4px; font-size: 0.8rem; margin-right: 5px; margin-bottom: 5px; display: inline-block;">{n}</span>' for n in sold_names])
+        chips = "".join([f'<span style="background: rgba(37,99,235,0.1); color: var(--mui-primary, #1976d2); padding: 2px 8px; border-radius: 4px; font-size: 0.8rem; margin-right: 5px; margin-bottom: 5px; display: inline-block;">{n}</span>' for n in sold_names])
         names_list_html = f'<div style="margin-top: 8px;">{chips}</div>'
     
     st.markdown(f"""
@@ -1895,17 +2027,17 @@ def show_batch_sell_success_dialog(names_summary, count, proceeds_jpy, realized_
         <!-- 売却銘柄数 -->
         <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color, #e2e8f0); padding: 10px 0;">
             <span style="color: var(--text-color, #64748b); opacity: 0.8; font-weight: bold;">売却銘柄数</span>
-            <span style="text-align: right; font-weight: bold; color: var(--text-color, #0f172a);">{count} 銘柄</span>
+            <span class="tabular-nums" style="text-align: right; font-weight: bold; color: var(--text-color, #0f172a);">{count} 銘柄</span>
         </div>
         <!-- 売却受取総額 -->
         <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color, #e2e8f0); padding: 10px 0;">
             <span style="color: var(--text-color, #64748b); opacity: 0.8; font-weight: bold;">売却受取総額</span>
-            <span style="text-align: right; font-weight: bold; color: #2563eb;">¥{int(proceeds_jpy):,}</span>
+            <span class="tabular-nums" style="text-align: right; font-weight: bold; color: var(--mui-primary, #1976d2);">¥{int(proceeds_jpy):,}</span>
         </div>
         <!-- 確定実現損益合計 -->
         <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 0;">
             <span style="color: var(--text-color, #64748b); font-weight: bold;">確定実現損益合計</span>
-            <span style="text-align: right; font-weight: bold; color: {pl_color}; font-size: 1.2rem;">{pl_sign}¥{int(realized_pl_jpy):,}</span>
+            <span class="tabular-nums" style="text-align: right; font-weight: bold; color: {pl_color}; font-size: 1.25rem;">{pl_sign}¥{int(realized_pl_jpy):,}</span>
         </div>
     </div>
     
@@ -4642,6 +4774,11 @@ def render_detail_dashboard(selected_ticker, selected_name, raw_analysis, key_su
             owned_color = "#64748b" # Grey
 
     metrics = raw_analysis['metrics']
+    change_pct_val = metrics.get('change_pct', 0.0) or 0.0
+    pct_sign = "+" if change_pct_val > 0 else ""
+    pct_arrow = "▲ " if change_pct_val > 0 else ("▼ " if change_pct_val < 0 else "")
+    pill_cls = "pill-gain" if change_pct_val >= 0 else "pill-loss"
+    change_pct_badge = f'<span class="pill-badge {pill_cls}">{pct_arrow}{pct_sign}{change_pct_val:.2f}%</span>'
 
     # Layout for detailed metrics and Watchlist add/remove button
     watchlist = load_watchlist()
@@ -4668,23 +4805,23 @@ def render_detail_dashboard(selected_ticker, selected_name, raw_analysis, key_su
             with m_col1:
                 st.markdown(f"""<div class="card">
                      <div class="metric-title">基準日株価</div>
-                     <div class="metric-value metric-accent">{format_price(metrics['price'], selected_ticker)}</div>
+                     <div class="metric-value metric-accent tabular-nums">{format_price(metrics['price'], selected_ticker)}</div>
                  </div>""", unsafe_allow_html=True)
                 st.markdown(f"""<div class="card">
                      <div class="metric-title">前日比</div>
-                     <div class="metric-value" style="color: {'#16a34a' if metrics['change_pct'] >= 0 else '#dc2626'}">{metrics['change_pct']:.2f}%</div>
+                     <div style="margin-top: 6px;">{change_pct_badge}</div>
                  </div>""", unsafe_allow_html=True)
             with m_col2:
                 pbr_val = metrics.get('pbr')
                 pbr_str = f"{pbr_val:.2f}倍" if pbr_val is not None else "－"
-                pbr_color = "#16a34a" if (pbr_val is not None and pbr_val < 1.0) else "var(--text-color, #1e293b)"
+                pbr_color = "var(--color-gain)" if (pbr_val is not None and pbr_val < 1.0) else "var(--text-color, #1e293b)"
                 pbr_sub = "解散価値割れ (割安)" if (pbr_val is not None and pbr_val < 1.0) else "基準日時点の試算PBR"
                 st.markdown(f"""<div class="card">
                      <div class="metric-title">基準日PBR</div>
-                     <div class="metric-value" style="color: {pbr_color};">{pbr_str}</div>
+                     <div class="metric-value tabular-nums" style="color: {pbr_color};">{pbr_str}</div>
                      <div style="font-size: 0.8rem; color: #64748b; margin-top: 2px;">{pbr_sub}</div>
                  </div>""", unsafe_allow_html=True)
-                st.markdown(f"""<div class="card" style="border-left: 4px solid {owned_color};">
+                st.markdown(f"""<div class="card" style="border-left: 3px solid {owned_color};">
                      <div class="metric-title">練習用保有状況</div>
                      <div class="metric-value" style="color: {owned_color};">{owned_text}</div>
                      <div style="font-size: 0.8rem; color: #64748b; margin-top: 2px;">{owned_sub}</div>
@@ -4694,26 +4831,26 @@ def render_detail_dashboard(selected_ticker, selected_name, raw_analysis, key_su
             with m_col1:
                 st.markdown(f"""<div class="card">
                      <div class="metric-title">現在株価</div>
-                     <div class="metric-value metric-accent">{format_price(metrics['price'], selected_ticker)}</div>
+                     <div class="metric-value metric-accent tabular-nums">{format_price(metrics['price'], selected_ticker)}</div>
                  </div>""", unsafe_allow_html=True)
                 st.markdown(f"""<div class="card">
                      <div class="metric-title">PER (倍)</div>
-                     <div class="metric-value">{f"{metrics['per']:.1f}" if metrics['per'] is not None else "N/A"}</div>
+                     <div class="metric-value tabular-nums">{f"{metrics['per']:.1f}" if metrics['per'] is not None else "N/A"}</div>
                  </div>""", unsafe_allow_html=True)
                 st.markdown(f"""<div class="card">
                      <div class="metric-title">配当利回り</div>
-                     <div class="metric-value">{f"{metrics['dividend_yield']:.2f}%" if metrics['dividend_yield'] is not None else "N/A"}</div>
+                     <div class="metric-value tabular-nums">{f"{metrics['dividend_yield']:.2f}%" if metrics['dividend_yield'] is not None else "N/A"}</div>
                  </div>""", unsafe_allow_html=True)
             with m_col2:
                 st.markdown(f"""<div class="card">
                      <div class="metric-title">前日比</div>
-                     <div class="metric-value" style="color: {'#16a34a' if metrics['change_pct'] >= 0 else '#dc2626'}">{metrics['change_pct']:.2f}%</div>
+                     <div style="margin-top: 6px;">{change_pct_badge}</div>
                  </div>""", unsafe_allow_html=True)
                 st.markdown(f"""<div class="card">
                      <div class="metric-title">PBR (倍)</div>
-                     <div class="metric-value">{f"{metrics['pbr']:.2f}" if metrics['pbr'] is not None else "N/A"}</div>
+                     <div class="metric-value tabular-nums">{f"{metrics['pbr']:.2f}" if metrics['pbr'] is not None else "N/A"}</div>
                  </div>""", unsafe_allow_html=True)
-                st.markdown(f"""<div class="card" style="border-left: 4px solid {owned_color};">
+                st.markdown(f"""<div class="card" style="border-left: 3px solid {owned_color};">
                      <div class="metric-title">保有状況</div>
                      <div class="metric-value" style="color: {owned_color};">{owned_text}</div>
                      <div style="font-size: 0.8rem; color: #64748b; margin-top: 2px;">{owned_sub}</div>
@@ -4725,25 +4862,25 @@ def render_detail_dashboard(selected_ticker, selected_name, raw_analysis, key_su
             with col1:
                 st.markdown(f"""<div class="card">
                      <div class="metric-title">基準日株価</div>
-                     <div class="metric-value metric-accent">{format_price(metrics['price'], selected_ticker)}</div>
+                     <div class="metric-value metric-accent tabular-nums">{format_price(metrics['price'], selected_ticker)}</div>
                  </div>""", unsafe_allow_html=True)
             with col2:
                 st.markdown(f"""<div class="card">
                      <div class="metric-title">前日比</div>
-                     <div class="metric-value" style="color: {'#16a34a' if metrics['change_pct'] >= 0 else '#dc2626'}">{metrics['change_pct']:.2f}%</div>
+                     <div style="margin-top: 6px;">{change_pct_badge}</div>
                  </div>""", unsafe_allow_html=True)
             with col3:
                 pbr_val = metrics.get('pbr')
                 pbr_str = f"{pbr_val:.2f}倍" if pbr_val is not None else "－"
-                pbr_color = "#16a34a" if (pbr_val is not None and pbr_val < 1.0) else "var(--text-color, #1e293b)"
+                pbr_color = "var(--color-gain)" if (pbr_val is not None and pbr_val < 1.0) else "var(--text-color, #1e293b)"
                 pbr_sub = "解散価値割れ (割安)" if (pbr_val is not None and pbr_val < 1.0) else "基準日時点の試算PBR"
                 st.markdown(f"""<div class="card">
                      <div class="metric-title">基準日PBR</div>
-                     <div class="metric-value" style="color: {pbr_color};">{pbr_str}</div>
+                     <div class="metric-value tabular-nums" style="color: {pbr_color};">{pbr_str}</div>
                      <div style="font-size: 0.8rem; color: #64748b; margin-top: 2px;">{pbr_sub}</div>
                  </div>""", unsafe_allow_html=True)
             with col4:
-                st.markdown(f"""<div class="card" style="border-left: 4px solid {owned_color};">
+                st.markdown(f"""<div class="card" style="border-left: 3px solid {owned_color};">
                      <div class="metric-title">練習用保有状況</div>
                      <div class="metric-value" style="color: {owned_color};">{owned_text}</div>
                      <div style="font-size: 0.8rem; color: #64748b; margin-top: 2px;">{owned_sub}</div>
@@ -4769,30 +4906,30 @@ def render_detail_dashboard(selected_ticker, selected_name, raw_analysis, key_su
             with col1:
                 st.markdown(f"""<div class="card">
                      <div class="metric-title">現在株価</div>
-                     <div class="metric-value metric-accent">{format_price(metrics['price'], selected_ticker)}</div>
+                     <div class="metric-value metric-accent tabular-nums">{format_price(metrics['price'], selected_ticker)}</div>
                  </div>""", unsafe_allow_html=True)
             with col2:
                 st.markdown(f"""<div class="card">
                      <div class="metric-title">前日比</div>
-                     <div class="metric-value" style="color: {'#16a34a' if metrics['change_pct'] >= 0 else '#dc2626'}">{metrics['change_pct']:.2f}%</div>
+                     <div style="margin-top: 6px;">{change_pct_badge}</div>
                  </div>""", unsafe_allow_html=True)
             with col3:
                 st.markdown(f"""<div class="card">
                      <div class="metric-title">PER (倍)</div>
-                     <div class="metric-value">{f"{metrics['per']:.1f}" if metrics['per'] is not None else "N/A"}</div>
+                     <div class="metric-value tabular-nums">{f"{metrics['per']:.1f}" if metrics['per'] is not None else "N/A"}</div>
                  </div>""", unsafe_allow_html=True)
             with col4:
                 st.markdown(f"""<div class="card">
                      <div class="metric-title">PBR (倍)</div>
-                     <div class="metric-value">{f"{metrics['pbr']:.2f}" if metrics['pbr'] is not None else "N/A"}</div>
+                     <div class="metric-value tabular-nums">{f"{metrics['pbr']:.2f}" if metrics['pbr'] is not None else "N/A"}</div>
                  </div>""", unsafe_allow_html=True)
             with col5:
                 st.markdown(f"""<div class="card">
                      <div class="metric-title">配当利回り</div>
-                     <div class="metric-value">{f"{metrics['dividend_yield']:.2f}%" if metrics['dividend_yield'] is not None else "N/A"}</div>
+                     <div class="metric-value tabular-nums">{f"{metrics['dividend_yield']:.2f}%" if metrics['dividend_yield'] is not None else "N/A"}</div>
                  </div>""", unsafe_allow_html=True)
             with col6:
-                st.markdown(f"""<div class="card" style="border-left: 4px solid {owned_color};">
+                st.markdown(f"""<div class="card" style="border-left: 3px solid {owned_color};">
                      <div class="metric-title">保有状況</div>
                      <div class="metric-value" style="color: {owned_color};">{owned_text}</div>
                      <div style="font-size: 0.8rem; color: #64748b; margin-top: 2px;">{owned_sub}</div>
@@ -8820,17 +8957,17 @@ with tab_simulation:
     
     with sum_col1:
         st.markdown(f"""
-        <div class="card" style="border-left: 5px solid #2563eb; padding: 15px; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); background-color: var(--secondary-background-color); color: var(--text-color); margin-bottom: 10px;">
-            <div style="font-size: 0.85rem; color: #64748b; font-weight: 600;">初期総投資額</div>
-            <div style="font-size: 1.5rem; font-weight: bold; margin-top: 5px; color: var(--text-color);">{format_price(total_invest_jpy)}</div>
+        <div class="card" style="border-left: 3px solid var(--mui-primary); padding: 18px 20px; margin-bottom: 12px;">
+            <div class="metric-title">初期総投資額</div>
+            <div class="metric-value tabular-nums" style="margin-top: 6px; font-size: 1.55rem;">{format_price(total_invest_jpy)}</div>
         </div>
         """, unsafe_allow_html=True)
         
     with sum_col2:
         st.markdown(f"""
-        <div class="card" style="border-left: 5px solid #475569; padding: 15px; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); background-color: var(--secondary-background-color); color: var(--text-color); margin-bottom: 10px;">
-            <div style="font-size: 0.85rem; color: #64748b; font-weight: 600;">現在合計評価額</div>
-            <div style="font-size: 1.5rem; font-weight: bold; margin-top: 5px; color: var(--text-color);">{format_price(total_curr_jpy)}</div>
+        <div class="card" style="border-left: 3px solid var(--mui-text-secondary); padding: 18px 20px; margin-bottom: 12px;">
+            <div class="metric-title">現在合計評価額</div>
+            <div class="metric-value tabular-nums" style="margin-top: 6px; font-size: 1.55rem;">{format_price(total_curr_jpy)}</div>
         </div>
         """, unsafe_allow_html=True)
 
@@ -8838,32 +8975,39 @@ with tab_simulation:
         total_pl = total_curr_jpy - total_invest_jpy
         total_pl_pct = (total_pl / total_invest_jpy * 100) if total_invest_jpy > 0 else 0.0
         
-        pl_color = "#10b981" if total_pl >= 0 else "#ef4444"
-        pl_border = "#10b981" if total_pl >= 0 else "#ef4444"
+        pl_color = "var(--color-gain)" if total_pl >= 0 else "var(--color-loss)"
+        pl_border = "var(--color-gain)" if total_pl >= 0 else "var(--color-loss)"
+        pl_pill = "pill-gain" if total_pl >= 0 else "pill-loss"
+        pl_arrow = "▲ " if total_pl > 0 else ("▼ " if total_pl < 0 else "")
         pl_sign = "+" if total_pl >= 0 else ""
         
         st.markdown(f"""
-        <div class="card" style="border-left: 5px solid {pl_border}; padding: 15px; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); background-color: var(--secondary-background-color); color: var(--text-color); margin-bottom: 10px;">
-            <div style="font-size: 0.85rem; color: #64748b; font-weight: 600;">評価損益 (含み損益)</div>
-            <div style="font-size: 1.5rem; font-weight: bold; margin-top: 5px; color: {pl_color};">
-                {pl_sign}¥{int(total_pl):,}<br>
-                <span style="font-size: 0.8rem; font-weight: normal; color: #64748b;">
-                    損益率: {total_pl_pct:+.2f}%
-                </span>
+        <div class="card" style="border-left: 3px solid {pl_border}; padding: 18px 20px; margin-bottom: 12px;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div class="metric-title" style="margin-bottom: 0;">評価損益 (含み損益)</div>
+                <span class="pill-badge {pl_pill}">{pl_arrow}{total_pl_pct:+.2f}%</span>
+            </div>
+            <div class="metric-value tabular-nums" style="margin-top: 6px; font-size: 1.55rem; color: {pl_color};">
+                {pl_sign}¥{int(total_pl):,}
             </div>
         </div>
         """, unsafe_allow_html=True)
         
     with sum_col4:
         realized_jpy = portfolio_data.get("total_realized_pl_jpy", 0.0)
-        real_color = "#10b981" if realized_jpy >= 0 else "#ef4444"
-        real_border = "#10b981" if realized_jpy >= 0 else "#ef4444"
+        real_color = "var(--color-gain)" if realized_jpy >= 0 else "var(--color-loss)"
+        real_border = "var(--color-gain)" if realized_jpy >= 0 else "var(--color-loss)"
+        real_pill = "pill-gain" if realized_jpy >= 0 else "pill-loss"
+        real_arrow = "▲ " if realized_jpy > 0 else ("▼ " if realized_jpy < 0 else "")
         real_sign = "+" if realized_jpy >= 0 else ""
         
         st.markdown(f"""
-        <div class="card" style="border-left: 5px solid {real_border}; padding: 15px; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); background-color: var(--secondary-background-color); color: var(--text-color); margin-bottom: 10px;">
-            <div style="font-size: 0.85rem; color: #64748b; font-weight: 600;">確定損益 (累計実益)</div>
-            <div style="font-size: 1.5rem; font-weight: bold; margin-top: 5px; color: {real_color};">
+        <div class="card" style="border-left: 3px solid {real_border}; padding: 18px 20px; margin-bottom: 12px;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div class="metric-title" style="margin-bottom: 0;">確定損益 (累計実益)</div>
+                <span class="pill-badge {real_pill}">{real_arrow}累計</span>
+            </div>
+            <div class="metric-value tabular-nums" style="margin-top: 6px; font-size: 1.55rem; color: {real_color};">
                 {real_sign}¥{int(realized_jpy):,}
             </div>
         </div>
@@ -9084,22 +9228,22 @@ with tab_simulation:
                             batch_proceeds += q * cp * rate
                             batch_pl += (cp - rec["purchase_price"]) * q * rate
                             
-                    b_pl_color = "#10b981" if batch_pl >= 0 else "#ef4444"
+                    b_pl_color = "var(--color-gain)" if batch_pl >= 0 else "var(--color-loss)"
                     b_pl_sign = "+" if batch_pl >= 0 else ""
                     
                     st.markdown(f"""
-                    <div style="background-color: var(--secondary-background-color); border: 1.5px solid #ef4444; border-radius: 8px; padding: 12px; margin-top: 10px; margin-bottom: 12px;">
+                    <div style="background-color: var(--secondary-background-color); border: 1.5px solid var(--border-color); border-radius: 8px; padding: 12px; margin-top: 10px; margin-bottom: 12px;">
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                            <span style="font-weight: bold; color: #ef4444; font-size: 0.95rem;">📦 まとめて売却プレビュー</span>
-                            <span style="font-size: 0.8rem; background: rgba(239,68,68,0.15); color: #ef4444; padding: 2px 8px; border-radius: 4px; font-weight: bold;">{len(selected_batch)} 銘柄選択中</span>
+                            <span style="font-weight: bold; color: var(--mui-primary); font-size: 0.95rem;">📦 まとめて売却プレビュー</span>
+                            <span class="pill-badge" style="background: rgba(37,99,235,0.12); color: var(--mui-primary);">{len(selected_batch)} 銘柄選択中</span>
                         </div>
                         <div style="display: flex; justify-content: space-between; font-size: 0.88rem;">
                             <span style="opacity: 0.75;">売却受取総額:</span>
-                            <span style="font-weight: bold;">¥{int(batch_proceeds):,}</span>
+                            <span class="tabular-nums" style="font-weight: bold;">¥{int(batch_proceeds):,}</span>
                         </div>
                         <div style="display: flex; justify-content: space-between; font-size: 0.88rem; margin-top: 4px;">
                             <span style="opacity: 0.75;">確定実現損益合計:</span>
-                            <span style="font-weight: bold; color: {b_pl_color};">{b_pl_sign}¥{int(batch_pl):,}</span>
+                            <span class="tabular-nums" style="font-weight: bold; color: {b_pl_color};">{b_pl_sign}¥{int(batch_pl):,}</span>
                         </div>
                     </div>
                     """, unsafe_allow_html=True)
@@ -9152,15 +9296,15 @@ with tab_simulation:
                     </div>
                     <div style="display: flex; justify-content: space-between; margin-top: 5px;">
                         <span style="color: var(--text-color); opacity: 0.75;">保有数量:</span>
-                        <span style="font-weight: bold; color: var(--text-color);">{total_qty:,} 株</span>
+                        <span class="tabular-nums" style="font-weight: bold; color: var(--text-color);">{total_qty:,} 株</span>
                     </div>
                     <div style="display: flex; justify-content: space-between; margin-top: 5px;">
                         <span style="color: var(--text-color); opacity: 0.75;">取得単価:</span>
-                        <span style="font-weight: bold; color: var(--text-color);">{format_price(selected_rec['purchase_price'], selected_ticker)}</span>
+                        <span class="tabular-nums" style="font-weight: bold; color: var(--text-color);">{format_price(selected_rec['purchase_price'], selected_ticker)}</span>
                     </div>
                     <div style="display: flex; justify-content: space-between; margin-top: 5px;">
                         <span style="color: var(--text-color); opacity: 0.75;">現在価格:</span>
-                        <span style="font-weight: bold; color: var(--text-color);">{format_price(curr_price, selected_ticker)}</span>
+                        <span class="tabular-nums" style="font-weight: bold; color: var(--text-color);">{format_price(curr_price, selected_ticker)}</span>
                     </div>
                 </div>
                 """, unsafe_allow_html=True)
@@ -9171,7 +9315,7 @@ with tab_simulation:
                 full_expected_return = total_qty * curr_price
                 full_cost = total_qty * selected_rec["purchase_price"]
                 full_realized_pl = full_expected_return - full_cost
-                full_pl_color = "#10b981" if full_realized_pl >= 0 else "#ef4444"
+                full_pl_color = "var(--color-gain)" if full_realized_pl >= 0 else "var(--color-loss)"
                 full_pl_sign = "+" if full_realized_pl >= 0 else ""
                 rate = get_usdjpy_rate() if is_us_stock(selected_ticker) else 1.0
                 full_pl_jpy = full_realized_pl * rate
@@ -9184,18 +9328,18 @@ with tab_simulation:
                     full_pl_str = f"{full_pl_sign}{format_price(full_realized_pl, selected_ticker)}"
                     
                 st.markdown(f"""
-                <div style="background-color: var(--secondary-background-color); border: 1.5px solid #ef4444; border-radius: 8px; padding: 12px; margin-bottom: 12px;">
+                <div style="background-color: var(--secondary-background-color); border: 1.5px solid var(--border-color); border-radius: 8px; padding: 12px; margin-bottom: 12px;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                        <span style="font-weight: bold; color: #ef4444; font-size: 0.95rem;">🔥 保有全株（100%）の一括売却</span>
-                        <span style="font-size: 0.8rem; background: rgba(239,68,68,0.15); color: #ef4444; padding: 2px 8px; border-radius: 4px; font-weight: bold;">全{total_qty:,}株</span>
+                        <span style="font-weight: bold; color: var(--mui-primary); font-size: 0.95rem;">🔥 保有全株（100%）の一括売却</span>
+                        <span class="pill-badge" style="background: rgba(37,99,235,0.12); color: var(--mui-primary);">全{total_qty:,}株</span>
                     </div>
                     <div style="display: flex; justify-content: space-between; font-size: 0.88rem;">
                         <span style="opacity: 0.75;">売却受取総額:</span>
-                        <span style="font-weight: bold;">{full_return_str}</span>
+                        <span class="tabular-nums" style="font-weight: bold;">{full_return_str}</span>
                     </div>
                     <div style="display: flex; justify-content: space-between; font-size: 0.88rem; margin-top: 4px;">
                         <span style="opacity: 0.75;">確定実現損益:</span>
-                        <span style="font-weight: bold; color: {full_pl_color};">{full_pl_str}</span>
+                        <span class="tabular-nums" style="font-weight: bold; color: {full_pl_color};">{full_pl_str}</span>
                     </div>
                 </div>
                 """, unsafe_allow_html=True)
@@ -9238,7 +9382,7 @@ with tab_simulation:
                     expected_return = sell_qty * curr_price
                     original_cost = sell_qty * selected_rec["purchase_price"]
                     realized_pl = expected_return - original_cost
-                    pl_color_style = "color: #10b981;" if realized_pl >= 0 else "color: #ef4444;"
+                    pl_color_style = "color: var(--color-gain);" if realized_pl >= 0 else "color: var(--color-loss);"
                     pl_sign = "+" if realized_pl >= 0 else ""
                     
                     if is_us_stock(selected_ticker):
@@ -9252,11 +9396,11 @@ with tab_simulation:
                     <div style="background-color: var(--secondary-background-color); border: 1px solid var(--border-color); border-radius: 6px; padding: 10px 12px; margin-bottom: 12px; font-size: 0.88rem;">
                         <div style="display: flex; justify-content: space-between;">
                             <span style="opacity: 0.75;">売却予定金額 ({sell_qty:,}株):</span>
-                            <span style="font-weight: bold;">{expected_return_str}</span>
+                            <span class="tabular-nums" style="font-weight: bold;">{expected_return_str}</span>
                         </div>
                         <div style="display: flex; justify-content: space-between; margin-top: 4px;">
                             <span style="opacity: 0.75;">確定実現損益:</span>
-                            <span style="font-weight: bold; {pl_color_style}">{realized_pl_str}</span>
+                            <span class="tabular-nums" style="font-weight: bold; {pl_color_style}">{realized_pl_str}</span>
                         </div>
                     </div>
                     """, unsafe_allow_html=True)
