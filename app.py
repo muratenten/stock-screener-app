@@ -817,9 +817,9 @@ st.html(f"""
     }}
     
     /* ==========================================================================
-       Feather Icons Theme Integration
+       Lucide / Feather Icons Theme Integration
        ========================================================================== */
-    .feather-icon {{
+    .feather-icon, .lucide-icon, svg.lucide {{
         width: 1.15em;
         height: 1.15em;
         display: inline-block;
@@ -832,7 +832,7 @@ st.html(f"""
         flex-shrink: 0;
         box-sizing: content-box;
     }}
-    .feather-wrapper {{
+    .feather-wrapper, .lucide-wrapper {{
         display: inline-flex;
         align-items: center;
         justify-content: center;
@@ -841,16 +841,22 @@ st.html(f"""
         vertical-align: middle;
         margin-right: 0.35em;
     }}
-    .feather-converted-node {{
+    .feather-converted-node, .lucide-converted-node {{
         display: inline-flex;
         align-items: center;
         vertical-align: middle;
     }}
-    [data-baseweb="tab"][aria-selected="true"] .feather-icon {{
+    [data-baseweb="tab"][aria-selected="true"] .feather-icon,
+    [data-baseweb="tab"][aria-selected="true"] .lucide-icon,
+    [data-baseweb="tab"][aria-selected="true"] svg.lucide {{
         stroke: var(--primary-color) !important;
     }}
     button[data-testid*="primary"] .feather-icon,
-    .premium-active .feather-icon {{
+    button[data-testid*="primary"] .lucide-icon,
+    button[data-testid*="primary"] svg.lucide,
+    .premium-active .feather-icon,
+    .premium-active .lucide-icon,
+    .premium-active svg.lucide {{
         stroke: #ffffff !important;
     }}
 
@@ -1268,124 +1274,138 @@ st.html(f"""
 </style>
 """)
 
-# Inject global Javascript for Feather Icons replacement, premium button styling and badge removal
+# Inject global Javascript for Lucide Icons (Feather evolved) replacement, premium button styling and badge removal
 st.components.v1.html("""
 <script>
     const parentDoc = window.parent.document;
 
-    // Load Feather Icons library from CDN if not already loaded
+    // Load Lucide Icons library from CDN if not already loaded
     try {
-        if (!parentDoc.querySelector('script[data-feather-lib]')) {
+        if (!parentDoc.querySelector('script[data-lucide-lib]')) {
             const s = parentDoc.createElement('script');
-            s.src = "https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js";
-            s.setAttribute('data-feather-lib', 'true');
+            s.src = "https://cdn.jsdelivr.net/npm/lucide@latest/dist/umd/lucide.js";
+            s.setAttribute('data-lucide-lib', 'true');
             parentDoc.head.appendChild(s);
         }
     } catch(e) {}
 
-    // Embedded Feather Icons SVG dictionary for instantaneous rendering (no CDN delay)
-    const featherSvgMap = {
-        'search': '<svg class="feather-icon" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>',
-        'star': '<svg class="feather-icon" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>',
-        'briefcase': '<svg class="feather-icon" viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg>',
-        'trending-up': '<svg class="feather-icon" viewBox="0 0 24 24"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>',
-        'trending-down': '<svg class="feather-icon" viewBox="0 0 24 24"><polyline points="23 18 13.5 8.5 8.5 13.5 1 6"></polyline><polyline points="17 18 23 18 23 12"></polyline></svg>',
-        'activity': '<svg class="feather-icon" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>',
-        'book-open': '<svg class="feather-icon" viewBox="0 0 24 24"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>',
-        'settings': '<svg class="feather-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>',
-        'smartphone': '<svg class="feather-icon" viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect><line x1="12" y1="18" x2="12.01" y2="18"></line></svg>',
-        'monitor': '<svg class="feather-icon" viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>',
-        'award': '<svg class="feather-icon" viewBox="0 0 24 24"><circle cx="12" cy="8" r="7"></circle><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"></polyline></svg>',
-        'refresh-cw': '<svg class="feather-icon" viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>',
-        'check-circle': '<svg class="feather-icon" viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>',
-        'alert-triangle': '<svg class="feather-icon" viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>',
-        'alert-circle': '<svg class="feather-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>',
-        'zap': '<svg class="feather-icon" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>',
-        'file-text': '<svg class="feather-icon" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>',
-        'clipboard': '<svg class="feather-icon" viewBox="0 0 24 24"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect></svg>',
-        'lock': '<svg class="feather-icon" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>',
-        'key': '<svg class="feather-icon" viewBox="0 0 24 24"><path d="M21 2l-2 2m-2-2l2 2m-2 2l2-2m-7 7l-5 5a2.83 2.83 0 0 1-4-4l5-5m7-7l2 2m0 0a5 5 0 1 1-7.07 7.07l-1.41-1.41"></path></svg>',
-        'gift': '<svg class="feather-icon" viewBox="0 0 24 24"><polyline points="20 12 20 22 4 22 4 12"></polyline><rect x="2" y="7" width="20" height="5"></rect><line x1="12" y1="22" x2="12" y2="7"></line><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"></path><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"></path></svg>',
-        'trash-2': '<svg class="feather-icon" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>',
-        'plus': '<svg class="feather-icon" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>',
-        'bell': '<svg class="feather-icon" viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>',
-        'target': '<svg class="feather-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="6"></circle><circle cx="12" cy="12" r="2"></circle></svg>',
-        'package': '<svg class="feather-icon" viewBox="0 0 24 24"><line x1="16.5" y1="9.4" x2="7.5" y2="4.21"></line><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>',
-        'bar-chart-2': '<svg class="feather-icon" viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>',
-        'eye': '<svg class="feather-icon" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>',
-        'shield': '<svg class="feather-icon" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>',
-        'calendar': '<svg class="feather-icon" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>',
-        'clock': '<svg class="feather-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>',
-        'credit-card': '<svg class="feather-icon" viewBox="0 0 24 24"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect><line x1="1" y1="10" x2="23" y2="10"></line></svg>',
-        'coffee': '<svg class="feather-icon" viewBox="0 0 24 24"><path d="M18 8h1a4 4 0 0 1 0 8h-1"></path><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"></path><line x1="6" y1="1" x2="6" y2="4"></line><line x1="10" y1="1" x2="10" y2="4"></line><line x1="14" y1="1" x2="14" y2="4"></line></svg>',
-        'shopping-bag': '<svg class="feather-icon" viewBox="0 0 24 24"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path><line x1="3" y1="6" x2="21" y2="6"></line><path d="M16 10a4 4 0 0 1-8 0"></path></svg>',
-        'send': '<svg class="feather-icon" viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>',
-        'user': '<svg class="feather-icon" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>',
-        'cpu': '<svg class="feather-icon" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2" ry="2"></rect><rect x="9" y="9" width="6" height="6"></rect><line x1="9" y1="1" x2="9" y2="4"></line><line x1="15" y1="1" x2="15" y2="4"></line><line x1="9" y1="20" x2="9" y2="23"></line><line x1="15" y1="20" x2="15" y2="23"></line><line x1="20" y1="9" x2="23" y2="9"></line><line x1="20" y1="14" x2="23" y2="14"></line><line x1="1" y1="9" x2="4" y2="9"></line><line x1="1" y1="14" x2="4" y2="14"></line></svg>',
-        'dollar-sign': '<svg class="feather-icon" viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>',
-        'globe': '<svg class="feather-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>',
-        'cloud': '<svg class="feather-icon" viewBox="0 0 24 24"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"></path></svg>',
-        'home': '<svg class="feather-icon" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>',
-        'layers': '<svg class="feather-icon" viewBox="0 0 24 24"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg>',
-        'log-out': '<svg class="feather-icon" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>',
-        'tag': '<svg class="feather-icon" viewBox="0 0 24 24"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7.01" y2="7"></line></svg>',
-        'save': '<svg class="feather-icon" viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>',
-        'folder': '<svg class="feather-icon" viewBox="0 0 24 24"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>',
-        'download': '<svg class="feather-icon" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>',
-        'edit-2': '<svg class="feather-icon" viewBox="0 0 24 24"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg>',
-        'truck': '<svg class="feather-icon" viewBox="0 0 24 24"><rect x="1" y="3" width="15" height="13"></rect><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon><circle cx="5.5" cy="18.5" r="2.5"></circle><circle cx="18.5" cy="18.5" r="2.5"></circle></svg>',
-        'image': '<svg class="feather-icon" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>',
-        'play': '<svg class="feather-icon" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>',
-        'arrow-right': '<svg class="feather-icon" viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>',
-        'x': '<svg class="feather-icon" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>',
-        'scissors': '<svg class="feather-icon" viewBox="0 0 24 24"><circle cx="6" cy="6" r="3"></circle><circle cx="6" cy="18" r="3"></circle><line x1="20" y1="4" x2="8.12" y2="15.88"></line><line x1="14.47" y1="14.48" x2="20" y2="20"></line><line x1="8.12" y1="8.12" x2="12" y2="12"></line></svg>',
-        'disc': '<svg class="feather-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="3"></circle></svg>'
+    // Embedded Lucide Icons SVG dictionary for 0ms instantaneous rendering
+    const lucideSvgMap = {
+        'search': '<svg class="lucide lucide-search feather-icon" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path></svg>',
+        'star': '<svg class="lucide lucide-star feather-icon" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>',
+        'sparkles': '<svg class="lucide lucide-sparkles feather-icon" viewBox="0 0 24 24"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275z"></path></svg>',
+        'briefcase': '<svg class="lucide lucide-briefcase feather-icon" viewBox="0 0 24 24"><rect width="20" height="14" x="2" y="7" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg>',
+        'trending-up': '<svg class="lucide lucide-trending-up feather-icon" viewBox="0 0 24 24"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"></polyline><polyline points="16 7 22 7 22 13"></polyline></svg>',
+        'trending-down': '<svg class="lucide lucide-trending-down feather-icon" viewBox="0 0 24 24"><polyline points="22 17 13.5 8.5 8.5 13.5 2 7"></polyline><polyline points="16 17 22 17 22 11"></polyline></svg>',
+        'candlestick-chart': '<svg class="lucide lucide-candlestick-chart feather-icon" viewBox="0 0 24 24"><path d="M9 5v4"></path><rect width="4" height="6" x="7" y="9" rx="1"></rect><path d="M9 15v2"></path><path d="M17 3v2"></path><rect width="4" height="8" x="15" y="5" rx="1"></rect><path d="M17 13v3"></path><path d="M3 3v16a2 2 0 0 0 2 2h16"></path></svg>',
+        'rocket': '<svg class="lucide lucide-rocket feather-icon" viewBox="0 0 24 24"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"></path><path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"></path><path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"></path><path d="M12 9V4s3.03.55 4 2c1.08 1.62 0 5 0 5"></path></svg>',
+        'crown': '<svg class="lucide lucide-crown feather-icon" viewBox="0 0 24 24"><path d="M11.562 3.266a.5.5 0 0 1 .876 0L15.39 8.87a1 1 0 0 0 1.516.294L21.183 5.5a.5.5 0 0 1 .798.519l-2.834 10.246a1 1 0 0 1-.956.735H5.809a1 1 0 0 1-.956-.735L2.019 6.019a.5.5 0 0 1 .798-.519l4.276 3.664a1 1 0 0 0 1.516-.294z"></path><path d="M5 21h14"></path></svg>',
+        'trophy': '<svg class="lucide lucide-trophy feather-icon" viewBox="0 0 24 24"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"></path><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"></path><path d="M4 22h16"></path><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"></path><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"></path><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"></path></svg>',
+        'gem': '<svg class="lucide lucide-gem feather-icon" viewBox="0 0 24 24"><path d="M6 3h12l4 6-10 13L2 9Z"></path><path d="M11 3 8 9l4 13 4-13-3-6"></path><path d="M2 9h20"></path></svg>',
+        'coins': '<svg class="lucide lucide-coins feather-icon" viewBox="0 0 24 24"><circle cx="8" cy="8" r="6"></circle><path d="M18.09 10.37A6 6 0 1 1 10.34 18"></path><path d="M7 6h1v4"></path><path d="m16.71 13.88.7.71-2.82 2.82"></path></svg>',
+        'japanese-yen': '<svg class="lucide lucide-japanese-yen feather-icon" viewBox="0 0 24 24"><path d="m12 12-4-8"></path><path d="m12 12 4-8"></path><path d="M12 12v9"></path><path d="M6 15h12"></path><path d="M6 19h12"></path></svg>',
+        'credit-card': '<svg class="lucide lucide-credit-card feather-icon" viewBox="0 0 24 24"><rect width="20" height="14" x="2" y="5" rx="2"></rect><line x1="2" x2="22" y1="10" y2="10"></line></svg>',
+        'settings': '<svg class="lucide lucide-settings feather-icon" viewBox="0 0 24 24"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path><circle cx="12" cy="12" r="3"></circle></svg>',
+        'target': '<svg class="lucide lucide-target feather-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="6"></circle><circle cx="12" cy="12" r="2"></circle></svg>',
+        'boxes': '<svg class="lucide lucide-boxes feather-icon" viewBox="0 0 24 24"><path d="M2.97 12.92A2 2 0 0 0 2 14.63v3.24a2 2 0 0 0 .97 1.71l3 1.8a2 2 0 0 0 2.06 0L12 19v-5.5l-5-3-4.03 2.42Z"></path><path d="m7 16.5-4.74-2.85"></path><path d="m7 16.5 5-3"></path><path d="M7 16.5v5.17"></path><path d="M12 13.5V19l3.97 2.38a2 2 0 0 0 2.06 0l3-1.8a2 2 0 0 0 .97-1.71v-3.24a2 2 0 0 0-.97-1.71L17 10.5l-5 3Z"></path><path d="m17 16.5-5-3"></path><path d="m17 16.5 4.74-2.85"></path><path d="M17 16.5v5.17"></path><path d="M7.97 4.42A2 2 0 0 0 7 6.13v4.37l5 3 5-3V6.13a2 2 0 0 0-.97-1.71l-3-1.8a2 2 0 0 0-2.06 0l-3 1.8Z"></path><path d="M12 8 7.26 5.15"></path><path d="m12 8 4.74-2.85"></path><path d="M12 13.5V8"></path></svg>',
+        'refresh-cw': '<svg class="lucide lucide-refresh-cw feather-icon" viewBox="0 0 24 24"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"></path><path d="M21 3v5h-5"></path><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"></path><path d="M8 16H3v5"></path></svg>',
+        'check-circle-2': '<svg class="lucide lucide-check-circle-2 feather-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><path d="m9 12 2 2 4-4"></path></svg>',
+        'alert-triangle': '<svg class="lucide lucide-alert-triangle feather-icon" viewBox="0 0 24 24"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"></path><line x1="12" x2="12" y1="9" y2="13"></line><line x1="12" x2="12.01" y1="17" y2="17"></line></svg>',
+        'alert-circle': '<svg class="lucide lucide-alert-circle feather-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>',
+        'hourglass': '<svg class="lucide lucide-hourglass feather-icon" viewBox="0 0 24 24"><path d="M5 22h14"></path><path d="M5 2h14"></path><path d="M17 22v-4.172a2 2 0 0 0-.586-1.414L12 12l-4.414 4.414A2 2 0 0 0 7 17.828V22"></path><path d="M7 2v4.172a2 2 0 0 0 .586 1.414L12 12l4.414-4.414A2 2 0 0 0 17 6.172V2"></path></svg>',
+        'flame': '<svg class="lucide lucide-flame feather-icon" viewBox="0 0 24 24"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"></path></svg>',
+        'bot': '<svg class="lucide lucide-bot feather-icon" viewBox="0 0 24 24"><path d="M12 8V4H8"></path><rect width="16" height="12" x="4" y="8" rx="2"></rect><path d="M2 14h2"></path><path d="M20 14h2"></path><path d="M15 13v2"></path><path d="M9 13v2"></path></svg>',
+        'lightbulb': '<svg class="lucide lucide-lightbulb feather-icon" viewBox="0 0 24 24"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"></path><path d="M9 18h6"></path><path d="M10 22h4"></path></svg>',
+        'file-text': '<svg class="lucide lucide-file-text feather-icon" viewBox="0 0 24 24"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"></path><path d="M14 2v4a2 2 0 0 0 2 2h4"></path><path d="M10 9H8"></path><path d="M16 13H8"></path><path d="M16 17H8"></path></svg>',
+        'book-open': '<svg class="lucide lucide-book-open feather-icon" viewBox="0 0 24 24"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>',
+        'clipboard': '<svg class="lucide lucide-clipboard feather-icon" viewBox="0 0 24 24"><rect width="8" height="4" x="8" y="2" rx="1" ry="1"></rect><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path></svg>',
+        'pencil': '<svg class="lucide lucide-pencil feather-icon" viewBox="0 0 24 24"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"></path><path d="m15 5 4 4"></path></svg>',
+        'lock': '<svg class="lucide lucide-lock feather-icon" viewBox="0 0 24 24"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>',
+        'key': '<svg class="lucide lucide-key feather-icon" viewBox="0 0 24 24"><circle cx="7.5" cy="15.5" r="5.5"></circle><path d="m21 2-9.6 9.6"></path><path d="m15.5 7.5 3 3L22 7l-3-3"></path></svg>',
+        'log-out': '<svg class="lucide lucide-log-out feather-icon" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>',
+        'shield-check': '<svg class="lucide lucide-shield-check feather-icon" viewBox="0 0 24 24"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"></path><path d="m9 12 2 2 4-4"></path></svg>',
+        'gift': '<svg class="lucide lucide-gift feather-icon" viewBox="0 0 24 24"><rect x="3" y="8" width="18" height="4" rx="1"></rect><path d="M12 8v13"></path><path d="M19 12v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7"></path><path d="M7.5 8a2.5 2.5 0 0 1 0-5A4.8 8 0 0 1 12 8a4.8 8 0 0 1 4.5-5 2.5 2.5 0 0 1 0 5"></path></svg>',
+        'tag': '<svg class="lucide lucide-tag feather-icon" viewBox="0 0 24 24"><path d="M12 2H2v10l9.29 9.29c.94.94 2.48.94 3.42 0l6.58-6.58c.94-.94.94-2.48 0-3.42L12 2Z"></path><path d="M7 7h.01"></path></svg>',
+        'trash-2': '<svg class="lucide lucide-trash-2 feather-icon" viewBox="0 0 24 24"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path><line x1="10" x2="10" y1="11" y2="17"></line><line x1="14" x2="14" y1="11" y2="17"></line></svg>',
+        'plus': '<svg class="lucide lucide-plus feather-icon" viewBox="0 0 24 24"><path d="M5 12h14"></path><path d="M12 5v14"></path></svg>',
+        'bell': '<svg class="lucide lucide-bell feather-icon" viewBox="0 0 24 24"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"></path><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"></path></svg>',
+        'eye': '<svg class="lucide lucide-eye feather-icon" viewBox="0 0 24 24"><path d="2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"></path><circle cx="12" cy="12" r="3"></circle></svg>',
+        'calendar': '<svg class="lucide lucide-calendar feather-icon" viewBox="0 0 24 24"><path d="M8 2v4"></path><path d="M16 2v4"></path><rect width="18" height="18" x="3" y="4" rx="2"></rect><path d="M3 10h18"></path></svg>',
+        'clock': '<svg class="lucide lucide-clock feather-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>',
+        'user': '<svg class="lucide lucide-user feather-icon" viewBox="0 0 24 24"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>',
+        'globe': '<svg class="lucide lucide-globe feather-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"></path><path d="M2 12h20"></path></svg>',
+        'flag': '<svg class="lucide lucide-flag feather-icon" viewBox="0 0 24 24"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"></path><line x1="4" x2="4" y1="22" y2="15"></line></svg>',
+        'coffee': '<svg class="lucide lucide-coffee feather-icon" viewBox="0 0 24 24"><path d="M17 8h1a4 4 0 1 1 0 8h-1"></path><path d="M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4Z"></path><line x1="6" x2="6" y1="2" y2="4"></line><line x1="10" x2="10" y1="2" y2="4"></line><line x1="14" x2="14" y1="2" y2="4"></line></svg>',
+        'utensils': '<svg class="lucide lucide-utensils feather-icon" viewBox="0 0 24 24"><path d="M18 2v6a3 3 0 0 1-3 3 3 3 0 0 1-3-3V2"></path><path d="M15 2v10"></path><path d="M18 17v5"></path><path d="M12 17v5"></path><path d="M6 2v20"></path><path d="M9 2v4a2 2 0 0 1-2 2 2 2 0 0 1-2-2V2"></path></svg>',
+        'shopping-bag': '<svg class="lucide lucide-shopping-bag feather-icon" viewBox="0 0 24 24"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"></path><path d="M3 6h18"></path><path d="M16 10a4 4 0 0 1-8 0"></path></svg>',
+        'plane': '<svg class="lucide lucide-plane feather-icon" viewBox="0 0 24 24"><path d="M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.2c.4-.3.6-.7.5-1.2z"></path></svg>',
+        'car': '<svg class="lucide lucide-car feather-icon" viewBox="0 0 24 24"><path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"></path><circle cx="7" cy="17" r="2"></circle><path d="M9 17h6"></path><circle cx="17" cy="17" r="2"></circle></svg>',
+        'building-2': '<svg class="lucide lucide-building-2 feather-icon" viewBox="0 0 24 24"><path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z"></path><path d="M6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2"></path><path d="M18 9h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2"></path><path d="M10 6h4"></path><path d="M10 10h4"></path><path d="M10 14h4"></path><path d="M10 18h4"></path></svg>',
+        'factory': '<svg class="lucide lucide-factory feather-icon" viewBox="0 0 24 24"><path d="M2 20a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8l-7 5V8l-7 5V4a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"></path><path d="M17 18h1"></path><path d="M12 18h1"></path><path d="M7 18h1"></path></svg>',
+        'palette': '<svg class="lucide lucide-palette feather-icon" viewBox="0 0 24 24"><circle cx="13.5" cy="6.5" r=".5"></circle><circle cx="17.5" cy="10.5" r=".5"></circle><circle cx="8.5" cy="7.5" r=".5"></circle><circle cx="6.5" cy="12.5" r=".5"></circle><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"></path></svg>',
+        'gamepad-2': '<svg class="lucide lucide-gamepad-2 feather-icon" viewBox="0 0 24 24"><line x1="6" x2="10" y1="12" y2="12"></line><line x1="8" x2="8" y1="10" y2="14"></line><line x1="15" x2="15.01" y1="13" y2="13"></line><line x1="18" x2="18.01" y1="11" y2="11"></line><rect width="20" height="12" x="2" y="6" rx="2"></rect></svg>',
+        'download': '<svg class="lucide lucide-download feather-icon" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" x2="12" y1="15" y2="3"></line></svg>',
+        'save': '<svg class="lucide lucide-save feather-icon" viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>',
+        'folder': '<svg class="lucide lucide-folder feather-icon" viewBox="0 0 24 24"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"></path></svg>',
+        'arrow-right': '<svg class="lucide lucide-arrow-right feather-icon" viewBox="0 0 24 24"><path d="M5 12h14"></path><path d="m12 5 7 7-7 7"></path></svg>',
+        'x': '<svg class="lucide lucide-x feather-icon" viewBox="0 0 24 24"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>',
+        'scissors': '<svg class="lucide lucide-scissors feather-icon" viewBox="0 0 24 24"><circle cx="6" cy="6" r="3"></circle><circle cx="6" cy="18" r="3"></circle><line x1="20" x2="8.12" y1="4" y2="15.88"></line><line x1="14.47" x2="20" y1="14.48" y2="20"></line><line x1="8.12" x2="12" y1="8.12" y2="12"></line></svg>',
+        'circle-dot': '<svg class="lucide lucide-circle-dot feather-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="1"></circle></svg>',
+        'smartphone': '<svg class="lucide lucide-smartphone feather-icon" viewBox="0 0 24 24"><rect width="14" height="20" x="5" y="2" rx="2" ry="2"></rect><path d="M12 18h.01"></path></svg>',
+        'monitor': '<svg class="lucide lucide-monitor feather-icon" viewBox="0 0 24 24"><rect width="20" height="14" x="2" y="3" rx="2"></rect><line x1="8" x2="16" y1="21" y2="21"></line><line x1="12" x2="12" y1="17" y2="21"></line></svg>',
+        'cpu': '<svg class="lucide lucide-cpu feather-icon" viewBox="0 0 24 24"><rect width="16" height="16" x="4" y="4" rx="2"></rect><rect width="6" height="6" x="9" y="9" rx="1"></rect><path d="M15 2v2"></path><path d="M15 20v2"></path><path d="M2 15h2"></path><path d="M2 9h2"></path><path d="M20 15h2"></path><path d="M20 9h2"></path><path d="M9 2v2"></path><path d="M9 20v2"></path></svg>',
+        'cloud': '<svg class="lucide lucide-cloud feather-icon" viewBox="0 0 24 24"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"></path></svg>'
     };
 
-    const emojiFeatherMap = {
+    // Full mapping of emojis to Lucide icons
+    const emojiLucideMap = {
+        '🇯🇵': 'flag',
+        '🇺🇸': 'flag',
+        '⏳': 'hourglass',
+        '🚀': 'rocket',
+        '👑': 'crown',
+        '🏆': 'trophy',
+        '💎': 'gem',
+        '💰': 'coins',
+        '💴': 'japanese-yen',
+        '💳': 'credit-card',
+        '📊': 'candlestick-chart',
+        '📈': 'trending-up',
+        '📉': 'trending-down',
         '🔍': 'search', '🔎': 'search',
-        '⭐': 'star', '☆': 'star', '🌟': 'star', '✨': 'star',
+        '⭐': 'star', '☆': 'star', '🌟': 'star', '✨': 'sparkles',
         '💼': 'briefcase',
-        '📈': 'trending-up', '📉': 'trending-down',
-        '📊': 'bar-chart-2',
-        '🏋': 'activity', '⚡': 'zap', '🔥': 'activity',
-        '📚': 'book-open', '📖': 'book-open', '📰': 'file-text',
         '⚙': 'settings', '🛠': 'settings',
-        '📱': 'smartphone',
-        '💻': 'monitor',
-        '👑': 'award', '🏆': 'award', '💎': 'award',
+        '🎯': 'target',
+        '📦': 'boxes',
         '🔄': 'refresh-cw',
-        '✅': 'check-circle',
-        '⚠': 'alert-triangle',
-        '🚨': 'alert-circle',
-        '💡': 'zap',
-        '📄': 'file-text', '📋': 'clipboard', '✏': 'edit-2',
+        '✅': 'check-circle-2',
+        '⚠': 'alert-triangle', '🚨': 'alert-circle',
+        '💡': 'lightbulb', '⚡': 'sparkles', '🔥': 'flame', '🏋': 'trending-up',
+        '📄': 'file-text', '📋': 'clipboard', '✏': 'pencil',
+        '📚': 'book-open', '📖': 'book-open', '📰': 'file-text',
         '🔐': 'lock', '🔒': 'lock', '🔑': 'key', '🚪': 'log-out',
         '🎁': 'gift', '🎟': 'tag', '🆓': 'tag',
-        '🗑': 'trash-2',
-        '➕': 'plus',
-        '🔔': 'bell',
-        '🎯': 'target',
-        '📦': 'package', '📥': 'download', '💾': 'save', '📂': 'folder',
-        '🎉': 'award',
-        '👁': 'eye',
-        '🛡': 'shield',
-        '📅': 'calendar',
-        '🕒': 'clock',
-        '🚀': 'zap',
-        '💳': 'credit-card', '💰': 'dollar-sign', '💴': 'dollar-sign',
-        '👤': 'user', '🤖': 'cpu', '🌐': 'globe', '☁': 'cloud',
-        '☕': 'coffee', '🍔': 'coffee', '🍱': 'coffee', '🍽': 'coffee', '🍎': 'coffee',
-        '🛍': 'shopping-bag', '👕': 'shopping-bag', '💄': 'shopping-bag',
-        '✈': 'send', '🚗': 'truck',
-        '🎨': 'image', '🎮': 'play',
-        '🏢': 'home', '🏭': 'layers',
+        '🗑': 'trash-2', '➕': 'plus', '🔔': 'bell', '👁': 'eye', '🛡': 'shield-check',
+        '📅': 'calendar', '🕒': 'clock',
+        '👤': 'user', '🤖': 'bot', '🌐': 'globe', '☁': 'cloud',
+        '📱': 'smartphone', '💻': 'monitor',
+        '☕': 'coffee', '🍔': 'utensils', '🍱': 'utensils', '🍽': 'utensils', '🍎': 'utensils',
+        '🛍': 'shopping-bag', '👕': 'shopping-bag', '💄': 'sparkles',
+        '✈': 'plane', '🚗': 'car',
+        '🏢': 'building-2', '🏭': 'factory', '🎨': 'palette', '🎮': 'gamepad-2',
         '➔': 'arrow-right', '✖': 'x', '✂': 'scissors',
-        '🟢': 'disc'
+        '🟢': 'circle-dot',
+        '🎉': 'sparkles',
+        '📥': 'download', '💾': 'save', '📂': 'folder',
+        '🇯': 'flag', '🇵': 'flag', '🇺': 'flag', '🇸': 'flag'
     };
 
-    // Replace UI emojis with crisp Feather vector SVG icons
-    function replaceEmojisWithFeather(doc) {
+    // Sort emoji keys by length descending to match composite emojis like 🇯🇵 first
+    const sortedEmojiKeys = Object.keys(emojiLucideMap).sort((a, b) => b.length - a.length);
+
+    // Replace UI emojis with crisp Lucide vector SVG icons
+    function replaceEmojisWithLucide(doc) {
         if (!doc || !doc.body) return;
         const targetSelectors = [
             'button',
@@ -1401,9 +1421,13 @@ st.components.v1.html("""
             '[data-testid="stRadio"] label',
             '[data-testid="stCheckbox"] label',
             '[data-testid="stMetric"]',
+            '[data-testid="stMetricValue"]',
+            '[data-testid="stMetricLabel"]',
+            'span[data-testid="stMetricDelta"]',
             '[role="dialog"]',
             'div.stMarkdown',
             'p',
+            'table', 'th', 'td',
             '.login-section-title',
             '.login-info-title',
             '.login-intro-text'
@@ -1422,14 +1446,19 @@ st.components.v1.html("""
             const textNodes = [];
             let n;
             while (n = walker.nextNode()) {
-                if (n.parentElement && (n.parentElement.classList.contains('feather-wrapper') || n.parentElement.classList.contains('feather-icon'))) {
+                if (n.parentElement && (
+                    n.parentElement.classList.contains('lucide-wrapper') || 
+                    n.parentElement.classList.contains('feather-wrapper') || 
+                    n.parentElement.classList.contains('lucide-icon') || 
+                    n.parentElement.classList.contains('feather-icon')
+                )) {
                     continue;
                 }
                 const val = n.nodeValue;
                 if (!val) continue;
                 const cleanVal = val.replace(/\ufe0f/g, '');
-                for (const em of Object.keys(emojiFeatherMap)) {
-                    if (cleanVal.includes(em)) {
+                for (const em of sortedEmojiKeys) {
+                    if (val.includes(em) || cleanVal.includes(em)) {
                         textNodes.push(n);
                         break;
                     }
@@ -1442,16 +1471,17 @@ st.components.v1.html("""
                 const text = node.nodeValue;
                 
                 const span = doc.createElement('span');
-                span.className = 'feather-converted-node';
+                span.className = 'lucide-converted-node feather-converted-node';
                 
                 let replacedHtml = text;
-                for (const [em, iconName] of Object.entries(emojiFeatherMap)) {
+                for (const em of sortedEmojiKeys) {
+                    const iconName = emojiLucideMap[em];
                     const emWithVar = em + '\ufe0f';
                     const emWithoutVar = em;
                     
-                    const svg = featherSvgMap[iconName] || (window.parent.feather && window.parent.feather.icons[iconName] ? window.parent.feather.icons[iconName].toSvg({ class: 'feather-icon', width: 16, height: 16 }) : '');
+                    const svg = lucideSvgMap[iconName] || (window.parent.lucide && window.parent.lucide.icons[iconName] ? window.parent.lucide.icons[iconName].toSvg({ class: 'lucide-icon feather-icon', width: 16, height: 16 }) : '');
                     if (svg) {
-                        const iconSpan = `<span class="feather-wrapper" data-feather-replaced="${iconName}">${svg}</span>`;
+                        const iconSpan = `<span class="lucide-wrapper feather-wrapper" data-lucide-replaced="${iconName}" data-feather-replaced="${iconName}">${svg}</span>`;
                         if (replacedHtml.includes(emWithVar)) {
                             replacedHtml = replacedHtml.split(emWithVar).join(iconSpan);
                         }
@@ -1483,11 +1513,11 @@ st.components.v1.html("""
                 return;
             }
 
-            const hasBriefcase = txt.includes('💼') || btn.querySelector('[data-feather-replaced="briefcase"]') || txt.includes('ポートフォリオ');
-            const hasStar = txt.includes('⭐') || btn.querySelector('[data-feather-replaced="star"]') || txt.includes('個別分析') || txt.includes('お気に入り');
-            const hasTrendingUp = txt.includes('📈') || btn.querySelector('[data-feather-replaced="trending-up"]');
-            const hasTrendingDown = txt.includes('📉') || btn.querySelector('[data-feather-replaced="trending-down"]');
-            const hasRefresh = txt.includes('🔄') || btn.querySelector('[data-feather-replaced="refresh-cw"]');
+            const hasBriefcase = txt.includes('💼') || btn.querySelector('[data-feather-replaced="briefcase"]') || btn.querySelector('[data-lucide-replaced="briefcase"]') || txt.includes('ポートフォリオ');
+            const hasStar = txt.includes('⭐') || btn.querySelector('[data-feather-replaced="star"]') || btn.querySelector('[data-lucide-replaced="star"]') || txt.includes('個別分析') || txt.includes('お気に入り');
+            const hasTrendingUp = txt.includes('📈') || btn.querySelector('[data-feather-replaced="trending-up"]') || btn.querySelector('[data-lucide-replaced="trending-up"]');
+            const hasTrendingDown = txt.includes('📉') || btn.querySelector('[data-feather-replaced="trending-down"]') || btn.querySelector('[data-lucide-replaced="trending-down"]');
+            const hasRefresh = txt.includes('🔄') || btn.querySelector('[data-feather-replaced="refresh-cw"]') || btn.querySelector('[data-lucide-replaced="refresh-cw"]');
 
             if (hasBriefcase || hasStar || hasTrendingUp || hasTrendingDown || hasRefresh) {
                 if (!btn.classList.contains('premium-list-btn')) {
@@ -1577,13 +1607,26 @@ st.components.v1.html("""
         });
     }
 
+    // High frequency interval + real-time observer for instantaneous emoji replacement
     setInterval(() => {
         applyStyles();
-        replaceEmojisWithFeather(parentDoc);
+        replaceEmojisWithLucide(parentDoc);
         purgeStreamlitBadges();
-    }, 150);
+    }, 120);
+
+    // MutationObserver to react immediately to Streamlit DOM updates
+    try {
+        const observer = new MutationObserver((mutations) => {
+            replaceEmojisWithLucide(parentDoc);
+            applyStyles();
+        });
+        if (parentDoc.body) {
+            observer.observe(parentDoc.body, { childList: true, subtree: true });
+        }
+    } catch(e) {}
+
     applyStyles();
-    replaceEmojisWithFeather(parentDoc);
+    replaceEmojisWithLucide(parentDoc);
     purgeStreamlitBadges();
 </script>
 """, height=0, width=0)
@@ -6173,8 +6216,8 @@ if query_user == "default":
     div[data-testid="stBottomBlockContainer"] {display: none !important;}
     button[title*="fullscreen" i], button[title*="View fullscreen"], button[title*="全画面" i] {display: none !important;}
 
-    /* Feather Icons in Portal */
-    .feather-icon {
+    /* Lucide / Feather Icons in Portal */
+    .feather-icon, .lucide-icon, svg.lucide {
         width: 1.15em;
         height: 1.15em;
         display: inline-block;
@@ -6187,7 +6230,7 @@ if query_user == "default":
         flex-shrink: 0;
         box-sizing: content-box;
     }
-    .feather-wrapper {
+    .feather-wrapper, .lucide-wrapper {
         display: inline-flex;
         align-items: center;
         justify-content: center;
@@ -6196,7 +6239,7 @@ if query_user == "default":
         vertical-align: middle;
         margin-right: 0.35em;
     }
-    .feather-converted-node {
+    .feather-converted-node, .lucide-converted-node {
         display: inline-flex;
         align-items: center;
         vertical-align: middle;
@@ -6219,35 +6262,36 @@ if query_user == "default":
     </style>
     """).replace("{portal_bg}", portal_bg))
     
-    # Active JS badge & footer purger and Feather Icons for login page
+    # Active JS badge & footer purger and Lucide Icons for login page
     st.components.v1.html("""
     <script>
-    const featherSvgMap = {
-        'lock': '<svg class="feather-icon" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>',
-        'key': '<svg class="feather-icon" viewBox="0 0 24 24"><path d="M21 2l-2 2m-2-2l2 2m-2 2l2-2m-7 7l-5 5a2.83 2.83 0 0 1-4-4l5-5m7-7l2 2m0 0a5 5 0 1 1-7.07 7.07l-1.41-1.41"></path></svg>',
-        'file-text': '<svg class="feather-icon" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>',
-        'alert-triangle': '<svg class="feather-icon" viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>',
-        'alert-circle': '<svg class="feather-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>',
-        'award': '<svg class="feather-icon" viewBox="0 0 24 24"><circle cx="12" cy="8" r="7"></circle><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"></polyline></svg>',
-        'zap': '<svg class="feather-icon" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>',
-        'trending-up': '<svg class="feather-icon" viewBox="0 0 24 24"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>',
-        'settings': '<svg class="feather-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>'
+    const lucideSvgMap = {
+        'lock': '<svg class="lucide lucide-lock feather-icon" viewBox="0 0 24 24"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>',
+        'key': '<svg class="lucide lucide-key feather-icon" viewBox="0 0 24 24"><circle cx="7.5" cy="15.5" r="5.5"></circle><path d="m21 2-9.6 9.6"></path><path d="m15.5 7.5 3 3L22 7l-3-3"></path></svg>',
+        'file-text': '<svg class="lucide lucide-file-text feather-icon" viewBox="0 0 24 24"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"></path><path d="M14 2v4a2 2 0 0 0 2 2h4"></path><path d="M10 9H8"></path><path d="M16 13H8"></path><path d="M16 17H8"></path></svg>',
+        'alert-triangle': '<svg class="lucide lucide-alert-triangle feather-icon" viewBox="0 0 24 24"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"></path><line x1="12" x2="12" y1="9" y2="13"></line><line x1="12" x2="12.01" y1="17" y2="17"></line></svg>',
+        'alert-circle': '<svg class="lucide lucide-alert-circle feather-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>',
+        'crown': '<svg class="lucide lucide-crown feather-icon" viewBox="0 0 24 24"><path d="M11.562 3.266a.5.5 0 0 1 .876 0L15.39 8.87a1 1 0 0 0 1.516.294L21.183 5.5a.5.5 0 0 1 .798.519l-2.834 10.246a1 1 0 0 1-.956.735H5.809a1 1 0 0 1-.956-.735L2.019 6.019a.5.5 0 0 1 .798-.519l4.276 3.664a1 1 0 0 0 1.516-.294z"></path><path d="M5 21h14"></path></svg>',
+        'lightbulb': '<svg class="lucide lucide-lightbulb feather-icon" viewBox="0 0 24 24"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"></path><path d="M9 18h6"></path><path d="M10 22h4"></path></svg>',
+        'trending-up': '<svg class="lucide lucide-trending-up feather-icon" viewBox="0 0 24 24"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"></polyline><polyline points="16 7 22 7 22 13"></polyline></svg>',
+        'settings': '<svg class="lucide lucide-settings feather-icon" viewBox="0 0 24 24"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path><circle cx="12" cy="12" r="3"></circle></svg>'
     };
 
-    const emojiFeatherMap = {
+    const emojiLucideMap = {
         '🔐': 'lock',
         '🔒': 'lock',
         '🔑': 'key',
         '📄': 'file-text',
         '⚠️': 'alert-triangle',
         '🚨': 'alert-circle',
-        '👑': 'award',
-        '💡': 'zap',
+        '👑': 'crown',
+        '💡': 'lightbulb',
         '📈': 'trending-up',
-        '⚙️': 'settings'
+        '⚙️': 'settings',
+        '⚙': 'settings'
     };
 
-    function replaceEmojisWithFeather(doc) {
+    function replaceEmojisWithLucide(doc) {
         if (!doc || !doc.body) return;
         const targetSelectors = ['button', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', '.login-section-title', '.login-info-title', '.login-info-box', 'p'];
         const elements = doc.querySelectorAll(targetSelectors.join(','));
@@ -6262,11 +6306,17 @@ if query_user == "default":
             const textNodes = [];
             let n;
             while (n = walker.nextNode()) {
-                if (n.parentElement && (n.parentElement.classList.contains('feather-wrapper') || n.parentElement.classList.contains('feather-icon'))) continue;
+                if (n.parentElement && (
+                    n.parentElement.classList.contains('lucide-wrapper') || 
+                    n.parentElement.classList.contains('feather-wrapper') || 
+                    n.parentElement.classList.contains('lucide-icon') || 
+                    n.parentElement.classList.contains('feather-icon')
+                )) continue;
                 const val = n.nodeValue;
                 if (!val) continue;
-                for (const em of Object.keys(emojiFeatherMap)) {
-                    if (val.includes(em)) {
+                const cleanVal = val.replace(/\ufe0f/g, '');
+                for (const em of Object.keys(emojiLucideMap)) {
+                    if (val.includes(em) || cleanVal.includes(em)) {
                         textNodes.push(n);
                         break;
                     }
@@ -6277,14 +6327,19 @@ if query_user == "default":
                 if (!parent) return;
                 const text = node.nodeValue;
                 const span = doc.createElement('span');
-                span.className = 'feather-converted-node';
+                span.className = 'lucide-converted-node feather-converted-node';
                 let replacedHtml = text;
-                for (const [em, iconName] of Object.entries(emojiFeatherMap)) {
-                    if (replacedHtml.includes(em)) {
-                        const svg = featherSvgMap[iconName] || '';
-                        if (svg) {
-                            const iconSpan = `<span class="feather-wrapper" data-feather-replaced="${iconName}">${svg}</span>`;
-                            replacedHtml = replacedHtml.split(em).join(iconSpan);
+                for (const [em, iconName] of Object.entries(emojiLucideMap)) {
+                    const emWithVar = em + '\ufe0f';
+                    const emWithoutVar = em;
+                    const svg = lucideSvgMap[iconName] || '';
+                    if (svg) {
+                        const iconSpan = `<span class="lucide-wrapper feather-wrapper" data-lucide-replaced="${iconName}" data-feather-replaced="${iconName}">${svg}</span>`;
+                        if (replacedHtml.includes(emWithVar)) {
+                            replacedHtml = replacedHtml.split(emWithVar).join(iconSpan);
+                        }
+                        if (replacedHtml.includes(emWithoutVar)) {
+                            replacedHtml = replacedHtml.split(emWithoutVar).join(iconSpan);
                         }
                     }
                 }
@@ -6322,7 +6377,7 @@ if query_user == "default":
 
         docs.forEach(doc => {
             try {
-                replaceEmojisWithFeather(doc);
+                replaceEmojisWithLucide(doc);
                 selectors.forEach(sel => {
                     doc.querySelectorAll(sel).forEach(el => {
                         el.style.setProperty('display', 'none', 'important');
