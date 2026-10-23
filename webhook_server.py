@@ -75,6 +75,16 @@ LINE_LIFF_ID = os.environ.get("LINE_LIFF_ID", "2011538719-L0SX8ZZU")
 LINE_USER_ID = os.environ.get("LINE_USER_ID", "U808d7431c75b1a6dded4e6be45447e27")
 USER_PREF_FILE = os.path.join(BASE_DIR, "user_preferences.json")
 
+# Firebase Firestore Configuration
+FIREBASE_PROJECT_ID = os.environ.get("FIREBASE_PROJECT_ID", "zenstock-screener")
+FIREBASE_API_KEY = os.environ.get("FIREBASE_API_KEY", "AIzaSyDyq0O937Xeyc7dhNQqh8HL01KkjZuCwUI")
+FIRESTORE_REGISTRY_DOC = "line_subscriber_registry"
+
+# In-memory preference cache & lock
+_PREFS_CACHE = {}
+_PREFS_CACHE_TIME = 0.0
+_PREFS_CACHE_TTL = 60.0  # 60 seconds TTL
+
 # In-memory debug logs (last 50 events)
 RECENT_LOGS = []
 
@@ -147,14 +157,73 @@ def get_line_user_profile(user_id: str) -> dict:
         add_log(f"⚠️ Profile API error: {e}")
     return {}
 
-def load_all_preferences() -> dict:
+def fetch_preferences_from_firestore() -> dict:
+    """Fetch subscriber registry from Firestore portfolios/line_subscriber_registry."""
+    url = f"https://firestore.googleapis.com/v1/projects/{FIREBASE_PROJECT_ID}/databases/(default)/documents/portfolios/{FIRESTORE_REGISTRY_DOC}"
+    if FIREBASE_API_KEY:
+        url += f"?key={FIREBASE_API_KEY}"
+    try:
+        res = requests.get(url, timeout=6)
+        if res.status_code == 200:
+            doc = res.json()
+            raw_json = doc.get("fields", {}).get("registry_json", {}).get("stringValue", "")
+            if raw_json:
+                data = json.loads(raw_json)
+                if isinstance(data, dict):
+                    return data
+    except Exception as e:
+        add_log(f"⚠️ Firestore fetch preferences error: {e}")
+    return {}
+
+def save_preferences_to_firestore(prefs: dict):
+    """Persist subscriber registry to Firestore portfolios/line_subscriber_registry."""
+    url = f"https://firestore.googleapis.com/v1/projects/{FIREBASE_PROJECT_ID}/databases/(default)/documents/portfolios/{FIRESTORE_REGISTRY_DOC}"
+    if FIREBASE_API_KEY:
+        url += f"?key={FIREBASE_API_KEY}"
+    body = {
+        "fields": {
+            "registry_json": {
+                "stringValue": json.dumps(prefs, ensure_ascii=False)
+            }
+        }
+    }
+    try:
+        res = requests.patch(url, json=body, timeout=6)
+        if res.status_code == 200:
+            add_log(f"☁️ [FIRESTORE SYNC] Saved {len(prefs)} subscribers to cloud registry.")
+            return True
+        else:
+            add_log(f"⚠️ Firestore sync warning: {res.status_code} - {res.text[:100]}")
+    except Exception as e:
+        add_log(f"⚠️ Firestore save preferences error: {e}")
+    return False
+
+def load_all_preferences(force_refresh_firestore=False) -> dict:
+    global _PREFS_CACHE, _PREFS_CACHE_TIME
+    now = time.time()
+    
+    # 1. Use memory cache if fresh and not forced
+    if not force_refresh_firestore and _PREFS_CACHE and (now - _PREFS_CACHE_TIME) < _PREFS_CACHE_TTL:
+        return _PREFS_CACHE
+
     prefs = {}
+    
+    # 2. Try loading from local file
     if os.path.exists(USER_PREF_FILE):
         try:
             with open(USER_PREF_FILE, "r", encoding="utf-8") as f:
                 prefs = json.load(f)
         except Exception:
             prefs = {}
+
+    # 3. Fetch from Firestore to restore any data lost across Render restarts
+    fs_prefs = fetch_preferences_from_firestore()
+    if fs_prefs:
+        merged = dict(fs_prefs)
+        merged.update(prefs)
+        prefs = merged
+    
+    # 4. Guarantee Admin account exists
     if LINE_USER_ID not in prefs:
         prefs[LINE_USER_ID] = {
             "name": "村本拓海 (管理者)",
@@ -165,14 +234,32 @@ def load_all_preferences() -> dict:
             "active": True,
             "registered_at": "初期登録"
         }
+    
+    # Update local disk cache and memory cache
+    try:
+        with open(USER_PREF_FILE, "w", encoding="utf-8") as f:
+            json.dump(prefs, f, ensure_ascii=False, indent=2)
+    except Exception:
+        pass
+
+    _PREFS_CACHE = prefs
+    _PREFS_CACHE_TIME = now
     return prefs
 
 def save_all_preferences(prefs: dict):
+    global _PREFS_CACHE, _PREFS_CACHE_TIME
+    _PREFS_CACHE = prefs
+    _PREFS_CACHE_TIME = time.time()
+    
+    # 1. Save to local file
     try:
         with open(USER_PREF_FILE, "w", encoding="utf-8") as f:
             json.dump(prefs, f, ensure_ascii=False, indent=2)
     except Exception as e:
-        add_log(f"⚠️ save_all_preferences error: {e}")
+        add_log(f"⚠️ save_all_preferences local error: {e}")
+
+    # 2. Persist to Firestore cloud registry so it survives restarts/deploys
+    save_preferences_to_firestore(prefs)
 
 def save_user_preference(user_id: str, params: dict, name: str = None):
     prefs = load_all_preferences()
@@ -299,7 +386,7 @@ def build_free_sniper_msg(sniped_stocks, user_name="会員", n_match=50, future_
 def broadcast_morning_sniper_routine(force=False):
     """Execute morning screening and push to all registered active subscribers with tier-based messages."""
     add_log("🌅 [MORNING ROUTINE] Starting morning sniper routine...")
-    prefs = load_all_preferences()
+    prefs = load_all_preferences(force_refresh_firestore=True)
     active_subscribers = {uid: u for uid, u in prefs.items() if u.get("active", True)}
     
     if not active_subscribers:
@@ -363,7 +450,7 @@ def broadcast_noon_exit_routine(force=False, test_user_id=None):
         add_log("ℹ️ [NOON EXIT ROUTINE] No positions due for exit today.")
         return 0, "本日手仕舞い期日の銘柄はありません。"
         
-    prefs = load_all_preferences()
+    prefs = load_all_preferences(force_refresh_firestore=True)
     active_subscribers = {uid: u for uid, u in prefs.items() if u.get("active", True)}
     
     if test_user_id:
@@ -646,7 +733,7 @@ def api_refresh_cache(background_tasks: BackgroundTasks):
 
 @app.get("/api/subscribers")
 def api_subscribers():
-    prefs = load_all_preferences()
+    prefs = load_all_preferences(force_refresh_firestore=True)
     results = []
     for uid, info in prefs.items():
         masked_id = uid[:5] + "..." + uid[-4:] if len(uid) > 10 else uid
@@ -703,8 +790,6 @@ def api_register_subscriber(payload: dict):
     return {"status": "registered", "user_id": user_id, "name": name}
 
 # ================= Stripe Webhook & Firestore Sync =================
-FIREBASE_PROJECT_ID = os.environ.get("FIREBASE_PROJECT_ID", "zenstock-screener")
-FIREBASE_API_KEY = os.environ.get("FIREBASE_API_KEY", "AIzaSyDyq0O937Xeyc7dhNQqh8HL01KkjZuCwUI")
 STRIPE_WEBHOOK_SECRET = os.environ.get("STRIPE_WEBHOOK_SECRET", "")
 PROCESSED_STRIPE_EVENTS = set()
 
@@ -1075,7 +1160,7 @@ async def line_webhook(request: Request, background_tasks: BackgroundTasks, x_li
 
         # Admin Command: List Subscribers
         if user_id == LINE_USER_ID and any(k in text for k in ["知人一覧", "登録者", "購読者", "メンバー", "知人リスト"]):
-            prefs = load_all_preferences()
+            prefs = load_all_preferences(force_refresh_firestore=True)
             lines = []
             for i, (uid, info) in enumerate(prefs.items(), 1):
                 status_mark = "✅ 配信ON" if info.get("active", True) else "❌ 配信OFF"
