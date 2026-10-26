@@ -740,6 +740,7 @@ def api_subscribers():
         results.append({
             "user_id_masked": masked_id,
             "name": info.get("name", "知人"),
+            "tier": "premium" if is_line_user_premium(uid) else "free",
             "active": info.get("active", True),
             "registered_at": info.get("registered_at", "初期"),
             "params": {
@@ -1164,8 +1165,9 @@ async def line_webhook(request: Request, background_tasks: BackgroundTasks, x_li
             lines = []
             for i, (uid, info) in enumerate(prefs.items(), 1):
                 status_mark = "✅ 配信ON" if info.get("active", True) else "❌ 配信OFF"
+                tier_mark = "👑 プレミアム" if is_line_user_premium(uid) else "🌱 無料"
                 reg_date = info.get("registered_at", "")[:10]
-                lines.append(f"{i}. {info.get('name', '知人')} ({status_mark}) [{reg_date}]")
+                lines.append(f"{i}. {info.get('name', '知人')} [{tier_mark}] ({status_mark}) [{reg_date}]")
             list_msg = (
                 f"👥【ZenStock 購読知人一覧】\n"
                 f"合計: {len(prefs)}名 (有効: {sum(1 for u in prefs.values() if u.get('active', True))}名)\n"
