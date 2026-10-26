@@ -888,8 +888,8 @@ def link_web_user_with_line(web_user_key: str, line_user_id: str) -> dict:
     """Pair a web user (Google/Firebase) with a LINE user ID, syncing tier bidirectionally."""
     clean_web = web_user_key.strip()
     clean_line = line_user_id.strip()
-    if not clean_web or not clean_line:
-        return {"status": "error", "message": "Missing key"}
+    if not clean_web or not clean_line or clean_web in ("default", "guest"):
+        return {"status": "error", "message": "無効なWebアカウントキーです"}
 
     # Ensure LINE subscriber exists in local prefs
     prefs = load_all_preferences()
@@ -1219,11 +1219,15 @@ async def line_webhook(request: Request, background_tasks: BackgroundTasks, x_li
             reply_line_message(reply_token, invite_msg)
             continue
 
-        # Account Link Command (e.g. "連携 google_111998389463136687256" or "連携_google_xxx")
-        if text.startswith("連携"):
-            raw_key = text.replace("連携_", "").replace("連携", "").strip()
-            if raw_key:
+        # Account Link Command (e.g. "連携 google_111998389463136687256", "連携_google_xxx", "連携: xxx", "連携：xxx")
+        if text.startswith("連携") or re.match(r"^連携[\s_:：=]", text):
+            raw_key = re.sub(r"^連携[\s_:：=]*", "", text).strip()
+            raw_key = raw_key.replace("連携_", "").replace("連携", "").strip()
+            if raw_key and raw_key not in ("default", "guest"):
                 res = link_web_user_with_line(raw_key, user_id)
+                if res.get("status") == "error":
+                    reply_line_message(reply_token, f"⚠️ LINE連携エラー: {res.get('message', 'アカウントが見つかりません')}")
+                    continue
                 tier_label = "👑 プレミアム会員" if res.get("tier") == "premium" else "🌱 無料会員"
                 tier_desc = (
                     "Webアプリのプレミアム権限とLINEが同期されました！\n平日の毎朝10:00に、スナイパー急騰銘柄（銘柄名フル開示）をお届けします🎯"
@@ -1241,7 +1245,11 @@ async def line_webhook(request: Request, background_tasks: BackgroundTasks, x_li
                 reply_line_message(reply_token, link_reply)
                 continue
             else:
-                reply_line_message(reply_token, "⚠️ 連携するWebアカウントIDが指定されていません。\nWebアプリ画面の「LINE連携」ボタンから送信してください。")
+                reply_line_message(
+                    reply_token,
+                    "⚠️ 有効なWebアカウントIDが指定されていません。\n"
+                    "ZenStock Webアプリ画面でログイン後、「LINE連携」ボタンを押して送信してください。"
+                )
                 continue
 
         # 1. Trigger Scan (e.g. "スキャン", "スナイプ", "今すぐ", "スキャン 60 25 10 1")

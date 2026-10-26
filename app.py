@@ -159,8 +159,28 @@ def load_portfolio_from_firebase(user_key, project_id, id_token=None):
         line_uid = fields.get("line_user_id", {}).get("stringValue")
         if not line_uid and (user_key in ("google_111998389463136687256", "takkun", "line_Uf3de8f9ba3463f32a3e05b3e019b22f4", "firebase_TrIi2tRbmqOTj2ekSa01PQCxnMu2", "firebase_G08Hp11pslPTLNGT6uNGObHIucN2") or "111998389463136687256" in str(user_key) or "TrIi2tRbmqOTj2ekSa01PQCxnMu2" in str(user_key)):
             line_uid = "U808d7431c75b1a6dded4e6be45447e27"
+        elif not line_uid and str(user_key).startswith("line_U"):
+            line_uid = str(user_key).replace("line_", "")
         if line_uid:
             st.session_state["user_line_id"] = line_uid
+            # 自動双方向同期: Webのtier権限をLINE側に非同期で伝達（セッション中1回）
+            if not st.session_state.get("_line_backend_synced"):
+                st.session_state["_line_backend_synced"] = True
+                def _bg_sync_line(uk, luid):
+                    try:
+                        import urllib.request, json
+                        sync_url = "https://stock-screener-app-nt5h.onrender.com/api/link_line"
+                        sync_req = urllib.request.Request(
+                            sync_url,
+                            data=json.dumps({"web_user_key": uk, "line_user_id": luid}).encode("utf-8"),
+                            headers={"Content-Type": "application/json"},
+                            method="POST"
+                        )
+                        urllib.request.urlopen(sync_req, timeout=5)
+                    except Exception:
+                        pass
+                import threading
+                threading.Thread(target=_bg_sync_line, args=(user_key, line_uid), daemon=True).start()
         
         # Parse portfolio data and immediately sync to local disk cache & session state
         if portfolio_str:
@@ -469,6 +489,22 @@ LINE_OFFICIAL_SVG_WHITE = f'<svg style="width: 20px; height: 20px; vertical-alig
 @st.dialog("LINE連携（毎朝のスナイパー急騰速報）", width="medium")
 def show_line_link_dialog():
     u_key = st.session_state.get('user_key', 'default')
+    
+    # ログインガード: 未ログイン（ゲスト）時の誤送信・誤連携を完全に防止
+    if u_key in ('default', 'guest', '', None):
+        st.markdown("""
+        <div style="font-size: 0.95rem; line-height: 1.6; padding: 10px 0;">
+            <p>💡 <b>LINE連携を行うには、まずWebアプリへのログインが必要です。</b></p>
+            <p style="opacity: 0.85; font-size: 0.88rem;">
+                ログイン後にこのボタンを押すと、あなたのWebアカウント（無料/プレミアム権限）とLINEが自動で紐づき、平日の毎朝10:00に速報が届くようになります。
+            </p>
+            <div style="background: rgba(56, 189, 248, 0.08); border-left: 4px solid #38bdf8; padding: 14px; border-radius: 6px; margin-top: 15px; font-size: 0.9rem;">
+                👉 画面上部またはサイドバーの<b>「Googleでログイン」</b>または<b>「LINEでログイン」</b>からログインしてください。
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+        return
+
     line_link_url = f"https://line.me/R/oaMessage/@317uxnml/?連携_{u_key}"
     st.markdown(f"""
     <div style="font-size: 0.92rem; line-height: 1.6;">
