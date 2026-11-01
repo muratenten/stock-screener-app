@@ -687,7 +687,7 @@ if logo_data_uri:
                         'footer',
                         '#MainMenu',
                         '.stDeployButton',
-                        '[data-testid="stToolbar"]',
+                        '[data-testid="stToolbarActions"]',
                         '[data-testid="stDecoration"]',
                         '[data-testid="stStatusWidget"]',
                         '[class*="viewerBadge"]',
@@ -823,19 +823,22 @@ st.html(f"""
     /* Completely hide Streamlit footer, MainMenu, deploy buttons, and badges, while keeping sidebar toggle button */
     #MainMenu {{visibility: hidden !important; display: none !important;}}
     header {{background: transparent !important;}}
-    header [data-testid="stToolbar"],
+    [data-testid="stToolbar"] {{background: transparent !important;}}
     header .stDeployButton,
     header #MainMenu,
     header [data-testid="stDecoration"],
-    header [data-testid="stStatusWidget"] {{
+    header [data-testid="stStatusWidget"],
+    [data-testid="stToolbarActions"] {{
         visibility: hidden !important;
         display: none !important;
     }}
     /* Keep sidebar and collapse / expand toggle buttons always accessible and on top */
     [data-testid="stSidebarCollapseButton"],
     [data-testid="stSidebarCollapsedControl"],
+    [data-testid="stExpandSidebarButton"],
     header [data-testid="stSidebarCollapseButton"],
-    header [data-testid="stSidebarCollapsedControl"] {{
+    header [data-testid="stSidebarCollapsedControl"],
+    header [data-testid="stExpandSidebarButton"] {{
         visibility: visible !important;
         display: inline-flex !important;
         opacity: 1 !important;
@@ -849,7 +852,6 @@ st.html(f"""
     }}
     footer, [data-testid="stFooter"] {{visibility: hidden !important; display: none !important; height: 0px !important;}}
     .stDeployButton {{display: none !important;}}
-    [data-testid="stToolbar"] {{visibility: hidden !important; display: none !important;}}
     [data-testid="stDecoration"] {{display: none !important;}}
     [data-testid="stStatusWidget"] {{visibility: hidden !important; display: none !important;}}
     .viewerBadge_container__r5tak, [class*="viewerBadge"] {{display: none !important;}}
@@ -1974,7 +1976,7 @@ st.components.v1.html("""
             '[class*="embeddedAppMetaInfoBar"]',
             '[class*="manageApp"]',
             '.viewerBadge_container__r5tak',
-            '[data-testid="stToolbar"]',
+            '[data-testid="stToolbarActions"]',
             '[data-testid="stDecoration"]',
             '[data-testid="stStatusWidget"]',
             '#MainMenu',
@@ -2004,7 +2006,7 @@ st.components.v1.html("""
                 });
 
                 // Ensure sidebar and sidebar toggle buttons remain visible, functional, and on top
-                doc.querySelectorAll('[data-testid="stSidebarCollapseButton"], [data-testid="stSidebarCollapsedControl"]').forEach(btn => {
+                doc.querySelectorAll('[data-testid="stSidebarCollapseButton"], [data-testid="stSidebarCollapsedControl"], [data-testid="stExpandSidebarButton"]').forEach(btn => {
                     btn.style.setProperty('display', 'inline-flex', 'important');
                     btn.style.setProperty('visibility', 'visible', 'important');
                     btn.style.setProperty('opacity', '1', 'important');
@@ -2015,6 +2017,15 @@ st.components.v1.html("""
                     sb.style.setProperty('visibility', 'visible', 'important');
                     sb.style.setProperty('z-index', '999999', 'important');
                 });
+
+                // Auto-expand sidebar if closed on initial load
+                if (!window.__zen_sidebar_expanded) {
+                    const expandBtn = doc.querySelector('[data-testid="stExpandSidebarButton"]');
+                    if (expandBtn) {
+                        window.__zen_sidebar_expanded = true;
+                        expandBtn.click();
+                    }
+                }
             } catch(e) {}
         });
     }
@@ -6645,19 +6656,22 @@ if query_user == "default":
     /* Completely hide Streamlit footer, MainMenu, deploy buttons, and badges in portal, while keeping sidebar toggle button */
     #MainMenu {visibility: hidden !important; display: none !important;}
     header {background: transparent !important;}
-    header [data-testid="stToolbar"],
+    [data-testid="stToolbar"] {background: transparent !important;}
     header .stDeployButton,
     header #MainMenu,
     header [data-testid="stDecoration"],
-    header [data-testid="stStatusWidget"] {
+    header [data-testid="stStatusWidget"],
+    [data-testid="stToolbarActions"] {
         visibility: hidden !important;
         display: none !important;
     }
     /* Keep sidebar and collapse / expand toggle buttons always accessible and on top */
     [data-testid="stSidebarCollapseButton"],
     [data-testid="stSidebarCollapsedControl"],
+    [data-testid="stExpandSidebarButton"],
     header [data-testid="stSidebarCollapseButton"],
-    header [data-testid="stSidebarCollapsedControl"] {
+    header [data-testid="stSidebarCollapsedControl"],
+    header [data-testid="stExpandSidebarButton"] {
         visibility: visible !important;
         display: inline-flex !important;
         opacity: 1 !important;
@@ -6671,7 +6685,6 @@ if query_user == "default":
     }
     footer, [data-testid="stFooter"] {visibility: hidden !important; display: none !important; height: 0px !important;}
     .stDeployButton {display: none !important;}
-    [data-testid="stToolbar"] {visibility: hidden !important; display: none !important;}
     [data-testid="stDecoration"] {display: none !important;}
     [data-testid="stStatusWidget"] {visibility: hidden !important; display: none !important;}
     .viewerBadge_container__r5tak, [class*="viewerBadge"] {display: none !important;}
@@ -6827,7 +6840,7 @@ if query_user == "default":
             '[class*="embeddedAppMetaInfoBar"]',
             '[class*="manageApp"]',
             '.viewerBadge_container__r5tak',
-            '[data-testid="stToolbar"]',
+            '[data-testid="stToolbarActions"]',
             '[data-testid="stDecoration"]',
             '[data-testid="stStatusWidget"]',
             '#MainMenu',
@@ -6853,7 +6866,7 @@ if query_user == "default":
                     });
                 });
                 // Ensure sidebar and sidebar toggle buttons remain visible, functional, and on top
-                doc.querySelectorAll('[data-testid="stSidebarCollapseButton"], [data-testid="stSidebarCollapsedControl"]').forEach(btn => {
+                doc.querySelectorAll('[data-testid="stSidebarCollapseButton"], [data-testid="stSidebarCollapsedControl"], [data-testid="stExpandSidebarButton"]').forEach(btn => {
                     btn.style.setProperty('display', 'inline-flex', 'important');
                     btn.style.setProperty('visibility', 'visible', 'important');
                     btn.style.setProperty('opacity', '1', 'important');
@@ -6864,6 +6877,15 @@ if query_user == "default":
                     sb.style.setProperty('visibility', 'visible', 'important');
                     sb.style.setProperty('z-index', '999999', 'important');
                 });
+
+                // Auto-expand sidebar if closed on initial load
+                if (!window.__zen_portal_sidebar_expanded) {
+                    const expandBtn = doc.querySelector('[data-testid="stExpandSidebarButton"]');
+                    if (expandBtn) {
+                        window.__zen_portal_sidebar_expanded = true;
+                        expandBtn.click();
+                    }
+                }
             } catch(e){}
         });
     }
