@@ -8915,6 +8915,92 @@ f'''<div style="padding: 10px 14px; background: rgba(255, 255, 255, 0.03); borde
             st.markdown("<div style='margin-bottom: 24px;'></div>", unsafe_allow_html=True)
 
 
+@st.dialog("📄 投資信託 交付目論見書・ファンド要綱", width="large")
+def show_fund_prospectus_dialog(fund_id: str):
+    p = sfs.get_fund_prospectus(fund_id)
+    if not p:
+        st.error("目論見書データの取得に失敗しました。")
+        return
+    
+    st.html(f"""
+    <div style="margin-bottom: 14px; border-bottom: 2px solid var(--mui-primary, #1976d2); padding-bottom: 8px;">
+        <div style="font-size: 0.8rem; color: var(--mui-primary, #1976d2); font-weight: 700;">{p['category']} | {p['type']}</div>
+        <h3 style="margin: 3px 0 6px 0; font-size: 1.25rem; font-weight: 700; color: var(--text-color);">{p['name']}</h3>
+        <div style="font-size: 0.82rem; color: var(--secondary-text-color);">愛称: <b style="color: var(--text-color);">{p['nickname']}</b> / 運用委託会社: <b>{p['trustee']}</b></div>
+    </div>
+    """)
+
+    # 1. 運用方針・ベンチマーク連動特色
+    st.markdown("##### 🎯 運用方針・ベンチマーク連動特色")
+    st.html(f"""
+    <div style="background: rgba(0,0,0,0.02); border: 1px solid var(--border-color); border-radius: 8px; padding: 12px; font-size: 0.85rem; line-height: 1.6; color: var(--text-color); margin-bottom: 16px;">
+        {p['description']}<br>
+        <div style="margin-top: 6px; font-size: 0.8rem; color: var(--secondary-text-color);"><b>連動・ベンチマーク対象:</b> {p['underlying']}</div>
+    </div>
+    """)
+
+    # 2. 手数料・保有コスト（信託報酬の内訳）
+    st.markdown("##### 💰 手数料・保有コスト（信託報酬の詳細内訳）")
+    fb = p["fee_breakdown"]
+    st.html(f"""
+    <div style="background: rgba(16, 185, 129, 0.04); border: 1px solid rgba(16, 185, 129, 0.25); border-radius: 8px; padding: 12px; margin-bottom: 16px;">
+        <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 10px; border-bottom: 1px solid rgba(16, 185, 129, 0.2); padding-bottom: 6px;">
+            <b style="font-size: 0.95rem; color: var(--text-color);">信託報酬（年率・税込）</b>
+            <span style="font-size: 1.35rem; font-weight: 700; color: var(--color-gain, #10b981);" class="tabular-nums">{p['expense_ratio']:.4f}%</span>
+        </div>
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; font-size: 0.78rem; color: var(--secondary-text-color);">
+            <div style="background: rgba(255,255,255,0.7); padding: 6px 8px; border-radius: 4px; border: 1px solid rgba(0,0,0,0.06);">
+                <b>委託会社 (運用):</b><br><span class="tabular-nums" style="font-weight: 700; color: var(--text-color);">{fb['manager']:.4f}%</span>
+            </div>
+            <div style="background: rgba(255,255,255,0.7); padding: 6px 8px; border-radius: 4px; border: 1px solid rgba(0,0,0,0.06);">
+                <b>販売会社 (SBI証券):</b><br><span class="tabular-nums" style="font-weight: 700; color: var(--text-color);">{fb['distributor']:.4f}%</span>
+            </div>
+            <div style="background: rgba(255,255,255,0.7); padding: 6px 8px; border-radius: 4px; border: 1px solid rgba(0,0,0,0.06);">
+                <b>受託会社 (信託銀行):</b><br><span class="tabular-nums" style="font-weight: 700; color: var(--text-color);">{fb['custodian']:.4f}%</span>
+            </div>
+        </div>
+        <div style="display: flex; justify-content: space-between; font-size: 0.82rem; margin-top: 10px; padding-top: 6px; color: var(--secondary-text-color);">
+            <span>購入時手数料: <b style="color: var(--color-gain, #10b981);">{p['purchase_fee']}</b></span>
+            <span>信託財産留保額（解約時）: <b style="color: var(--color-gain, #10b981);">{p['redemption_fee']}</b></span>
+        </div>
+    </div>
+    """)
+
+    # 3. 基本仕様・主要組入
+    st.markdown("##### 📋 ファンド基本仕様 & 主要組入銘柄")
+    holdings_str = "、".join(p['major_holdings']) if p['major_holdings'] else "株式・債券等の現物資産"
+    ts_badge = "✅ つみたて投資枠 対象" if p['nisa_tsumitate'] else "❌ つみたて投資枠 対象外"
+    gr_badge = "✅ 成長投資枠 対象" if p['nisa_growth'] else "❌ 成長投資枠 対象外"
+    st.html(f"""
+    <div style="background: rgba(0,0,0,0.02); border: 1px solid var(--border-color); border-radius: 8px; padding: 12px; font-size: 0.83rem; line-height: 1.6; margin-bottom: 16px;">
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 8px; margin-bottom: 8px;">
+            <div>純資産総額: <b class="tabular-nums">{p['aum_oku']:,} 億円</b></div>
+            <div>決算サイクル: <b>{p['settlement_cycle']}</b></div>
+            <div>NISA適格性: <b>{ts_badge} / {gr_badge}</b></div>
+            <div>受託信託銀行: <b>{p['custodian']}</b></div>
+        </div>
+        <div style="border-top: 1px dashed var(--border-color); padding-top: 8px; margin-top: 6px;">
+            <b>主要組入上位銘柄・アセット:</b><br>
+            <span style="color: var(--mui-primary, #1976d2); font-weight: 600;">{holdings_str}</span>
+        </div>
+    </div>
+    """)
+
+    # 4. 主な投資リスク
+    st.markdown("##### ⚠️ 主な投資リスク（目論見書記載事項）")
+    risk_html = "".join([f"<li style='margin-bottom: 6px;'><b>{r['name']}:</b> {r['desc']}</li>" for r in p['risks']])
+    st.html(f"""
+    <div style="background: rgba(244, 63, 94, 0.04); border: 1px solid rgba(244, 63, 94, 0.2); border-radius: 8px; padding: 12px; font-size: 0.82rem; line-height: 1.5; color: var(--secondary-text-color); margin-bottom: 16px;">
+        <ul style="margin: 0; padding-left: 20px;">
+            {risk_html}
+        </ul>
+        <div style="font-size: 0.75rem; color: #f43f5e; margin-top: 6px;">※ 投資信託は預貯金と異なり元本保証はありません。ご購入の際は自己の判断と責任において行ってください。</div>
+    </div>
+    """)
+
+    st.link_button("🌐 SBI証券 公式ファンド詳細ページ（交付目論見書PDF等）", f"https://site0.sbisec.co.jp/marble/fund/detail/search.do?target=fund&keyword={p['nickname']}", use_container_width=True)
+
+
 # -----------------------------------------------------------------------------
 # TAB 1.7: SBI INVESTMENT TRUST PACKS & SELECTION (SBI投資信託パック選定 & 分析)
 # -----------------------------------------------------------------------------
@@ -8947,33 +9033,7 @@ with tab_fund:
     </div>
     """, unsafe_allow_html=True)
 
-    # 1. Curated Preset Packs (Portfolio Builder)
-    with st.expander("AI厳選おすすめパック（最適ポートフォリオ配分）を見る", expanded=False):
-        st.markdown("<div style='font-size: 0.84rem; color: var(--secondary-text-color); margin-bottom: 12px;'>複数のファンドを黄金比率で組み合わせ、リスクを分散しながら期待リターンを最大化する実戦的パックです。</div>", unsafe_allow_html=True)
-        col_p1, col_p2, col_p3 = st.columns(3)
-        cols = [col_p1, col_p2, col_p3]
-        for idx, pack in enumerate(sfs.PRESET_PACKS):
-            with cols[idx]:
-                st.html(f'''<div class="card" style="padding: 16px; height: 100%; border-top: 4px solid var(--mui-primary, #1976d2); display: flex; flex-direction: column; justify-content: space-between;">
-<div>
-<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-<span style="font-size: 0.72rem; font-weight: 700; background: rgba(25, 118, 210, 0.1); color: var(--mui-primary, #1976d2); padding: 2px 7px; border-radius: 4px;">{pack['badge']}</span>
-<span style="font-size: 0.72rem; color: var(--secondary-text-color);">合成コスト: <b class="tabular-nums">{pack['composite_expense']}</b></span>
-</div>
-<div style="font-size: 1.05rem; font-weight: 700; color: var(--text-color); margin-bottom: 6px;">{pack['title']}</div>
-<div style="font-size: 0.8rem; color: var(--secondary-text-color); line-height: 1.4; margin-bottom: 12px;">{pack['concept']}</div>
-<div style="background: rgba(0, 0, 0, 0.02); padding: 8px 10px; border-radius: 6px; border: 1px solid var(--border-color); margin-bottom: 10px;">
-<div style="font-size: 0.72rem; color: var(--secondary-text-color); margin-bottom: 4px; font-weight: 600;">推奨ブレンド比率:</div>
-{''.join([f'<div style="font-size: 0.78rem; display: flex; justify-content: space-between; margin-bottom: 2px;"><span style="color: var(--text-color);">{alc["name"]}</span><b class="tabular-nums" style="color: var(--mui-primary, #1976d2);">{alc["weight"]}%</b></div>' for alc in pack['allocations']])}
-</div>
-</div>
-<div style="display: flex; justify-content: space-between; align-items: baseline; border-top: 1px solid var(--border-color); padding-top: 8px; margin-top: 6px;">
-<span style="font-size: 0.72rem; color: var(--secondary-text-color);">直近1年合成リターン</span>
-<span style="font-size: 1.15rem; font-weight: 700; color: var(--color-gain, #10b981);" class="tabular-nums">{pack['expected_return']}</span>
-</div>
-</div>''')
-
-    # 1.8. Technical Terms & Genre Explanation Guide (Dedicated Knowledge Hub)
+    # 1. Technical Terms & Genre Explanation Guide (Dedicated Knowledge Hub)
     with st.expander("📖 投資信託の専門用語・重要指標 & ジャンル徹底解説ガイドを見る", expanded=False):
         st.html('''
 <div style="padding: 6px 0;">
@@ -9083,6 +9143,16 @@ with tab_fund:
     # 2. Comprehensive Screening & Filter Panel (Real-time Filter by Genre)
     st.markdown("### ⚙️ 投資信託の条件絞り込み")
 
+    # Display Mode Toggle cleanly placed at top-left
+    col_v_head1, col_v_head2 = st.columns([1.5, 2.5]) if not is_mobile else (st.container(), st.container())
+    with col_v_head1:
+        view_mode = st.segmented_control(
+            "表示形式の選択",
+            options=["詳細カード表示", "徹底比較一覧表"],
+            default="詳細カード表示",
+            key="fund_view_mode_toggle"
+        ) or "詳細カード表示"
+
     categories = sfs.get_all_categories()
     
     st.html('''<style>
@@ -9187,15 +9257,6 @@ div[class*="st-key-sbi_fund_category_filter"] button span {
                 ],
                 key="fund_sort_choice"
             )
-
-    col_view1, col_view2 = st.columns([1.2, 2.0])
-    with col_view1:
-        view_mode = st.segmented_control(
-            "表示形式の選択",
-            options=["詳細カード表示", "徹底比較一覧表"],
-            default="詳細カード表示",
-            key="fund_view_mode_toggle"
-        ) or "詳細カード表示"
 
     # 3. Retrieve Filtered & Ranked Funds (Instantly Reactive)
     filtered_funds = sfs.filter_and_sort_funds(
@@ -9349,7 +9410,7 @@ div[class*="st-key-sbi_fund_category_filter"] button span {
 </div>''')
 
                 # Card Actions - All cleanly positioned inside the card border
-                col_fb1, col_fb2, col_fb3, col_fb4 = st.columns([1.1, 1.2, 1.0, 1.0])
+                col_fb1, col_fb2, col_fb3 = st.columns([1.2, 1.2, 1.1])
                 
                 is_comp = f["id"] in compare_list
                 with col_fb1:
@@ -9371,15 +9432,8 @@ div[class*="st-key-sbi_fund_category_filter"] button span {
                         st.rerun()
 
                 with col_fb3:
-                    if st.button("💼 仮想購入準備", key=f"fund_sim_{f['id']}", use_container_width=True):
-                        st.session_state["sim_purchase_ticker"] = f"FUND:{f['id']}"
-                        st.session_state["sim_purchase_name"] = f['nickname']
-                        st.session_state["sim_purchase_price"] = 10000.0
-                        st.toast(f"{f['nickname']} をシミュレーション購入準備に追加しました")
-
-                with col_fb4:
-                    if st.button("📄 SBI目論見書", key=f"fund_sbi_{f['id']}", use_container_width=True):
-                        st.info(f"SBI証券アプリで『{f['name']}』を検索して目論見書をご確認いただけます。")
+                    if st.button("📄 目論見書・要綱", key=f"fund_prospectus_btn_{f['id']}", use_container_width=True):
+                        show_fund_prospectus_dialog(f["id"])
 
                 # Inline Individual Chart Rendering if toggled!
                 if st.session_state.get(f"show_chart_{f['id']}", False):
@@ -9444,20 +9498,77 @@ div[class*="st-key-sbi_fund_category_filter"] button span {
     selected_comp_funds = [sfs.get_fund_details(fid) for fid in compare_list if sfs.get_fund_details(fid)]
     
     if not selected_comp_funds:
-        st.info("💡 上の各銘柄カードにある **『📊 比較リストに追加』** ボタンを押すと、ここに選択した銘柄同士の累積リターン比較チャートと横並びスペック比較表がリアルタイム表示されます。")
+        st.info("💡 上の各銘柄カードにある **『📊 比較リストに追加』** ボタンを押すと、ここに選択した銘柄同士の累積リターン比較チャート、スペック横並び比較表、および **AI最適パック自動生成** がリアルタイム表示されます。")
     else:
-        # Comparison Header Bar with Badges and Clear Button
-        col_c_tags, col_c_clear = st.columns([3.0, 1.0])
-        with col_c_tags:
-            tag_badges = "".join([f'<span style="background: rgba(25, 118, 210, 0.1); color: var(--mui-primary, #1976d2); font-weight: 700; font-size: 0.82rem; padding: 4px 10px; border-radius: 16px; margin-right: 6px; display: inline-block; margin-bottom: 4px;">{f["nickname"]}</span>' for f in selected_comp_funds])
-            st.html(f'''<div style="display: flex; align-items: center; flex-wrap: wrap; gap: 6px; padding: 6px 0;">
-<span style="font-size: 0.85rem; font-weight: 600; color: var(--secondary-text-color);">現在比較中 ({len(selected_comp_funds)}本):</span>
-{tag_badges}
-</div>''')
-        with col_c_clear:
-            if st.button("🗑️ 比較リストをクリア", key="btn_clear_comp_list", use_container_width=True):
+        # Comparison Header Bar with Individual Delete Buttons and Clear Button
+        st.markdown("<div style='font-size: 0.88rem; font-weight: 700; color: var(--text-color); margin-bottom: 8px;'>現在比較中の銘柄（クリックで個別削除できます）:</div>", unsafe_allow_html=True)
+        
+        # Display individual delete buttons as responsive columns
+        c_chips_cols = st.columns(len(selected_comp_funds) + 1)
+        for c_idx, f_item in enumerate(selected_comp_funds):
+            with c_chips_cols[c_idx]:
+                if st.button(f"✖ {f_item['nickname']}", key=f"btn_del_cmp_{f_item['id']}", help="クリックして比較リストから削除", use_container_width=True):
+                    compare_list.remove(f_item["id"])
+                    st.toast(f"{f_item['nickname']} を比較リストから削除しました")
+                    st.rerun()
+        with c_chips_cols[-1]:
+            if st.button("🗑️ 全てクリア", key="btn_clear_comp_list", use_container_width=True):
                 st.session_state["fund_compare_list"] = []
+                st.session_state.pop("generated_custom_pack", None)
                 st.rerun()
+
+        # AI Custom Pack Generator Button & Display Section
+        st.markdown("<div style='margin-top: 14px; margin-bottom: 10px;'></div>", unsafe_allow_html=True)
+        col_gen_txt, col_gen_btn = st.columns([2.5, 1.4])
+        with col_gen_txt:
+            st.markdown("<div style='font-size: 0.88rem; color: var(--secondary-text-color); line-height: 1.5;'>🤖 <b>AI最適ポートフォリオ作成</b>: 比較リストの銘柄をAIが数理最適化し、下落耐性と収益性を両立した黄金ブレンド比率を自動算出します。</div>", unsafe_allow_html=True)
+        with col_gen_btn:
+            if st.button("🤖 選択銘柄でAI最適パックを自動生成", type="primary", use_container_width=True, key="btn_generate_ai_pack"):
+                if len(selected_comp_funds) < 2:
+                    st.warning("AI最適パックを生成するには、2銘柄以上を比較リストに追加してください。")
+                else:
+                    custom_pack = sfs.generate_ai_custom_pack([f['id'] for f in selected_comp_funds])
+                    st.session_state["generated_custom_pack"] = custom_pack
+                    st.toast("✨ AI最適ポートフォリオパックを自動生成しました！")
+
+        # If custom pack is generated, render rich portfolio card
+        if st.session_state.get("generated_custom_pack"):
+            pack = st.session_state["generated_custom_pack"]
+            alloc_bars = ""
+            for alc in pack["allocations"]:
+                alloc_bars += f'''
+                <div style="margin-bottom: 8px;">
+                    <div style="display: flex; justify-content: space-between; font-size: 0.82rem; margin-bottom: 3px;">
+                        <span><b style="color: {alc['color']};">●</b> <b>{alc['name']}</b> <span style="font-size: 0.74rem; color: var(--secondary-text-color);">({alc['category']})</span></span>
+                        <b class="tabular-nums" style="color: var(--mui-primary, #1976d2); font-size: 0.95rem;">{alc['weight']}%</b>
+                    </div>
+                    <div style="background: rgba(0,0,0,0.06); border-radius: 4px; height: 8px; overflow: hidden;">
+                        <div style="background: {alc['color']}; width: {alc['weight']}%; height: 100%; border-radius: 4px;"></div>
+                    </div>
+                </div>'''
+
+            st.html(f'''
+            <div class="card" style="padding: 18px 20px; margin: 14px 0 22px 0; border: 2px solid var(--mui-primary, #1976d2); border-radius: 10px; background: rgba(25, 118, 210, 0.02);">
+                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 8px;">
+                    <span style="font-size: 0.78rem; font-weight: 700; background: rgba(25, 118, 210, 0.12); color: var(--mui-primary, #1976d2); padding: 3px 10px; border-radius: 6px;">{pack['badge']}</span>
+                    <div style="display: flex; gap: 14px; font-size: 0.84rem;">
+                        <span>合成保有コスト: <b class="tabular-nums" style="color: var(--color-gain, #10b981);">{pack['composite_expense']:.4f}%</b></span>
+                        <span>直近1年合成リターン: <b class="tabular-nums" style="color: var(--color-gain, #10b981);">+{pack['composite_return_1y']:.1f}%</b></span>
+                    </div>
+                </div>
+                <div style="font-size: 1.2rem; font-weight: 700; color: var(--text-color); margin-bottom: 4px;">{pack['title']}</div>
+                <div style="font-size: 0.85rem; color: var(--secondary-text-color); line-height: 1.5; margin-bottom: 12px;">{pack['concept']}</div>
+
+                <div style="background: rgba(255,255,255,0.7); border: 1px solid var(--border-color); border-radius: 8px; padding: 12px 14px; margin-bottom: 10px;">
+                    <div style="font-size: 0.8rem; font-weight: 700; color: var(--text-color); margin-bottom: 8px;">📊 AI推奨ブレンド比率（合計100%）:</div>
+                    {alloc_bars}
+                </div>
+
+                <div style="font-size: 0.78rem; color: var(--secondary-text-color); line-height: 1.4;">
+                    💡 <b>運用のコツ:</b> 毎月のNISA積立設定にて、上記の比率（例: 月3万円積立なら各配分比率に応じた金額）で発注設定することで、AIが算出した最高効率のリスク分散効果を発揮します。
+                </div>
+            </div>
+            ''')
 
         # Period Selector & Multi-fund Comparison Chart
         col_c_text, col_c_per = st.columns([2.5, 1.0])

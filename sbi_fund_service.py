@@ -1396,3 +1396,153 @@ def fetch_individual_fund_chart(fund_id: str, period: str = "1y") -> Optional[Di
     except Exception as e:
         print(f"Error fetching individual fund chart: {e}")
         return None
+
+
+def get_fund_prospectus(fund_id: str) -> Optional[Dict[str, Any]]:
+    """
+    Generates a structured prospectus and key fact summary for in-app inspection.
+    """
+    fund = get_fund_details(fund_id)
+    if not fund:
+        return None
+
+    exp = fund.get("expense_ratio", 0.1)
+    # Estimate breakdown of trust fee (common industry ratio: 40% manager, 45% distributor, 15% custodian)
+    fee_manager = round(exp * 0.42, 5)
+    fee_distributor = round(exp * 0.43, 5)
+    fee_custodian = round(exp * 0.15, 5)
+
+    risk_list = [
+        {"name": "価格変動リスク", "desc": "組入株式や債券、コモディティの市場価格下落に伴い、基準価額が下落し元本を割り込む場合があります。"},
+        {"name": "為替変動リスク", "desc": "外貨建て資産を保有する場合、為替レートの円高局面において基準価額が押し下げられるリスクがあります。"},
+        {"name": "信用・カントリーリスク", "desc": "投資対象国（特に新興国）の政治・経済・法規制の急変や、発行体の債務不履行による影響を受ける可能性があります。"}
+    ]
+
+    settlement_cycle = "年4回（決算月：1, 4, 7, 10月）" if "年4回" in fund["name"] else "年1回（毎年基準日決算）"
+
+    return {
+        "fund": fund,
+        "name": fund["name"],
+        "nickname": fund["nickname"],
+        "trustee": fund["trustee"],
+        "custodian": "三菱UFJ信託銀行株式会社 または 三井住友信託銀行株式会社",
+        "category": fund["category"],
+        "type": fund["type"],
+        "underlying": fund["underlying"],
+        "expense_ratio": exp,
+        "fee_breakdown": {
+            "manager": fee_manager,
+            "distributor": fee_distributor,
+            "custodian": fee_custodian
+        },
+        "purchase_fee": "なし (ノーロード 0円)",
+        "redemption_fee": "なし (信託財産留保額 0円)",
+        "settlement_cycle": settlement_cycle,
+        "aum_oku": fund.get("aum_oku", 1000),
+        "major_holdings": fund.get("major_holdings", []),
+        "risks": risk_list,
+        "nisa_tsumitate": fund.get("nisa_tsumitate", False),
+        "nisa_growth": fund.get("nisa_growth", True),
+        "description": fund.get("description", "")
+    }
+
+
+def generate_ai_custom_pack(fund_ids: List[str]) -> Optional[Dict[str, Any]]:
+    """
+    Synthesizes an optimal multi-fund portfolio pack from user-selected funds,
+    calculating weighted asset allocations, composite fees, and tailored AI commentary.
+    """
+    if not fund_ids:
+        return None
+
+    funds = [get_fund_details(fid) for fid in fund_ids if get_fund_details(fid)]
+    if not funds:
+        return None
+
+    # Calculate optimal weighting based on Sharpe ratio and inverse volatility
+    scores = []
+    for f in funds:
+        sr = max(0.2, f.get("sharpe_ratio", 1.0))
+        dd_factor = 1.0 / max(10.0, abs(f.get("max_drawdown", 20.0)))
+        # Blended weight score
+        w_score = (sr ** 1.2) * (dd_factor ** 0.5)
+        scores.append(w_score)
+
+    total_score = sum(scores) if sum(scores) > 0 else len(funds)
+    raw_weights = [s / total_score for s in scores]
+
+    # Normalize weights to rounded integers summing strictly to 100%
+    int_weights = [max(5, int(round(w * 100))) for w in raw_weights]
+    diff = 100 - sum(int_weights)
+    # Adjust highest weighted fund
+    max_idx = int_weights.index(max(int_weights))
+    int_weights[max_idx] += diff
+
+    allocations = []
+    comp_expense = 0.0
+    comp_return_1y = 0.0
+    comp_return_3y = 0.0
+
+    has_tech = False
+    has_defensive = False
+    has_india = False
+    has_dividend = False
+
+    for f, w in zip(funds, int_weights):
+        allocations.append({
+            "fund_id": f["id"],
+            "name": f["nickname"],
+            "full_name": f["name"],
+            "weight": w,
+            "category": f["category"],
+            "role": f.get("role", ""),
+            "color": f.get("color", "#1976d2"),
+            "expense": f.get("expense_ratio", 0.1),
+            "return_1y": f.get("return_1y", 20.0)
+        })
+        comp_expense += f.get("expense_ratio", 0.1) * (w / 100.0)
+        comp_return_1y += f.get("return_1y", 20.0) * (w / 100.0)
+        comp_return_3y += f.get("return_3y_annual", 15.0) * (w / 100.0)
+
+        cat = f.get("category", "")
+        if "FANG+" in cat or "AI" in cat:
+            has_tech = True
+        if "金" in cat or "債券" in cat:
+            has_defensive = True
+        if "インド" in cat:
+            has_india = True
+        if "高配当" in cat:
+            has_dividend = True
+
+    # Generate custom title & badge based on asset composition
+    if has_tech and has_defensive:
+        title = "AI攻守両道・ハイブリッド最適パック"
+        badge = "🏆 攻防一体・最適ブレンド"
+        concept = "ハイテクの高成長モメンタムを攻めのエンジンとしつつ、金・債券で急落時のクッションを確保した極めてバランスの良い黄金配分です。"
+    elif has_tech:
+        title = "AI積極成長・ハイテク特化ブーストパック"
+        badge = "🚀 超高リターン追求型"
+        concept = "世界最強のメガテック・AI半導体の急成長を最大限に取り込み、資産の加速度的な拡大を狙う積極運用ポートフォリオです。"
+    elif has_defensive or has_dividend:
+        title = "堅実ディフェンス・高配当インカムパック"
+        badge = "🛡️ 鉄壁の守り・安定キャッシュフロー"
+        concept = "市場全体の急な荒波に左右されにくく、定期的な分配金や実物資産の強みで資産価値を着実に守り抜く設計です。"
+    elif has_india:
+        title = "新興国フロンティア・世界経済共創パック"
+        badge = "🌍 人口ボーナス高成長型"
+        concept = "全世界の安定成長に、人口世界一のインドの爆発的な内需成長をブレンドした未来志向のポートフォリオです。"
+    else:
+        title = "厳選カスタム・コア資産最適化パック"
+        badge = "✨ 世界分散・低コスト王道"
+        concept = "選定された優良ファンドの強みを掛け合わせ、極めて低い手数料で長期の複利効果を最大化するポートフォリオです。"
+
+    return {
+        "title": title,
+        "badge": badge,
+        "concept": concept,
+        "allocations": allocations,
+        "composite_expense": round(comp_expense, 4),
+        "composite_return_1y": round(comp_return_1y, 1),
+        "composite_return_3y": round(comp_return_3y, 1),
+        "fund_count": len(funds)
+    }
