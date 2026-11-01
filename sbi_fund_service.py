@@ -925,8 +925,8 @@ SBI_FUNDS_DB: List[Dict[str, Any]] = [
     },
     {
         "id": "mitsubishi_gold",
-        "name": "三菱ＵＦＪ 純金ファンド",
-        "nickname": "ファインゴールド",
+        "name": "三菱ＵＦＪ 純金ファンド（ファインゴールド）",
+        "nickname": "三菱UFJ純金（ファインゴールド）",
         "category": "金・債券・バランス",
         "type": "コモディティ投信",
         "trustee": "三菱UFJアセットマネジメント",
