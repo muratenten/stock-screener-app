@@ -10,6 +10,7 @@ import urllib.request
 import urllib.parse
 import json
 import os
+import geopolitics_service as gs
 from tickers import JP_TICKERS, US_TICKERS
 
 # Plotly config for scroll/pinch-to-zoom and permanently visible modebar
@@ -7381,8 +7382,9 @@ def check_practice_preset_match():
         st.session_state["prac_preset_select_mobile"] = "⚙️ カスタム設定"
 
 # Main Navigation Tabs
-tab_screen, tab_favorite, tab_simulation, tab_practice, tab_explanation = st.tabs([
+tab_screen, tab_geopolitics, tab_favorite, tab_simulation, tab_practice, tab_explanation = st.tabs([
     "🔍 スクリーニング実行と結果分析", 
+    "🌍 時事・社会情勢テーマ提案窓口",
     "⭐ 銘柄検索・個別分析 & お気に入り",
     "💼 仮想シミュレーション（デモトレード）", 
     "🏋️ 過去チャート練習モード",
@@ -8648,7 +8650,226 @@ with tab_screen:
 
 
 # -----------------------------------------------------------------------------
-# TAB 1.5: HOLDINGS & FAVORITES ANALYSIS
+# TAB 1.5: GEOPOLITICS & SOCIAL THEMES (時事・社会情勢テーマ提案窓口)
+# -----------------------------------------------------------------------------
+with tab_geopolitics:
+    st.markdown("""
+    <div style="margin-bottom: 20px;">
+        <h2 style="margin: 0 0 6px 0; font-size: 1.6rem; font-weight: 700; color: var(--text-color);">
+            🌍 社会情勢・時事テーマ銘柄提案窓口
+        </h2>
+        <div style="font-size: 0.92rem; color: var(--secondary-text-color); line-height: 1.5;">
+            有事・防衛リスク、情報漏洩・サイバー攻撃、資源インフレなど、<b>現在の社会情勢ニュースと機関投資家の資金流入データ</b>をAIがリアルタイム照合。<br>
+            思惑だけのボロ株を排除し、公的契約や業績の実態があり、かつ<b>直近チャートの過去勝率が70%を超える本命銘柄</b>を動的厳選して提案します。
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # Theme selection pills
+    theme_options = {
+        "🛡️ 有事・防衛・地政学リスク": "defense",
+        "🔒 情報漏洩・サイバーセキュリティ": "cyber",
+        "⚡ 資源・エネルギー・コモディティ高": "energy",
+        "🚢 海運・サプライチェーン危機": "shipping"
+    }
+
+    selected_theme_label = st.segmented_control(
+        "注目の社会情勢テーマを選択",
+        options=list(theme_options.keys()),
+        default=list(theme_options.keys())[0],
+        key="geo_theme_selected"
+    ) or list(theme_options.keys())[0]
+
+    current_theme_key = theme_options[selected_theme_label]
+    cfg = gs.THEMES_CONFIG[current_theme_key]
+
+    # Theme Overview Card
+    st.markdown(f"""
+    <div class="card" style="padding: 16px 20px; margin-bottom: 18px; border-left: 4px solid var(--mui-primary, #1976d2);">
+        <div style="font-weight: 700; font-size: 1.05rem; margin-bottom: 6px; color: var(--text-color);">
+            {cfg['title']}
+        </div>
+        <div style="font-size: 0.88rem; color: var(--secondary-text-color); line-height: 1.6;">
+            {cfg['description']}
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # 2 Columns: Left = Live Intelligence News, Right = Sector Pulse
+    col_news, col_pulse = st.columns([1.3, 0.7])
+
+    with col_news:
+        st.markdown("""
+        <div style="font-size: 0.85rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--secondary-text-color); margin-bottom: 8px;">
+            📰 最新マクロ情勢・金融速報（一次開示・専門メディア連携）
+        </div>
+        """, unsafe_allow_html=True)
+        
+        with st.spinner("最新ニュースと情勢ヘッドラインを取得中..."):
+            live_news = gs.fetch_latest_news(current_theme_key, max_items=4)
+
+        news_html = '<div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px;">'
+        for n in live_news:
+            news_html += f"""
+            <div style="padding: 9px 13px; background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border-color); border-radius: 8px; font-size: 0.84rem;">
+                <div style="font-weight: 600; color: var(--text-color); margin-bottom: 3px;">
+                    {n['title']}
+                </div>
+                <div style="display: flex; gap: 10px; font-size: 0.74rem; color: var(--secondary-text-color);">
+                    <span>🏛️ 出典: {n['source']}</span>
+                    <span>⏱️ {n['pubDate'][:16] if len(n['pubDate']) >= 16 else n['pubDate']}</span>
+                </div>
+            </div>
+            """
+        news_html += '</div>'
+        st.markdown(news_html, unsafe_allow_html=True)
+
+    with col_pulse:
+        st.markdown("""
+        <div style="font-size: 0.85rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--secondary-text-color); margin-bottom: 8px;">
+            📊 セクター資金流入ステータス
+        </div>
+        """, unsafe_allow_html=True)
+
+        with st.spinner("テーマ構成銘柄のリアルタイム需給をスキャン中..."):
+            theme_stocks = gs.analyze_theme_stocks(current_theme_key)
+
+        spike_stocks = [s for s in theme_stocks if s.get("has_spike")]
+        avg_vol_ratio = float(np.mean([s["vol_ratio"] for s in theme_stocks])) if theme_stocks else 1.0
+
+        pulse_status = "🔥 強い資金流入を検知" if avg_vol_ratio >= 1.2 or len(spike_stocks) >= 2 else ("🟢 安定推移・押し目形成中" if avg_vol_ratio >= 0.9 else "⚪ 静かな助走局面")
+        pulse_color = "var(--color-gain)" if "流入" in pulse_status else "var(--mui-primary, #1976d2)"
+
+        st.markdown(f"""
+        <div class="card" style="padding: 16px; text-align: center; margin-bottom: 16px;">
+            <div class="metric-title">セクター需給モメンタム</div>
+            <div style="font-size: 1.15rem; font-weight: 700; color: {pulse_color}; margin: 6px 0;">
+                {pulse_status}
+            </div>
+            <div style="font-size: 0.82rem; color: var(--secondary-text-color); line-height: 1.5; margin-top: 8px;">
+                平均出来高比率: <b class="tabular-nums">{avg_vol_ratio:.1f}倍</b><br>
+                大口資金急増検知: <b class="tabular-nums">{len(spike_stocks)} 銘柄</b>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+
+    st.markdown("---")
+    st.markdown(f"""
+    <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 16px;">
+        <div>
+            <h3 style="margin: 0 0 4px 0; font-size: 1.25rem; font-weight: 700; color: var(--text-color);">
+                🎯 本日の厳選注目銘柄（勝率・出来高スコア順）
+            </h3>
+            <div style="font-size: 0.82rem; color: var(--secondary-text-color);">
+                直近の出来高変化、過去波形勝率、および本命度により毎日リアルタイムに自動ランキング
+            </div>
+        </div>
+        <div style="font-size: 0.78rem; opacity: 0.7; color: var(--secondary-text-color);">
+            ※毎営業日 最新株価連動
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # Render Stock Cards
+    for idx, s in enumerate(theme_stocks, 1):
+        p_val = s['price']
+        p_disp = f"¥{p_val:,.1f}" if (p_val < 1000 and p_val != int(p_val)) else f"¥{int(round(p_val)):,}" if p_val > 0 else "---"
+        chg_val = s['change_pct']
+        pill_cls = "pill-gain" if chg_val >= 0 else "pill-loss"
+        sign_str = "+" if chg_val >= 0 else ""
+        chg_disp = f"{sign_str}{chg_val:.2f}%"
+
+        rank_badge_bg = "rgba(25, 118, 210, 0.12)" if s['rank'] == "本命A" else "rgba(100, 116, 139, 0.12)"
+        rank_badge_color = "#1976d2" if s['rank'] == "本命A" else "#64748b"
+
+        vol_badge = ""
+        if s.get("has_spike"):
+            vol_badge = '<span class="pill-badge pill-gain" style="font-size: 0.72rem; padding: 2px 7px;">🔥 出来高急増</span>'
+
+        with st.container():
+            st.markdown(f"""
+            <div class="card" style="padding: 20px; margin-bottom: 18px;">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 8px; margin-bottom: 12px;">
+                    <div>
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <span style="font-size: 1.15rem; font-weight: 700; color: var(--text-color); font-family: 'Roboto', sans-serif;">
+                                {idx}. {s['name']}
+                            </span>
+                            <span style="font-size: 0.85rem; font-family: monospace; color: var(--secondary-text-color);">
+                                ({s['ticker']})
+                            </span>
+                            <span style="background: {rank_badge_bg}; color: {rank_badge_color}; font-size: 0.72rem; font-weight: 700; padding: 2px 8px; border-radius: 4px;">
+                                {s['rank']}
+                            </span>
+                            {vol_badge}
+                        </div>
+                        <div style="font-size: 0.82rem; color: var(--secondary-text-color); margin-top: 4px;">
+                            {s['sub']}
+                        </div>
+                    </div>
+                    <div style="text-align: right;">
+                        <div style="font-size: 1.35rem; font-weight: 700; color: var(--text-color);" class="tabular-nums">
+                            {p_disp}
+                        </div>
+                        <div>
+                            <span class="pill-badge {pill_cls}">
+                                {chg_disp}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; background: rgba(0, 0, 0, 0.02); padding: 12px; border-radius: 8px; border: 1px solid var(--border-color); margin-bottom: 14px;">
+                    <div>
+                        <div style="font-size: 0.75rem; color: var(--secondary-text-color);">20日出来高比率</div>
+                        <div style="font-size: 1.05rem; font-weight: 700; color: var(--text-color);" class="tabular-nums">
+                            {s['vol_ratio']:.1f}倍
+                        </div>
+                    </div>
+                    <div>
+                        <div style="font-size: 0.75rem; color: var(--secondary-text-color);">過去幾何波形勝率</div>
+                        <div style="font-size: 1.05rem; font-weight: 700; color: var(--color-gain);" class="tabular-nums">
+                            {s['win_rate']:.1f}%
+                        </div>
+                    </div>
+                    <div>
+                        <div style="font-size: 0.75rem; color: var(--secondary-text-color);">目標ターゲット想定</div>
+                        <div style="font-size: 1.05rem; font-weight: 700; color: var(--mui-primary, #1976d2);" class="tabular-nums">
+                            ¥{s['target_price']:,.1f} <span style="font-size: 0.72rem;">(+{s['avg_future_ret']:.1f}%)</span>
+                        </div>
+                    </div>
+                    <div>
+                        <div style="font-size: 0.75rem; color: var(--secondary-text-color);">規律損切り撤退目安</div>
+                        <div style="font-size: 1.05rem; font-weight: 700; color: var(--color-loss);" class="tabular-nums">
+                            ¥{s['stop_price']:,.1f} <span style="font-size: 0.72rem;">(-4.5%)</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+
+            with st.expander(f"📝 Gemini 3.8 / 専門アナリストの戦略解説レポートを開く（{s['name']}）", expanded=False):
+                report_text = gs.generate_analyst_report(s, cfg, live_news)
+                st.markdown(report_text)
+
+            col_btn1, col_btn2 = st.columns([1, 1])
+            with col_btn1:
+                if st.button(f"🔍 チャート・詳細波形を分析", key=f"geo_view_{s['ticker']}"):
+                    st.session_state["target_ticker"] = s['ticker']
+                    st.session_state["active_tab_index"] = 2
+                    st.rerun()
+            with col_btn2:
+                if st.button(f"💼 仮想シミュレーションで購入", key=f"geo_buy_{s['ticker']}"):
+                    st.session_state["sim_purchase_ticker"] = s['ticker']
+                    st.session_state["sim_purchase_name"] = s['name']
+                    st.session_state["sim_purchase_price"] = s['price']
+                    st.toast(f"✅ {s['name']} をシミュレーション購入準備に追加しました！")
+
+            st.markdown("<div style='margin-bottom: 24px;'></div>", unsafe_allow_html=True)
+
+
+# -----------------------------------------------------------------------------
+# TAB 2: HOLDINGS & FAVORITES ANALYSIS
 # -----------------------------------------------------------------------------
 with tab_favorite:
 
