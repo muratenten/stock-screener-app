@@ -24,6 +24,14 @@ PLOTLY_CONFIG = {
 }
 
 # UI theme and mode settings (Material-UI v5 Design System)
+# Synchronize theme with query parameters and persistent state
+if 'color_theme' not in st.session_state:
+    query_theme = st.query_params.get("theme")
+    if query_theme in ("dark", "light"):
+        st.session_state['color_theme'] = query_theme
+    else:
+        st.session_state['color_theme'] = 'light'
+
 with st.sidebar:
     st.markdown("### 🎨 デザイン・テーマ設定")
     
@@ -39,8 +47,16 @@ with st.sidebar:
         help="ライトモード / ダークモードを瞬時に切り替えます"
     )
     if selected_theme:
-        st.session_state['color_theme'] = 'dark' if selected_theme == "🌙" else 'light'
+        new_theme = 'dark' if selected_theme == "🌙" else 'light'
+        if st.session_state.get('color_theme') != new_theme:
+            st.session_state['color_theme'] = new_theme
+            st.query_params["theme"] = new_theme
+    
     is_dark = st.session_state.get('color_theme', 'light') == 'dark'
+    if is_dark and st.query_params.get("theme") != "dark":
+        st.query_params["theme"] = "dark"
+    elif not is_dark and st.query_params.get("theme") == "dark":
+        st.query_params["theme"] = "light"
 
     # Layout optimization
     curr_ui = st.session_state.get('ui_mode', 'PC')
@@ -2013,6 +2029,15 @@ st.components.v1.html("""
     applyStyles();
     replaceEmojisWithLucide(parentDoc);
     purgeStreamlitBadges();
+
+    // Persist active color theme to localStorage
+    try {
+        const activeTheme = "{'dark' if is_dark else 'light'}";
+        localStorage.setItem('zen_color_theme', activeTheme);
+        if (window.parent && window.parent.localStorage) {
+            window.parent.localStorage.setItem('zen_color_theme', activeTheme);
+        }
+    } catch(e) {}
 </script>
 """, height=0, width=0)
 
@@ -6172,8 +6197,12 @@ def color_pl_cell(val):
 # Check for Demo Login from HTML anchor click
 demo_login = st.query_params.get("demo_login")
 if demo_login:
+    # Preserve theme across demo login
+    current_active_theme = st.query_params.get("theme", st.session_state.get('color_theme', 'light'))
+    st.session_state["color_theme"] = current_active_theme
     if demo_login == "google":
         st.query_params["user"] = "google_mock_user"
+        st.query_params["theme"] = current_active_theme
         st.session_state["user_key"] = "google_mock_user"
         st.session_state["user_display_name"] = "デモ Googleユーザー"
         st.session_state["user_avatar"] = "https://lh3.googleusercontent.com/a/default-user=s96-c"
@@ -6186,6 +6215,7 @@ if demo_login:
         st.rerun()
     elif demo_login == "line":
         st.query_params["user"] = "line_mock_user"
+        st.query_params["theme"] = current_active_theme
         st.session_state["user_key"] = "line_mock_user"
         st.session_state["user_display_name"] = "デモ LINEユーザー"
         st.session_state["user_avatar"] = "https://profile.line-scdn.net/default_profile_image"
@@ -6203,7 +6233,14 @@ state = st.query_params.get("state")
 
 if code and state:
     redirect_uri = st.secrets.get("redirect_uri", "http://localhost:8501/")
-    if state == "google_auth":
+    # Preserve theme from OAuth state or URL parameters
+    if "__dark" in state or st.query_params.get("theme") == "dark":
+        st.session_state["color_theme"] = "dark"
+    elif "__light" in state or st.query_params.get("theme") == "light":
+        st.session_state["color_theme"] = "light"
+    current_active_theme = st.session_state.get("color_theme", "light")
+
+    if state.startswith("google_auth"):
         google_client_id = st.secrets.get("google_client_id")
         google_client_secret = st.secrets.get("google_client_secret")
         if google_client_id and google_client_secret:
@@ -6283,6 +6320,7 @@ if code and state:
                         st.session_state["user_display_name"] = google_name
                         st.session_state["user_avatar"] = google_picture
                         st.query_params["user"] = user_key
+                        st.query_params["theme"] = current_active_theme
                         
                         firebase_project_id = st.session_state.get('firebase_project_id', DEFAULT_FIREBASE_PROJECT_ID)
                         if firebase_project_id:
@@ -6305,7 +6343,7 @@ if code and state:
             except Exception as e:
                 st.error(f"Googleログイン処理中にエラーが発生しました: {str(e)}")
                 
-    elif state == "line_auth":
+    elif state.startswith("line_auth"):
         line_channel_id = st.secrets.get("line_channel_id")
         line_channel_secret = st.secrets.get("line_channel_secret")
         if line_channel_id and line_channel_secret:
@@ -6348,6 +6386,7 @@ if code and state:
                         st.session_state["user_display_name"] = line_name
                         st.session_state["user_avatar"] = line_picture
                         st.query_params["user"] = user_key
+                        st.query_params["theme"] = current_active_theme
                         
                         firebase_project_id = st.session_state.get('firebase_project_id', DEFAULT_FIREBASE_PROJECT_ID)
                         if firebase_project_id:
@@ -6807,6 +6846,15 @@ if query_user == "default":
     }
     setInterval(purgePortalBadges, 150);
     purgePortalBadges();
+
+    // Persist active color theme to localStorage in portal
+    try {
+        const activeTheme = "{'dark' if is_dark else 'light'}";
+        localStorage.setItem('zen_color_theme', activeTheme);
+        if (window.parent && window.parent.localStorage) {
+            window.parent.localStorage.setItem('zen_color_theme', activeTheme);
+        }
+    } catch(e) {}
     </script>
     """, height=0, width=0)
     
@@ -6853,6 +6901,9 @@ if query_user == "default":
         redirect_uri = st.secrets.get("redirect_uri", "http://localhost:8501/")
         
         target_frame = "_blank"
+        current_theme_slug = "dark" if is_dark else "light"
+        theme_query_param = f"&theme={current_theme_slug}"
+        oauth_theme_state = f"__{current_theme_slug}"
         
         st.markdown("""
         <div style="background: #ffffff !important; padding: 20px 24px 14px 24px !important; border-radius: 8px !important; box-shadow: 0px 2px 1px -1px rgba(0,0,0,0.2), 0px 1px 1px 0px rgba(0,0,0,0.14), 0px 1px 3px 0px rgba(0,0,0,0.12) !important; border: 1px solid rgba(0, 0, 0, 0.12) !important; margin-bottom: 20px; position: relative; z-index: 1;">
@@ -6869,10 +6920,10 @@ if query_user == "default":
                     f"redirect_uri={urllib.parse.quote(redirect_uri)}&"
                     "response_type=code&"
                     "scope=openid%20profile%20email&"
-                    "state=google_auth"
+                    f"state=google_auth{oauth_theme_state}"
                 )
             else:
-                google_auth_url = "?demo_login=google"
+                google_auth_url = f"?demo_login=google{theme_query_param}"
                 
             google_btn_html = f"""
             <a href="{google_auth_url}" target="{target_frame}" class="social-login-btn google-btn">
@@ -6895,10 +6946,10 @@ if query_user == "default":
                     f"redirect_uri={urllib.parse.quote(redirect_uri)}&"
                     "response_type=code&"
                     "scope=openid%20profile&"
-                    "state=line_auth"
+                    f"state=line_auth{oauth_theme_state}"
                 )
             else:
-                line_auth_url = "?demo_login=line"
+                line_auth_url = f"?demo_login=line{theme_query_param}"
                  
             line_btn_html = f"""
             <a href="{line_auth_url}" target="{target_frame}" class="social-login-btn line-btn">
@@ -6973,6 +7024,10 @@ if query_user == "default":
 user_key = query_user
 st.session_state['user_key'] = user_key
 st.query_params["user"] = user_key
+if st.session_state.get('color_theme') == 'dark':
+    st.query_params["theme"] = "dark"
+elif st.session_state.get('color_theme') == 'light' and st.query_params.get("theme") == "dark":
+    st.query_params["theme"] = "light"
 
 # Proactively load user profile, tier, and portfolio from Firebase immediately on startup
 if 'firebase_loaded_users' not in st.session_state:
