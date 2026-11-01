@@ -9839,11 +9839,26 @@ div[class*="st-key-sbi_fund_category_filter"] button span {
 {cmp_badge}
 <span style="color: var(--secondary-text-color); font-size: 0.78rem;">（各銘柄カードの『📊 比較リストに追加』で選択）</span>
 </div>
-<button type="button"
-   onclick="(parent.document||document).getElementById('fund_comparison_section')?.scrollIntoView({{behavior:'smooth', block:'start'}});"
-   style="display: inline-flex; align-items: center; justify-content: center; gap: 6px; background-color: var(--mui-primary, #1976d2); color: #ffffff; border: 1px solid var(--mui-primary, #1976d2); padding: 6px 18px; min-height: 38px; border-radius: 8px; font-weight: 600; font-size: 0.875rem; cursor: pointer; box-shadow: 0 1px 3px rgba(25,118,210,0.25); transition: background-color 0.15s ease;">
-   <span>📊 比較リストへ</span>
-</button>
+<a href="#fund_comparison_section"
+   onclick="event.preventDefault(); (function() {{
+       var el = document.getElementById('fund_comparison_section');
+       if (!el) {{
+           try {{ if (window.parent && window.parent.document) el = window.parent.document.getElementById('fund_comparison_section'); }} catch(e){{}}
+       }}
+       if (el) {{
+           el.scrollIntoView({{behavior: 'smooth', block: 'start'}});
+           try {{
+               var cont = document.querySelector('[data-testid=\\'stAppViewContainer\\']') || (window.parent && window.parent.document ? window.parent.document.querySelector('[data-testid=\\'stAppViewContainer\\']') : null);
+               if (cont) {{
+                   var topPos = el.getBoundingClientRect().top + cont.scrollTop - 90;
+                   cont.scrollTo({{top: topPos, behavior: 'smooth'}});
+               }}
+           }} catch(e){{}}
+       }}
+   }})();"
+   style="display: inline-flex; align-items: center; justify-content: center; gap: 6px; background-color: var(--mui-primary, #1976d2); color: #ffffff !important; border: 1px solid var(--mui-primary, #1976d2); padding: 6px 18px; min-height: 38px; border-radius: 8px; font-weight: 600; font-size: 0.875rem; cursor: pointer; text-decoration: none !important; box-shadow: 0 1px 3px rgba(25,118,210,0.25); transition: background-color 0.15s ease;">
+   <span style="color: #ffffff !important;">📊 比較リストへ</span>
+</a>
 </div>''')
 
     if not filtered_funds:
@@ -10085,7 +10100,22 @@ div[class*="st-key-sbi_fund_category_filter"] button span {
         with col_c_head_txt:
             st.markdown(f"""<div style='display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 6px; margin-bottom: 6px;'>
 <div style='font-size: 0.9rem; font-weight: 700; color: var(--text-color);'>現在比較中の銘柄 ({len(selected_comp_funds)}本) <span style='font-size: 0.76rem; font-weight: normal; color: var(--secondary-text-color);'>※クリックで個別削除できます</span></div>
-<a href="#fund_screening_top" onclick="(parent.document||document).getElementById('fund_screening_top')?.scrollIntoView({{behavior:'smooth', block:'start'}}); return true;" style="font-size: 0.78rem; font-weight: 600; color: var(--mui-primary, #1976d2); text-decoration: none; cursor: pointer;">↑ スクリーニング一覧へ戻る</a>
+<a href="#fund_screening_top" onclick="event.preventDefault(); (function() {{
+    var el = document.getElementById('fund_screening_top');
+    if (!el) {{
+        try {{ if (window.parent && window.parent.document) el = window.parent.document.getElementById('fund_screening_top'); }} catch(e){{}}
+    }}
+    if (el) {{
+        el.scrollIntoView({{behavior: 'smooth', block: 'start'}});
+        try {{
+            var cont = document.querySelector('[data-testid=\\'stAppViewContainer\\']') || (window.parent && window.parent.document ? window.parent.document.querySelector('[data-testid=\\'stAppViewContainer\\']') : null);
+            if (cont) {{
+                var topPos = el.getBoundingClientRect().top + cont.scrollTop - 100;
+                cont.scrollTo({{top: topPos, behavior: 'smooth'}});
+            }}
+        }} catch(e){{}}
+    }}
+}})();" style="font-size: 0.78rem; font-weight: 600; color: var(--mui-primary, #1976d2); text-decoration: none; cursor: pointer;">↑ スクリーニング一覧へ戻る</a>
 </div>""", unsafe_allow_html=True)
         with col_c_head_clr:
             if st.button("🗑️ 比較リストを空にする", key="btn_clear_comp_list", use_container_width=True):
