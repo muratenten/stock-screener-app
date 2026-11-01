@@ -9501,28 +9501,6 @@ div[class*="st-key-sbi_fund_category_filter"] button span {
         st.info("💡 上の各銘柄カードにある **『📊 比較リストに追加』** ボタンを押すと、ここに選択した銘柄同士の累積リターン比較チャート、スペック横並び比較表、および **AI最適パック自動生成** がリアルタイム表示されます。")
     else:
         # Comparison Header Bar with Individual Delete Buttons and Clear Button
-        st.html('''<style>
-div[class*="st-key-btn_del_cmp_"] button {
-    padding: 4px 10px !important;
-    font-size: 0.8rem !important;
-    border-radius: 16px !important;
-    border: 1px solid var(--border-color) !important;
-    background: rgba(0, 0, 0, 0.03) !important;
-    color: var(--text-color) !important;
-    height: 32px !important;
-    white-space: nowrap !important;
-}
-div[class*="st-key-btn_del_cmp_"] button:hover {
-    border-color: #f43f5e !important;
-    color: #f43f5e !important;
-    background: rgba(244, 63, 94, 0.08) !important;
-}
-div[class*="st-key-btn_generate_ai_pack"] button {
-    white-space: nowrap !important;
-    font-weight: 700 !important;
-}
-</style>''')
-
         col_c_head_txt, col_c_head_clr = st.columns([3.2, 1.1]) if not is_mobile else (st.container(), st.container())
         with col_c_head_txt:
             st.markdown(f"<div style='font-size: 0.9rem; font-weight: 700; color: var(--text-color); margin-bottom: 6px;'>現在比較中の銘柄 ({len(selected_comp_funds)}本) <span style='font-size: 0.76rem; font-weight: normal; color: var(--secondary-text-color);'>※クリックで個別削除できます</span></div>", unsafe_allow_html=True)
@@ -9532,19 +9510,48 @@ div[class*="st-key-btn_generate_ai_pack"] button {
                 st.session_state.pop("generated_custom_pack", None)
                 st.rerun()
 
-        # Display individual delete buttons naturally left-aligned
-        max_per_row = 4 if not is_mobile else 2
-        for i in range(0, len(selected_comp_funds), max_per_row):
-            chunk = selected_comp_funds[i:i + max_per_row]
-            widths = [max(1.0, len(f['nickname']) * 0.15 + 0.4) for f in chunk]
-            widths.append(max(0.1, 5.0 - sum(widths)))  # Right spacer absorbing extra width
-            c_cols = st.columns(widths)
-            for c_idx, f_item in enumerate(chunk):
-                with c_cols[c_idx]:
-                    if st.button(f"✕ {f_item['nickname']}", key=f"btn_del_cmp_{f_item['id']}", help=f"『{f_item['name']}』を比較リストから除外", use_container_width=True):
-                        compare_list.remove(f_item["id"])
-                        st.toast(f"{f_item['nickname']} を比較リストから削除しました")
-                        st.rerun()
+        st.html('''<style>
+div[data-testid="stPills"] {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 8px !important;
+    margin-bottom: 12px !important;
+}
+div[data-testid="stPills"] button {
+    border-radius: 20px !important;
+    font-size: 0.82rem !important;
+    padding: 5px 14px !important;
+    border: 1px solid var(--border-color) !important;
+    background: rgba(0, 0, 0, 0.03) !important;
+    color: var(--text-color) !important;
+    transition: all 0.15s ease !important;
+}
+div[data-testid="stPills"] button:hover {
+    color: #f43f5e !important;
+    border-color: #f43f5e !important;
+    background: rgba(244, 63, 94, 0.08) !important;
+}
+div[class*="st-key-btn_generate_ai_pack"] button {
+    white-space: nowrap !important;
+    font-weight: 700 !important;
+}
+</style>''')
+
+        # Display naturally left-aligned pills with content width
+        comp_nicknames = {f['id']: f['nickname'] for f in selected_comp_funds}
+        del_clicked_fid = st.pills(
+            "比較中銘柄",
+            options=[f['id'] for f in selected_comp_funds],
+            format_func=lambda fid: f"✕ {comp_nicknames.get(fid, fid)}",
+            selection_mode="single",
+            default=None,
+            key=f"pill_del_cmp_{len(selected_comp_funds)}_{'_'.join(compare_list)}",
+            label_visibility="collapsed"
+        )
+        if del_clicked_fid and del_clicked_fid in compare_list:
+            compare_list.remove(del_clicked_fid)
+            st.toast(f"{comp_nicknames.get(del_clicked_fid, '銘柄')} を比較リストから削除しました")
+            st.rerun()
 
         # AI Custom Pack Generator Button & Display Section
         st.markdown("<div style='margin-top: 14px; margin-bottom: 10px;'></div>", unsafe_allow_html=True)
