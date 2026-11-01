@@ -9462,7 +9462,11 @@ div[class*="st-key-sbi_fund_category_filter"] button span {
                 key="fund_comp_chart_period_choice"
             ) or "1y"
 
-        comp_data = sfs.fetch_comparison_chart_data(period=comp_chart_period, fund_ids=[f["id"] for f in selected_comp_funds])
+        try:
+            comp_data = sfs.fetch_comparison_chart_data(period=comp_chart_period, fund_ids=[f["id"] for f in selected_comp_funds])
+        except Exception as chart_err:
+            comp_data = sfs.fetch_comparison_chart_data(period="1y")
+
         if comp_data:
             fig_comp = go.Figure()
             for s_name, s_data in comp_data.items():

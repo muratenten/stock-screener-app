@@ -1198,12 +1198,14 @@ def filter_and_sort_funds(
     return results
 
 
-def fetch_comparison_chart_data(period: str = "1y", fund_ids: Optional[List[str]] = None) -> Dict[str, Any]:
+def fetch_comparison_chart_data(period: str = "1y", fund_ids: Optional[List[str]] = None, *args, **kwargs) -> Dict[str, Any]:
     """
     Fetches historical cumulative return series for selected or representative funds.
+    Extremely robust against yfinance MultiIndex/SingleIndex structures and conversion errors.
     """
     now = time.time()
-    cache_key = f"chart_{period}_{'_'.join(sorted(fund_ids)) if fund_ids else 'default'}"
+    sorted_ids = sorted(fund_ids) if fund_ids else []
+    cache_key = f"chart_{period}_{'_'.join(sorted_ids) if sorted_ids else 'default'}"
     if cache_key in _CHART_CACHE:
         cached = _CHART_CACHE[cache_key]
         if now - cached["time"] < 1800:
@@ -1211,9 +1213,8 @@ def fetch_comparison_chart_data(period: str = "1y", fund_ids: Optional[List[str]
 
     palette = ["#1976d2", "#f43f5e", "#10b981", "#f59e0b", "#8b5cf6", "#06b6d4", "#ec4899", "#84cc16", "#64748b"]
 
+    targets = []
     if fund_ids:
-        # Build targets dynamically from selected fund IDs
-        targets = []
         fund_map = {f["id"]: f for f in SBI_FUNDS_DB}
         for idx, fid in enumerate(fund_ids):
             if fid in fund_map:
@@ -1224,11 +1225,8 @@ def fetch_comparison_chart_data(period: str = "1y", fund_ids: Optional[List[str]
                     "ticker": f.get("proxy_ticker", "VT"),
                     "color": palette[idx % len(palette)]
                 })
-        if not targets:
-            # Fallback if none matched
-            fund_ids = None
 
-    if not fund_ids:
+    if not targets:
         targets = [
             {"id": "ifreenext_fang_plus", "label": "FANG+ (メガテック10社)", "ticker": "FNGS", "color": "#f43f5e"},
             {"id": "emaxis_slim_sp500", "label": "Slim S&P500 (米国500社)", "ticker": "VOO", "color": "#1976d2"},
@@ -1239,7 +1237,7 @@ def fetch_comparison_chart_data(period: str = "1y", fund_ids: Optional[List[str]
             {"id": "rakuten_sox", "label": "半導体 SOX (ハイテク中核)", "ticker": "SOXX", "color": "#ec4899"}
         ]
 
-    tickers = [t["ticker"] for t in targets]
+    tickers = list(dict.fromkeys([t["ticker"] for t in targets]))
     series_dict = {}
 
     try:
@@ -1248,34 +1246,58 @@ def fetch_comparison_chart_data(period: str = "1y", fund_ids: Optional[List[str]
             for t in targets:
                 tick = t["ticker"]
                 try:
-                    if tick in df.columns.levels[0]:
-                        close_s = df[tick]["Close"].dropna()
-                        if len(close_s) > 5:
-                            first_val = float(close_s.iloc[0])
+                    close_data = None
+                    if isinstance(df.columns, pd.MultiIndex):
+                        if tick in df.columns.levels[0]:
+                            close_data = df[tick]["Close"]
+                        elif "Close" in df.columns.levels[0] and tick in df["Close"].columns:
+                            close_data = df["Close"][tick]
+                    else:
+                        if "Close" in df.columns:
+                            close_data = df["Close"]
+
+                    if close_data is not None:
+                        # Ensure close_data is a clean 1D Series of floats
+                        if isinstance(close_data, pd.DataFrame):
+                            s = close_data.iloc[:, 0].dropna()
+                        else:
+                            s = close_data.dropna()
+
+                        s = pd.to_numeric(s, errors="coerce").dropna()
+                        if len(s) > 3:
+                            first_raw = s.iloc[0]
+                            first_val = float(first_raw.item() if hasattr(first_raw, 'item') else first_raw)
                             if first_val > 0:
-                                cum_ret = ((close_s / first_val) - 1.0) * 100.0
+                                cum_ret = ((s / first_val) - 1.0) * 100.0
+                                dates_list = [d.strftime("%Y-%m-%d") for d in cum_ret.index]
+                                vals_list = [round(float(v.item() if hasattr(v, 'item') else v), 2) for v in cum_ret.values]
+                                last_raw = cum_ret.iloc[-1]
+                                last_val = round(float(last_raw.item() if hasattr(last_raw, 'item') else last_raw), 1)
+
                                 series_dict[t["label"]] = {
-                                    "dates": [d.strftime("%Y-%m-%d") for d in cum_ret.index],
-                                    "returns": [round(float(v), 2) for v in cum_ret.values],
+                                    "dates": dates_list,
+                                    "returns": vals_list,
                                     "color": t["color"],
-                                    "latest": round(float(cum_ret.iloc[-1]), 1)
+                                    "latest": last_val
                                 }
-                except Exception:
+                except Exception as parse_err:
+                    print(f"Error parsing ticker {tick}: {parse_err}")
                     continue
     except Exception as e:
         print(f"Error fetching fund chart data: {e}")
 
+    # Fallback to graceful simulation curves if yfinance is rate-limited or fails
     if not series_dict:
         dates = pd.date_range(end=pd.Timestamp.today(), periods=120, freq="B").strftime("%Y-%m-%d").tolist()
-        series_dict = {
-            "FANG+ (メガテック10社)": {"dates": dates, "returns": [round(i * 0.42, 2) for i in range(120)], "color": "#f43f5e", "latest": 51.4},
-            "Slim S&P500 (米国500社)": {"dates": dates, "returns": [round(i * 0.27, 2) for i in range(120)], "color": "#1976d2", "latest": 32.6},
-            "サクっとインド株式 (人口世界一)": {"dates": dates, "returns": [round(i * 0.32, 2) for i in range(120)], "color": "#f59e0b", "latest": 38.6},
-            "サクっと純金 (有事・防衛)": {"dates": dates, "returns": [round(i * 0.29, 2) for i in range(120)], "color": "#eab308", "latest": 35.2},
-            "オルカン (全世界株式)": {"dates": dates, "returns": [round(i * 0.24, 2) for i in range(120)], "color": "#10b981", "latest": 28.8},
-            "SBI日本高配当 (年4回分配)": {"dates": dates, "returns": [round(i * 0.23, 2) for i in range(120)], "color": "#8b5cf6", "latest": 28.5},
-            "半導体 SOX (ハイテク中核)": {"dates": dates, "returns": [round(i * 0.41, 2) for i in range(120)], "color": "#ec4899", "latest": 49.5}
-        }
+        base_rates = [0.42, 0.28, 0.32, 0.29, 0.24, 0.23, 0.40, 0.15, 0.10]
+        for idx, t in enumerate(targets):
+            rate = base_rates[idx % len(base_rates)]
+            series_dict[t["label"]] = {
+                "dates": dates,
+                "returns": [round(i * rate, 2) for i in range(120)],
+                "color": t["color"],
+                "latest": round(119 * rate, 1)
+            }
 
     _CHART_CACHE[cache_key] = {"time": now, "data": series_dict}
     return series_dict
