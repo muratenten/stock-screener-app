@@ -832,18 +832,52 @@ st.html(f"""
         visibility: hidden !important;
         display: none !important;
     }}
-    /* Keep sidebar and collapse / expand toggle buttons always accessible and on top */
+    /* Keep sidebar collapse / expand toggle buttons always accessible, fixed, and on top */
     [data-testid="stSidebarCollapseButton"],
-    [data-testid="stSidebarCollapsedControl"],
-    [data-testid="stExpandSidebarButton"],
-    header [data-testid="stSidebarCollapseButton"],
-    header [data-testid="stSidebarCollapsedControl"],
-    header [data-testid="stExpandSidebarButton"] {{
+    header [data-testid="stSidebarCollapseButton"] {{
         visibility: visible !important;
         display: inline-flex !important;
         opacity: 1 !important;
         pointer-events: auto !important;
         z-index: 1000000 !important;
+    }}
+    [data-testid="stExpandSidebarButton"],
+    button[data-testid="stExpandSidebarButton"],
+    [data-testid="stSidebarCollapsedControl"],
+    header [data-testid="stExpandSidebarButton"],
+    header [data-testid="stSidebarCollapsedControl"] {{
+        visibility: visible !important;
+        display: inline-flex !important;
+        opacity: 1 !important;
+        pointer-events: auto !important;
+        position: fixed !important;
+        top: 14px !important;
+        left: 14px !important;
+        z-index: 1000001 !important;
+        background-color: var(--secondary-background-color, #ffffff) !important;
+        color: var(--text-color, #1e293b) !important;
+        border: 1px solid var(--border-color, rgba(0,0,0,0.15)) !important;
+        border-radius: 8px !important;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.15) !important;
+        padding: 6px 10px !important;
+        min-width: 38px !important;
+        min-height: 38px !important;
+        align-items: center !important;
+        justify-content: center !important;
+        cursor: pointer !important;
+        transition: transform 0.15s ease, background-color 0.15s ease !important;
+    }}
+    [data-testid="stExpandSidebarButton"]:hover,
+    button[data-testid="stExpandSidebarButton"]:hover {{
+        background-color: var(--primary-color, #1976d2) !important;
+        color: #ffffff !important;
+        transform: scale(1.05) !important;
+    }}
+    [data-testid="stExpandSidebarButton"] svg,
+    button[data-testid="stExpandSidebarButton"] svg {{
+        fill: currentColor !important;
+        stroke: currentColor !important;
+        color: inherit !important;
     }}
     section[data-testid="stSidebar"],
     [data-testid="stSidebar"] {{
@@ -1146,12 +1180,34 @@ st.html(f"""
     [data-testid="stSidebar"] div[data-testid="stSegmentedControl"] [role="radiogroup"],
     [data-testid="stSidebar"] div[data-testid="stSegmentedControl"] > div {{
         flex-wrap: nowrap !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
     }}
     [data-testid="stSidebar"] div[data-testid="stSegmentedControl"] button {{
         flex: 1 1 0px !important;
         padding: 0 !important;
         min-height: 38px !important;
         height: 38px !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        text-align: center !important;
+    }}
+    [data-testid="stSidebar"] div[data-testid="stSegmentedControl"] button > div,
+    [data-testid="stSidebar"] div[data-testid="stSegmentedControl"] button [data-testid="stMarkdownContainer"],
+    [data-testid="stSidebar"] div[data-testid="stSegmentedControl"] button p,
+    [data-testid="stSidebar"] div[data-testid="stSegmentedControl"] button span {{
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        text-align: center !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        width: 100% !important;
+        height: 100% !important;
+        line-height: 1 !important;
+        font-size: 1.25rem !important;
     }}
     [data-testid="stSidebar"] div[data-testid="stSegmentedControl"] .lucide-wrapper,
     [data-testid="stSidebar"] div[data-testid="stSegmentedControl"] .feather-wrapper {{
@@ -1166,7 +1222,7 @@ st.html(f"""
     [data-testid="stSidebar"] div[data-testid="stSegmentedControl"] svg.lucide,
     [data-testid="stSidebar"] div[data-testid="stSegmentedControl"] .feather-icon {{
         vertical-align: middle !important;
-        margin: 0 !important;
+        margin: 0 auto !important;
         padding: 0 !important;
         transform: translateY(0) !important;
         width: 1.25rem !important;
@@ -2011,21 +2067,17 @@ st.components.v1.html("""
                     btn.style.setProperty('visibility', 'visible', 'important');
                     btn.style.setProperty('opacity', '1', 'important');
                     btn.style.setProperty('pointer-events', 'auto', 'important');
-                    btn.style.setProperty('z-index', '1000000', 'important');
+                    btn.style.setProperty('z-index', '1000001', 'important');
+                    if (btn.parentElement) {
+                        btn.parentElement.style.setProperty('display', 'inline-flex', 'important');
+                        btn.parentElement.style.setProperty('visibility', 'visible', 'important');
+                        btn.parentElement.style.setProperty('pointer-events', 'auto', 'important');
+                    }
                 });
                 doc.querySelectorAll('section[data-testid="stSidebar"]').forEach(sb => {
                     sb.style.setProperty('visibility', 'visible', 'important');
                     sb.style.setProperty('z-index', '999999', 'important');
                 });
-
-                // Auto-expand sidebar if closed on initial load
-                if (!window.__zen_sidebar_expanded) {
-                    const expandBtn = doc.querySelector('[data-testid="stExpandSidebarButton"]');
-                    if (expandBtn) {
-                        window.__zen_sidebar_expanded = true;
-                        expandBtn.click();
-                    }
-                }
             } catch(e) {}
         });
     }
@@ -6665,18 +6717,106 @@ if query_user == "default":
         visibility: hidden !important;
         display: none !important;
     }
-    /* Keep sidebar and collapse / expand toggle buttons always accessible and on top */
+    /* Keep sidebar collapse / expand toggle buttons always accessible, fixed, and on top in portal */
     [data-testid="stSidebarCollapseButton"],
-    [data-testid="stSidebarCollapsedControl"],
-    [data-testid="stExpandSidebarButton"],
-    header [data-testid="stSidebarCollapseButton"],
-    header [data-testid="stSidebarCollapsedControl"],
-    header [data-testid="stExpandSidebarButton"] {
+    header [data-testid="stSidebarCollapseButton"] {
         visibility: visible !important;
         display: inline-flex !important;
         opacity: 1 !important;
         pointer-events: auto !important;
         z-index: 1000000 !important;
+    }
+    [data-testid="stExpandSidebarButton"],
+    button[data-testid="stExpandSidebarButton"],
+    [data-testid="stSidebarCollapsedControl"],
+    header [data-testid="stExpandSidebarButton"],
+    header [data-testid="stSidebarCollapsedControl"] {
+        visibility: visible !important;
+        display: inline-flex !important;
+        opacity: 1 !important;
+        pointer-events: auto !important;
+        position: fixed !important;
+        top: 14px !important;
+        left: 14px !important;
+        z-index: 1000001 !important;
+        background-color: var(--secondary-background-color, #ffffff) !important;
+        color: var(--text-color, #1e293b) !important;
+        border: 1px solid var(--border-color, rgba(0,0,0,0.15)) !important;
+        border-radius: 8px !important;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.15) !important;
+        padding: 6px 10px !important;
+        min-width: 38px !important;
+        min-height: 38px !important;
+        align-items: center !important;
+        justify-content: center !important;
+        cursor: pointer !important;
+        transition: transform 0.15s ease, background-color 0.15s ease !important;
+    }
+    [data-testid="stExpandSidebarButton"]:hover,
+    button[data-testid="stExpandSidebarButton"]:hover {
+        background-color: var(--primary-color, #1976d2) !important;
+        color: #ffffff !important;
+        transform: scale(1.05) !important;
+    }
+    [data-testid="stExpandSidebarButton"] svg,
+    button[data-testid="stExpandSidebarButton"] svg {
+        fill: currentColor !important;
+        stroke: currentColor !important;
+        color: inherit !important;
+    }
+
+    /* Sidebar-specific Segmented Control in Portal (Perfect center alignment for Theme & Layout emojis) */
+    [data-testid="stSidebar"] div[data-testid="stSegmentedControl"] [role="radiogroup"],
+    [data-testid="stSidebar"] div[data-testid="stSegmentedControl"] > div {
+        flex-wrap: nowrap !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+    }
+    [data-testid="stSidebar"] div[data-testid="stSegmentedControl"] button {
+        flex: 1 1 0px !important;
+        padding: 0 !important;
+        min-height: 38px !important;
+        height: 38px !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        text-align: center !important;
+    }
+    [data-testid="stSidebar"] div[data-testid="stSegmentedControl"] button > div,
+    [data-testid="stSidebar"] div[data-testid="stSegmentedControl"] button [data-testid="stMarkdownContainer"],
+    [data-testid="stSidebar"] div[data-testid="stSegmentedControl"] button p,
+    [data-testid="stSidebar"] div[data-testid="stSegmentedControl"] button span {
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        text-align: center !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        width: 100% !important;
+        height: 100% !important;
+        line-height: 1 !important;
+        font-size: 1.25rem !important;
+    }
+    [data-testid="stSidebar"] div[data-testid="stSegmentedControl"] .lucide-wrapper,
+    [data-testid="stSidebar"] div[data-testid="stSegmentedControl"] .feather-wrapper {
+        margin: 0 !important;
+        padding: 0 !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        vertical-align: middle !important;
+        line-height: 1 !important;
+    }
+    [data-testid="stSidebar"] div[data-testid="stSegmentedControl"] svg.lucide,
+    [data-testid="stSidebar"] div[data-testid="stSegmentedControl"] .feather-icon {
+        vertical-align: middle !important;
+        margin: 0 auto !important;
+        padding: 0 !important;
+        transform: translateY(0) !important;
+        width: 1.25rem !important;
+        height: 1.25rem !important;
+        display: inline-block !important;
     }
     section[data-testid="stSidebar"],
     [data-testid="stSidebar"] {
@@ -6871,21 +7011,17 @@ if query_user == "default":
                     btn.style.setProperty('visibility', 'visible', 'important');
                     btn.style.setProperty('opacity', '1', 'important');
                     btn.style.setProperty('pointer-events', 'auto', 'important');
-                    btn.style.setProperty('z-index', '1000000', 'important');
+                    btn.style.setProperty('z-index', '1000001', 'important');
+                    if (btn.parentElement) {
+                        btn.parentElement.style.setProperty('display', 'inline-flex', 'important');
+                        btn.parentElement.style.setProperty('visibility', 'visible', 'important');
+                        btn.parentElement.style.setProperty('pointer-events', 'auto', 'important');
+                    }
                 });
                 doc.querySelectorAll('section[data-testid="stSidebar"]').forEach(sb => {
                     sb.style.setProperty('visibility', 'visible', 'important');
                     sb.style.setProperty('z-index', '999999', 'important');
                 });
-
-                // Auto-expand sidebar if closed on initial load
-                if (!window.__zen_portal_sidebar_expanded) {
-                    const expandBtn = doc.querySelector('[data-testid="stExpandSidebarButton"]');
-                    if (expandBtn) {
-                        window.__zen_portal_sidebar_expanded = true;
-                        expandBtn.click();
-                    }
-                }
             } catch(e){}
         });
     }
