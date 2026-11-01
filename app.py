@@ -9308,18 +9308,34 @@ div[class*="st-key-sbi_fund_category_filter"] button span {
         sort_by=sort_choice
     )
 
-    st.html(f'''<div style="display: flex; justify-content: space-between; align-items: flex-end; margin: 18px 0 12px 0;">
+    # Comparison list state initialization
+    if "fund_compare_list" not in st.session_state:
+        st.session_state["fund_compare_list"] = ["emaxis_slim_all_country", "emaxis_slim_sp500"]
+    compare_list = st.session_state["fund_compare_list"]
+
+    cmp_count = len(compare_list)
+    cmp_badge = f"<span style='background: var(--mui-primary, #1976d2); color: #fff; padding: 2px 8px; border-radius: 12px; font-weight: 700; font-size: 0.78rem;' class='tabular-nums'>{cmp_count}本</span>"
+
+    st.html(f'''<div id="fund_screening_top" style="scroll-margin-top: 100px;"></div>
+<div style="display: flex; justify-content: space-between; align-items: flex-end; margin: 18px 0 10px 0;">
 <div>
 <h3 style="margin: 0 0 2px 0; font-size: 1.25rem; font-weight: 700; color: var(--text-color);">厳選投資信託スクリーニング結果 ({len(filtered_funds)}本)</h3>
 <div style="font-size: 0.8rem; color: var(--secondary-text-color);">ジャンルや条件を選択するとリアルタイムに即時絞り込まれます</div>
 </div>
 <div style="font-size: 0.84rem; font-weight: 600; color: var(--mui-primary, #1976d2);">該当: <span style="font-size: 1.15rem; font-weight: 700;" class="tabular-nums">{len(filtered_funds)}</span> / 全 {len(sfs.SBI_FUNDS_DB)} 本</div>
-</div>''')
+</div>
 
-    # Comparison list state initialization
-    if "fund_compare_list" not in st.session_state:
-        st.session_state["fund_compare_list"] = ["emaxis_slim_all_country", "emaxis_slim_sp500"]
-    compare_list = st.session_state["fund_compare_list"]
+<div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; margin: 4px 0 16px 0; padding: 10px 14px; background: rgba(25, 118, 210, 0.04); border: 1px solid rgba(25, 118, 210, 0.18); border-radius: 8px;">
+<div style="display: flex; align-items: center; gap: 8px; font-size: 0.82rem; color: var(--text-color);">
+<span>📊 <b>現在比較中:</b> {cmp_badge}</span>
+<span style="color: var(--secondary-text-color); font-size: 0.76rem;">（下の各銘柄で『比較リストに追加』できます）</span>
+</div>
+<a href="#fund_comparison_section" 
+   onclick="(parent.document||document).getElementById('fund_comparison_section')?.scrollIntoView({{behavior:'smooth', block:'start'}}); return true;"
+   style="display: inline-flex; align-items: center; gap: 6px; background: #1976d2; color: #ffffff !important; text-decoration: none !important; padding: 7px 16px; border-radius: 6px; font-weight: 700; font-size: 0.82rem; box-shadow: 0 2px 5px rgba(25,118,210,0.25); cursor: pointer; transition: background 0.15s ease;">
+   <span>📊 比較リスト & 徹底比較表へジャンプ ⬇️</span>
+</a>
+</div>''')
 
     if not filtered_funds:
         st.info("条件に一致する投資信託が見つかりませんでした。条件を変更して再検索してください。")
@@ -9542,7 +9558,7 @@ div[class*="st-key-sbi_fund_category_filter"] button span {
                         st.plotly_chart(fig_inline, use_container_width=True, config=PLOTLY_CONFIG)
 
     # 4. Dedicated Comparison Section for Selected Funds (At the bottom of the list)
-    st.markdown("<div style='margin-top: 40px; margin-bottom: 24px; border-top: 2px dashed var(--border-color);'></div>", unsafe_allow_html=True)
+    st.markdown("<div id='fund_comparison_section' style='margin-top: 40px; margin-bottom: 24px; border-top: 2px dashed var(--border-color); scroll-margin-top: 80px;'></div>", unsafe_allow_html=True)
     st.markdown("### 📊 選択した銘柄の累積リターン比較 & 徹底比較表")
     
     selected_comp_funds = [sfs.get_fund_details(fid) for fid in compare_list if sfs.get_fund_details(fid)]
@@ -9553,7 +9569,10 @@ div[class*="st-key-sbi_fund_category_filter"] button span {
         # Comparison Header Bar with Individual Delete Buttons and Clear Button
         col_c_head_txt, col_c_head_clr = st.columns([3.2, 1.1]) if not is_mobile else (st.container(), st.container())
         with col_c_head_txt:
-            st.markdown(f"<div style='font-size: 0.9rem; font-weight: 700; color: var(--text-color); margin-bottom: 6px;'>現在比較中の銘柄 ({len(selected_comp_funds)}本) <span style='font-size: 0.76rem; font-weight: normal; color: var(--secondary-text-color);'>※クリックで個別削除できます</span></div>", unsafe_allow_html=True)
+            st.markdown(f"""<div style='display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 6px; margin-bottom: 6px;'>
+<div style='font-size: 0.9rem; font-weight: 700; color: var(--text-color);'>現在比較中の銘柄 ({len(selected_comp_funds)}本) <span style='font-size: 0.76rem; font-weight: normal; color: var(--secondary-text-color);'>※クリックで個別削除できます</span></div>
+<a href="#fund_screening_top" onclick="(parent.document||document).getElementById('fund_screening_top')?.scrollIntoView({{behavior:'smooth', block:'start'}}); return true;" style="font-size: 0.78rem; font-weight: 600; color: var(--mui-primary, #1976d2); text-decoration: none; cursor: pointer;">⬆️ スクリーニング一覧へ戻る</a>
+</div>""", unsafe_allow_html=True)
         with col_c_head_clr:
             if st.button("🗑️ 比較リストを空にする", key="btn_clear_comp_list", use_container_width=True):
                 st.session_state["fund_compare_list"] = []
