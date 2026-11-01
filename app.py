@@ -23,25 +23,40 @@ PLOTLY_CONFIG = {
     'modeBarButtons': [['zoomIn2d', 'zoomOut2d', 'resetScale2d']]
 }
 
-# UI theme and mode settings
-st.sidebar.markdown("### 📱 表示・デザイン設定")
-ui_mode_label = st.sidebar.radio(
-    "レイアウトの最適化",
-    options=["PC版 (マルチカラム)", "スマホ版 (縦並び)"],
-    index=0 if st.session_state.get('ui_mode', 'PC') == 'PC' else 1,
-    key="sidebar_ui_mode_selector"
-)
-st.session_state['ui_mode'] = 'PC' if ui_mode_label == "PC版 (マルチカラム)" else 'スマホ'
-is_mobile = st.session_state.get('ui_mode', 'PC') == 'スマホ'
+# UI theme and mode settings (Material-UI v5 Design System)
+with st.sidebar:
+    st.markdown("### 🎨 デザイン・テーマ設定")
+    
+    # Material-UI Theme Selector (Light / Dark)
+    curr_theme = st.session_state.get('color_theme', 'light')
+    theme_default = "☀️" if curr_theme == 'light' else "🌙"
+    
+    selected_theme = st.segmented_control(
+        "テーマモード (Material-UI)",
+        options=["☀️", "🌙"],
+        default=theme_default,
+        key="mui_theme_selector",
+        help="ライトモード / ダークモードを瞬時に切り替えます"
+    )
+    if selected_theme:
+        st.session_state['color_theme'] = 'dark' if selected_theme == "🌙" else 'light'
+    is_dark = st.session_state.get('color_theme', 'light') == 'dark'
 
-theme_label = st.sidebar.radio(
-    "表示テーマ",
-    options=["ライトモード", "ダークモード"],
-    index=0 if st.session_state.get('color_theme', 'light') == 'light' else 1,
-    key="sidebar_color_theme_selector"
-)
-st.session_state['color_theme'] = 'light' if theme_label == "ライトモード" else 'dark'
-is_dark = st.session_state.get('color_theme', 'light') == 'dark'
+    # Layout optimization
+    curr_ui = st.session_state.get('ui_mode', 'PC')
+    ui_default = "💻" if curr_ui == 'PC' else "📱"
+    selected_ui = st.segmented_control(
+        "画面レイアウト",
+        options=["💻", "📱"],
+        default=ui_default,
+        key="mui_layout_selector",
+        help="PC版（マルチカラム）/ スマホ版（縦並び）を切り替えます"
+    )
+    if selected_ui:
+        st.session_state['ui_mode'] = 'スマホ' if selected_ui == "📱" else 'PC'
+    is_mobile = st.session_state.get('ui_mode', 'PC') == 'スマホ'
+    
+    st.markdown("<hr style='margin: 12px 0 16px 0; border: none; border-top: 1px solid var(--border-color);'>", unsafe_allow_html=True)
 
 # Default Firebase configuration fallback
 DEFAULT_FIREBASE_PROJECT_ID = "zenstock-screener"
@@ -684,20 +699,34 @@ if logo_data_uri:
 
 # Inject premium custom CSS dynamically based on theme selection
 # Inject Material-UI (MUI v5) custom CSS dynamically based on theme selection
+# Official MUI Dark Mode standard: https://mui.com/material-ui/customization/dark-mode/
 bg_color = "#121212" if is_dark else "#f4f6f8" # MUI canvas background
-card_bg = "#1e1e1e" if is_dark else "#ffffff" # MUI Paper surface
-text_color = "rgba(255, 255, 255, 0.87)" if is_dark else "rgba(0, 0, 0, 0.87)" # MUI Text Primary
-secondary_text_color = "rgba(255, 255, 255, 0.60)" if is_dark else "rgba(0, 0, 0, 0.60)" # MUI Text Secondary
-primary_color = "#90caf9" if is_dark else "#1976d2" # MUI Primary Blue
-primary_dark = "#42a5f5" if is_dark else "#1565c0"
+card_bg = "#1e1e1e" if is_dark else "#ffffff" # MUI Paper surface (Elevation 1)
+elevation_2 = "#242424" if is_dark else "#f8fafc" # MUI Paper surface (Elevation 2)
+elevation_3 = "#272727" if is_dark else "#f1f5f9" # MUI Paper surface (Elevation 3)
+card_sub_bg = "rgba(255, 255, 255, 0.06)" if is_dark else "rgba(0, 0, 0, 0.02)"
+card_sub_border = "rgba(255, 255, 255, 0.12)" if is_dark else "rgba(0, 0, 0, 0.06)"
+
+# Pure white text in dark mode for maximum contrast and readability
+text_color = "#ffffff" if is_dark else "rgba(0, 0, 0, 0.87)"
+secondary_text_color = "rgba(255, 255, 255, 0.85)" if is_dark else "rgba(0, 0, 0, 0.60)"
+
+# Desaturated, elegant primary colors for dark mode (non-glaring, eye-friendly slate blue)
+primary_color = "#4a7bb0" if is_dark else "#1976d2"
+primary_dark = "#3b6594" if is_dark else "#1565c0"
+active_btn_bg = "#253b5c" if is_dark else "#1976d2"
+active_btn_border = "#415f85" if is_dark else "#1565c0"
+primary_sub_bg = "rgba(74, 123, 176, 0.16)" if is_dark else "rgba(25, 118, 210, 0.04)"
+primary_sub_border = "rgba(74, 123, 176, 0.35)" if is_dark else "rgba(25, 118, 210, 0.18)"
+
 border_color = "rgba(255, 255, 255, 0.12)" if is_dark else "rgba(0, 0, 0, 0.12)" # MUI Divider
 unselected_btn_bg = "#1e1e1e" if is_dark else "#ffffff"
 title_bg = "linear-gradient(135deg, #1e1e1e 0%, #121212 100%)" if is_dark else "linear-gradient(135deg, #ffffff 0%, #f4f6f8 100%)"
 title_border = "rgba(255, 255, 255, 0.12)" if is_dark else "rgba(0, 0, 0, 0.08)"
-title_text_color = "#90caf9" if is_dark else "#1976d2"
-subtitle_text_color = "rgba(255, 255, 255, 0.60)" if is_dark else "rgba(0, 0, 0, 0.60)"
+title_text_color = "#6ba4e8" if is_dark else "#1976d2"
+subtitle_text_color = "rgba(255, 255, 255, 0.85)" if is_dark else "rgba(0, 0, 0, 0.60)"
 
-# Unified Financial Gain/Loss Colors
+# Unified Financial Gain/Loss Colors (Preserved authentic red/green)
 color_gain = "#34d399" if is_dark else "#059669" # Rich Emerald Green
 color_gain_bg = "rgba(16, 185, 129, 0.22)" if is_dark else "rgba(16, 185, 129, 0.12)"
 color_gain_border = "rgba(52, 211, 153, 0.35)" if is_dark else "rgba(16, 185, 129, 0.28)"
@@ -707,14 +736,16 @@ color_loss_bg = "rgba(239, 68, 68, 0.22)" if is_dark else "rgba(239, 68, 68, 0.1
 color_loss_border = "rgba(248, 113, 113, 0.35)" if is_dark else "rgba(239, 68, 68, 0.28)"
 
 # Theme-aware styling for selectbox tags (pills) to ensure excellent contrast
-tag_bg = "#1976d2"
-tag_border = "#1565c0"
+tag_bg = "#3b6594" if is_dark else "#1976d2"
+tag_border = "#415f85" if is_dark else "#1565c0"
 tag_text = "#ffffff"
 
 # Specific colors for Glide Data Grid (st.dataframe)
 gdg_bg_cell = "#121212" if is_dark else "#ffffff"
 gdg_bg_header = "#1e1e1e" if is_dark else "#f8fafc"
 gdg_bg_cell_hover = "#242526" if is_dark else "#f4f6f8"
+gdg_bg_header_hover = "#242526" if is_dark else "#f1f5f9"
+dataframe_filter = "invert(0.94) hue-rotate(180deg)" if is_dark else "none"
 gdg_bg_header_hover = "#242526" if is_dark else "#f1f5f9"
 dataframe_filter = "invert(0.94) hue-rotate(180deg)" if is_dark else "none"
 
@@ -808,6 +839,14 @@ st.html(f"""
         --mui-text-secondary: {secondary_text_color};
         --mui-divider: {border_color};
         --mui-paper: {card_bg};
+        --card-sub-bg: {card_sub_bg};
+        --card-sub-border: {card_sub_border};
+        --primary-sub-bg: {primary_sub_bg};
+        --primary-sub-border: {primary_sub_border};
+        --mui-active-bg: {active_btn_bg};
+        --mui-active-border: {active_btn_border};
+        --mui-elevation-2: {elevation_2};
+        --mui-elevation-3: {elevation_3};
         --mui-shadow-1: 0px 2px 1px -1px rgba(0,0,0,0.2), 0px 1px 1px 0px rgba(0,0,0,0.14), 0px 1px 3px 0px rgba(0,0,0,0.12);
         --mui-shadow-2: 0px 3px 1px -2px rgba(0,0,0,0.2), 0px 2px 2px 0px rgba(0,0,0,0.14), 0px 1px 5px 0px rgba(0,0,0,0.12);
         --mui-shadow-3: 0px 3px 3px -2px rgba(0,0,0,0.2), 0px 3px 4px 0px rgba(0,0,0,0.14), 0px 1px 8px 0px rgba(0,0,0,0.12);
@@ -954,6 +993,143 @@ st.html(f"""
     .card:hover {{
         box-shadow: var(--mui-shadow-3);
         transform: translateY(-2px);
+    }}
+
+    /* Streamlit Bordered Container (MUI Paper Elevation 1) */
+    div[data-testid="stVerticalBlockBorderWrapper"] {{
+        background-color: var(--secondary-background-color) !important;
+        border: 1px solid var(--border-color) !important;
+        border-radius: var(--mui-radius-md) !important;
+        box-shadow: var(--mui-shadow-1) !important;
+        transition: box-shadow 250ms ease, transform 200ms ease !important;
+    }}
+    div[data-testid="stVerticalBlockBorderWrapper"]:hover {{
+        box-shadow: var(--mui-shadow-2) !important;
+    }}
+
+    /* Form & Control Widget Labels (全体集合の選択、絞り込み、社会情勢テーマ選択などの見出し) */
+    div[data-testid="stWidgetLabel"],
+    label[data-testid="stWidgetLabel"],
+    div[data-testid="stWidgetLabel"] p,
+    div[data-testid="stWidgetLabel"] span,
+    div[data-testid="stWidgetLabel"] label,
+    label[data-baseweb="label"],
+    label[data-baseweb="label"] p,
+    .stSelectbox label,
+    .stSelectbox label p,
+    .stMultiSelect label,
+    .stMultiSelect label p,
+    .stRadio label,
+    .stRadio label p,
+    .stTextInput label,
+    .stNumberInput label,
+    .stSlider label,
+    div[data-testid="stSegmentedControl"] > label,
+    div[data-testid="stSegmentedControl"] > label p,
+    div[data-testid="stSegmentedControl"] [data-testid="stWidgetLabel"] p {{
+        color: var(--text-color) !important;
+        font-weight: 600 !important;
+        font-size: 0.88rem !important;
+        letter-spacing: 0.015em !important;
+    }}
+
+    /* MUI Segmented Control (Toggle Button Group) Base */
+    div[data-testid="stSegmentedControl"] {{
+        background: var(--card-sub-bg) !important;
+        border: 1px solid var(--border-color) !important;
+        border-radius: var(--mui-radius-md) !important;
+        padding: 3px !important;
+    }}
+    div[data-testid="stSegmentedControl"] [role="radiogroup"],
+    div[data-testid="stSegmentedControl"] > div {{
+        display: flex !important;
+        align-items: center !important;
+        flex-wrap: wrap !important;
+        gap: 4px !important;
+    }}
+    div[data-testid="stSegmentedControl"] button {{
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        text-align: center !important;
+        border-radius: 6px !important;
+        font-size: 0.84rem !important;
+        font-weight: 600 !important;
+        padding: 6px 14px !important;
+        min-height: 36px !important;
+        line-height: 1.25 !important;
+        white-space: nowrap !important;
+        border: 1px solid transparent !important;
+        transition: all 0.2s ease !important;
+        flex: 0 0 auto !important;
+    }}
+    div[data-testid="stSegmentedControl"] button div,
+    div[data-testid="stSegmentedControl"] button p,
+    div[data-testid="stSegmentedControl"] button span {{
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        line-height: 1.25 !important;
+        margin: 0 !important;
+    }}
+    div[data-testid="stSegmentedControl"] button[aria-checked="true"] {{
+        background-color: var(--mui-active-bg) !important;
+        color: #ffffff !important;
+        border: 1px solid var(--mui-active-border) !important;
+        box-shadow: {'none' if is_dark else '0 1px 3px rgba(0,0,0,0.18)'} !important;
+    }}
+    div[data-testid="stSegmentedControl"] button[aria-checked="true"] svg.lucide,
+    div[data-testid="stSegmentedControl"] button[aria-checked="true"] .feather-icon {{
+        stroke: #ffffff !important;
+    }}
+    div[data-testid="stSegmentedControl"] button[aria-checked="false"] {{
+        background-color: transparent !important;
+        color: var(--secondary-text-color) !important;
+        border: 1px solid transparent !important;
+    }}
+    div[data-testid="stSegmentedControl"] button[aria-checked="false"] svg.lucide,
+    div[data-testid="stSegmentedControl"] button[aria-checked="false"] .feather-icon {{
+        stroke: var(--secondary-text-color) !important;
+    }}
+    div[data-testid="stSegmentedControl"] button[aria-checked="false"]:hover {{
+        color: var(--text-color) !important;
+        background-color: {'rgba(255, 255, 255, 0.08)' if is_dark else 'rgba(0, 0, 0, 0.04)'} !important;
+    }}
+    div[data-testid="stSegmentedControl"] button[aria-checked="false"]:hover svg.lucide,
+    div[data-testid="stSegmentedControl"] button[aria-checked="false"]:hover .feather-icon {{
+        stroke: var(--text-color) !important;
+    }}
+
+    /* Sidebar-specific Segmented Control (Square icon toggle buttons for Theme & Layout) */
+    [data-testid="stSidebar"] div[data-testid="stSegmentedControl"] [role="radiogroup"],
+    [data-testid="stSidebar"] div[data-testid="stSegmentedControl"] > div {{
+        flex-wrap: nowrap !important;
+    }}
+    [data-testid="stSidebar"] div[data-testid="stSegmentedControl"] button {{
+        flex: 1 1 0px !important;
+        padding: 0 !important;
+        min-height: 38px !important;
+        height: 38px !important;
+    }}
+    [data-testid="stSidebar"] div[data-testid="stSegmentedControl"] .lucide-wrapper,
+    [data-testid="stSidebar"] div[data-testid="stSegmentedControl"] .feather-wrapper {{
+        margin: 0 !important;
+        padding: 0 !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        vertical-align: middle !important;
+        line-height: 1 !important;
+    }}
+    [data-testid="stSidebar"] div[data-testid="stSegmentedControl"] svg.lucide,
+    [data-testid="stSidebar"] div[data-testid="stSegmentedControl"] .feather-icon {{
+        vertical-align: middle !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        transform: translateY(0) !important;
+        width: 1.25rem !important;
+        height: 1.25rem !important;
+        display: inline-block !important;
     }}
     .metric-title {{
         color: {secondary_text_color};
@@ -1165,15 +1341,15 @@ st.html(f"""
     div.stButton > button[data-testid="stBaseButton-primary"],
     div.stButton > button.st-emotion-cache-16idsys,
     div.stButton > button.st-emotion-cache-1f81d1z {{
-        background-color: {primary_color} !important;
-        background: {primary_color} !important;
+        background-color: {active_btn_bg if is_dark else primary_color} !important;
+        background: {active_btn_bg if is_dark else primary_color} !important;
         color: #ffffff !important;
         font-weight: 500 !important;
         font-size: 0.875rem !important;
         letter-spacing: 0.02857em !important;
-        border: none !important;
+        border: 1px solid {active_btn_border if is_dark else 'transparent'} !important;
         border-radius: var(--mui-radius-sm) !important;
-        box-shadow: var(--mui-shadow-2) !important;
+        box-shadow: {'none' if is_dark else 'var(--mui-shadow-2)'} !important;
         outline: none !important;
         transition: background-color 250ms cubic-bezier(0.4, 0, 0.2, 1) 0ms, box-shadow 250ms cubic-bezier(0.4, 0, 0.2, 1) 0ms, border-color 250ms cubic-bezier(0.4, 0, 0.2, 1) 0ms !important;
         padding: 8px 22px !important;
@@ -1186,7 +1362,7 @@ st.html(f"""
         background-color: {primary_dark} !important;
         background: {primary_dark} !important;
         color: #ffffff !important;
-        box-shadow: var(--mui-shadow-4) !important;
+        box-shadow: {'none' if is_dark else 'var(--mui-shadow-4)'} !important;
         transform: none !important;
     }}
     [data-testid="stBaseButton-primary"] p,
@@ -1227,6 +1403,11 @@ st.html(f"""
         border: 1px solid {'rgba(255, 255, 255, 0.23)' if is_dark else 'rgba(0, 0, 0, 0.23)'} !important;
         border-radius: var(--mui-radius-sm) !important;
         transition: border-color 200ms cubic-bezier(0.0, 0, 0.2, 1) 0ms !important;
+    }}
+    div[data-baseweb="select"] > div div,
+    div[data-baseweb="select"] > div span,
+    div[data-baseweb="select"] [role="combobox"] {{
+        color: var(--text-color) !important;
     }}
     div[data-baseweb="select"] > div:hover {{
         border-color: {'rgba(255, 255, 255, 0.87)' if is_dark else 'rgba(0, 0, 0, 0.87)'} !important;
@@ -1554,11 +1735,15 @@ st.components.v1.html("""
         'cpu': '<svg class="lucide lucide-cpu feather-icon" viewBox="0 0 24 24"><rect width="16" height="16" x="4" y="4" rx="2"></rect><rect width="6" height="6" x="9" y="9" rx="1"></rect><path d="M15 2v2"></path><path d="M15 20v2"></path><path d="M2 15h2"></path><path d="M2 9h2"></path><path d="M20 15h2"></path><path d="M20 9h2"></path><path d="M9 2v2"></path><path d="M9 20v2"></path></svg>',
         'cloud': '<svg class="lucide lucide-cloud feather-icon" viewBox="0 0 24 24"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"></path></svg>',
         'anchor': '<svg class="lucide lucide-anchor feather-icon" viewBox="0 0 24 24"><circle cx="12" cy="5" r="3"></circle><line x1="12" x2="12" y1="22" y2="8"></line><path d="M5 12H2a10 10 0 0 0 20 0h-3"></path></svg>',
-        'shield-check': '<svg class="lucide lucide-shield-check feather-icon" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path><path d="m9 12 2 2 4-4"></path></svg>'
+        'shield-check': '<svg class="lucide lucide-shield-check feather-icon" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path><path d="m9 12 2 2 4-4"></path></svg>',
+        'sun': '<svg class="lucide lucide-sun feather-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2"></path><path d="M12 20v2"></path><path d="m4.93 4.93 1.41 1.41"></path><path d="m17.66 17.66 1.41 1.41"></path><path d="M2 12h2"></path><path d="M20 12h2"></path><path d="m6.34 17.66-1.41 1.41"></path><path d="m19.07 4.93-1.41 1.41"></path></svg>',
+        'moon': '<svg class="lucide lucide-moon feather-icon" viewBox="0 0 24 24"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"></path></svg>'
     };
 
     // Full mapping of emojis to Lucide icons
     const emojiLucideMap = {
+        '☀️': 'sun', '☀': 'sun',
+        '🌙': 'moon',
         '🇯🇵': 'flag',
         '🇺🇸': 'flag',
         '⏳': 'hourglass',
@@ -6479,10 +6664,14 @@ if query_user == "default":
         'crown': '<svg class="lucide lucide-crown feather-icon" viewBox="0 0 24 24"><path d="M11.562 3.266a.5.5 0 0 1 .876 0L15.39 8.87a1 1 0 0 0 1.516.294L21.183 5.5a.5.5 0 0 1 .798.519l-2.834 10.246a1 1 0 0 1-.956.735H5.809a1 1 0 0 1-.956-.735L2.019 6.019a.5.5 0 0 1 .798-.519l4.276 3.664a1 1 0 0 0 1.516-.294z"></path><path d="M5 21h14"></path></svg>',
         'lightbulb': '<svg class="lucide lucide-lightbulb feather-icon" viewBox="0 0 24 24"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"></path><path d="M9 18h6"></path><path d="M10 22h4"></path></svg>',
         'trending-up': '<svg class="lucide lucide-trending-up feather-icon" viewBox="0 0 24 24"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"></polyline><polyline points="16 7 22 7 22 13"></polyline></svg>',
-        'settings': '<svg class="lucide lucide-settings feather-icon" viewBox="0 0 24 24"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path><circle cx="12" cy="12" r="3"></circle></svg>'
+        'settings': '<svg class="lucide lucide-settings feather-icon" viewBox="0 0 24 24"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path><circle cx="12" cy="12" r="3"></circle></svg>',
+        'sun': '<svg class="lucide lucide-sun feather-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2"></path><path d="M12 20v2"></path><path d="m4.93 4.93 1.41 1.41"></path><path d="m17.66 17.66 1.41 1.41"></path><path d="M2 12h2"></path><path d="M20 12h2"></path><path d="m6.34 17.66-1.41 1.41"></path><path d="m19.07 4.93-1.41 1.41"></path></svg>',
+        'moon': '<svg class="lucide lucide-moon feather-icon" viewBox="0 0 24 24"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"></path></svg>'
     };
 
     const emojiLucideMap = {
+        '☀️': 'sun', '☀': 'sun',
+        '🌙': 'moon',
         '🔐': 'lock',
         '🔒': 'lock',
         '🔑': 'key',
@@ -9054,16 +9243,17 @@ with tab_fund:
         </div>
     </div>
     
-    <div class="card" style="padding: 14px 18px; margin-bottom: 20px; background: rgba(25, 118, 210, 0.04); border-left: 4px solid var(--mui-primary, #1976d2); border-radius: 8px;">
-        <div style="font-weight: 700; font-size: 0.95rem; color: var(--text-color); margin-bottom: 6px; display: flex; align-items: center; gap: 6px;">
-            <span>💡 「投資信託の銘柄」と「パック」の違いとは？</span>
+    <div class="card" style="padding: 14px 18px; margin-bottom: 20px; background: var(--primary-sub-bg); border-left: 4px solid var(--mui-primary); border: 1px solid var(--border-color); border-radius: 8px;">
+        <div style="font-weight: 700; font-size: 0.95rem; color: var(--text-color); margin-bottom: 8px; display: flex; align-items: center; gap: 8px;">
+            <span style="font-size: 1.15rem; display: inline-flex; align-items: center; justify-content: center; line-height: 1;">💡</span>
+            <span>「投資信託の銘柄」と「パック」の違いとは？</span>
         </div>
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px; font-size: 0.85rem; color: var(--secondary-text-color); line-height: 1.55;">
-            <div style="background: rgba(255, 255, 255, 0.7); padding: 10px 12px; border-radius: 6px; border: 1px solid rgba(0,0,0,0.06);">
-                <b style="color: var(--mui-primary, #1976d2);">① 投資信託の銘柄（単体ファンド）</b><br>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px; font-size: 0.85rem; color: var(--text-color); line-height: 1.55;">
+            <div style="background: var(--card-sub-bg); padding: 12px 14px; border-radius: 6px; border: 1px solid var(--border-color); color: var(--text-color);">
+                <b style="color: var(--mui-primary);">① 投資信託の銘柄（単体ファンド）</b><br>
                 「オルカン」や「S&P500」「FANG+」など、<b>1本ずつ独立した商品（単品）</b>のことです。国内に約6,000本、SBI証券に約2,600本ありますが、手数料が高く損しやすい地雷商品を除き、本アプリでは<b>本当に買う価値のある実績上位46本</b>を厳選搭載しています。
             </div>
-            <div style="background: rgba(255, 255, 255, 0.7); padding: 10px 12px; border-radius: 6px; border: 1px solid rgba(0,0,0,0.06);">
+            <div style="background: var(--card-sub-bg); padding: 12px 14px; border-radius: 6px; border: 1px solid var(--border-color); color: var(--text-color);">
                 <b style="color: #f59e0b;">② パック（最適ポートフォリオ組み合わせ）</b><br>
                 「株＋金」「米国＋インド」のように、<b>複数の優良銘柄を黄金比率でブレンドした買い方のセット（コース料理）</b>のことです。1銘柄だけに集中せず、下落耐性と高成長を両立できるようAIが理想の配分率をパッケージ化しています。
             </div>
@@ -9369,31 +9559,31 @@ div[class*="st-key-sbi_fund_category_filter"] button span {
 <td style="padding: 10px 8px; text-align: right; color: var(--color-loss, #f43f5e);" class="tabular-nums">{f['max_drawdown']:.1f}%</td>
 </tr>''')
 
-        st.html(f'''<div style="background: rgba(25, 118, 210, 0.04); border: 1px solid rgba(25, 118, 210, 0.2); border-radius: 6px; padding: 7px 14px; margin-bottom: 10px; font-size: 0.76rem; color: var(--secondary-text-color); display: flex; align-items: center; flex-wrap: wrap; gap: 8px;">
-<span style="font-weight: 700; color: var(--mui-primary, #1976d2);">💡 指標の高低早見ガイド:</span>
+        st.html(f'''<div style="background: var(--primary-sub-bg); border: 1px solid var(--primary-sub-border); border-radius: 6px; padding: 7px 14px; margin-bottom: 10px; font-size: 0.76rem; color: var(--secondary-text-color); display: flex; align-items: center; flex-wrap: wrap; gap: 8px;">
+<span style="font-weight: 700; color: var(--mui-primary);">💡 指標の高低早見ガイド:</span>
 <span>信託報酬: <b style="color: var(--color-gain, #10b981);">▼ 低いほど優 (低コスト)</b></span>
 <span style="opacity: 0.4;">|</span>
 <span>最大下落(DD): <b style="color: var(--color-gain, #10b981);">▼ 0%に近いほど優 (暴落に強い)</b></span>
 <span style="opacity: 0.4;">|</span>
-<span>効率(SR)・リターン・純資産・AIスコア: <b style="color: var(--mui-primary, #1976d2);">▲ 高い/大きいほど優</b></span>
+<span>効率(SR)・リターン・純資産・AIスコア: <b style="color: var(--mui-primary);">▲ 高い/大きいほど優</b></span>
 </div>
 
-<div style="overflow-x: auto; margin-bottom: 24px; border: 1px solid var(--border-color); border-radius: 8px; background: rgba(255,255,255,0.02);">
+<div style="overflow-x: auto; margin-bottom: 24px; border: 1px solid var(--border-color); border-radius: 8px; background: var(--card-sub-bg);">
 <table style="width: 100%; border-collapse: collapse; min-width: 850px;">
 <thead>
-<tr style="background: rgba(0,0,0,0.04); border-bottom: 1px solid var(--border-color); font-size: 0.75rem; color: var(--secondary-text-color); text-transform: uppercase;">
+<tr style="background: var(--card-sub-bg); border-bottom: 1px solid var(--border-color); font-size: 0.75rem; color: var(--secondary-text-color); text-transform: uppercase;">
 <th style="padding: 10px 8px; text-align: center;">RANK</th>
-<th style="padding: 10px 8px; text-align: center;">AIスコア <span style="font-size: 0.68rem; color: var(--mui-primary, #1976d2);">▲</span></th>
+<th style="padding: 10px 8px; text-align: center;">AIスコア <span style="font-size: 0.68rem; color: var(--mui-primary);">▲</span></th>
 <th style="padding: 10px 8px; text-align: center;">次に上がる期待度 <span style="font-size: 0.68rem; color: #f43f5e;">▲</span></th>
 <th style="padding: 10px 10px; text-align: left;">投資信託名 / 連動対象</th>
 <th style="padding: 10px 6px; text-align: center;">比較</th>
 <th style="padding: 10px 6px; text-align: center;">つみたて</th>
 <th style="padding: 10px 6px; text-align: center;">成長枠</th>
 <th style="padding: 10px 8px; text-align: right;">信託報酬 <span style="font-size: 0.68rem; color: var(--color-gain, #10b981);">▼低優</span></th>
-<th style="padding: 10px 8px; text-align: right;">純資産 <span style="font-size: 0.68rem; color: var(--mui-primary, #1976d2);">▲大優</span></th>
+<th style="padding: 10px 8px; text-align: right;">純資産 <span style="font-size: 0.68rem; color: var(--mui-primary);">▲大優</span></th>
 <th style="padding: 10px 8px; text-align: right;">直近1年 <span style="font-size: 0.68rem; color: var(--color-gain, #10b981);">▲高優</span></th>
 <th style="padding: 10px 8px; text-align: right;">過去3年 <span style="font-size: 0.68rem; color: var(--color-gain, #10b981);">▲高優</span></th>
-<th style="padding: 10px 8px; text-align: right;">効率(SR) <span style="font-size: 0.68rem; color: var(--mui-primary, #1976d2);">▲高優</span></th>
+<th style="padding: 10px 8px; text-align: right;">効率(SR) <span style="font-size: 0.68rem; color: var(--mui-primary);">▲高優</span></th>
 <th style="padding: 10px 8px; text-align: right;">最大下落 <span style="font-size: 0.68rem; color: var(--color-gain, #10b981);">▼小優</span></th>
 </tr>
 </thead>
@@ -9409,7 +9599,7 @@ div[class*="st-key-sbi_fund_category_filter"] button span {
             tsumitate_badge = '<span style="background: rgba(16, 185, 129, 0.12); color: var(--color-gain, #10b981); font-size: 0.7rem; font-weight: 700; padding: 2px 6px; border-radius: 4px;">つみたて枠</span>' if f.get("nisa_tsumitate") else ''
             growth_badge = '<span style="background: rgba(25, 118, 210, 0.12); color: var(--mui-primary, #1976d2); font-size: 0.7rem; font-weight: 700; padding: 2px 6px; border-radius: 4px;">成長枠</span>' if f.get("nisa_growth") else ''
             
-            holdings_html = " ".join([f'<span style="background: rgba(0,0,0,0.04); border: 1px solid var(--border-color); font-size: 0.72rem; padding: 2px 7px; border-radius: 4px; color: var(--text-color);">{h}</span>' for h in f.get("major_holdings", [])[:6]])
+            holdings_html = " ".join([f'<span style="background: var(--card-sub-bg); border: 1px solid var(--border-color); font-size: 0.72rem; padding: 2px 7px; border-radius: 4px; color: var(--text-color);">{h}</span>' for h in f.get("major_holdings", [])[:6]])
 
             with st.container(border=True):
                 st.html(f'''<div style="padding: 2px 0 6px 0;">
@@ -9428,24 +9618,24 @@ div[class*="st-key-sbi_fund_category_filter"] button span {
 <div style="text-align: right; min-width: 150px;">
 <div style="font-size: 0.72rem; color: var(--secondary-text-color);">ZenStock AI 総合スコア</div>
 <div style="font-size: 1.3rem; font-weight: 700; color: {f['color']};" class="tabular-nums">{f['score']} <span style="font-size: 0.85rem; color: {f['color']};">{stars_str}</span></div>
-<div style="margin-top: 4px; display: inline-flex; align-items: center; gap: 4px; background: rgba(0,0,0,0.03); border: 1px solid var(--border-color); padding: 2px 7px; border-radius: 4px;">
+<div style="margin-top: 4px; display: inline-flex; align-items: center; gap: 4px; background: var(--card-sub-bg); border: 1px solid var(--border-color); padding: 2px 7px; border-radius: 4px;">
 <span style="font-size: 0.68rem; color: var(--secondary-text-color);">次に上がる期待度:</span>
 <span style="font-size: 0.72rem; font-weight: 700; color: {f.get('forward_growth_color', '#f97316')};">{f.get('forward_growth_label', '🔥 上昇期待')}</span>
 </div>
 </div>
 </div>
 
-<div style="font-size: 0.84rem; color: var(--secondary-text-color); line-height: 1.5; margin-bottom: 12px; background: rgba(0,0,0,0.015); padding: 8px 12px; border-radius: 6px; border-left: 3px solid {f['color']};">
+<div style="font-size: 0.84rem; color: var(--secondary-text-color); line-height: 1.5; margin-bottom: 12px; background: var(--card-sub-bg); padding: 8px 12px; border-radius: 6px; border-left: 3px solid {f['color']};">
 {f['description']}
 </div>
 
-<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px; background: rgba(0,0,0,0.02); padding: 10px 14px; border-radius: 8px; border: 1px solid var(--border-color); margin-bottom: 12px;">
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px; background: var(--card-sub-bg); padding: 10px 14px; border-radius: 8px; border: 1px solid var(--border-color); margin-bottom: 12px;">
 <div>
 <div style="font-size: 0.72rem; color: var(--secondary-text-color);">信託報酬 <span style="font-size: 0.68rem; color: var(--color-gain, #10b981); font-weight: 700;">▼低優</span></div>
 <div style="font-size: 1.0rem; font-weight: 700; color: var(--text-color);" class="tabular-nums">{f['expense_ratio']:.4f}%</div>
 </div>
 <div>
-<div style="font-size: 0.72rem; color: var(--secondary-text-color);">純資産総額 <span style="font-size: 0.68rem; color: var(--mui-primary, #1976d2); font-weight: 700;">▲大優</span></div>
+<div style="font-size: 0.72rem; color: var(--secondary-text-color);">純資産総額 <span style="font-size: 0.68rem; color: var(--mui-primary); font-weight: 700;">▲大優</span></div>
 <div style="font-size: 1.0rem; font-weight: 700; color: var(--text-color);" class="tabular-nums">{f['aum_oku']:,} 億円</div>
 </div>
 <div>
@@ -9457,8 +9647,8 @@ div[class*="st-key-sbi_fund_category_filter"] button span {
 <div style="font-size: 1.0rem; font-weight: 700; color: var(--color-gain, #10b981);" class="tabular-nums">+{f['return_3y_annual']:.1f}%</div>
 </div>
 <div>
-<div style="font-size: 0.72rem; color: var(--secondary-text-color);">シャープレシオ <span style="font-size: 0.68rem; color: var(--mui-primary, #1976d2); font-weight: 700;">▲高優</span></div>
-<div style="font-size: 1.0rem; font-weight: 700; color: var(--mui-primary, #1976d2);" class="tabular-nums">{f['sharpe_ratio']:.2f}</div>
+<div style="font-size: 0.72rem; color: var(--secondary-text-color);">シャープレシオ <span style="font-size: 0.68rem; color: var(--mui-primary); font-weight: 700;">▲高優</span></div>
+<div style="font-size: 1.0rem; font-weight: 700; color: var(--mui-primary);" class="tabular-nums">{f['sharpe_ratio']:.2f}</div>
 </div>
 <div>
 <div style="font-size: 0.72rem; color: var(--secondary-text-color);">最大ドローダウン <span style="font-size: 0.68rem; color: var(--color-gain, #10b981); font-weight: 700;">▼小優</span></div>
@@ -9545,16 +9735,21 @@ div[class*="st-key-sbi_fund_category_filter"] button span {
                             fillcolor="rgba(139, 92, 246, 0.08)",
                             hovertemplate="リターン: %{y:+.2f}%<extra></extra>"
                         ), row=2, col=1)
+                        chart_font_color = "rgba(255, 255, 255, 0.87)" if is_dark else "rgba(0, 0, 0, 0.87)"
+                        chart_grid_color = "rgba(255, 255, 255, 0.08)" if is_dark else "rgba(128, 128, 128, 0.12)"
+                        chart_tick_color = "rgba(255, 255, 255, 0.60)" if is_dark else "rgba(0, 0, 0, 0.60)"
                         fig_inline.update_layout(
                             height=360,
                             margin=dict(l=10, r=10, t=10, b=10),
                             paper_bgcolor="rgba(0,0,0,0)",
                             plot_bgcolor="rgba(0,0,0,0)",
+                            font=dict(family="Roboto, Noto Sans JP, sans-serif", color=chart_font_color),
                             hovermode="x unified",
-                            legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1, font=dict(size=10)),
-                            xaxis2=dict(showgrid=True, gridcolor="rgba(128,128,128,0.12)"),
-                            yaxis=dict(showgrid=True, gridcolor="rgba(128,128,128,0.12)"),
-                            yaxis2=dict(showgrid=True, gridcolor="rgba(128,128,128,0.12)", ticksuffix="%")
+                            legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1, font=dict(size=10, color=chart_font_color)),
+                            xaxis=dict(showgrid=True, gridcolor=chart_grid_color, tickfont=dict(color=chart_tick_color)),
+                            xaxis2=dict(showgrid=True, gridcolor=chart_grid_color, tickfont=dict(color=chart_tick_color)),
+                            yaxis=dict(showgrid=True, gridcolor=chart_grid_color, tickfont=dict(color=chart_tick_color)),
+                            yaxis2=dict(showgrid=True, gridcolor=chart_grid_color, ticksuffix="%", tickfont=dict(color=chart_tick_color))
                         )
                         st.plotly_chart(fig_inline, use_container_width=True, config=PLOTLY_CONFIG)
 
@@ -9703,19 +9898,19 @@ div[class*="st-key-btn_generate_ai_pack"] button {
                         <span style="font-size: 0.72rem; color: var(--secondary-text-color); font-weight: normal;">※過去1年実績ベース（実績値）</span>
                     </div>
                     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 8px; margin-bottom: 10px;">
-                        <div style="background: rgba(255, 255, 255, 0.85); padding: 8px 10px; border-radius: 6px; border: 1px solid rgba(0,0,0,0.06);">
+                        <div style="background: var(--card-sub-bg); padding: 8px 10px; border-radius: 6px; border: 1px solid var(--border-color);">
                             <div style="font-size: 0.7rem; color: var(--secondary-text-color);">実績リターン利益</div>
                             <div style="font-size: 1.15rem; font-weight: 700; color: var(--color-gain, #10b981);" class="tabular-nums">+{annual_profit:,} 円</div>
                             <div style="font-size: 0.68rem; color: var(--secondary-text-color);">運用後総額: <b class="tabular-nums">{total_value:,}円</b></div>
                         </div>
-                        <div style="background: rgba(255, 255, 255, 0.85); padding: 8px 10px; border-radius: 6px; border: 1px solid rgba(0,0,0,0.06);">
+                        <div style="background: var(--card-sub-bg); padding: 8px 10px; border-radius: 6px; border: 1px solid var(--border-color);">
                             <div style="font-size: 0.7rem; color: var(--secondary-text-color);">年間保有コスト (信託報酬)</div>
                             <div style="font-size: 1.15rem; font-weight: 700; color: var(--text-color);" class="tabular-nums">約 {annual_fee:,} 円</div>
                             <div style="font-size: 0.68rem; color: var(--secondary-text-color);">年率 {comp_fee_rate:.4f}% (月約{annual_fee//12:,}円)</div>
                         </div>
-                        <div style="background: rgba(255, 255, 255, 0.85); padding: 8px 10px; border-radius: 6px; border: 1px solid rgba(0,0,0,0.06);">
+                        <div style="background: var(--card-sub-bg); padding: 8px 10px; border-radius: 6px; border: 1px solid var(--border-color);">
                             <div style="font-size: 0.7rem; color: var(--secondary-text-color);">コスト控除後 手取純利益</div>
-                            <div style="font-size: 1.15rem; font-weight: 700; color: var(--mui-primary, #1976d2);" class="tabular-nums">+{net_profit:,} 円</div>
+                            <div style="font-size: 1.15rem; font-weight: 700; color: var(--mui-primary);" class="tabular-nums">+{net_profit:,} 円</div>
                             <div style="font-size: 0.68rem; color: var(--color-gain, #10b981); font-weight: 600;">NISAなら全額非課税！</div>
                         </div>
                     </div>
@@ -9725,34 +9920,34 @@ div[class*="st-key-btn_generate_ai_pack"] button {
                     </div>
                 </div>
 
-                <div style="background: rgba(25, 118, 210, 0.04); border: 1px solid rgba(25, 118, 210, 0.25); border-radius: 8px; padding: 12px 14px; margin-bottom: 12px;">
+                <div style="background: var(--primary-sub-bg); border: 1px solid var(--primary-sub-border); border-radius: 8px; padding: 12px 14px; margin-bottom: 12px;">
                     <div style="font-size: 0.84rem; font-weight: 700; color: var(--text-color); margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 4px;">
                         <span>🔮 【今後1年間】AI上昇確率予測シナリオ（100万円運用時）</span>
                         <span style="font-size: 0.72rem; color: var(--secondary-text-color);">※モメンタム加速・米金利サイクル・業績成長率を考慮</span>
                     </div>
                     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 8px;">
-                        <div style="background: rgba(255, 255, 255, 0.9); padding: 8px 10px; border-radius: 6px; border-top: 3px solid #10b981; border: 1px solid rgba(0,0,0,0.06);">
+                        <div style="background: var(--card-sub-bg); padding: 8px 10px; border-radius: 6px; border-top: 3px solid #10b981; border: 1px solid var(--border-color);">
                             <div style="font-size: 0.72rem; font-weight: 700; color: #10b981;">標準シナリオ (AI基本)</div>
                             <div style="font-size: 1.15rem; font-weight: 700; color: var(--text-color);" class="tabular-nums">+{exp_base_profit:,} 円</div>
                             <div style="font-size: 0.68rem; color: var(--secondary-text-color);">想定リターン: <b>+{exp_base_ret:.1f}%</b></div>
-                            <div style="font-size: 0.68rem; color: var(--mui-primary, #1976d2); margin-top: 2px;">手取: +{exp_base_net:,}円</div>
+                            <div style="font-size: 0.68rem; color: var(--mui-primary); margin-top: 2px;">手取: +{exp_base_net:,}円</div>
                         </div>
-                        <div style="background: rgba(255, 255, 255, 0.9); padding: 8px 10px; border-radius: 6px; border-top: 3px solid #f43f5e; border: 1px solid rgba(0,0,0,0.06);">
+                        <div style="background: var(--card-sub-bg); padding: 8px 10px; border-radius: 6px; border-top: 3px solid #f43f5e; border: 1px solid var(--border-color);">
                             <div style="font-size: 0.72rem; font-weight: 700; color: #f43f5e;">🚀 強気シナリオ (加速時)</div>
                             <div style="font-size: 1.15rem; font-weight: 700; color: #f43f5e;" class="tabular-nums">+{exp_bull_profit:,} 円</div>
                             <div style="font-size: 0.68rem; color: var(--secondary-text-color);">想定リターン: <b>+{exp_bull_ret:.1f}%</b></div>
-                            <div style="font-size: 0.68rem; color: var(--mui-primary, #1976d2); margin-top: 2px;">手取: +{exp_bull_net:,}円</div>
+                            <div style="font-size: 0.68rem; color: var(--mui-primary); margin-top: 2px;">手取: +{exp_bull_net:,}円</div>
                         </div>
-                        <div style="background: rgba(255, 255, 255, 0.9); padding: 8px 10px; border-radius: 6px; border-top: 3px solid #64748b; border: 1px solid rgba(0,0,0,0.06);">
+                        <div style="background: var(--card-sub-bg); padding: 8px 10px; border-radius: 6px; border-top: 3px solid #64748b; border: 1px solid var(--border-color);">
                             <div style="font-size: 0.72rem; font-weight: 700; color: #64748b;">🛡️ 調整シナリオ (堅実)</div>
                             <div style="font-size: 1.15rem; font-weight: 700; color: var(--text-color);" class="tabular-nums">+{exp_bear_profit:,} 円</div>
                             <div style="font-size: 0.68rem; color: var(--secondary-text-color);">想定リターン: <b>+{exp_bear_ret:.1f}%</b></div>
-                            <div style="font-size: 0.68rem; color: var(--mui-primary, #1976d2); margin-top: 2px;">手取: +{exp_bear_net:,}円</div>
+                            <div style="font-size: 0.68rem; color: var(--mui-primary); margin-top: 2px;">手取: +{exp_bear_net:,}円</div>
                         </div>
                     </div>
                 </div>
 
-                <div style="background: rgba(255,255,255,0.7); border: 1px solid var(--border-color); border-radius: 8px; padding: 12px 14px; margin-bottom: 10px;">
+                <div style="background: var(--card-sub-bg); border: 1px solid var(--border-color); border-radius: 8px; padding: 12px 14px; margin-bottom: 10px;">
                     <div style="font-size: 0.8rem; font-weight: 700; color: var(--text-color); margin-bottom: 8px;">📊 AI推奨ブレンド比率（合計100%）:</div>
                     {alloc_bars}
                 </div>
@@ -9792,15 +9987,19 @@ div[class*="st-key-btn_generate_ai_pack"] button {
                     hovertemplate="<b>%{fullData.name}</b><br>日付: %{x}<br>累積リターン: %{y:+.2f}%<extra></extra>"
                 ))
             fig_comp.add_hline(y=0, line_dash="dash", line_color="rgba(128,128,128,0.35)")
+            chart_font_color = "rgba(255, 255, 255, 0.87)" if is_dark else "rgba(0, 0, 0, 0.87)"
+            chart_grid_color = "rgba(255, 255, 255, 0.08)" if is_dark else "rgba(128, 128, 128, 0.12)"
+            chart_tick_color = "rgba(255, 255, 255, 0.60)" if is_dark else "rgba(0, 0, 0, 0.60)"
             fig_comp.update_layout(
                 height=380,
                 margin=dict(l=10, r=10, t=10, b=10),
                 paper_bgcolor="rgba(0,0,0,0)",
                 plot_bgcolor="rgba(0,0,0,0)",
+                font=dict(family="Roboto, Noto Sans JP, sans-serif", color=chart_font_color),
                 hovermode="x unified",
-                legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1, font=dict(size=10.5)),
-                xaxis=dict(showgrid=True, gridcolor="rgba(128,128,128,0.12)"),
-                yaxis=dict(showgrid=True, gridcolor="rgba(128,128,128,0.12)", ticksuffix="%")
+                legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1, font=dict(size=10.5, color=chart_font_color)),
+                xaxis=dict(showgrid=True, gridcolor=chart_grid_color, tickfont=dict(color=chart_tick_color)),
+                yaxis=dict(showgrid=True, gridcolor=chart_grid_color, ticksuffix="%", tickfont=dict(color=chart_tick_color))
             )
             st.plotly_chart(fig_comp, use_container_width=True, config=PLOTLY_CONFIG)
 
@@ -9826,7 +10025,7 @@ div[class*="st-key-btn_generate_ai_pack"] button {
 <td style="padding: 10px 8px; text-align: right;" class="tabular-nums">{f.get('aum_oku', 0):,}億円</td>
 <td style="padding: 10px 8px; text-align: right; font-weight: 700; color: {'var(--color-gain, #10b981)' if f.get('return_1y', 0.0) >= 0 else 'var(--color-loss, #f43f5e)'};" class="tabular-nums">{f.get('return_1y', 0.0):+.1f}%</td>
 <td style="padding: 10px 8px; text-align: right; color: var(--color-gain, #10b981);" class="tabular-nums">+{f.get('return_3y_annual', 0.0):.1f}%</td>
-<td style="padding: 10px 8px; text-align: right; font-weight: 700; color: var(--mui-primary, #1976d2);" class="tabular-nums">{f.get('sharpe_ratio', 1.0):.2f}</td>
+<td style="padding: 10px 8px; text-align: right; font-weight: 700; color: var(--mui-primary);" class="tabular-nums">{f.get('sharpe_ratio', 1.0):.2f}</td>
 <td style="padding: 10px 8px; text-align: right; color: var(--color-loss, #f43f5e);" class="tabular-nums">{f.get('max_drawdown', 0.0):.1f}%</td>
 </tr>''')
 
