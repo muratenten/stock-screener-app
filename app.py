@@ -1206,9 +1206,10 @@ st.html(f"""
         max-width: 100% !important;
         gap: 8px !important;
     }}
+    /* Sidebar-specific Segmented Control: Full width, perfectly centered vector icons without clipping */
     [data-testid="stSidebar"] [data-baseweb="button-group"] button,
     [data-testid="stSidebar"] [data-testid="stButtonGroup"] button,
-    [data-testid="stSidebar"] button[data-testid^="stBaseButton-segmented_control"],
+    [data-testid="stSidebar"] button[data-testid*="segmented_control"],
     [data-testid="stSidebar"] [role="radiogroup"] button,
     [data-testid="stSidebar"] div[data-testid="stSegmentedControl"] button {{
         flex: 1 1 0% !important;
@@ -1224,16 +1225,28 @@ st.html(f"""
         text-align: center !important;
         border-radius: 10px !important;
         overflow: visible !important;
+        box-sizing: border-box !important;
     }}
+    [data-testid="stSidebar"] [data-baseweb="button-group"] button *,
     [data-testid="stSidebar"] [data-testid="stButtonGroup"] button *,
-    [data-testid="stSidebar"] button[data-testid^="stBaseButton-segmented_control"] * {{
+    [data-testid="stSidebar"] button[data-testid*="segmented_control"] *,
+    [data-testid="stSidebar"] [role="radiogroup"] button *,
+    [data-testid="stSidebar"] div[data-testid="stSegmentedControl"] button * {{
         margin-right: 0 !important;
         margin-left: 0 !important;
+        overflow: visible !important;
+        max-width: none !important;
+        box-sizing: border-box !important;
     }}
+    [data-testid="stSidebar"] [data-baseweb="button-group"] button > div,
+    [data-testid="stSidebar"] [data-baseweb="button-group"] button [data-testid="stMarkdownContainer"],
+    [data-testid="stSidebar"] [data-baseweb="button-group"] button p,
     [data-testid="stSidebar"] [data-testid="stButtonGroup"] button > div,
     [data-testid="stSidebar"] [data-testid="stButtonGroup"] button [data-testid="stMarkdownContainer"],
     [data-testid="stSidebar"] [data-testid="stButtonGroup"] button p,
-    [data-testid="stSidebar"] button[data-testid^="stBaseButton-segmented_control"] p {{
+    [data-testid="stSidebar"] button[data-testid*="segmented_control"] > div,
+    [data-testid="stSidebar"] button[data-testid*="segmented_control"] [data-testid="stMarkdownContainer"],
+    [data-testid="stSidebar"] button[data-testid*="segmented_control"] p {{
         display: flex !important;
         align-items: center !important;
         justify-content: center !important;
@@ -1241,18 +1254,26 @@ st.html(f"""
         margin: 0 auto !important;
         padding: 0 !important;
         line-height: 1 !important;
-        font-size: 1.5rem !important;
-        width: auto !important;
-        height: auto !important;
+        font-size: 1.35rem !important;
+        width: 100% !important;
+        height: 100% !important;
+        overflow: visible !important;
     }}
+    [data-testid="stSidebar"] [data-baseweb="button-group"] .lucide-wrapper,
+    [data-testid="stSidebar"] [data-baseweb="button-group"] .feather-wrapper,
+    [data-testid="stSidebar"] [data-baseweb="button-group"] .lucide-converted-node,
+    [data-testid="stSidebar"] [data-baseweb="button-group"] .feather-converted-node,
     [data-testid="stSidebar"] [data-testid="stButtonGroup"] .lucide-wrapper,
     [data-testid="stSidebar"] [data-testid="stButtonGroup"] .feather-wrapper,
     [data-testid="stSidebar"] [data-testid="stButtonGroup"] .lucide-converted-node,
     [data-testid="stSidebar"] [data-testid="stButtonGroup"] .feather-converted-node,
-    [data-testid="stSidebar"] button[data-testid^="stBaseButton-segmented_control"] .lucide-wrapper,
-    [data-testid="stSidebar"] button[data-testid^="stBaseButton-segmented_control"] .feather-wrapper {{
+    [data-testid="stSidebar"] button[data-testid*="segmented_control"] .lucide-wrapper,
+    [data-testid="stSidebar"] button[data-testid*="segmented_control"] .feather-wrapper,
+    [data-testid="stSidebar"] button[data-testid*="segmented_control"] .lucide-converted-node,
+    [data-testid="stSidebar"] button[data-testid*="segmented_control"] .feather-converted-node {{
         margin: 0 auto !important;
         margin-right: 0 !important;
+        margin-left: 0 !important;
         padding: 0 !important;
         display: inline-flex !important;
         align-items: center !important;
@@ -1262,18 +1283,27 @@ st.html(f"""
         transform: none !important;
         width: auto !important;
         height: auto !important;
+        overflow: visible !important;
     }}
+    [data-testid="stSidebar"] [data-baseweb="button-group"] svg.lucide,
+    [data-testid="stSidebar"] [data-baseweb="button-group"] .feather-icon,
     [data-testid="stSidebar"] [data-testid="stButtonGroup"] svg.lucide,
     [data-testid="stSidebar"] [data-testid="stButtonGroup"] .feather-icon,
-    [data-testid="stSidebar"] button[data-testid^="stBaseButton-segmented_control"] svg.lucide,
-    [data-testid="stSidebar"] button[data-testid^="stBaseButton-segmented_control"] .feather-icon {{
+    [data-testid="stSidebar"] button[data-testid*="segmented_control"] svg.lucide,
+    [data-testid="stSidebar"] button[data-testid*="segmented_control"] .feather-icon {{
         vertical-align: middle !important;
         margin: 0 auto !important;
         padding: 0 !important;
         transform: none !important;
-        width: 1.5rem !important;
-        height: 1.5rem !important;
+        width: 22px !important;
+        height: 22px !important;
+        min-width: 22px !important;
+        min-height: 22px !important;
+        max-width: 22px !important;
+        max-height: 22px !important;
         display: block !important;
+        overflow: visible !important;
+        stroke-width: 2 !important;
     }}
     .metric-title {{
         color: {secondary_text_color};
@@ -2123,6 +2153,34 @@ st.components.v1.html("""
                 doc.querySelectorAll('section[data-testid="stSidebar"]').forEach(sb => {
                     sb.style.setProperty('visibility', 'visible', 'important');
                     sb.style.setProperty('z-index', '999999', 'important');
+                });
+
+                // Ensure sidebar segmented control buttons and icons are centered without clipping
+                doc.querySelectorAll('[data-testid="stSidebar"] [data-baseweb="button-group"] button, [data-testid="stSidebar"] [data-testid="stButtonGroup"] button, [data-testid="stSidebar"] button[data-testid*="segmented_control"]').forEach(btn => {
+                    btn.style.setProperty('overflow', 'visible', 'important');
+                    btn.style.setProperty('display', 'flex', 'important');
+                    btn.style.setProperty('align-items', 'center', 'important');
+                    btn.style.setProperty('justify-content', 'center', 'important');
+                    btn.querySelectorAll('*').forEach(el => {
+                        el.style.setProperty('overflow', 'visible', 'important');
+                        el.style.setProperty('max-width', 'none', 'important');
+                        if (el.tagName && el.tagName.toLowerCase() === 'svg') {
+                            el.style.setProperty('width', '22px', 'important');
+                            el.style.setProperty('height', '22px', 'important');
+                            el.style.setProperty('min-width', '22px', 'important');
+                            el.style.setProperty('min-height', '22px', 'important');
+                            el.style.setProperty('max-width', '22px', 'important');
+                            el.style.setProperty('max-height', '22px', 'important');
+                            el.style.setProperty('margin', '0 auto', 'important');
+                            el.style.setProperty('display', 'block', 'important');
+                            el.style.setProperty('vertical-align', 'middle', 'important');
+                        } else if (el.classList && (el.classList.contains('lucide-wrapper') || el.classList.contains('feather-wrapper') || el.classList.contains('lucide-converted-node'))) {
+                            el.style.setProperty('margin', '0 auto', 'important');
+                            el.style.setProperty('display', 'inline-flex', 'important');
+                            el.style.setProperty('align-items', 'center', 'important');
+                            el.style.setProperty('justify-content', 'center', 'important');
+                        }
+                    });
                 });
             } catch(e) {}
         });
@@ -6839,9 +6897,10 @@ if query_user == "default":
         max-width: 100% !important;
         gap: 8px !important;
     }
+    /* Sidebar-specific Segmented Control: Full width, perfectly centered vector icons without clipping */
     [data-testid="stSidebar"] [data-baseweb="button-group"] button,
     [data-testid="stSidebar"] [data-testid="stButtonGroup"] button,
-    [data-testid="stSidebar"] button[data-testid^="stBaseButton-segmented_control"],
+    [data-testid="stSidebar"] button[data-testid*="segmented_control"],
     [data-testid="stSidebar"] [role="radiogroup"] button,
     [data-testid="stSidebar"] div[data-testid="stSegmentedControl"] button {
         flex: 1 1 0% !important;
@@ -6857,16 +6916,28 @@ if query_user == "default":
         text-align: center !important;
         border-radius: 10px !important;
         overflow: visible !important;
+        box-sizing: border-box !important;
     }
+    [data-testid="stSidebar"] [data-baseweb="button-group"] button *,
     [data-testid="stSidebar"] [data-testid="stButtonGroup"] button *,
-    [data-testid="stSidebar"] button[data-testid^="stBaseButton-segmented_control"] * {
+    [data-testid="stSidebar"] button[data-testid*="segmented_control"] *,
+    [data-testid="stSidebar"] [role="radiogroup"] button *,
+    [data-testid="stSidebar"] div[data-testid="stSegmentedControl"] button * {
         margin-right: 0 !important;
         margin-left: 0 !important;
+        overflow: visible !important;
+        max-width: none !important;
+        box-sizing: border-box !important;
     }
+    [data-testid="stSidebar"] [data-baseweb="button-group"] button > div,
+    [data-testid="stSidebar"] [data-baseweb="button-group"] button [data-testid="stMarkdownContainer"],
+    [data-testid="stSidebar"] [data-baseweb="button-group"] button p,
     [data-testid="stSidebar"] [data-testid="stButtonGroup"] button > div,
     [data-testid="stSidebar"] [data-testid="stButtonGroup"] button [data-testid="stMarkdownContainer"],
     [data-testid="stSidebar"] [data-testid="stButtonGroup"] button p,
-    [data-testid="stSidebar"] button[data-testid^="stBaseButton-segmented_control"] p {
+    [data-testid="stSidebar"] button[data-testid*="segmented_control"] > div,
+    [data-testid="stSidebar"] button[data-testid*="segmented_control"] [data-testid="stMarkdownContainer"],
+    [data-testid="stSidebar"] button[data-testid*="segmented_control"] p {
         display: flex !important;
         align-items: center !important;
         justify-content: center !important;
@@ -6874,18 +6945,26 @@ if query_user == "default":
         margin: 0 auto !important;
         padding: 0 !important;
         line-height: 1 !important;
-        font-size: 1.5rem !important;
-        width: auto !important;
-        height: auto !important;
+        font-size: 1.35rem !important;
+        width: 100% !important;
+        height: 100% !important;
+        overflow: visible !important;
     }
+    [data-testid="stSidebar"] [data-baseweb="button-group"] .lucide-wrapper,
+    [data-testid="stSidebar"] [data-baseweb="button-group"] .feather-wrapper,
+    [data-testid="stSidebar"] [data-baseweb="button-group"] .lucide-converted-node,
+    [data-testid="stSidebar"] [data-baseweb="button-group"] .feather-converted-node,
     [data-testid="stSidebar"] [data-testid="stButtonGroup"] .lucide-wrapper,
     [data-testid="stSidebar"] [data-testid="stButtonGroup"] .feather-wrapper,
     [data-testid="stSidebar"] [data-testid="stButtonGroup"] .lucide-converted-node,
     [data-testid="stSidebar"] [data-testid="stButtonGroup"] .feather-converted-node,
-    [data-testid="stSidebar"] button[data-testid^="stBaseButton-segmented_control"] .lucide-wrapper,
-    [data-testid="stSidebar"] button[data-testid^="stBaseButton-segmented_control"] .feather-wrapper {
+    [data-testid="stSidebar"] button[data-testid*="segmented_control"] .lucide-wrapper,
+    [data-testid="stSidebar"] button[data-testid*="segmented_control"] .feather-wrapper,
+    [data-testid="stSidebar"] button[data-testid*="segmented_control"] .lucide-converted-node,
+    [data-testid="stSidebar"] button[data-testid*="segmented_control"] .feather-converted-node {
         margin: 0 auto !important;
         margin-right: 0 !important;
+        margin-left: 0 !important;
         padding: 0 !important;
         display: inline-flex !important;
         align-items: center !important;
@@ -6895,18 +6974,27 @@ if query_user == "default":
         transform: none !important;
         width: auto !important;
         height: auto !important;
+        overflow: visible !important;
     }
+    [data-testid="stSidebar"] [data-baseweb="button-group"] svg.lucide,
+    [data-testid="stSidebar"] [data-baseweb="button-group"] .feather-icon,
     [data-testid="stSidebar"] [data-testid="stButtonGroup"] svg.lucide,
     [data-testid="stSidebar"] [data-testid="stButtonGroup"] .feather-icon,
-    [data-testid="stSidebar"] button[data-testid^="stBaseButton-segmented_control"] svg.lucide,
-    [data-testid="stSidebar"] button[data-testid^="stBaseButton-segmented_control"] .feather-icon {
+    [data-testid="stSidebar"] button[data-testid*="segmented_control"] svg.lucide,
+    [data-testid="stSidebar"] button[data-testid*="segmented_control"] .feather-icon {
         vertical-align: middle !important;
         margin: 0 auto !important;
         padding: 0 !important;
         transform: none !important;
-        width: 1.5rem !important;
-        height: 1.5rem !important;
+        width: 22px !important;
+        height: 22px !important;
+        min-width: 22px !important;
+        min-height: 22px !important;
+        max-width: 22px !important;
+        max-height: 22px !important;
         display: block !important;
+        overflow: visible !important;
+        stroke-width: 2 !important;
     }
     section[data-testid="stSidebar"],
     [data-testid="stSidebar"] {
@@ -7111,6 +7199,34 @@ if query_user == "default":
                 doc.querySelectorAll('section[data-testid="stSidebar"]').forEach(sb => {
                     sb.style.setProperty('visibility', 'visible', 'important');
                     sb.style.setProperty('z-index', '999999', 'important');
+                });
+
+                // Ensure sidebar segmented control buttons and icons are centered without clipping
+                doc.querySelectorAll('[data-testid="stSidebar"] [data-baseweb="button-group"] button, [data-testid="stSidebar"] [data-testid="stButtonGroup"] button, [data-testid="stSidebar"] button[data-testid*="segmented_control"]').forEach(btn => {
+                    btn.style.setProperty('overflow', 'visible', 'important');
+                    btn.style.setProperty('display', 'flex', 'important');
+                    btn.style.setProperty('align-items', 'center', 'important');
+                    btn.style.setProperty('justify-content', 'center', 'important');
+                    btn.querySelectorAll('*').forEach(el => {
+                        el.style.setProperty('overflow', 'visible', 'important');
+                        el.style.setProperty('max-width', 'none', 'important');
+                        if (el.tagName && el.tagName.toLowerCase() === 'svg') {
+                            el.style.setProperty('width', '22px', 'important');
+                            el.style.setProperty('height', '22px', 'important');
+                            el.style.setProperty('min-width', '22px', 'important');
+                            el.style.setProperty('min-height', '22px', 'important');
+                            el.style.setProperty('max-width', '22px', 'important');
+                            el.style.setProperty('max-height', '22px', 'important');
+                            el.style.setProperty('margin', '0 auto', 'important');
+                            el.style.setProperty('display', 'block', 'important');
+                            el.style.setProperty('vertical-align', 'middle', 'important');
+                        } else if (el.classList && (el.classList.contains('lucide-wrapper') || el.classList.contains('feather-wrapper') || el.classList.contains('lucide-converted-node'))) {
+                            el.style.setProperty('margin', '0 auto', 'important');
+                            el.style.setProperty('display', 'inline-flex', 'important');
+                            el.style.setProperty('align-items', 'center', 'important');
+                            el.style.setProperty('justify-content', 'center', 'important');
+                        }
+                    });
                 });
             } catch(e){}
         });
