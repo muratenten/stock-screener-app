@@ -9570,6 +9570,24 @@ div[class*="st-key-btn_generate_ai_pack"] button {
         # If custom pack is generated, render rich portfolio card
         if st.session_state.get("generated_custom_pack"):
             pack = st.session_state["generated_custom_pack"]
+
+            # 100万円運用シミュレーションの計算
+            sim_capital = 1_000_000
+            comp_return = pack.get("composite_return_1y", 20.0)
+            comp_fee_rate = pack.get("composite_expense", 0.1)
+
+            annual_profit = int(round(sim_capital * (comp_return / 100.0)))
+            annual_fee = max(1, int(round(sim_capital * (comp_fee_rate / 100.0))))
+            net_profit = annual_profit - annual_fee
+            total_value = sim_capital + annual_profit
+
+            alloc_chips = "".join([
+                f'<span style="background: rgba(255,255,255,0.8); border: 1px solid var(--border-color); padding: 2px 7px; border-radius: 4px; display: inline-block; margin-right: 6px; margin-bottom: 3px; font-size: 0.72rem;">'
+                f'<b style="color: {alc["color"]};">●</b> {alc["name"]}: <b class="tabular-nums">{int(round(sim_capital * alc["weight"] / 100.0)):,}円</b> ({alc["weight"]}%)'
+                f'</span>'
+                for alc in pack["allocations"]
+            ])
+
             alloc_bars = ""
             for alc in pack["allocations"]:
                 alloc_bars += f'''
@@ -9594,6 +9612,34 @@ div[class*="st-key-btn_generate_ai_pack"] button {
                 </div>
                 <div style="font-size: 1.2rem; font-weight: 700; color: var(--text-color); margin-bottom: 4px;">{pack['title']}</div>
                 <div style="font-size: 0.85rem; color: var(--secondary-text-color); line-height: 1.5; margin-bottom: 12px;">{pack['concept']}</div>
+
+                <div style="background: rgba(16, 185, 129, 0.04); border: 1px solid rgba(16, 185, 129, 0.25); border-radius: 8px; padding: 12px 14px; margin-bottom: 12px;">
+                    <div style="font-size: 0.84rem; font-weight: 700; color: var(--text-color); margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 4px;">
+                        <span>💰 100万円を1年間運用した場合の実績シミュレーション</span>
+                        <span style="font-size: 0.72rem; color: var(--secondary-text-color); font-weight: normal;">※直近1年実績（年率換算）ベース</span>
+                    </div>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 8px; margin-bottom: 10px;">
+                        <div style="background: rgba(255, 255, 255, 0.85); padding: 8px 10px; border-radius: 6px; border: 1px solid rgba(0,0,0,0.06);">
+                            <div style="font-size: 0.7rem; color: var(--secondary-text-color);">想定年間リターン利益</div>
+                            <div style="font-size: 1.15rem; font-weight: 700; color: var(--color-gain, #10b981);" class="tabular-nums">+{annual_profit:,} 円</div>
+                            <div style="font-size: 0.68rem; color: var(--secondary-text-color);">運用後資産総額: <b class="tabular-nums">{total_value:,}円</b></div>
+                        </div>
+                        <div style="background: rgba(255, 255, 255, 0.85); padding: 8px 10px; border-radius: 6px; border: 1px solid rgba(0,0,0,0.06);">
+                            <div style="font-size: 0.7rem; color: var(--secondary-text-color);">年間保有コスト (信託報酬)</div>
+                            <div style="font-size: 1.15rem; font-weight: 700; color: var(--text-color);" class="tabular-nums">約 {annual_fee:,} 円</div>
+                            <div style="font-size: 0.68rem; color: var(--secondary-text-color);">年率 {comp_fee_rate:.4f}% (月約{annual_fee//12:,}円)</div>
+                        </div>
+                        <div style="background: rgba(255, 255, 255, 0.85); padding: 8px 10px; border-radius: 6px; border: 1px solid rgba(0,0,0,0.06);">
+                            <div style="font-size: 0.7rem; color: var(--secondary-text-color);">コスト控除後 手取り純利益</div>
+                            <div style="font-size: 1.15rem; font-weight: 700; color: var(--mui-primary, #1976d2);" class="tabular-nums">+{net_profit:,} 円</div>
+                            <div style="font-size: 0.68rem; color: var(--color-gain, #10b981); font-weight: 600;">NISAなら全額非課税！</div>
+                        </div>
+                    </div>
+                    <div style="border-top: 1px dashed rgba(16, 185, 129, 0.25); padding-top: 6px; font-size: 0.74rem; color: var(--secondary-text-color);">
+                        <span style="font-weight: 600; margin-right: 4px;">100万円の銘柄別配分金額:</span>
+                        {alloc_chips}
+                    </div>
+                </div>
 
                 <div style="background: rgba(255,255,255,0.7); border: 1px solid var(--border-color); border-radius: 8px; padding: 12px 14px; margin-bottom: 10px;">
                     <div style="font-size: 0.8rem; font-weight: 700; color: var(--text-color); margin-bottom: 8px;">📊 AI推奨ブレンド比率（合計100%）:</div>
