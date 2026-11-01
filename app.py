@@ -68,6 +68,7 @@ with st.sidebar:
         if st.session_state.get('color_theme') != new_theme:
             st.session_state['color_theme'] = new_theme
             st.query_params["theme"] = new_theme
+            st.rerun()
     
     is_dark = st.session_state.get('color_theme', 'light') == 'dark'
     if is_dark and st.query_params.get("theme") != "dark":
@@ -1021,7 +1022,7 @@ st.html(f"""
     [data-baseweb="tab"][aria-selected="true"] .feather-icon,
     [data-baseweb="tab"][aria-selected="true"] .lucide-icon,
     [data-baseweb="tab"][aria-selected="true"] svg.lucide {{
-        stroke: var(--primary-color) !important;
+        stroke: {'#ffffff' if is_dark else 'var(--primary-color)'} !important;
     }}
     button[data-testid*="primary"] .feather-icon,
     button[data-testid*="primary"] .lucide-icon,
@@ -1680,33 +1681,54 @@ st.html(f"""
     }}
     
     /* ==========================================================================
-       MUI Tabs & Tab Indicator
+       MUI Tabs & Tab Indicator (Pure White in Dark Mode)
        ========================================================================== */
     button[data-baseweb="tab"] {{
-        color: {secondary_text_color} !important;
+        color: {'#ffffff' if is_dark else secondary_text_color} !important;
         font-weight: 500 !important;
         font-size: 0.875rem !important;
         letter-spacing: 0.02857em !important;
         border-bottom: 2px solid transparent !important;
         padding: 12px 18px !important;
         transition: color 250ms cubic-bezier(0.4, 0, 0.2, 1) 0ms, border-color 250ms cubic-bezier(0.4, 0, 0.2, 1) 0ms !important;
-        opacity: 0.7 !important;
+        opacity: {'0.85' if is_dark else '0.7'} !important;
     }}
-    button[data-baseweb="tab"] div {{
-        color: {secondary_text_color} !important;
+    button[data-baseweb="tab"] div,
+    button[data-baseweb="tab"] p,
+    button[data-baseweb="tab"] span {{
+        color: {'#ffffff' if is_dark else secondary_text_color} !important;
+    }}
+    button[data-baseweb="tab"] svg.lucide,
+    button[data-baseweb="tab"] .feather-icon {{
+        stroke: {'#ffffff' if is_dark else secondary_text_color} !important;
     }}
     button[data-baseweb="tab"]:hover {{
         opacity: 1 !important;
-        color: var(--primary-color) !important;
+        color: {'#ffffff' if is_dark else 'var(--primary-color)'} !important;
+    }}
+    button[data-baseweb="tab"]:hover div,
+    button[data-baseweb="tab"]:hover p,
+    button[data-baseweb="tab"]:hover span {{
+        color: {'#ffffff' if is_dark else 'var(--primary-color)'} !important;
+    }}
+    button[data-baseweb="tab"]:hover svg.lucide,
+    button[data-baseweb="tab"]:hover .feather-icon {{
+        stroke: {'#ffffff' if is_dark else 'var(--primary-color)'} !important;
     }}
     button[data-baseweb="tab"][aria-selected="true"] {{
-        border-bottom: 2px solid var(--primary-color) !important;
+        border-bottom: 2px solid {'#3b82f6' if is_dark else 'var(--primary-color)'} !important;
         opacity: 1 !important;
-        background-color: {'rgba(144, 202, 249, 0.04)' if is_dark else 'rgba(25, 118, 210, 0.04)'} !important;
+        background-color: {'rgba(59, 130, 246, 0.08)' if is_dark else 'rgba(25, 118, 210, 0.04)'} !important;
     }}
-    button[data-baseweb="tab"][aria-selected="true"] div {{
-        color: var(--primary-color) !important;
-        font-weight: 600 !important;
+    button[data-baseweb="tab"][aria-selected="true"] div,
+    button[data-baseweb="tab"][aria-selected="true"] p,
+    button[data-baseweb="tab"][aria-selected="true"] span {{
+        color: {'#ffffff' if is_dark else 'var(--primary-color)'} !important;
+        font-weight: 700 !important;
+    }}
+    button[data-baseweb="tab"][aria-selected="true"] svg.lucide,
+    button[data-baseweb="tab"][aria-selected="true"] .feather-icon {{
+        stroke: {'#ffffff' if is_dark else 'var(--primary-color)'} !important;
     }}
     div[role="tablist"] {{
         border-bottom: 1px solid var(--border-color) !important;
@@ -2215,6 +2237,18 @@ st.components.v1.html("""
         localStorage.setItem('zen_color_theme', activeTheme);
         if (window.parent && window.parent.localStorage) {
             window.parent.localStorage.setItem('zen_color_theme', activeTheme);
+        }
+    } catch(e) {}
+
+    // Automatically restore theme from localStorage if not present in URL
+    try {
+        const savedTheme = localStorage.getItem('zen_color_theme') || (window.parent && window.parent.localStorage ? window.parent.localStorage.getItem('zen_color_theme') : null);
+        const win = window.parent || window;
+        const urlParams = new URLSearchParams(win.location.search);
+        if (savedTheme && (savedTheme === 'dark' || savedTheme === 'light') && !urlParams.has('theme')) {
+            urlParams.set('theme', savedTheme);
+            const newUrl = win.location.pathname + '?' + urlParams.toString();
+            win.location.replace(newUrl);
         }
     } catch(e) {}
 </script>
@@ -5395,7 +5429,7 @@ def render_detail_dashboard(selected_ticker, selected_name, raw_analysis, key_su
     # Hardcoded theme colors for segmented control styling
     local_is_dark = st.session_state.get('color_theme', 'light') == 'dark'
     local_unselected_bg = "#0b0f19" if local_is_dark else "#e2e8f0"
-    local_text_color = "#e2e8f0" if local_is_dark else "#1e293b"
+    local_text_color = "#ffffff" if local_is_dark else "#1e293b"
     local_border_color = "#1e293b" if local_is_dark else "#cbd5e1"
     local_primary_color = "#3b82f6" if local_is_dark else "#2563eb"
     local_bg_color = "#0b0f19" if local_is_dark else "#f8fafc"
@@ -7371,6 +7405,18 @@ if query_user == "default":
         localStorage.setItem('zen_color_theme', activeTheme);
         if (window.parent && window.parent.localStorage) {
             window.parent.localStorage.setItem('zen_color_theme', activeTheme);
+        }
+    } catch(e) {}
+
+    // Automatically restore theme from localStorage in portal if not present in URL
+    try {
+        const savedTheme = localStorage.getItem('zen_color_theme') || (window.parent && window.parent.localStorage ? window.parent.localStorage.getItem('zen_color_theme') : null);
+        const win = window.parent || window;
+        const urlParams = new URLSearchParams(win.location.search);
+        if (savedTheme && (savedTheme === 'dark' || savedTheme === 'light') && !urlParams.has('theme')) {
+            urlParams.set('theme', savedTheme);
+            const newUrl = win.location.pathname + '?' + urlParams.toString();
+            win.location.replace(newUrl);
         }
     } catch(e) {}
     </script>
