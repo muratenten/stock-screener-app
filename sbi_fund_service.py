@@ -1198,26 +1198,46 @@ def filter_and_sort_funds(
     return results
 
 
-def fetch_comparison_chart_data(period: str = "1y") -> Dict[str, Any]:
+def fetch_comparison_chart_data(period: str = "1y", fund_ids: Optional[List[str]] = None) -> Dict[str, Any]:
     """
-    Fetches historical cumulative return series for representative asset classes/funds.
+    Fetches historical cumulative return series for selected or representative funds.
     """
     now = time.time()
-    cache_key = f"chart_{period}"
+    cache_key = f"chart_{period}_{'_'.join(sorted(fund_ids)) if fund_ids else 'default'}"
     if cache_key in _CHART_CACHE:
         cached = _CHART_CACHE[cache_key]
         if now - cached["time"] < 1800:
             return cached["data"]
 
-    targets = [
-        {"id": "ifreenext_fang_plus", "label": "FANG+ (メガテック10社)", "ticker": "FNGS", "color": "#f43f5e"},
-        {"id": "emaxis_slim_sp500", "label": "Slim S&P500 (米国500社)", "ticker": "VOO", "color": "#1976d2"},
-        {"id": "sbi_ishares_india", "label": "サクっとインド株式 (人口世界一)", "ticker": "INDA", "color": "#f59e0b"},
-        {"id": "sbi_ishares_gold", "label": "サクっと純金 (有事・防衛)", "ticker": "IAU", "color": "#eab308"},
-        {"id": "emaxis_slim_all_country", "label": "オルカン (全世界株式)", "ticker": "VT", "color": "#10b981"},
-        {"id": "sbi_japan_high_dividend", "label": "SBI日本高配当 (年4回分配)", "ticker": "1489.T", "color": "#8b5cf6"},
-        {"id": "rakuten_sox", "label": "半導体 SOX (ハイテク中核)", "ticker": "SOXX", "color": "#ec4899"}
-    ]
+    palette = ["#1976d2", "#f43f5e", "#10b981", "#f59e0b", "#8b5cf6", "#06b6d4", "#ec4899", "#84cc16", "#64748b"]
+
+    if fund_ids:
+        # Build targets dynamically from selected fund IDs
+        targets = []
+        fund_map = {f["id"]: f for f in SBI_FUNDS_DB}
+        for idx, fid in enumerate(fund_ids):
+            if fid in fund_map:
+                f = fund_map[fid]
+                targets.append({
+                    "id": f["id"],
+                    "label": f"{f['nickname']} ({f['category']})",
+                    "ticker": f.get("proxy_ticker", "VT"),
+                    "color": palette[idx % len(palette)]
+                })
+        if not targets:
+            # Fallback if none matched
+            fund_ids = None
+
+    if not fund_ids:
+        targets = [
+            {"id": "ifreenext_fang_plus", "label": "FANG+ (メガテック10社)", "ticker": "FNGS", "color": "#f43f5e"},
+            {"id": "emaxis_slim_sp500", "label": "Slim S&P500 (米国500社)", "ticker": "VOO", "color": "#1976d2"},
+            {"id": "sbi_ishares_india", "label": "サクっとインド株式 (人口世界一)", "ticker": "INDA", "color": "#f59e0b"},
+            {"id": "sbi_ishares_gold", "label": "サクっと純金 (有事・防衛)", "ticker": "IAU", "color": "#eab308"},
+            {"id": "emaxis_slim_all_country", "label": "オルカン (全世界株式)", "ticker": "VT", "color": "#10b981"},
+            {"id": "sbi_japan_high_dividend", "label": "SBI日本高配当 (年4回分配)", "ticker": "1489.T", "color": "#8b5cf6"},
+            {"id": "rakuten_sox", "label": "半導体 SOX (ハイテク中核)", "ticker": "SOXX", "color": "#ec4899"}
+        ]
 
     tickers = [t["ticker"] for t in targets]
     series_dict = {}

@@ -9215,6 +9215,11 @@ div[class*="st-key-sbi_fund_category_filter"] button span {
 <div style="font-size: 0.84rem; font-weight: 600; color: var(--mui-primary, #1976d2);">該当: <span style="font-size: 1.15rem; font-weight: 700;" class="tabular-nums">{len(filtered_funds)}</span> / 全 {len(sfs.SBI_FUNDS_DB)} 本</div>
 </div>''')
 
+    # Comparison list state initialization
+    if "fund_compare_list" not in st.session_state:
+        st.session_state["fund_compare_list"] = ["emaxis_slim_all_country", "emaxis_slim_sp500"]
+    compare_list = st.session_state["fund_compare_list"]
+
     if not filtered_funds:
         st.info("条件に一致する投資信託が見つかりませんでした。条件を変更して再検索してください。")
     elif view_mode == "徹底比較一覧表":
@@ -9223,6 +9228,8 @@ div[class*="st-key-sbi_fund_category_filter"] button span {
         for idx, f in enumerate(filtered_funds, 1):
             ts_tag = '<span style="color: var(--color-gain, #10b981); font-weight: 700;">○</span>' if f.get("nisa_tsumitate") else '<span style="opacity: 0.3;">-</span>'
             gr_tag = '<span style="color: var(--mui-primary, #1976d2); font-weight: 700;">○</span>' if f.get("nisa_growth") else '<span style="opacity: 0.3;">-</span>'
+            is_cmp = f['id'] in compare_list
+            cmp_indicator = '<span style="color: var(--mui-primary, #1976d2); font-weight: 700;">★比較中</span>' if is_cmp else '<span style="opacity: 0.25;">-</span>'
             table_rows.append(f'''<tr style="border-bottom: 1px solid var(--border-color); font-size: 0.82rem;">
 <td style="padding: 10px 8px; font-weight: 700; text-align: center;"><span style="background: {f['color']}; color: #fff; padding: 2px 6px; border-radius: 4px; font-size: 0.7rem;">{f['rank']}</span></td>
 <td style="padding: 10px 8px; font-weight: 700; color: {f['color']}; text-align: center;" class="tabular-nums">{f['score']}</td>
@@ -9230,6 +9237,7 @@ div[class*="st-key-sbi_fund_category_filter"] button span {
 <div style="font-weight: 600; color: var(--text-color);">{idx}. {f['name']}</div>
 <div style="font-size: 0.72rem; color: var(--secondary-text-color);">{f['category']} | {f['underlying']}</div>
 </td>
+<td style="padding: 10px 6px; text-align: center;">{cmp_indicator}</td>
 <td style="padding: 10px 6px; text-align: center;">{ts_tag}</td>
 <td style="padding: 10px 6px; text-align: center;">{gr_tag}</td>
 <td style="padding: 10px 8px; text-align: right; font-weight: 600;" class="tabular-nums">{f['expense_ratio']:.4f}%</td>
@@ -9247,6 +9255,7 @@ div[class*="st-key-sbi_fund_category_filter"] button span {
 <th style="padding: 10px 8px; text-align: center;">RANK</th>
 <th style="padding: 10px 8px; text-align: center;">AIスコア</th>
 <th style="padding: 10px 10px; text-align: left;">投資信託名 / 連動対象</th>
+<th style="padding: 10px 6px; text-align: center;">比較</th>
 <th style="padding: 10px 6px; text-align: center;">つみたて</th>
 <th style="padding: 10px 6px; text-align: center;">成長枠</th>
 <th style="padding: 10px 8px; text-align: right;">信託報酬</th>
@@ -9263,7 +9272,7 @@ div[class*="st-key-sbi_fund_category_filter"] button span {
 </table>
 </div>''')
     else:
-        # Detailed Card View
+        # Detailed Card View - All Action Buttons Cleanly Wrapped INSIDE Card Frame
         for idx, f in enumerate(filtered_funds, 1):
             stars_str = "★" * f["stars"] + "☆" * (5 - f["stars"])
             tsumitate_badge = '<span style="background: rgba(16, 185, 129, 0.12); color: var(--color-gain, #10b981); font-size: 0.7rem; font-weight: 700; padding: 2px 6px; border-radius: 4px;">つみたて枠</span>' if f.get("nisa_tsumitate") else ''
@@ -9271,7 +9280,8 @@ div[class*="st-key-sbi_fund_category_filter"] button span {
             
             holdings_html = " ".join([f'<span style="background: rgba(0,0,0,0.04); border: 1px solid var(--border-color); font-size: 0.72rem; padding: 2px 7px; border-radius: 4px; color: var(--text-color);">{h}</span>' for h in f.get("major_holdings", [])[:6]])
 
-            st.html(f'''<div class="card" style="padding: 18px 20px; margin-bottom: 16px;">
+            with st.container(border=True):
+                st.html(f'''<div style="padding: 2px 0 6px 0;">
 <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 10px; margin-bottom: 10px;">
 <div style="flex: 1 1 300px;">
 <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 6px; margin-bottom: 4px;">
@@ -9281,7 +9291,7 @@ div[class*="st-key-sbi_fund_category_filter"] button span {
 {growth_badge}
 <span style="font-size: 0.74rem; color: var(--secondary-text-color);">| {f['type']}・{f['trustee']}</span>
 </div>
-<div style="font-size: 1.12rem; font-weight: 700; color: var(--text-color); margin-bottom: 2px;">{idx}. {f['name']}</div>
+<div style="font-size: 1.15rem; font-weight: 700; color: var(--text-color); margin-bottom: 2px;">{idx}. {f['name']}</div>
 <div style="font-size: 0.8rem; color: var(--secondary-text-color);">{f['role']} / 連動対象: {f['underlying']}</div>
 </div>
 <div style="text-align: right; min-width: 140px;">
@@ -9329,22 +9339,199 @@ div[class*="st-key-sbi_fund_category_filter"] button span {
 </div>
 </div>''')
 
-            col_fb1, col_fb2, col_fb3 = st.columns([1.2, 1.2, 1.0])
-            with col_fb1:
-                if st.button("この投信の個別チャートを表示", key=f"fund_view_chart_{f['id']}"):
-                    st.session_state["selected_indiv_fund_id"] = f["id"]
-                    st.rerun()
-            with col_fb2:
-                if st.button("仮想購入準備に追加", key=f"fund_sim_{f['id']}"):
-                    st.session_state["sim_purchase_ticker"] = f"FUND:{f['id']}"
-                    st.session_state["sim_purchase_name"] = f['nickname']
-                    st.session_state["sim_purchase_price"] = 10000.0
-                    st.toast(f"{f['nickname']} をシミュレーション購入準備に追加しました")
-            with col_fb3:
-                if st.button("SBI証券目論見書", key=f"fund_sbi_{f['id']}"):
-                    st.info(f"SBI証券アプリで『{f['name']}』を検索して目論見書をご確認いただけます。")
+                # Card Actions - All cleanly positioned inside the card border
+                col_fb1, col_fb2, col_fb3, col_fb4 = st.columns([1.1, 1.2, 1.0, 1.0])
+                
+                is_comp = f["id"] in compare_list
+                with col_fb1:
+                    comp_btn_label = "✅ 比較中 (解除)" if is_comp else "📊 比較リストに追加"
+                    if st.button(comp_btn_label, key=f"fund_comp_btn_{f['id']}", type="primary" if is_comp else "secondary", use_container_width=True):
+                        if is_comp:
+                            compare_list.remove(f["id"])
+                            st.toast(f"{f['nickname']} を比較リストから外しました")
+                        else:
+                            compare_list.append(f["id"])
+                            st.toast(f"{f['nickname']} を比較リストに追加しました！")
+                        st.rerun()
 
-            st.markdown("<div style='margin-bottom: 20px;'></div>", unsafe_allow_html=True)
+                with col_fb2:
+                    show_chart = st.session_state.get(f"show_chart_{f['id']}", False)
+                    chart_btn_label = "📉 チャートを閉じる" if show_chart else "📈 個別チャートを表示"
+                    if st.button(chart_btn_label, key=f"fund_view_chart_{f['id']}", type="primary" if show_chart else "secondary", use_container_width=True):
+                        st.session_state[f"show_chart_{f['id']}"] = not show_chart
+                        st.rerun()
+
+                with col_fb3:
+                    if st.button("💼 仮想購入準備", key=f"fund_sim_{f['id']}", use_container_width=True):
+                        st.session_state["sim_purchase_ticker"] = f"FUND:{f['id']}"
+                        st.session_state["sim_purchase_name"] = f['nickname']
+                        st.session_state["sim_purchase_price"] = 10000.0
+                        st.toast(f"{f['nickname']} をシミュレーション購入準備に追加しました")
+
+                with col_fb4:
+                    if st.button("📄 SBI目論見書", key=f"fund_sbi_{f['id']}", use_container_width=True):
+                        st.info(f"SBI証券アプリで『{f['name']}』を検索して目論見書をご確認いただけます。")
+
+                # Inline Individual Chart Rendering if toggled!
+                if st.session_state.get(f"show_chart_{f['id']}", False):
+                    st.markdown("<hr style='margin: 14px 0 10px 0; border: none; border-top: 1px solid var(--border-color);'>", unsafe_allow_html=True)
+                    st.markdown(f"<div style='font-weight: 700; font-size: 0.95rem; margin-bottom: 8px;'>📈 {f['nickname']} の詳細テクニカル分析（基準価額 & 25日・75日移動平均線）</div>", unsafe_allow_html=True)
+                    indiv_data = sfs.fetch_individual_fund_chart(f["id"], period="1y")
+                    if indiv_data:
+                        fig_inline = make_subplots(rows=2, cols=1, shared_xaxes=True, vertical_spacing=0.08, row_heights=[0.65, 0.35])
+                        fig_inline.add_trace(go.Scatter(
+                            x=indiv_data["dates"],
+                            y=indiv_data["close"],
+                            mode="lines",
+                            name="基準価格 (連動指数)",
+                            line=dict(color="#1976d2", width=2),
+                            hovertemplate="価格: %{y:,.1f}<extra></extra>"
+                        ), row=1, col=1)
+                        if indiv_data["sma25"] and any(v is not None for v in indiv_data["sma25"]):
+                            fig_inline.add_trace(go.Scatter(
+                                x=indiv_data["dates"],
+                                y=indiv_data["sma25"],
+                                mode="lines",
+                                name="25日移動平均",
+                                line=dict(color="#f97316", width=1.5, dash="dot"),
+                                hovertemplate="25日線: %{y:,.1f}<extra></extra>"
+                            ), row=1, col=1)
+                        if indiv_data["sma75"] and any(v is not None for v in indiv_data["sma75"]):
+                            fig_inline.add_trace(go.Scatter(
+                                x=indiv_data["dates"],
+                                y=indiv_data["sma75"],
+                                mode="lines",
+                                name="75日移動平均",
+                                line=dict(color="#10b981", width=1.5, dash="dash"),
+                                hovertemplate="75日線: %{y:,.1f}<extra></extra>"
+                            ), row=1, col=1)
+                        fig_inline.add_trace(go.Scatter(
+                            x=indiv_data["dates"],
+                            y=indiv_data["cum_return"],
+                            mode="lines",
+                            name="累積リターン (%)",
+                            line=dict(color="#8b5cf6", width=1.8),
+                            fill="tozeroy",
+                            fillcolor="rgba(139, 92, 246, 0.08)",
+                            hovertemplate="リターン: %{y:+.2f}%<extra></extra>"
+                        ), row=2, col=1)
+                        fig_inline.update_layout(
+                            height=360,
+                            margin=dict(l=10, r=10, t=10, b=10),
+                            paper_bgcolor="rgba(0,0,0,0)",
+                            plot_bgcolor="rgba(0,0,0,0)",
+                            hovermode="x unified",
+                            legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1, font=dict(size=10)),
+                            xaxis2=dict(showgrid=True, gridcolor="rgba(128,128,128,0.12)"),
+                            yaxis=dict(showgrid=True, gridcolor="rgba(128,128,128,0.12)"),
+                            yaxis2=dict(showgrid=True, gridcolor="rgba(128,128,128,0.12)", ticksuffix="%")
+                        )
+                        st.plotly_chart(fig_inline, use_container_width=True, config=PLOTLY_CONFIG)
+
+    # 4. Dedicated Comparison Section for Selected Funds (At the bottom of the list)
+    st.markdown("<div style='margin-top: 40px; margin-bottom: 24px; border-top: 2px dashed var(--border-color);'></div>", unsafe_allow_html=True)
+    st.markdown("### 📊 選択した銘柄の累積リターン比較 & 徹底比較表")
+    
+    selected_comp_funds = [f for f in sfs.SBI_FUNDS_DB if f["id"] in compare_list]
+    
+    if not selected_comp_funds:
+        st.info("💡 上の各銘柄カードにある **『📊 比較リストに追加』** ボタンを押すと、ここに選択した銘柄同士の累積リターン比較チャートと横並びスペック比較表がリアルタイム表示されます。")
+    else:
+        # Comparison Header Bar with Badges and Clear Button
+        col_c_tags, col_c_clear = st.columns([3.0, 1.0])
+        with col_c_tags:
+            tag_badges = "".join([f'<span style="background: rgba(25, 118, 210, 0.1); color: var(--mui-primary, #1976d2); font-weight: 700; font-size: 0.82rem; padding: 4px 10px; border-radius: 16px; margin-right: 6px; display: inline-block; margin-bottom: 4px;">{f["nickname"]}</span>' for f in selected_comp_funds])
+            st.html(f'''<div style="display: flex; align-items: center; flex-wrap: wrap; gap: 6px; padding: 6px 0;">
+<span style="font-size: 0.85rem; font-weight: 600; color: var(--secondary-text-color);">現在比較中 ({len(selected_comp_funds)}本):</span>
+{tag_badges}
+</div>''')
+        with col_c_clear:
+            if st.button("🗑️ 比較リストをクリア", key="btn_clear_comp_list", use_container_width=True):
+                st.session_state["fund_compare_list"] = []
+                st.rerun()
+
+        # Period Selector & Multi-fund Comparison Chart
+        col_c_text, col_c_per = st.columns([2.5, 1.0])
+        with col_c_text:
+            st.caption("選択した銘柄の累積リターン推移（%）を重ね合わせてパフォーマンスを比較します。凡例をクリックすると個別表示のON/OFFが可能です。")
+        with col_c_per:
+            comp_chart_period = st.segmented_control(
+                "比較期間",
+                options=["6mo", "1y", "3y", "5y"],
+                default="1y",
+                key="fund_comp_chart_period_choice"
+            ) or "1y"
+
+        comp_data = sfs.fetch_comparison_chart_data(period=comp_chart_period, fund_ids=[f["id"] for f in selected_comp_funds])
+        if comp_data:
+            fig_comp = go.Figure()
+            for s_name, s_data in comp_data.items():
+                fig_comp.add_trace(go.Scatter(
+                    x=s_data["dates"],
+                    y=s_data["returns"],
+                    mode="lines",
+                    name=f"{s_name} ({s_data['latest']:+.1f}%)",
+                    line=dict(color=s_data["color"], width=2),
+                    hovertemplate="<b>%{fullData.name}</b><br>日付: %{x}<br>累積リターン: %{y:+.2f}%<extra></extra>"
+                ))
+            fig_comp.add_hline(y=0, line_dash="dash", line_color="rgba(128,128,128,0.35)")
+            fig_comp.update_layout(
+                height=380,
+                margin=dict(l=10, r=10, t=10, b=10),
+                paper_bgcolor="rgba(0,0,0,0)",
+                plot_bgcolor="rgba(0,0,0,0)",
+                hovermode="x unified",
+                legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1, font=dict(size=10.5)),
+                xaxis=dict(showgrid=True, gridcolor="rgba(128,128,128,0.12)"),
+                yaxis=dict(showgrid=True, gridcolor="rgba(128,128,128,0.12)", ticksuffix="%")
+            )
+            st.plotly_chart(fig_comp, use_container_width=True, config=PLOTLY_CONFIG)
+
+        # Side-by-Side Detailed Specs Comparison Table
+        st.markdown("<div style='margin-top: 18px; margin-bottom: 8px; font-weight: 700; font-size: 1.05rem;'>📋 選択銘柄の徹底スペック横並び比較表</div>", unsafe_allow_html=True)
+        comp_rows = []
+        for idx, f in enumerate(selected_comp_funds, 1):
+            ts_tag = '<span style="color: var(--color-gain, #10b981); font-weight: 700;">○</span>' if f.get("nisa_tsumitate") else '<span style="opacity: 0.3;">-</span>'
+            gr_tag = '<span style="color: var(--mui-primary, #1976d2); font-weight: 700;">○</span>' if f.get("nisa_growth") else '<span style="opacity: 0.3;">-</span>'
+            comp_rows.append(f'''<tr style="border-bottom: 1px solid var(--border-color); font-size: 0.82rem;">
+<td style="padding: 10px 8px; font-weight: 700; text-align: center;"><span style="background: {f['color']}; color: #fff; padding: 2px 6px; border-radius: 4px; font-size: 0.7rem;">{f['rank']}</span></td>
+<td style="padding: 10px 8px; font-weight: 700; color: {f['color']}; text-align: center;" class="tabular-nums">{f['score']}</td>
+<td style="padding: 10px 10px;">
+<div style="font-weight: 700; color: var(--text-color);">{f['name']}</div>
+<div style="font-size: 0.72rem; color: var(--secondary-text-color);">{f['role']} / {f['trustee']}</div>
+</td>
+<td style="padding: 10px 6px; text-align: center;">{ts_tag}</td>
+<td style="padding: 10px 6px; text-align: center;">{gr_tag}</td>
+<td style="padding: 10px 8px; text-align: right; font-weight: 700;" class="tabular-nums">{f['expense_ratio']:.4f}%</td>
+<td style="padding: 10px 8px; text-align: right;" class="tabular-nums">{f['aum_oku']:,}億円</td>
+<td style="padding: 10px 8px; text-align: right; font-weight: 700; color: var(--color-gain, #10b981);" class="tabular-nums">+{f['return_1y']:.1f}%</td>
+<td style="padding: 10px 8px; text-align: right; color: var(--color-gain, #10b981);" class="tabular-nums">+{f['return_3y_annual']:.1f}%</td>
+<td style="padding: 10px 8px; text-align: right; font-weight: 700; color: var(--mui-primary, #1976d2);" class="tabular-nums">{f['sharpe_ratio']:.2f}</td>
+<td style="padding: 10px 8px; text-align: right; color: var(--color-loss, #f43f5e);" class="tabular-nums">{f['max_drawdown']:.1f}%</td>
+</tr>''')
+
+        st.html(f'''<div style="overflow-x: auto; margin-bottom: 24px; border: 1px solid var(--border-color); border-radius: 8px; background: rgba(255,255,255,0.02);">
+<table style="width: 100%; border-collapse: collapse; min-width: 850px;">
+<thead>
+<tr style="background: rgba(0,0,0,0.04); border-bottom: 1px solid var(--border-color); font-size: 0.76rem; color: var(--secondary-text-color); text-transform: uppercase;">
+<th style="padding: 10px 8px; text-align: center;">RANK</th>
+<th style="padding: 10px 8px; text-align: center;">AIスコア</th>
+<th style="padding: 10px 10px; text-align: left;">投資信託名 / 役割</th>
+<th style="padding: 10px 6px; text-align: center;">つみたて</th>
+<th style="padding: 10px 6px; text-align: center;">成長枠</th>
+<th style="padding: 10px 8px; text-align: right;">信託報酬(年率)</th>
+<th style="padding: 10px 8px; text-align: right;">純資産総額</th>
+<th style="padding: 10px 8px; text-align: right;">1年リターン</th>
+<th style="padding: 10px 8px; text-align: right;">3年年率</th>
+<th style="padding: 10px 8px; text-align: right;">シャープレシオ</th>
+<th style="padding: 10px 8px; text-align: right;">最大下落(DD)</th>
+</tr>
+</thead>
+<tbody>
+{''.join(comp_rows)}
+</tbody>
+</table>
+</div>''')
 
 
 # -----------------------------------------------------------------------------
