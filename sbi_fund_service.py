@@ -12,6 +12,8 @@ import yfinance as yf
 # In-memory cache for chart series (TTL = 30 minutes)
 _CHART_CACHE: Dict[str, Any] = {}
 _INDIVIDUAL_CHART_CACHE: Dict[str, Any] = {}
+_REALTIME_RETURN_CACHE: Dict[str, Dict[str, Any]] = {}
+_LAST_BATCH_FETCH_TIME: float = 0.0
 
 # Master Database of 35+ Top SBI Securities Investment Trusts
 SBI_FUNDS_DB: List[Dict[str, Any]] = [
@@ -1181,6 +1183,119 @@ def calculate_forward_growth_potential(fund: Dict[str, Any]) -> Dict[str, Any]:
     }
 
 
+def _clean_price_series(s: pd.Series) -> pd.Series:
+    """
+    Cleans stock/ETF price series from Yahoo Finance split adjustment anomalies.
+    Detects sudden abnormal 1-day drops (<0.25x) or spikes (>4.0x) and smooths them.
+    """
+    if len(s) < 3:
+        return s
+    s_clean = s.copy()
+    for i in range(1, len(s_clean)):
+        prev = s_clean.iloc[i - 1]
+        curr = s_clean.iloc[i]
+        if prev > 0 and curr > 0:
+            ratio = curr / prev
+            if ratio < 0.25 or ratio > 4.0:
+                if i + 1 < len(s_clean) and 0.5 < (s_clean.iloc[i + 1] / prev) < 2.0:
+                    s_clean.iloc[i] = prev
+                elif i + 2 < len(s_clean) and 0.5 < (s_clean.iloc[i + 2] / prev) < 2.0:
+                    s_clean.iloc[i] = prev
+                else:
+                    s_clean.iloc[i] = prev
+    return s_clean
+
+
+def fetch_all_realtime_returns(force: bool = False) -> Dict[str, float]:
+    """
+    Fetches 1-year realtime cumulative returns for all proxy tickers in SBI_FUNDS_DB.
+    Caches the results for 30 minutes. Returns a mapping of fund_id -> realtime return_1y.
+    Ensures card metrics 100% match the individual technical charts.
+    """
+    global _LAST_BATCH_FETCH_TIME
+    now = time.time()
+
+    if not force and (now - _LAST_BATCH_FETCH_TIME < 1800) and len(_REALTIME_RETURN_CACHE) > 0:
+        return {fid: data["return_1y"] for fid, data in _REALTIME_RETURN_CACHE.items()}
+
+    ticker_to_fids: Dict[str, List[str]] = {}
+    for f in SBI_FUNDS_DB:
+        tick = f.get("proxy_ticker")
+        if tick:
+            ticker_to_fids.setdefault(tick, []).append(f["id"])
+
+    tickers = list(ticker_to_fids.keys())
+    if not tickers:
+        return {}
+
+    try:
+        df = yf.download(tickers, period="1y", interval="1d", progress=False, group_by="ticker", auto_adjust=True)
+        if df is not None and not df.empty:
+            for tick, fids in ticker_to_fids.items():
+                try:
+                    close_data = None
+                    if isinstance(df.columns, pd.MultiIndex):
+                        if tick in df.columns.levels[0]:
+                            close_data = df[tick]["Close"]
+                        elif "Close" in df.columns.levels[0] and tick in df["Close"].columns:
+                            close_data = df["Close"][tick]
+                    else:
+                        if "Close" in df.columns:
+                            close_data = df["Close"]
+
+                    if close_data is not None:
+                        s = close_data.dropna()
+                        if isinstance(s, pd.DataFrame):
+                            s = s.iloc[:, 0]
+                        s = pd.to_numeric(s, errors="coerce").dropna()
+                        s = _clean_price_series(s)
+                        if len(s) >= 5:
+                            first_val = float(s.iloc[0])
+                            last_val = float(s.iloc[-1])
+                            if first_val > 0:
+                                cum_ret = round(((last_val / first_val) - 1.0) * 100.0, 1)
+                                for fid in fids:
+                                    _REALTIME_RETURN_CACHE[fid] = {
+                                        "return_1y": cum_ret,
+                                        "time": now
+                                    }
+                except Exception as parse_err:
+                    print(f"Error parsing ticker {tick} in batch realtime return: {parse_err}")
+            _LAST_BATCH_FETCH_TIME = now
+    except Exception as e:
+        print(f"Error downloading batch realtime returns: {e}")
+
+    return {fid: data["return_1y"] for fid, data in _REALTIME_RETURN_CACHE.items()}
+
+
+def get_realtime_fund_return(fund_id: str) -> Optional[float]:
+    """
+    Returns the realtime 1-year cumulative return for a fund, exactly matching its chart.
+    """
+    now = time.time()
+    # 1. First priority: from individual chart cache (exact match)
+    indiv_cache = _INDIVIDUAL_CHART_CACHE.get(f"indiv_{fund_id}_1y")
+    if indiv_cache and (now - indiv_cache.get("time", 0) < 1800):
+        data = indiv_cache.get("data")
+        if data and "latest_cum_return" in data:
+            return round(data["latest_cum_return"], 1)
+
+    # 2. Second priority: from realtime return cache
+    if fund_id in _REALTIME_RETURN_CACHE:
+        cached = _REALTIME_RETURN_CACHE[fund_id]
+        if now - cached.get("time", 0) < 1800:
+            return cached.get("return_1y")
+
+    # 3. Third priority: fetch all realtime returns
+    returns_map = fetch_all_realtime_returns()
+    if fund_id in returns_map:
+        return returns_map[fund_id]
+
+    # 4. Fallback: static value from SBI_FUNDS_DB
+    f = next((item for item in SBI_FUNDS_DB if item["id"] == fund_id), None)
+    return f.get("return_1y") if f else None
+
+
 def get_all_categories() -> List[str]:
     return [
         "すべて",
@@ -1196,13 +1311,17 @@ def get_all_categories() -> List[str]:
 def get_fund_details(fund_id: str) -> Optional[Dict[str, Any]]:
     """
     Retrieves full details of a single fund including quantitative score, forward growth potential, rank, and color.
+    Dynamically synchronizes return_1y with realtime yfinance 1-year performance.
     """
     f = next((item for item in SBI_FUNDS_DB if item["id"] == fund_id), None)
     if not f:
         return None
     item = dict(f)
-    item.update(score_fund(f))
-    item.update(calculate_forward_growth_potential(f))
+    rt = get_realtime_fund_return(fund_id)
+    if rt is not None:
+        item["return_1y"] = rt
+    item.update(score_fund(item))
+    item.update(calculate_forward_growth_potential(item))
     return item
 
 
@@ -1216,7 +1335,10 @@ def filter_and_sort_funds(
 ) -> List[Dict[str, Any]]:
     """
     Filters and sorts funds based on multiple screening criteria.
+    Dynamically synchronizes return_1y across all displayed funds with realtime market performance.
     """
+    realtime_returns = fetch_all_realtime_returns()
+
     results = []
     q = search_query.strip().lower()
 
@@ -1260,9 +1382,12 @@ def filter_and_sort_funds(
             if not match:
                 continue
 
-        score_info = score_fund(f)
-        fwd_info = calculate_forward_growth_potential(f)
         item = dict(f)
+        if f["id"] in realtime_returns:
+            item["return_1y"] = realtime_returns[f["id"]]
+
+        score_info = score_fund(item)
+        fwd_info = calculate_forward_growth_potential(item)
         item.update(score_info)
         item.update(fwd_info)
         results.append(item)
@@ -1285,29 +1410,6 @@ def filter_and_sort_funds(
         results.sort(key=lambda x: abs(x["max_drawdown"]))
 
     return results
-
-
-def _clean_price_series(s: pd.Series) -> pd.Series:
-    """
-    Cleans stock/ETF price series from Yahoo Finance split adjustment anomalies.
-    Detects sudden abnormal 1-day drops (<0.25x) or spikes (>4.0x) and smooths them.
-    """
-    if len(s) < 3:
-        return s
-    s_clean = s.copy()
-    for i in range(1, len(s_clean)):
-        prev = s_clean.iloc[i - 1]
-        curr = s_clean.iloc[i]
-        if prev > 0 and curr > 0:
-            ratio = curr / prev
-            if ratio < 0.25 or ratio > 4.0:
-                if i + 1 < len(s_clean) and 0.5 < (s_clean.iloc[i + 1] / prev) < 2.0:
-                    s_clean.iloc[i] = prev
-                elif i + 2 < len(s_clean) and 0.5 < (s_clean.iloc[i + 2] / prev) < 2.0:
-                    s_clean.iloc[i] = prev
-                else:
-                    s_clean.iloc[i] = prev
-    return s_clean
 
 
 def fetch_comparison_chart_data(period: str = "1y", fund_ids: Optional[List[str]] = None, *args, **kwargs) -> Dict[str, Any]:
@@ -1469,6 +1571,11 @@ def fetch_individual_fund_chart(fund_id: str, period: str = "1y") -> Optional[Di
         }
 
         _INDIVIDUAL_CHART_CACHE[cache_key] = {"time": now, "data": result}
+        if period == "1y":
+            _REALTIME_RETURN_CACHE[fund_id] = {
+                "return_1y": round(result["latest_cum_return"], 1),
+                "time": now
+            }
         return result
     except Exception as e:
         print(f"Error fetching individual fund chart: {e}")

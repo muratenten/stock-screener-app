@@ -9346,7 +9346,7 @@ div[class*="st-key-sbi_fund_category_filter"] button span {
 <td style="padding: 10px 6px; text-align: center;">{gr_tag}</td>
 <td style="padding: 10px 8px; text-align: right; font-weight: 600;" class="tabular-nums">{f['expense_ratio']:.4f}%</td>
 <td style="padding: 10px 8px; text-align: right;" class="tabular-nums">{f['aum_oku']:,}億</td>
-<td style="padding: 10px 8px; text-align: right; font-weight: 700; color: var(--color-gain, #10b981);" class="tabular-nums">+{f['return_1y']:.1f}%</td>
+<td style="padding: 10px 8px; text-align: right; font-weight: 700; color: {'var(--color-gain, #10b981)' if f['return_1y'] >= 0 else 'var(--color-loss, #f43f5e)'};" class="tabular-nums">{f['return_1y']:+.1f}%</td>
 <td style="padding: 10px 8px; text-align: right; color: var(--color-gain, #10b981);" class="tabular-nums">+{f['return_3y_annual']:.1f}%</td>
 <td style="padding: 10px 8px; text-align: right; font-weight: 600; color: var(--mui-primary, #1976d2);" class="tabular-nums">{f['sharpe_ratio']:.2f}</td>
 <td style="padding: 10px 8px; text-align: right; color: var(--color-loss, #f43f5e);" class="tabular-nums">{f['max_drawdown']:.1f}%</td>
@@ -9432,8 +9432,8 @@ div[class*="st-key-sbi_fund_category_filter"] button span {
 <div style="font-size: 1.0rem; font-weight: 700; color: var(--text-color);" class="tabular-nums">{f['aum_oku']:,} 億円</div>
 </div>
 <div>
-<div style="font-size: 0.72rem; color: var(--secondary-text-color);">直近1年リターン <span style="font-size: 0.68rem; color: var(--color-gain, #10b981); font-weight: 700;">▲高優</span></div>
-<div style="font-size: 1.0rem; font-weight: 700; color: var(--color-gain, #10b981);" class="tabular-nums">+{f['return_1y']:.1f}%</div>
+<div style="font-size: 0.72rem; color: var(--secondary-text-color);">直近1年リターン <span style="font-size: 0.68rem; color: {'var(--color-gain, #10b981)' if f['return_1y'] >= 0 else 'var(--color-loss, #f43f5e)'}; font-weight: 700;">{'▲高優' if f['return_1y'] >= 0 else '▼注意'}</span></div>
+<div style="font-size: 1.0rem; font-weight: 700; color: {'var(--color-gain, #10b981)' if f['return_1y'] >= 0 else 'var(--color-loss, #f43f5e)'};" class="tabular-nums">{f['return_1y']:+.1f}%</div>
 </div>
 <div>
 <div style="font-size: 0.72rem; color: var(--secondary-text-color);">過去3年(年率) <span style="font-size: 0.68rem; color: var(--color-gain, #10b981); font-weight: 700;">▲高優</span></div>
@@ -9486,9 +9486,11 @@ div[class*="st-key-sbi_fund_category_filter"] button span {
                 # Inline Individual Chart Rendering if toggled!
                 if st.session_state.get(f"show_chart_{f['id']}", False):
                     st.markdown("<hr style='margin: 14px 0 10px 0; border: none; border-top: 1px solid var(--border-color);'>", unsafe_allow_html=True)
-                    st.markdown(f"<div style='font-weight: 700; font-size: 0.95rem; margin-bottom: 8px;'>📈 {f['nickname']} の詳細テクニカル分析（基準価額 & 25日・75日移動平均線）</div>", unsafe_allow_html=True)
                     indiv_data = sfs.fetch_individual_fund_chart(f["id"], period="1y")
                     if indiv_data:
+                        cum_ret_val = indiv_data.get('latest_cum_return', 0.0)
+                        cum_ret_color = '#10b981' if cum_ret_val >= 0 else '#f43f5e'
+                        st.markdown(f"<div style='font-weight: 700; font-size: 0.95rem; margin-bottom: 8px;'>📈 {f['nickname']} の詳細テクニカル分析（直近1年累積リターン: <span style='color: {cum_ret_color}; font-weight: 800;' class='tabular-nums'>{cum_ret_val:+.1f}%</span> / 基準価額 & 25日・75日移動平均線）</div>", unsafe_allow_html=True)
                         fig_inline = make_subplots(rows=2, cols=1, shared_xaxes=True, vertical_spacing=0.08, row_heights=[0.65, 0.35])
                         fig_inline.add_trace(go.Scatter(
                             x=indiv_data["dates"],
@@ -9802,7 +9804,7 @@ div[class*="st-key-btn_generate_ai_pack"] button {
 <td style="padding: 10px 6px; text-align: center;">{gr_tag}</td>
 <td style="padding: 10px 8px; text-align: right; font-weight: 700;" class="tabular-nums">{f.get('expense_ratio', 0.1):.4f}%</td>
 <td style="padding: 10px 8px; text-align: right;" class="tabular-nums">{f.get('aum_oku', 0):,}億円</td>
-<td style="padding: 10px 8px; text-align: right; font-weight: 700; color: var(--color-gain, #10b981);" class="tabular-nums">+{f.get('return_1y', 0.0):.1f}%</td>
+<td style="padding: 10px 8px; text-align: right; font-weight: 700; color: {'var(--color-gain, #10b981)' if f.get('return_1y', 0.0) >= 0 else 'var(--color-loss, #f43f5e)'};" class="tabular-nums">{f.get('return_1y', 0.0):+.1f}%</td>
 <td style="padding: 10px 8px; text-align: right; color: var(--color-gain, #10b981);" class="tabular-nums">+{f.get('return_3y_annual', 0.0):.1f}%</td>
 <td style="padding: 10px 8px; text-align: right; font-weight: 700; color: var(--mui-primary, #1976d2);" class="tabular-nums">{f.get('sharpe_ratio', 1.0):.2f}</td>
 <td style="padding: 10px 8px; text-align: right; color: var(--color-loss, #f43f5e);" class="tabular-nums">{f.get('max_drawdown', 0.0):.1f}%</td>
