@@ -8658,7 +8658,7 @@ with tab_geopolitics:
     st.markdown("""
     <div style="margin-bottom: 20px;">
         <h2 style="margin: 0 0 6px 0; font-size: 1.6rem; font-weight: 700; color: var(--text-color);">
-            🌍 社会情勢・時事テーマ銘柄提案窓口
+            社会情勢・時事テーマ銘柄提案窓口
         </h2>
         <div style="font-size: 0.92rem; color: var(--secondary-text-color); line-height: 1.5;">
             有事・防衛リスク、情報漏洩・サイバー攻撃、資源インフレなど、<b>現在の社会情勢ニュースと機関投資家の資金流入データ</b>をAIがリアルタイム照合。<br>
@@ -8716,7 +8716,7 @@ with tab_geopolitics:
     with col_news:
         st.markdown("""
 <div style="font-size: 0.85rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--secondary-text-color); margin-bottom: 8px;">
-📰 最新マクロ情勢・金融速報（一次開示・専門メディア連携）
+最新マクロ情勢・金融速報（一次開示・専門メディア連携）
 </div>
 """, unsafe_allow_html=True)
         
@@ -8730,8 +8730,8 @@ with tab_geopolitics:
 f'''<div style="padding: 10px 14px; background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border-color); border-radius: 8px; margin-bottom: 8px;">
 <div style="font-weight: 600; font-size: 0.86rem; color: var(--text-color); line-height: 1.4; margin-bottom: 4px;">{n['title']}</div>
 <div style="display: flex; gap: 12px; font-size: 0.74rem; color: var(--secondary-text-color);">
-<span>🏛️ 出典: {n['source']}</span>
-<span>⏱️ {pub_date}</span>
+<span>出典: {n['source']}</span>
+<span>更新: {pub_date}</span>
 </div>
 </div>'''
             )
@@ -8740,7 +8740,7 @@ f'''<div style="padding: 10px 14px; background: rgba(255, 255, 255, 0.03); borde
     with col_pulse:
         st.markdown("""
 <div style="font-size: 0.85rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--secondary-text-color); margin-bottom: 8px;">
-📊 セクター資金流入ステータス
+セクター資金流入ステータス
 </div>
 """, unsafe_allow_html=True)
 
@@ -8750,12 +8750,25 @@ f'''<div style="padding: 10px 14px; background: rgba(255, 255, 255, 0.03); borde
         spike_stocks = [s for s in theme_stocks if s.get("has_spike")]
         avg_vol_ratio = float(np.mean([s["vol_ratio"] for s in theme_stocks])) if theme_stocks else 1.0
 
-        pulse_status = "🔥 強い資金流入を検知" if avg_vol_ratio >= 1.2 or len(spike_stocks) >= 2 else ("🟢 安定推移・押し目形成中" if avg_vol_ratio >= 0.9 else "⚪ 静かな助走局面")
-        pulse_color = "var(--color-gain)" if "流入" in pulse_status else "var(--mui-primary, #1976d2)"
+        if avg_vol_ratio >= 1.2 or len(spike_stocks) >= 2:
+            pulse_status = "強い資金流入を検知"
+            pulse_pill = '<span class="pill-badge pill-gain" style="font-size: 0.78rem; padding: 2px 8px; font-weight: 700;">急増</span>'
+            pulse_color = "var(--color-gain)"
+        elif avg_vol_ratio >= 0.9:
+            pulse_status = "堅調推移・押し目形成中"
+            pulse_pill = '<span class="pill-badge" style="background: rgba(25, 118, 210, 0.1); color: var(--mui-primary, #1976d2); font-size: 0.78rem; padding: 2px 8px; font-weight: 700;">安定</span>'
+            pulse_color = "var(--mui-primary, #1976d2)"
+        else:
+            pulse_status = "静かな助走局面"
+            pulse_pill = '<span class="pill-badge" style="background: rgba(100, 116, 139, 0.1); color: #64748b; font-size: 0.78rem; padding: 2px 8px; font-weight: 700;">中立</span>'
+            pulse_color = "#64748b"
 
         st.html(f'''<div class="card" style="padding: 16px; text-align: center; margin-bottom: 16px;">
 <div class="metric-title">セクター需給モメンタム</div>
-<div style="font-size: 1.15rem; font-weight: 700; color: {pulse_color}; margin: 6px 0;">{pulse_status}</div>
+<div style="display: flex; align-items: center; justify-content: center; gap: 8px; margin: 6px 0;">
+{pulse_pill}
+<span style="font-size: 1.15rem; font-weight: 700; color: {pulse_color};">{pulse_status}</span>
+</div>
 <div style="font-size: 0.82rem; color: var(--secondary-text-color); line-height: 1.5; margin-top: 8px;">
 平均出来高比率: <b class="tabular-nums">{avg_vol_ratio:.1f}倍</b><br>
 大口資金急増検知: <b class="tabular-nums">{len(spike_stocks)} 銘柄</b>
@@ -8765,7 +8778,7 @@ f'''<div style="padding: 10px 14px; background: rgba(255, 255, 255, 0.03); borde
     st.markdown("---")
     st.html('''<div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 16px;">
 <div>
-<h3 style="margin: 0 0 4px 0; font-size: 1.25rem; font-weight: 700; color: var(--text-color);">🎯 本日の厳選注目銘柄（勝率・出来高スコア順）</h3>
+<h3 style="margin: 0 0 4px 0; font-size: 1.25rem; font-weight: 700; color: var(--text-color);">本日の厳選注目銘柄（勝率・出来高スコア順）</h3>
 <div style="font-size: 0.82rem; color: var(--secondary-text-color);">直近の出来高変化、過去波形勝率、および本命度により毎日リアルタイムに自動ランキング</div>
 </div>
 <div style="font-size: 0.78rem; opacity: 0.7; color: var(--secondary-text-color);">※毎営業日 最新株価連動</div>
@@ -8785,7 +8798,7 @@ f'''<div style="padding: 10px 14px; background: rgba(255, 255, 255, 0.03); borde
 
         vol_badge = ""
         if s.get("has_spike"):
-            vol_badge = '<span class="pill-badge pill-gain" style="font-size: 0.72rem; padding: 2px 7px;">🔥 出来高急増</span>'
+            vol_badge = '<span class="pill-badge pill-gain" style="font-size: 0.72rem; padding: 2px 7px;">出来高急増</span>'
 
         with st.container():
             st.html(f'''<div class="card" style="padding: 20px; margin-bottom: 18px;">
@@ -8824,22 +8837,22 @@ f'''<div style="padding: 10px 14px; background: rgba(255, 255, 255, 0.03); borde
 </div>
 </div>''')
 
-            with st.expander(f"📝 Gemini 3.8 / 専門アナリストの戦略解説レポートを開く（{s['name']}）", expanded=False):
+            with st.expander(f"Gemini 3.8 / 専門アナリストの戦略解説レポートを開く（{s['name']}）", expanded=False):
                 report_text = gs.generate_analyst_report(s, cfg, live_news)
                 st.markdown(report_text)
 
             col_btn1, col_btn2 = st.columns([1, 1])
             with col_btn1:
-                if st.button(f"🔍 チャート・詳細波形を分析", key=f"geo_view_{s['ticker']}"):
+                if st.button("チャート・詳細波形を分析", key=f"geo_view_{s['ticker']}"):
                     st.session_state["target_ticker"] = s['ticker']
                     st.session_state["active_tab_index"] = 2
                     st.rerun()
             with col_btn2:
-                if st.button(f"💼 仮想シミュレーションで購入", key=f"geo_buy_{s['ticker']}"):
+                if st.button("仮想シミュレーションで購入", key=f"geo_buy_{s['ticker']}"):
                     st.session_state["sim_purchase_ticker"] = s['ticker']
                     st.session_state["sim_purchase_name"] = s['name']
                     st.session_state["sim_purchase_price"] = s['price']
-                    st.toast(f"✅ {s['name']} をシミュレーション購入準備に追加しました！")
+                    st.toast(f"{s['name']} をシミュレーション購入準備に追加しました")
 
             st.markdown("<div style='margin-bottom: 24px;'></div>", unsafe_allow_html=True)
 
