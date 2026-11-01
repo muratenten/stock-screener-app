@@ -1121,6 +1121,18 @@ def get_all_categories() -> List[str]:
     ]
 
 
+def get_fund_details(fund_id: str) -> Optional[Dict[str, Any]]:
+    """
+    Retrieves full details of a single fund including quantitative score, rank, and color.
+    """
+    f = next((item for item in SBI_FUNDS_DB if item["id"] == fund_id), None)
+    if not f:
+        return None
+    item = dict(f)
+    item.update(score_fund(f))
+    return item
+
+
 def filter_and_sort_funds(
     category: str = "すべて",
     nisa_filter: str = "すべて",

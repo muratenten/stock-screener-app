@@ -9432,7 +9432,7 @@ div[class*="st-key-sbi_fund_category_filter"] button span {
     st.markdown("<div style='margin-top: 40px; margin-bottom: 24px; border-top: 2px dashed var(--border-color);'></div>", unsafe_allow_html=True)
     st.markdown("### 📊 選択した銘柄の累積リターン比較 & 徹底比較表")
     
-    selected_comp_funds = [f for f in sfs.SBI_FUNDS_DB if f["id"] in compare_list]
+    selected_comp_funds = [sfs.get_fund_details(fid) for fid in compare_list if sfs.get_fund_details(fid)]
     
     if not selected_comp_funds:
         st.info("💡 上の各銘柄カードにある **『📊 比較リストに追加』** ボタンを押すと、ここに選択した銘柄同士の累積リターン比較チャートと横並びスペック比較表がリアルタイム表示されます。")
@@ -9497,21 +9497,24 @@ div[class*="st-key-sbi_fund_category_filter"] button span {
         for idx, f in enumerate(selected_comp_funds, 1):
             ts_tag = '<span style="color: var(--color-gain, #10b981); font-weight: 700;">○</span>' if f.get("nisa_tsumitate") else '<span style="opacity: 0.3;">-</span>'
             gr_tag = '<span style="color: var(--mui-primary, #1976d2); font-weight: 700;">○</span>' if f.get("nisa_growth") else '<span style="opacity: 0.3;">-</span>'
+            f_color = f.get('color', '#1976d2')
+            f_rank = f.get('rank', 'A')
+            f_score = f.get('score', 80.0)
             comp_rows.append(f'''<tr style="border-bottom: 1px solid var(--border-color); font-size: 0.82rem;">
-<td style="padding: 10px 8px; font-weight: 700; text-align: center;"><span style="background: {f['color']}; color: #fff; padding: 2px 6px; border-radius: 4px; font-size: 0.7rem;">{f['rank']}</span></td>
-<td style="padding: 10px 8px; font-weight: 700; color: {f['color']}; text-align: center;" class="tabular-nums">{f['score']}</td>
+<td style="padding: 10px 8px; font-weight: 700; text-align: center;"><span style="background: {f_color}; color: #fff; padding: 2px 6px; border-radius: 4px; font-size: 0.7rem;">{f_rank}</span></td>
+<td style="padding: 10px 8px; font-weight: 700; color: {f_color}; text-align: center;" class="tabular-nums">{f_score}</td>
 <td style="padding: 10px 10px;">
 <div style="font-weight: 700; color: var(--text-color);">{f['name']}</div>
-<div style="font-size: 0.72rem; color: var(--secondary-text-color);">{f['role']} / {f['trustee']}</div>
+<div style="font-size: 0.72rem; color: var(--secondary-text-color);">{f.get('role', '')} / {f.get('trustee', '')}</div>
 </td>
 <td style="padding: 10px 6px; text-align: center;">{ts_tag}</td>
 <td style="padding: 10px 6px; text-align: center;">{gr_tag}</td>
-<td style="padding: 10px 8px; text-align: right; font-weight: 700;" class="tabular-nums">{f['expense_ratio']:.4f}%</td>
-<td style="padding: 10px 8px; text-align: right;" class="tabular-nums">{f['aum_oku']:,}億円</td>
-<td style="padding: 10px 8px; text-align: right; font-weight: 700; color: var(--color-gain, #10b981);" class="tabular-nums">+{f['return_1y']:.1f}%</td>
-<td style="padding: 10px 8px; text-align: right; color: var(--color-gain, #10b981);" class="tabular-nums">+{f['return_3y_annual']:.1f}%</td>
-<td style="padding: 10px 8px; text-align: right; font-weight: 700; color: var(--mui-primary, #1976d2);" class="tabular-nums">{f['sharpe_ratio']:.2f}</td>
-<td style="padding: 10px 8px; text-align: right; color: var(--color-loss, #f43f5e);" class="tabular-nums">{f['max_drawdown']:.1f}%</td>
+<td style="padding: 10px 8px; text-align: right; font-weight: 700;" class="tabular-nums">{f.get('expense_ratio', 0.1):.4f}%</td>
+<td style="padding: 10px 8px; text-align: right;" class="tabular-nums">{f.get('aum_oku', 0):,}億円</td>
+<td style="padding: 10px 8px; text-align: right; font-weight: 700; color: var(--color-gain, #10b981);" class="tabular-nums">+{f.get('return_1y', 0.0):.1f}%</td>
+<td style="padding: 10px 8px; text-align: right; color: var(--color-gain, #10b981);" class="tabular-nums">+{f.get('return_3y_annual', 0.0):.1f}%</td>
+<td style="padding: 10px 8px; text-align: right; font-weight: 700; color: var(--mui-primary, #1976d2);" class="tabular-nums">{f.get('sharpe_ratio', 1.0):.2f}</td>
+<td style="padding: 10px 8px; text-align: right; color: var(--color-loss, #f43f5e);" class="tabular-nums">{f.get('max_drawdown', 0.0):.1f}%</td>
 </tr>''')
 
         st.html(f'''<div style="overflow-x: auto; margin-bottom: 24px; border: 1px solid var(--border-color); border-radius: 8px; background: rgba(255,255,255,0.02);">
