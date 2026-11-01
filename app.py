@@ -831,13 +831,20 @@ st.html(f"""
         visibility: hidden !important;
         display: none !important;
     }}
-    /* Keep sidebar collapse / expand button always accessible */
+    /* Keep sidebar and collapse / expand toggle buttons always accessible and on top */
     [data-testid="stSidebarCollapseButton"],
-    header [data-testid="stSidebarCollapseButton"] {{
+    [data-testid="stSidebarCollapsedControl"],
+    header [data-testid="stSidebarCollapseButton"],
+    header [data-testid="stSidebarCollapsedControl"] {{
         visibility: visible !important;
         display: inline-flex !important;
         opacity: 1 !important;
         pointer-events: auto !important;
+        z-index: 1000000 !important;
+    }}
+    section[data-testid="stSidebar"],
+    [data-testid="stSidebar"] {{
+        visibility: visible !important;
         z-index: 999999 !important;
     }}
     footer, [data-testid="stFooter"] {{visibility: hidden !important; display: none !important; height: 0px !important;}}
@@ -1996,16 +2003,17 @@ st.components.v1.html("""
                     });
                 });
 
-                // Ensure sidebar and sidebar collapse button remain visible and functional
-                doc.querySelectorAll('[data-testid="stSidebarCollapseButton"]').forEach(btn => {
+                // Ensure sidebar and sidebar toggle buttons remain visible, functional, and on top
+                doc.querySelectorAll('[data-testid="stSidebarCollapseButton"], [data-testid="stSidebarCollapsedControl"]').forEach(btn => {
                     btn.style.setProperty('display', 'inline-flex', 'important');
                     btn.style.setProperty('visibility', 'visible', 'important');
                     btn.style.setProperty('opacity', '1', 'important');
                     btn.style.setProperty('pointer-events', 'auto', 'important');
-                    btn.style.setProperty('z-index', '999999', 'important');
+                    btn.style.setProperty('z-index', '1000000', 'important');
                 });
                 doc.querySelectorAll('section[data-testid="stSidebar"]').forEach(sb => {
                     sb.style.setProperty('visibility', 'visible', 'important');
+                    sb.style.setProperty('z-index', '999999', 'important');
                 });
             } catch(e) {}
         });
@@ -6634,9 +6642,33 @@ if query_user == "default":
         flex-shrink: 0 !important;
         vertical-align: middle !important;
     }
-    /* Completely hide Streamlit header, footer, MainMenu, deploy buttons, and badges in portal */
+    /* Completely hide Streamlit footer, MainMenu, deploy buttons, and badges in portal, while keeping sidebar toggle button */
     #MainMenu {visibility: hidden !important; display: none !important;}
-    header {visibility: hidden !important; display: none !important;}
+    header {background: transparent !important;}
+    header [data-testid="stToolbar"],
+    header .stDeployButton,
+    header #MainMenu,
+    header [data-testid="stDecoration"],
+    header [data-testid="stStatusWidget"] {
+        visibility: hidden !important;
+        display: none !important;
+    }
+    /* Keep sidebar and collapse / expand toggle buttons always accessible and on top */
+    [data-testid="stSidebarCollapseButton"],
+    [data-testid="stSidebarCollapsedControl"],
+    header [data-testid="stSidebarCollapseButton"],
+    header [data-testid="stSidebarCollapsedControl"] {
+        visibility: visible !important;
+        display: inline-flex !important;
+        opacity: 1 !important;
+        pointer-events: auto !important;
+        z-index: 1000000 !important;
+    }
+    section[data-testid="stSidebar"],
+    [data-testid="stSidebar"] {
+        visibility: visible !important;
+        z-index: 999999 !important;
+    }
     footer, [data-testid="stFooter"] {visibility: hidden !important; display: none !important; height: 0px !important;}
     .stDeployButton {display: none !important;}
     [data-testid="stToolbar"] {visibility: hidden !important; display: none !important;}
@@ -6820,16 +6852,17 @@ if query_user == "default":
                         el.style.setProperty('height', '0px', 'important');
                     });
                 });
-                // Ensure sidebar and sidebar collapse button remain visible and functional
-                doc.querySelectorAll('[data-testid="stSidebarCollapseButton"]').forEach(btn => {
+                // Ensure sidebar and sidebar toggle buttons remain visible, functional, and on top
+                doc.querySelectorAll('[data-testid="stSidebarCollapseButton"], [data-testid="stSidebarCollapsedControl"]').forEach(btn => {
                     btn.style.setProperty('display', 'inline-flex', 'important');
                     btn.style.setProperty('visibility', 'visible', 'important');
                     btn.style.setProperty('opacity', '1', 'important');
                     btn.style.setProperty('pointer-events', 'auto', 'important');
-                    btn.style.setProperty('z-index', '999999', 'important');
+                    btn.style.setProperty('z-index', '1000000', 'important');
                 });
                 doc.querySelectorAll('section[data-testid="stSidebar"]').forEach(sb => {
                     sb.style.setProperty('visibility', 'visible', 'important');
+                    sb.style.setProperty('z-index', '999999', 'important');
                 });
             } catch(e){}
         });
