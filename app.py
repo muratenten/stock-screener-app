@@ -681,12 +681,11 @@ if logo_data_uri:
                     document.head.appendChild(appleIcon);
                 }}
 
-                // Aggressive Streamlit Community Cloud badge and header/footer cleanup
+                // Aggressive Streamlit Community Cloud badge and footer cleanup
                 function cleanStreamlitBadges() {{
                     var selectors = [
                         'footer',
                         '#MainMenu',
-                        'header',
                         '.stDeployButton',
                         '[data-testid="stToolbar"]',
                         '[data-testid="stDecoration"]',
@@ -821,9 +820,26 @@ st.html(f"""
         -webkit-font-smoothing: antialiased !important;
     }}
 
-    /* Completely hide Streamlit header, footer, MainMenu, deploy buttons, and badges */
+    /* Completely hide Streamlit footer, MainMenu, deploy buttons, and badges, while keeping sidebar toggle button */
     #MainMenu {{visibility: hidden !important; display: none !important;}}
-    header {{visibility: hidden !important; display: none !important;}}
+    header {{background: transparent !important;}}
+    header [data-testid="stToolbar"],
+    header .stDeployButton,
+    header #MainMenu,
+    header [data-testid="stDecoration"],
+    header [data-testid="stStatusWidget"] {{
+        visibility: hidden !important;
+        display: none !important;
+    }}
+    /* Keep sidebar collapse / expand button always accessible */
+    [data-testid="stSidebarCollapseButton"],
+    header [data-testid="stSidebarCollapseButton"] {{
+        visibility: visible !important;
+        display: inline-flex !important;
+        opacity: 1 !important;
+        pointer-events: auto !important;
+        z-index: 999999 !important;
+    }}
     footer, [data-testid="stFooter"] {{visibility: hidden !important; display: none !important; height: 0px !important;}}
     .stDeployButton {{display: none !important;}}
     [data-testid="stToolbar"] {{visibility: hidden !important; display: none !important;}}
@@ -1955,7 +1971,6 @@ st.components.v1.html("""
             '[data-testid="stDecoration"]',
             '[data-testid="stStatusWidget"]',
             '#MainMenu',
-            'header',
             '.stDeployButton',
             'button[title*="fullscreen" i]',
             'button[title*="View fullscreen"]',
@@ -1981,29 +1996,16 @@ st.components.v1.html("""
                     });
                 });
 
-                // Remove elements containing "Built with Streamlit" or "Fullscreen"
-                const walker = doc.createTreeWalker(doc.body, NodeFilter.SHOW_TEXT, null, false);
-                let node;
-                const targets = [];
-                while (node = walker.nextNode()) {
-                    const text = node.nodeValue || '';
-                    if (text.includes('Built with Streamlit') || text.includes('Fullscreen')) {
-                        let p = node.parentElement;
-                        while (p && p !== doc.body) {
-                            if (p.tagName === 'FOOTER' || p.tagName === 'DIV' || p.tagName === 'A' || p.tagName === 'BUTTON') {
-                                targets.push(p);
-                                break;
-                            }
-                            p = p.parentElement;
-                        }
-                    }
-                }
-                targets.forEach(t => {
-                    try {
-                        t.style.setProperty('display', 'none', 'important');
-                        t.style.setProperty('visibility', 'hidden', 'important');
-                        t.style.setProperty('height', '0px', 'important');
-                    } catch(e){}
+                // Ensure sidebar and sidebar collapse button remain visible and functional
+                doc.querySelectorAll('[data-testid="stSidebarCollapseButton"]').forEach(btn => {
+                    btn.style.setProperty('display', 'inline-flex', 'important');
+                    btn.style.setProperty('visibility', 'visible', 'important');
+                    btn.style.setProperty('opacity', '1', 'important');
+                    btn.style.setProperty('pointer-events', 'auto', 'important');
+                    btn.style.setProperty('z-index', '999999', 'important');
+                });
+                doc.querySelectorAll('section[data-testid="stSidebar"]').forEach(sb => {
+                    sb.style.setProperty('visibility', 'visible', 'important');
                 });
             } catch(e) {}
         });
@@ -6797,7 +6799,6 @@ if query_user == "default":
             '[data-testid="stDecoration"]',
             '[data-testid="stStatusWidget"]',
             '#MainMenu',
-            'header',
             '.stDeployButton',
             'button[title*="fullscreen" i]',
             'button[title*="View fullscreen"]',
@@ -6817,30 +6818,18 @@ if query_user == "default":
                         el.style.setProperty('display', 'none', 'important');
                         el.style.setProperty('visibility', 'hidden', 'important');
                         el.style.setProperty('height', '0px', 'important');
-                        el.remove();
                     });
                 });
-                const walker = doc.createTreeWalker(doc.body, NodeFilter.SHOW_TEXT, null, false);
-                let node;
-                const targets = [];
-                while (node = walker.nextNode()) {
-                    const text = node.nodeValue || '';
-                    if (text.includes('Built with Streamlit') || text.includes('Fullscreen')) {
-                        let p = node.parentElement;
-                        while (p && p !== doc.body) {
-                            if (p.tagName === 'FOOTER' || p.tagName === 'DIV' || p.tagName === 'A' || p.tagName === 'BUTTON') {
-                                targets.push(p);
-                                break;
-                            }
-                            p = p.parentElement;
-                        }
-                    }
-                }
-                targets.forEach(t => {
-                    try {
-                        t.style.setProperty('display', 'none', 'important');
-                        t.remove();
-                    } catch(e){}
+                // Ensure sidebar and sidebar collapse button remain visible and functional
+                doc.querySelectorAll('[data-testid="stSidebarCollapseButton"]').forEach(btn => {
+                    btn.style.setProperty('display', 'inline-flex', 'important');
+                    btn.style.setProperty('visibility', 'visible', 'important');
+                    btn.style.setProperty('opacity', '1', 'important');
+                    btn.style.setProperty('pointer-events', 'auto', 'important');
+                    btn.style.setProperty('z-index', '999999', 'important');
+                });
+                doc.querySelectorAll('section[data-testid="stSidebar"]').forEach(sb => {
+                    sb.style.setProperty('visibility', 'visible', 'important');
                 });
             } catch(e){}
         });
