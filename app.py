@@ -56,7 +56,7 @@ with st.sidebar:
     theme_default = "☀️" if curr_theme == 'light' else "🌙"
     
     selected_theme = st.segmented_control(
-        "テーマモード (Material-UI)",
+        "テーマモード",
         options=["☀️", "🌙"],
         default=theme_default,
         key="mui_theme_selector",
@@ -1176,27 +1176,48 @@ st.html(f"""
         stroke: var(--text-color) !important;
     }}
 
-    /* Sidebar-specific Segmented Control (Square icon toggle buttons for Theme & Layout) */
+    /* Sidebar-specific Segmented Control: Stack label on top, buttons below across full width */
+    [data-testid="stSidebar"] div[data-testid*="SegmentedControl"],
+    [data-testid="stSidebar"] div[data-testid="stSegmentedControl"],
+    [data-testid="stSidebar"] .stSegmentedControl,
+    [data-testid="stSidebar"] div:has(> [data-testid="stButtonGroup"]) {{
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: stretch !important;
+        width: 100% !important;
+        margin-bottom: 14px !important;
+    }}
+    [data-testid="stSidebar"] div[data-testid*="SegmentedControl"] > label,
+    [data-testid="stSidebar"] div[data-testid="stSegmentedControl"] > label,
+    [data-testid="stSidebar"] [data-testid="stWidgetLabel"] {{
+        display: block !important;
+        width: 100% !important;
+        margin-bottom: 8px !important;
+        text-align: left !important;
+    }}
     [data-testid="stSidebar"] [data-testid="stButtonGroup"],
     [data-testid="stSidebar"] [role="radiogroup"],
     [data-testid="stSidebar"] div[data-testid="stSegmentedControl"] > div {{
         flex-wrap: nowrap !important;
         display: flex !important;
         align-items: center !important;
-        justify-content: center !important;
-        gap: 6px !important;
+        justify-content: space-between !important;
+        width: 100% !important;
+        gap: 8px !important;
     }}
     [data-testid="stSidebar"] [data-testid="stButtonGroup"] button,
     [data-testid="stSidebar"] button[data-testid^="stBaseButton-segmented_control"],
     [data-testid="stSidebar"] div[data-testid="stSegmentedControl"] button {{
         flex: 1 1 0px !important;
+        width: 50% !important;
         padding: 0 !important;
-        min-height: 40px !important;
-        height: 40px !important;
+        min-height: 44px !important;
+        height: 44px !important;
         display: flex !important;
         align-items: center !important;
         justify-content: center !important;
         text-align: center !important;
+        border-radius: 8px !important;
         overflow: visible !important;
     }}
     [data-testid="stSidebar"] [data-testid="stButtonGroup"] button *,
@@ -1215,7 +1236,7 @@ st.html(f"""
         margin: 0 auto !important;
         padding: 0 !important;
         line-height: 1 !important;
-        font-size: 1.35rem !important;
+        font-size: 1.5rem !important;
         width: auto !important;
         height: auto !important;
     }}
@@ -1245,8 +1266,8 @@ st.html(f"""
         margin: 0 auto !important;
         padding: 0 !important;
         transform: none !important;
-        width: 1.35rem !important;
-        height: 1.35rem !important;
+        width: 1.5rem !important;
+        height: 1.5rem !important;
         display: block !important;
     }}
     .metric-title {{
@@ -6785,27 +6806,48 @@ if query_user == "default":
         color: inherit !important;
     }
 
-    /* Sidebar-specific Segmented Control in Portal (Perfect center alignment for Theme & Layout emojis) */
+    /* Sidebar-specific Segmented Control in Portal: Stack label on top, buttons below across full width */
+    [data-testid="stSidebar"] div[data-testid*="SegmentedControl"],
+    [data-testid="stSidebar"] div[data-testid="stSegmentedControl"],
+    [data-testid="stSidebar"] .stSegmentedControl,
+    [data-testid="stSidebar"] div:has(> [data-testid="stButtonGroup"]) {
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: stretch !important;
+        width: 100% !important;
+        margin-bottom: 14px !important;
+    }
+    [data-testid="stSidebar"] div[data-testid*="SegmentedControl"] > label,
+    [data-testid="stSidebar"] div[data-testid="stSegmentedControl"] > label,
+    [data-testid="stSidebar"] [data-testid="stWidgetLabel"] {
+        display: block !important;
+        width: 100% !important;
+        margin-bottom: 8px !important;
+        text-align: left !important;
+    }
     [data-testid="stSidebar"] [data-testid="stButtonGroup"],
     [data-testid="stSidebar"] [role="radiogroup"],
     [data-testid="stSidebar"] div[data-testid="stSegmentedControl"] > div {
         flex-wrap: nowrap !important;
         display: flex !important;
         align-items: center !important;
-        justify-content: center !important;
-        gap: 6px !important;
+        justify-content: space-between !important;
+        width: 100% !important;
+        gap: 8px !important;
     }
     [data-testid="stSidebar"] [data-testid="stButtonGroup"] button,
     [data-testid="stSidebar"] button[data-testid^="stBaseButton-segmented_control"],
     [data-testid="stSidebar"] div[data-testid="stSegmentedControl"] button {
         flex: 1 1 0px !important;
+        width: 50% !important;
         padding: 0 !important;
-        min-height: 40px !important;
-        height: 40px !important;
+        min-height: 44px !important;
+        height: 44px !important;
         display: flex !important;
         align-items: center !important;
         justify-content: center !important;
         text-align: center !important;
+        border-radius: 8px !important;
         overflow: visible !important;
     }
     [data-testid="stSidebar"] [data-testid="stButtonGroup"] button *,
@@ -6824,7 +6866,7 @@ if query_user == "default":
         margin: 0 auto !important;
         padding: 0 !important;
         line-height: 1 !important;
-        font-size: 1.35rem !important;
+        font-size: 1.5rem !important;
         width: auto !important;
         height: auto !important;
     }
@@ -6854,8 +6896,8 @@ if query_user == "default":
         margin: 0 auto !important;
         padding: 0 !important;
         transform: none !important;
-        width: 1.35rem !important;
-        height: 1.35rem !important;
+        width: 1.5rem !important;
+        height: 1.5rem !important;
         display: block !important;
     }
     section[data-testid="stSidebar"],
