@@ -6732,9 +6732,14 @@ if query_user == "default":
         position: relative !important;
         z-index: 1 !important;
     }
+    .login-portal-center-box {
+        max-width: 480px;
+        width: 100%;
+        margin: 0 auto;
+    }
     .login-title-glow {
         font-family: 'Roboto', 'Noto Sans JP', sans-serif !important;
-        font-size: 2.25rem !important;
+        font-size: clamp(1.8rem, 3.5vw, 2.25rem) !important;
         font-weight: 700 !important;
         color: #1976d2 !important;
         background: none !important;
@@ -6744,6 +6749,8 @@ if query_user == "default":
         margin-bottom: 6px !important;
         letter-spacing: -0.01562em !important;
         display: block !important;
+        white-space: nowrap !important;
+        word-break: keep-all !important;
     }
     .login-subtitle-glow {
         font-family: 'Roboto', 'Noto Sans JP', sans-serif !important;
@@ -6804,16 +6811,17 @@ if query_user == "default":
         display: flex !important;
         align-items: center !important;
         justify-content: center !important;
-        gap: 12px !important;
+        gap: 8px !important;
         width: 100% !important;
+        min-width: 0 !important;
         height: 48px !important;
         min-height: 48px !important;
-        padding: 0 16px !important;
+        padding: 0 10px !important;
         border-radius: 12px !important;
         font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Noto Sans JP', sans-serif !important;
-        font-size: 0.92rem !important;
+        font-size: 0.88rem !important;
         font-weight: 600 !important;
-        letter-spacing: 0.015em !important;
+        letter-spacing: 0.01em !important;
         text-decoration: none !important;
         white-space: nowrap !important;
         word-break: keep-all !important;
@@ -6824,6 +6832,11 @@ if query_user == "default":
         box-sizing: border-box !important;
         margin-bottom: 12px !important;
         text-align: center !important;
+    }
+    .social-login-btn span {
+        white-space: nowrap !important;
+        word-break: keep-all !important;
+        font-size: 0.88rem !important;
     }
     .google-btn {
         background-color: #ffffff !important;
@@ -7101,55 +7114,62 @@ if query_user == "default":
     if is_dark:
         st.html("""
         <style>
-        html, body {
-            background-color: #070b14 !important;
-            background: radial-gradient(ellipse at 50% 10%, #0d1a36 0%, #060912 100%) !important;
+        html, body, .stApp, [data-testid="stApp"], [data-testid="stAppViewContainer"], [data-testid="stMainViewContainer"], .main {
+            background-color: #030508 !important;
+            background: radial-gradient(ellipse at 50% 15%, #080e1a 0%, #020305 100%) !important;
+            color: #f1f5f9 !important;
         }
         .portal-blob {
-            filter: blur(150px) !important;
-            opacity: 0.75 !important;
+            filter: blur(180px) !important;
+            opacity: 0.16 !important;
         }
         .portal-blob-1 {
-            background: rgba(37, 99, 235, 0.4) !important;
-            width: 580px !important;
-            height: 580px !important;
+            background: rgba(30, 58, 138, 0.28) !important;
+            width: 480px !important;
+            height: 480px !important;
         }
         .portal-blob-2 {
-            background: rgba(79, 70, 229, 0.35) !important;
-            width: 600px !important;
-            height: 600px !important;
+            background: rgba(67, 56, 202, 0.22) !important;
+            width: 520px !important;
+            height: 520px !important;
         }
         .portal-blob-3 {
-            background: rgba(14, 165, 233, 0.3) !important;
-            width: 440px !important;
-            height: 440px !important;
+            background: rgba(15, 23, 42, 0.2) !important;
+            width: 380px !important;
+            height: 380px !important;
         }
         .login-title-glow {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Noto Sans JP', sans-serif !important;
-            font-size: clamp(2rem, 4vw, 2.75rem) !important;
+            font-size: clamp(1.8rem, 3.5vw, 2.4rem) !important;
             font-weight: 800 !important;
             color: #ffffff !important;
-            background: linear-gradient(135deg, #ffffff 25%, #93c5fd 65%, #60a5fa 100%) !important;
-            -webkit-background-clip: text !important;
-            -webkit-text-fill-color: transparent !important;
-            filter: drop-shadow(0 4px 24px rgba(59, 130, 246, 0.5)) !important;
+            -webkit-text-fill-color: #ffffff !important;
+            background: none !important;
+            text-shadow: 0 0 25px rgba(96, 165, 250, 0.6), 0 2px 10px rgba(0, 0, 0, 0.9) !important;
+            filter: none !important;
             text-align: center !important;
-            margin-top: 20px !important;
+            margin-top: 16px !important;
             margin-bottom: 8px !important;
-            letter-spacing: -0.02em !important;
+            letter-spacing: -0.015em !important;
             display: block !important;
             white-space: nowrap !important;
             word-break: keep-all !important;
         }
         .login-subtitle-glow {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Noto Sans JP', sans-serif !important;
-            font-size: 1rem !important;
-            color: #94a3b8 !important;
+            font-size: 0.95rem !important;
+            color: #cbd5e1 !important;
             text-align: center !important;
-            margin-bottom: 32px !important;
+            margin-bottom: 28px !important;
             font-weight: 500 !important;
-            letter-spacing: 0.03em !important;
+            letter-spacing: 0.05em !important;
             display: block !important;
+            white-space: nowrap !important;
+        }
+        .login-portal-center-box {
+            max-width: 480px !important;
+            width: 100% !important;
+            margin: 0 auto !important;
         }
         .google-btn {
             background-color: #ffffff !important;
@@ -7172,6 +7192,16 @@ if query_user == "default":
             background-color: #05b34c !important;
             box-shadow: 0 6px 22px rgba(6, 199, 85, 0.5) !important;
             transform: translateY(-1.5px) !important;
+        }
+        .social-login-btn {
+            padding: 0 8px !important;
+            gap: 8px !important;
+            font-size: 0.88rem !important;
+        }
+        .social-login-btn span {
+            white-space: nowrap !important;
+            word-break: keep-all !important;
+            font-size: 0.88rem !important;
         }
 
         /* Sidebar toggle unselected button styling in dark mode (Clear icon visibility) */
@@ -7425,9 +7455,10 @@ if query_user == "default":
     if is_mobile:
         col_w1, col_w2, col_w3 = st.columns([0.02, 0.96, 0.02])
     else:
-        col_w1, col_w2, col_w3 = st.columns([0.65, 2.7, 0.65])
+        col_w1, col_w2, col_w3 = st.columns([0.15, 3.7, 0.15])
         
     with col_w2:
+        st.markdown('<div class="login-portal-center-box">', unsafe_allow_html=True)
         logo_shadow = "box-shadow: 0 0 35px rgba(59, 130, 246, 0.45); border: 1.5px solid rgba(96, 165, 250, 0.4);" if is_dark else "box-shadow: 0 8px 24px rgba(37,99,235,0.25); border: 1.5px solid rgba(59,130,246,0.3);"
         login_logo_html = f'<div style="text-align: center; margin-bottom: 16px;"><img src="{logo_data_uri}" style="width: 76px; height: 76px; border-radius: 20px; {logo_shadow}" /></div>' if logo_data_uri else ""
         st.markdown(login_logo_html, unsafe_allow_html=True)
@@ -7603,6 +7634,7 @@ if query_user == "default":
         if st.button("📄 特定商取引法に基づく表記", key="portal_tokusho_btn"):
             show_tokusho_dialog()
             
+        st.markdown('</div>', unsafe_allow_html=True)
         st.stop()
 
 # ---------------------------------------------------------
