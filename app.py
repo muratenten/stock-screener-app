@@ -8858,8 +8858,8 @@ f'''<div style="padding: 10px 14px; background: rgba(255, 255, 255, 0.03); borde
         if s.get("has_spike"):
             vol_badge = '<span class="pill-badge pill-gain" style="font-size: 0.72rem; padding: 2px 7px;">🔥 出来高急増</span>'
 
-        with st.container():
-            st.html(f'''<div class="card" style="padding: 20px; margin-bottom: 18px;">
+        with st.container(border=True):
+            st.html(f'''<div style="padding: 2px 0 6px 0;">
 <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 8px; margin-bottom: 12px;">
 <div>
 <div style="display: flex; align-items: center; gap: 8px;">
@@ -8875,7 +8875,7 @@ f'''<div style="padding: 10px 14px; background: rgba(255, 255, 255, 0.03); borde
 <div><span class="pill-badge {pill_cls}">{chg_disp}</span></div>
 </div>
 </div>
-<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; background: rgba(0, 0, 0, 0.02); padding: 12px; border-radius: 8px; border: 1px solid var(--border-color); margin-bottom: 14px;">
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; background: rgba(0, 0, 0, 0.02); padding: 12px; border-radius: 8px; border: 1px solid var(--border-color); margin-bottom: 12px;">
 <div>
 <div style="font-size: 0.75rem; color: var(--secondary-text-color);">20日出来高比率</div>
 <div style="font-size: 1.05rem; font-weight: 700; color: var(--text-color);" class="tabular-nums">{s['vol_ratio']:.1f}倍</div>
@@ -8899,20 +8899,58 @@ f'''<div style="padding: 10px 14px; background: rgba(255, 255, 255, 0.03); borde
                 report_text = gs.generate_analyst_report(s, cfg, live_news)
                 st.markdown(report_text)
 
-            col_btn1, col_btn2 = st.columns([1, 1])
+            col_btn1, col_btn2 = st.columns([1.2, 1.2])
+            show_chart_key = f"geo_show_chart_{s['ticker']}"
+            is_chart_open = st.session_state.get(show_chart_key, False)
+            chart_btn_label = "📉 チャートを閉じる" if is_chart_open else "📈 チャート・詳細波形を分析"
+
             with col_btn1:
-                if st.button("チャート・詳細波形を分析", key=f"geo_view_{s['ticker']}"):
+                if st.button(chart_btn_label, key=f"geo_view_{s['ticker']}", type="primary" if is_chart_open else "secondary", use_container_width=True):
+                    st.session_state[show_chart_key] = not is_chart_open
                     st.session_state["target_ticker"] = s['ticker']
-                    st.session_state["active_tab_index"] = 3
                     st.rerun()
+
             with col_btn2:
-                if st.button("仮想シミュレーションで購入", key=f"geo_buy_{s['ticker']}"):
+                if st.button("💼 仮想シミュレーションで購入", key=f"geo_buy_{s['ticker']}", use_container_width=True):
                     st.session_state["sim_purchase_ticker"] = s['ticker']
                     st.session_state["sim_purchase_name"] = s['name']
                     st.session_state["sim_purchase_price"] = s['price']
                     st.toast(f"{s['name']} をシミュレーション購入準備に追加しました")
 
-            st.markdown("<div style='margin-bottom: 24px;'></div>", unsafe_allow_html=True)
+            # インライン展開：詳細波形チャート
+            if st.session_state.get(show_chart_key, False):
+                st.markdown("<hr style='margin: 14px 0 10px 0; border: none; border-top: 1px solid var(--border-color);'>", unsafe_allow_html=True)
+                st.markdown(f"<div style='font-weight: 700; font-size: 0.95rem; margin-bottom: 8px;'>📈 {s['name']} ({s['ticker']}) の詳細波形・テクニカル分析チャート</div>", unsafe_allow_html=True)
+
+                with st.spinner(f"{s['name']} のリアルタイム株価データを取得中..."):
+                    df_chart = fetch_chart_data(s['ticker'], interval="1d", period="1y")
+
+                if df_chart is not None and not df_chart.empty:
+                    df_chart = calculate_indicators_for_df(df_chart)
+                    fig_stock = create_chart(df_chart, s['ticker'], s['name'])
+
+                    # 目標ターゲット価格と損切り撤退目安を水平線としてプロット
+                    target_p = s.get('target_price', 0)
+                    stop_p = s.get('stop_price', 0)
+                    if target_p > 0:
+                        fig_stock.add_hline(
+                            y=target_p, line_dash="dash", line_color="#10b981", line_width=1.8,
+                            annotation_text=f"目標ターゲット ¥{target_p:,.1f} (+{s.get('avg_future_ret', 0):.1f}%)",
+                            annotation_position="top left",
+                            row=1, col=1
+                        )
+                    if stop_p > 0:
+                        fig_stock.add_hline(
+                            y=stop_p, line_dash="dot", line_color="#f43f5e", line_width=1.8,
+                            annotation_text=f"損切り撤退目安 ¥{stop_p:,.1f} (-4.5%)",
+                            annotation_position="bottom left",
+                            row=1, col=1
+                        )
+                    st.plotly_chart(fig_stock, use_container_width=True, config=PLOTLY_CONFIG)
+                else:
+                    st.warning("株価データの取得に失敗しました。時間をおいて再試行してください。")
+
+        st.markdown("<div style='margin-bottom: 16px;'></div>", unsafe_allow_html=True)
 
 
 @st.dialog("📄 投資信託 交付目論見書・ファンド要綱", width="large")
