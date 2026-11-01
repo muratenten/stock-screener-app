@@ -9314,7 +9314,7 @@ div[class*="st-key-sbi_fund_category_filter"] button span {
     compare_list = st.session_state["fund_compare_list"]
 
     cmp_count = len(compare_list)
-    cmp_badge = f"<span style='background: var(--mui-primary, #1976d2); color: #fff; padding: 2px 8px; border-radius: 12px; font-weight: 700; font-size: 0.78rem;' class='tabular-nums'>{cmp_count}本</span>"
+    cmp_badge = f"<span style='background: rgba(25, 118, 210, 0.1); color: var(--mui-primary, #1976d2); border: 1px solid rgba(25, 118, 210, 0.25); padding: 2px 8px; border-radius: 12px; font-weight: 700; font-size: 0.78rem;' class='tabular-nums'>{cmp_count}本</span>"
 
     st.html(f'''<div id="fund_screening_top" style="scroll-margin-top: 100px;"></div>
 <div style="display: flex; justify-content: space-between; align-items: flex-end; margin: 18px 0 10px 0;">
@@ -9325,16 +9325,17 @@ div[class*="st-key-sbi_fund_category_filter"] button span {
 <div style="font-size: 0.84rem; font-weight: 600; color: var(--mui-primary, #1976d2);">該当: <span style="font-size: 1.15rem; font-weight: 700;" class="tabular-nums">{len(filtered_funds)}</span> / 全 {len(sfs.SBI_FUNDS_DB)} 本</div>
 </div>
 
-<div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; margin: 4px 0 16px 0; padding: 10px 14px; background: rgba(25, 118, 210, 0.04); border: 1px solid rgba(25, 118, 210, 0.18); border-radius: 8px;">
-<div style="display: flex; align-items: center; gap: 8px; font-size: 0.82rem; color: var(--text-color);">
-<span>📊 <b>現在比較中:</b> {cmp_badge}</span>
-<span style="color: var(--secondary-text-color); font-size: 0.76rem;">（下の各銘柄で『比較リストに追加』できます）</span>
+<div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; margin: 4px 0 16px 0; padding: 8px 14px; background: rgba(0, 0, 0, 0.02); border: 1px solid var(--border-color); border-radius: 8px;">
+<div style="display: flex; align-items: center; gap: 8px; font-size: 0.84rem; color: var(--text-color);">
+<span style="font-weight: 600;">現在比較中:</span>
+{cmp_badge}
+<span style="color: var(--secondary-text-color); font-size: 0.78rem;">（各銘柄カードの『📊 比較リストに追加』で選択）</span>
 </div>
-<a href="#fund_comparison_section" 
-   onclick="(parent.document||document).getElementById('fund_comparison_section')?.scrollIntoView({{behavior:'smooth', block:'start'}}); return true;"
-   style="display: inline-flex; align-items: center; gap: 6px; background: #1976d2; color: #ffffff !important; text-decoration: none !important; padding: 7px 16px; border-radius: 6px; font-weight: 700; font-size: 0.82rem; box-shadow: 0 2px 5px rgba(25,118,210,0.25); cursor: pointer; transition: background 0.15s ease;">
-   <span>📊 比較リスト & 徹底比較表へジャンプ ⬇️</span>
-</a>
+<button type="button"
+   onclick="(parent.document||document).getElementById('fund_comparison_section')?.scrollIntoView({{behavior:'smooth', block:'start'}});"
+   style="display: inline-flex; align-items: center; justify-content: center; gap: 6px; background-color: var(--mui-primary, #1976d2); color: #ffffff; border: 1px solid var(--mui-primary, #1976d2); padding: 6px 18px; min-height: 38px; border-radius: 8px; font-weight: 600; font-size: 0.875rem; cursor: pointer; box-shadow: 0 1px 3px rgba(25,118,210,0.25); transition: background-color 0.15s ease;">
+   <span>📊 比較リストへ</span>
+</button>
 </div>''')
 
     if not filtered_funds:
@@ -9571,7 +9572,7 @@ div[class*="st-key-sbi_fund_category_filter"] button span {
         with col_c_head_txt:
             st.markdown(f"""<div style='display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 6px; margin-bottom: 6px;'>
 <div style='font-size: 0.9rem; font-weight: 700; color: var(--text-color);'>現在比較中の銘柄 ({len(selected_comp_funds)}本) <span style='font-size: 0.76rem; font-weight: normal; color: var(--secondary-text-color);'>※クリックで個別削除できます</span></div>
-<a href="#fund_screening_top" onclick="(parent.document||document).getElementById('fund_screening_top')?.scrollIntoView({{behavior:'smooth', block:'start'}}); return true;" style="font-size: 0.78rem; font-weight: 600; color: var(--mui-primary, #1976d2); text-decoration: none; cursor: pointer;">⬆️ スクリーニング一覧へ戻る</a>
+<a href="#fund_screening_top" onclick="(parent.document||document).getElementById('fund_screening_top')?.scrollIntoView({{behavior:'smooth', block:'start'}}); return true;" style="font-size: 0.78rem; font-weight: 600; color: var(--mui-primary, #1976d2); text-decoration: none; cursor: pointer;">↑ スクリーニング一覧へ戻る</a>
 </div>""", unsafe_allow_html=True)
         with col_c_head_clr:
             if st.button("🗑️ 比較リストを空にする", key="btn_clear_comp_list", use_container_width=True):
