@@ -9502,26 +9502,40 @@ div[class*="st-key-sbi_fund_category_filter"] button span {
     else:
         # Comparison Header Bar with Individual Delete Buttons and Clear Button
         st.html('''<style>
+div[data-testid="stVerticalBlock"]:has(> div div[class*="st-key-btn_del_cmp_"]) {
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: wrap !important;
+    justify-content: flex-start !important;
+    align-items: center !important;
+    gap: 8px !important;
+    margin-bottom: 8px !important;
+}
+div[data-testid="stVerticalBlock"]:has(> div div[class*="st-key-btn_del_cmp_"]) > div:has(div[class*="st-key-btn_del_cmp_"]) {
+    width: auto !important;
+    margin: 0 !important;
+    flex: 0 0 auto !important;
+}
 div[class*="st-key-btn_del_cmp_"] button {
-    padding: 6px 10px !important;
+    width: auto !important;
+    min-width: unset !important;
+    padding: 5px 13px !important;
     font-size: 0.82rem !important;
-    border-radius: 6px !important;
+    border-radius: 20px !important;
     border: 1px solid var(--border-color) !important;
-    background: rgba(0, 0, 0, 0.02) !important;
+    background: rgba(0, 0, 0, 0.03) !important;
     color: var(--text-color) !important;
     transition: all 0.15s ease !important;
-    height: 38px !important;
-    display: flex !important;
+    height: 33px !important;
+    display: inline-flex !important;
     align-items: center !important;
     justify-content: center !important;
     white-space: nowrap !important;
-    text-overflow: ellipsis !important;
-    overflow: hidden !important;
 }
 div[class*="st-key-btn_del_cmp_"] button:hover {
     border-color: #f43f5e !important;
     color: #f43f5e !important;
-    background: rgba(244, 63, 94, 0.06) !important;
+    background: rgba(244, 63, 94, 0.08) !important;
 }
 div[class*="st-key-btn_generate_ai_pack"] button {
     white-space: nowrap !important;
@@ -9538,17 +9552,13 @@ div[class*="st-key-btn_generate_ai_pack"] button {
                 st.session_state.pop("generated_custom_pack", None)
                 st.rerun()
 
-        # Display individual delete buttons in a uniform, fixed-column grid (4 cols on desktop, 2 on mobile)
-        cols_per_row = 4 if not is_mobile else 2
-        for i in range(0, len(selected_comp_funds), cols_per_row):
-            chunk = selected_comp_funds[i:i + cols_per_row]
-            c_cols = st.columns(cols_per_row)
-            for c_idx, f_item in enumerate(chunk):
-                with c_cols[c_idx]:
-                    if st.button(f"✕ {f_item['nickname']}", key=f"btn_del_cmp_{f_item['id']}", help=f"『{f_item['name']}』を比較リストから除外", use_container_width=True):
-                        compare_list.remove(f_item["id"])
-                        st.toast(f"{f_item['nickname']} を比較リストから削除しました")
-                        st.rerun()
+        # Display individual delete buttons left-aligned as natural pill tags
+        with st.container():
+            for f_item in selected_comp_funds:
+                if st.button(f"✕ {f_item['nickname']}", key=f"btn_del_cmp_{f_item['id']}", help=f"『{f_item['name']}』を比較リストから除外"):
+                    compare_list.remove(f_item["id"])
+                    st.toast(f"{f_item['nickname']} を比較リストから削除しました")
+                    st.rerun()
 
         # AI Custom Pack Generator Button & Display Section
         st.markdown("<div style='margin-top: 14px; margin-bottom: 10px;'></div>", unsafe_allow_html=True)
