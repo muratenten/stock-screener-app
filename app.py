@@ -8667,35 +8667,48 @@ with tab_geopolitics:
     </div>
     """, unsafe_allow_html=True)
 
-    # Theme selection pills
-    theme_options = {
-        "🛡️ 有事・防衛・地政学リスク": "defense",
-        "🔒 情報漏洩・サイバーセキュリティ": "cyber",
-        "⚡ 資源・エネルギー・コモディティ高": "energy",
-        "🚢 海運・サプライチェーン危機": "shipping"
-    }
+    # Dynamic Hot Theme Ranking (AI News Sentiment Driven)
+    hot_rankings = gs.get_hot_theme_ranking()
+    top_hot_names = [h["badge_label"] for h in hot_rankings if h["is_hot"]][:3]
+    top_hot_str = "、".join([f"<b>{name}</b>" for name in top_hot_names])
+
+    st.html(f'''<div style="background: rgba(25, 118, 210, 0.06); border: 1px solid rgba(25, 118, 210, 0.25); border-radius: 10px; padding: 12px 18px; margin-bottom: 18px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
+<div style="display: flex; align-items: center; gap: 8px;">
+<span style="background: var(--mui-primary, #1976d2); color: #fff; font-size: 0.74rem; font-weight: 700; padding: 3px 8px; border-radius: 4px;">AI 情勢レーダー</span>
+<span style="font-size: 0.88rem; color: var(--text-color);">本日マーケットで報道・資金流入が急増中のおすすめテーマ: {top_hot_str}</span>
+</div>
+<div style="font-size: 0.76rem; color: var(--secondary-text-color);">毎時 Google News 金融速報解析</div>
+</div>''')
+
+    # Build options mapping with hot badges
+    theme_options = {}
+    default_theme_label = None
+    for h in hot_rankings:
+        tid = h["id"]
+        cfg_item = gs.THEMES_CONFIG[tid]
+        label = f"🔥 {cfg_item['title']}" if h["is_hot"] else cfg_item["title"]
+        theme_options[label] = tid
+        if default_theme_label is None and h["is_hot"]:
+            default_theme_label = label
+
+    if not default_theme_label:
+        default_theme_label = list(theme_options.keys())[0]
 
     selected_theme_label = st.segmented_control(
-        "注目の社会情勢テーマを選択",
+        "注目の社会情勢テーマを選択（🔥マークは本日ニュース急増中のAIおすすめテーマ）",
         options=list(theme_options.keys()),
-        default=list(theme_options.keys())[0],
+        default=default_theme_label,
         key="geo_theme_selected"
-    ) or list(theme_options.keys())[0]
+    ) or default_theme_label
 
     current_theme_key = theme_options[selected_theme_label]
     cfg = gs.THEMES_CONFIG[current_theme_key]
 
     # Theme Overview Card
-    st.markdown(f"""
-    <div class="card" style="padding: 16px 20px; margin-bottom: 18px; border-left: 4px solid var(--mui-primary, #1976d2);">
-        <div style="font-weight: 700; font-size: 1.05rem; margin-bottom: 6px; color: var(--text-color);">
-            {cfg['title']}
-        </div>
-        <div style="font-size: 0.88rem; color: var(--secondary-text-color); line-height: 1.6;">
-            {cfg['description']}
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
+    st.html(f'''<div class="card" style="padding: 16px 20px; margin-bottom: 18px; border-left: 4px solid var(--mui-primary, #1976d2);">
+<div style="font-weight: 700; font-size: 1.05rem; margin-bottom: 6px; color: var(--text-color);">{cfg['title']}</div>
+<div style="font-size: 0.88rem; color: var(--secondary-text-color); line-height: 1.6;">{cfg['description']}</div>
+</div>''')
 
     # 2 Columns: Left = Live Intelligence News, Right = Sector Pulse
     col_news, col_pulse = st.columns([1.3, 0.7])
