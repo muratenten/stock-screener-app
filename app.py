@@ -1523,7 +1523,9 @@ st.components.v1.html("""
         'smartphone': '<svg class="lucide lucide-smartphone feather-icon" viewBox="0 0 24 24"><rect width="14" height="20" x="5" y="2" rx="2" ry="2"></rect><path d="M12 18h.01"></path></svg>',
         'monitor': '<svg class="lucide lucide-monitor feather-icon" viewBox="0 0 24 24"><rect width="20" height="14" x="2" y="3" rx="2"></rect><line x1="8" x2="16" y1="21" y2="21"></line><line x1="12" x2="12" y1="17" y2="21"></line></svg>',
         'cpu': '<svg class="lucide lucide-cpu feather-icon" viewBox="0 0 24 24"><rect width="16" height="16" x="4" y="4" rx="2"></rect><rect width="6" height="6" x="9" y="9" rx="1"></rect><path d="M15 2v2"></path><path d="M15 20v2"></path><path d="M2 15h2"></path><path d="M2 9h2"></path><path d="M20 15h2"></path><path d="M20 9h2"></path><path d="M9 2v2"></path><path d="M9 20v2"></path></svg>',
-        'cloud': '<svg class="lucide lucide-cloud feather-icon" viewBox="0 0 24 24"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"></path></svg>'
+        'cloud': '<svg class="lucide lucide-cloud feather-icon" viewBox="0 0 24 24"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"></path></svg>',
+        'anchor': '<svg class="lucide lucide-anchor feather-icon" viewBox="0 0 24 24"><circle cx="12" cy="5" r="3"></circle><line x1="12" x2="12" y1="22" y2="8"></line><path d="M5 12H2a10 10 0 0 0 20 0h-3"></path></svg>',
+        'shield-check': '<svg class="lucide lucide-shield-check feather-icon" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path><path d="m9 12 2 2 4-4"></path></svg>'
     };
 
     // Full mapping of emojis to Lucide icons
@@ -1555,9 +1557,9 @@ st.components.v1.html("""
         '📚': 'book-open', '📖': 'book-open', '📰': 'file-text',
         '🔐': 'lock', '🔒': 'lock', '🔑': 'key', '🚪': 'log-out',
         '🎁': 'gift', '🎟': 'tag', '🆓': 'tag',
-        '🗑': 'trash-2', '➕': 'plus', '🔔': 'bell', '👁': 'eye', '🛡': 'shield-check',
+        '🗑': 'trash-2', '➕': 'plus', '🔔': 'bell', '👁': 'eye', '🛡': 'shield-check', '🚢': 'anchor',
         '📅': 'calendar', '🕒': 'clock',
-        '👤': 'user', '🤖': 'bot', '🌐': 'globe', '☁': 'cloud',
+        '👤': 'user', '🤖': 'bot', '🌐': 'globe', '🌍': 'globe', '🌎': 'globe', '🌏': 'globe', '☁': 'cloud',
         '📱': 'smartphone', '💻': 'monitor',
         '☕': 'coffee', '🍔': 'utensils', '🍱': 'utensils', '🍽': 'utensils', '🍎': 'utensils',
         '🛍': 'shopping-bag', '👕': 'shopping-bag', '💄': 'sparkles',
