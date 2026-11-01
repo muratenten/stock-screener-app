@@ -10,9 +10,25 @@ import urllib.request
 import urllib.parse
 import json
 import os
+import base64
+from PIL import Image
 import geopolitics_service as gs
 import sbi_fund_service as sfs
 from tickers import JP_TICKERS, US_TICKERS
+
+# 1. Page Configuration MUST BE the very first Streamlit command executed
+logo_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "logo.png")
+try:
+    logo_img = Image.open(logo_path)
+except Exception:
+    logo_img = "📈"
+
+st.set_page_config(
+    page_title="ZenStock | AI日本株スクリーナー＆分析",
+    page_icon=logo_img,
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
 
 # Plotly config for scroll/pinch-to-zoom and permanently visible modebar
 PLOTLY_CONFIG = {
@@ -625,21 +641,6 @@ def check_and_increment_practice_runs(increment=False):
     if run_count >= 3:
         return False, run_count
     return True, run_count
-
-# Page config
-logo_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "logo.png")
-try:
-    from PIL import Image
-    logo_img = Image.open(logo_path)
-except Exception:
-    logo_img = "📈"
-
-st.set_page_config(
-    page_title="ZenStock | AI日本株スクリーナー＆分析",
-    page_icon=logo_img,
-    layout="wide",
-    initial_sidebar_state="expanded"
-)
 
 # Base64 encode logo for web app header and mobile icon injection
 logo_b64 = ""
