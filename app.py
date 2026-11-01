@@ -1178,56 +1178,63 @@ st.html(f"""
 
     /* Sidebar-specific Segmented Control (Square icon toggle buttons for Theme & Layout) */
     [data-testid="stSidebar"] div[data-testid="stSegmentedControl"] [role="radiogroup"],
+    [data-testid="stSidebar"] div[data-testid="stSegmentedControl"] [data-testid="stButtonGroup"],
     [data-testid="stSidebar"] div[data-testid="stSegmentedControl"] > div {{
         flex-wrap: nowrap !important;
         display: flex !important;
         align-items: center !important;
         justify-content: center !important;
+        gap: 6px !important;
     }}
     [data-testid="stSidebar"] div[data-testid="stSegmentedControl"] button {{
         flex: 1 1 0px !important;
         padding: 0 !important;
-        min-height: 38px !important;
-        height: 38px !important;
-        display: inline-flex !important;
+        min-height: 40px !important;
+        height: 40px !important;
+        display: flex !important;
         align-items: center !important;
         justify-content: center !important;
         text-align: center !important;
+        overflow: visible !important;
     }}
     [data-testid="stSidebar"] div[data-testid="stSegmentedControl"] button > div,
     [data-testid="stSidebar"] div[data-testid="stSegmentedControl"] button [data-testid="stMarkdownContainer"],
-    [data-testid="stSidebar"] div[data-testid="stSegmentedControl"] button p,
-    [data-testid="stSidebar"] div[data-testid="stSegmentedControl"] button span {{
-        display: inline-flex !important;
+    [data-testid="stSidebar"] div[data-testid="stSegmentedControl"] button p {{
+        display: flex !important;
         align-items: center !important;
         justify-content: center !important;
         text-align: center !important;
         margin: 0 !important;
         padding: 0 !important;
-        width: 100% !important;
-        height: 100% !important;
         line-height: 1 !important;
-        font-size: 1.25rem !important;
+        font-size: 1.35rem !important;
+        width: auto !important;
+        height: auto !important;
     }}
     [data-testid="stSidebar"] div[data-testid="stSegmentedControl"] .lucide-wrapper,
-    [data-testid="stSidebar"] div[data-testid="stSegmentedControl"] .feather-wrapper {{
+    [data-testid="stSidebar"] div[data-testid="stSegmentedControl"] .feather-wrapper,
+    [data-testid="stSidebar"] div[data-testid="stSegmentedControl"] .lucide-converted-node,
+    [data-testid="stSidebar"] div[data-testid="stSegmentedControl"] .feather-converted-node {{
         margin: 0 !important;
         padding: 0 !important;
-        display: inline-flex !important;
+        display: flex !important;
         align-items: center !important;
         justify-content: center !important;
         vertical-align: middle !important;
         line-height: 1 !important;
+        transform: none !important;
+        width: auto !important;
+        height: auto !important;
     }}
     [data-testid="stSidebar"] div[data-testid="stSegmentedControl"] svg.lucide,
     [data-testid="stSidebar"] div[data-testid="stSegmentedControl"] .feather-icon {{
         vertical-align: middle !important;
         margin: 0 auto !important;
         padding: 0 !important;
-        transform: translateY(0) !important;
-        width: 1.25rem !important;
-        height: 1.25rem !important;
-        display: inline-block !important;
+        transform: none !important;
+        width: 1.35rem !important;
+        height: 1.35rem !important;
+        display: block !important;
     }}
     .metric-title {{
         color: {secondary_text_color};
@@ -6767,56 +6774,63 @@ if query_user == "default":
 
     /* Sidebar-specific Segmented Control in Portal (Perfect center alignment for Theme & Layout emojis) */
     [data-testid="stSidebar"] div[data-testid="stSegmentedControl"] [role="radiogroup"],
+    [data-testid="stSidebar"] div[data-testid="stSegmentedControl"] [data-testid="stButtonGroup"],
     [data-testid="stSidebar"] div[data-testid="stSegmentedControl"] > div {
         flex-wrap: nowrap !important;
         display: flex !important;
         align-items: center !important;
         justify-content: center !important;
+        gap: 6px !important;
     }
     [data-testid="stSidebar"] div[data-testid="stSegmentedControl"] button {
         flex: 1 1 0px !important;
         padding: 0 !important;
-        min-height: 38px !important;
-        height: 38px !important;
-        display: inline-flex !important;
+        min-height: 40px !important;
+        height: 40px !important;
+        display: flex !important;
         align-items: center !important;
         justify-content: center !important;
         text-align: center !important;
+        overflow: visible !important;
     }
     [data-testid="stSidebar"] div[data-testid="stSegmentedControl"] button > div,
     [data-testid="stSidebar"] div[data-testid="stSegmentedControl"] button [data-testid="stMarkdownContainer"],
-    [data-testid="stSidebar"] div[data-testid="stSegmentedControl"] button p,
-    [data-testid="stSidebar"] div[data-testid="stSegmentedControl"] button span {
-        display: inline-flex !important;
+    [data-testid="stSidebar"] div[data-testid="stSegmentedControl"] button p {
+        display: flex !important;
         align-items: center !important;
         justify-content: center !important;
         text-align: center !important;
         margin: 0 !important;
         padding: 0 !important;
-        width: 100% !important;
-        height: 100% !important;
         line-height: 1 !important;
-        font-size: 1.25rem !important;
+        font-size: 1.35rem !important;
+        width: auto !important;
+        height: auto !important;
     }
     [data-testid="stSidebar"] div[data-testid="stSegmentedControl"] .lucide-wrapper,
-    [data-testid="stSidebar"] div[data-testid="stSegmentedControl"] .feather-wrapper {
+    [data-testid="stSidebar"] div[data-testid="stSegmentedControl"] .feather-wrapper,
+    [data-testid="stSidebar"] div[data-testid="stSegmentedControl"] .lucide-converted-node,
+    [data-testid="stSidebar"] div[data-testid="stSegmentedControl"] .feather-converted-node {
         margin: 0 !important;
         padding: 0 !important;
-        display: inline-flex !important;
+        display: flex !important;
         align-items: center !important;
         justify-content: center !important;
         vertical-align: middle !important;
         line-height: 1 !important;
+        transform: none !important;
+        width: auto !important;
+        height: auto !important;
     }
     [data-testid="stSidebar"] div[data-testid="stSegmentedControl"] svg.lucide,
     [data-testid="stSidebar"] div[data-testid="stSegmentedControl"] .feather-icon {
         vertical-align: middle !important;
         margin: 0 auto !important;
         padding: 0 !important;
-        transform: translateY(0) !important;
-        width: 1.25rem !important;
-        height: 1.25rem !important;
-        display: inline-block !important;
+        transform: none !important;
+        width: 1.35rem !important;
+        height: 1.35rem !important;
+        display: block !important;
     }
     section[data-testid="stSidebar"],
     [data-testid="stSidebar"] {
