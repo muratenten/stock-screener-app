@@ -1294,7 +1294,7 @@ st.html(f"""
         vertical-align: middle !important;
         margin: 0 auto !important;
         padding: 0 !important;
-        transform: none !important;
+        transform: translate(-2px, -2px) !important;
         width: 22px !important;
         height: 22px !important;
         min-width: 22px !important;
@@ -2174,6 +2174,7 @@ st.components.v1.html("""
                             el.style.setProperty('margin', '0 auto', 'important');
                             el.style.setProperty('display', 'block', 'important');
                             el.style.setProperty('vertical-align', 'middle', 'important');
+                            el.style.setProperty('transform', 'translate(-2px, -2px)', 'important');
                         } else if (el.classList && (el.classList.contains('lucide-wrapper') || el.classList.contains('feather-wrapper') || el.classList.contains('lucide-converted-node'))) {
                             el.style.setProperty('margin', '0 auto', 'important');
                             el.style.setProperty('display', 'inline-flex', 'important');
@@ -6985,7 +6986,7 @@ if query_user == "default":
         vertical-align: middle !important;
         margin: 0 auto !important;
         padding: 0 !important;
-        transform: none !important;
+        transform: translate(-2px, -2px) !important;
         width: 22px !important;
         height: 22px !important;
         min-width: 22px !important;
@@ -7220,6 +7221,7 @@ if query_user == "default":
                             el.style.setProperty('margin', '0 auto', 'important');
                             el.style.setProperty('display', 'block', 'important');
                             el.style.setProperty('vertical-align', 'middle', 'important');
+                            el.style.setProperty('transform', 'translate(-2px, -2px)', 'important');
                         } else if (el.classList && (el.classList.contains('lucide-wrapper') || el.classList.contains('feather-wrapper') || el.classList.contains('lucide-converted-node'))) {
                             el.style.setProperty('margin', '0 auto', 'important');
                             el.style.setProperty('display', 'inline-flex', 'important');
