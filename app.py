@@ -9248,22 +9248,31 @@ div[class*="st-key-sbi_fund_category_filter"] button span {
 <td style="padding: 10px 8px; text-align: right; color: var(--color-loss, #f43f5e);" class="tabular-nums">{f['max_drawdown']:.1f}%</td>
 </tr>''')
 
-        st.html(f'''<div style="overflow-x: auto; margin-bottom: 24px; border: 1px solid var(--border-color); border-radius: 8px; background: rgba(255,255,255,0.02);">
+        st.html(f'''<div style="background: rgba(25, 118, 210, 0.04); border: 1px solid rgba(25, 118, 210, 0.2); border-radius: 6px; padding: 7px 14px; margin-bottom: 10px; font-size: 0.76rem; color: var(--secondary-text-color); display: flex; align-items: center; flex-wrap: wrap; gap: 8px;">
+<span style="font-weight: 700; color: var(--mui-primary, #1976d2);">💡 指標の高低早見ガイド:</span>
+<span>信託報酬: <b style="color: var(--color-gain, #10b981);">▼ 低いほど優 (低コスト)</b></span>
+<span style="opacity: 0.4;">|</span>
+<span>最大下落(DD): <b style="color: var(--color-gain, #10b981);">▼ 0%に近いほど優 (暴落に強い)</b></span>
+<span style="opacity: 0.4;">|</span>
+<span>効率(SR)・リターン・純資産・AIスコア: <b style="color: var(--mui-primary, #1976d2);">▲ 高い/大きいほど優</b></span>
+</div>
+
+<div style="overflow-x: auto; margin-bottom: 24px; border: 1px solid var(--border-color); border-radius: 8px; background: rgba(255,255,255,0.02);">
 <table style="width: 100%; border-collapse: collapse; min-width: 850px;">
 <thead>
-<tr style="background: rgba(0,0,0,0.04); border-bottom: 1px solid var(--border-color); font-size: 0.76rem; color: var(--secondary-text-color); text-transform: uppercase;">
+<tr style="background: rgba(0,0,0,0.04); border-bottom: 1px solid var(--border-color); font-size: 0.75rem; color: var(--secondary-text-color); text-transform: uppercase;">
 <th style="padding: 10px 8px; text-align: center;">RANK</th>
-<th style="padding: 10px 8px; text-align: center;">AIスコア</th>
+<th style="padding: 10px 8px; text-align: center;">AIスコア <span style="font-size: 0.68rem; color: var(--mui-primary, #1976d2);">▲</span></th>
 <th style="padding: 10px 10px; text-align: left;">投資信託名 / 連動対象</th>
 <th style="padding: 10px 6px; text-align: center;">比較</th>
 <th style="padding: 10px 6px; text-align: center;">つみたて</th>
 <th style="padding: 10px 6px; text-align: center;">成長枠</th>
-<th style="padding: 10px 8px; text-align: right;">信託報酬</th>
-<th style="padding: 10px 8px; text-align: right;">純資産</th>
-<th style="padding: 10px 8px; text-align: right;">直近1年</th>
-<th style="padding: 10px 8px; text-align: right;">過去3年(年率)</th>
-<th style="padding: 10px 8px; text-align: right;">効率(SR)</th>
-<th style="padding: 10px 8px; text-align: right;">最大下落</th>
+<th style="padding: 10px 8px; text-align: right;">信託報酬 <span style="font-size: 0.68rem; color: var(--color-gain, #10b981);">▼低優</span></th>
+<th style="padding: 10px 8px; text-align: right;">純資産 <span style="font-size: 0.68rem; color: var(--mui-primary, #1976d2);">▲大優</span></th>
+<th style="padding: 10px 8px; text-align: right;">直近1年 <span style="font-size: 0.68rem; color: var(--color-gain, #10b981);">▲高優</span></th>
+<th style="padding: 10px 8px; text-align: right;">過去3年 <span style="font-size: 0.68rem; color: var(--color-gain, #10b981);">▲高優</span></th>
+<th style="padding: 10px 8px; text-align: right;">効率(SR) <span style="font-size: 0.68rem; color: var(--mui-primary, #1976d2);">▲高優</span></th>
+<th style="padding: 10px 8px; text-align: right;">最大下落 <span style="font-size: 0.68rem; color: var(--color-gain, #10b981);">▼小優</span></th>
 </tr>
 </thead>
 <tbody>
@@ -9306,27 +9315,27 @@ div[class*="st-key-sbi_fund_category_filter"] button span {
 
 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px; background: rgba(0,0,0,0.02); padding: 10px 14px; border-radius: 8px; border: 1px solid var(--border-color); margin-bottom: 12px;">
 <div>
-<div style="font-size: 0.72rem; color: var(--secondary-text-color);">信託報酬 (年率)</div>
+<div style="font-size: 0.72rem; color: var(--secondary-text-color);">信託報酬 <span style="font-size: 0.68rem; color: var(--color-gain, #10b981); font-weight: 700;">▼低優</span></div>
 <div style="font-size: 1.0rem; font-weight: 700; color: var(--text-color);" class="tabular-nums">{f['expense_ratio']:.4f}%</div>
 </div>
 <div>
-<div style="font-size: 0.72rem; color: var(--secondary-text-color);">純資産総額</div>
+<div style="font-size: 0.72rem; color: var(--secondary-text-color);">純資産総額 <span style="font-size: 0.68rem; color: var(--mui-primary, #1976d2); font-weight: 700;">▲大優</span></div>
 <div style="font-size: 1.0rem; font-weight: 700; color: var(--text-color);" class="tabular-nums">{f['aum_oku']:,} 億円</div>
 </div>
 <div>
-<div style="font-size: 0.72rem; color: var(--secondary-text-color);">直近1年リターン</div>
+<div style="font-size: 0.72rem; color: var(--secondary-text-color);">直近1年リターン <span style="font-size: 0.68rem; color: var(--color-gain, #10b981); font-weight: 700;">▲高優</span></div>
 <div style="font-size: 1.0rem; font-weight: 700; color: var(--color-gain, #10b981);" class="tabular-nums">+{f['return_1y']:.1f}%</div>
 </div>
 <div>
-<div style="font-size: 0.72rem; color: var(--secondary-text-color);">過去3年(年率)</div>
+<div style="font-size: 0.72rem; color: var(--secondary-text-color);">過去3年(年率) <span style="font-size: 0.68rem; color: var(--color-gain, #10b981); font-weight: 700;">▲高優</span></div>
 <div style="font-size: 1.0rem; font-weight: 700; color: var(--color-gain, #10b981);" class="tabular-nums">+{f['return_3y_annual']:.1f}%</div>
 </div>
 <div>
-<div style="font-size: 0.72rem; color: var(--secondary-text-color);">シャープレシオ</div>
+<div style="font-size: 0.72rem; color: var(--secondary-text-color);">シャープレシオ <span style="font-size: 0.68rem; color: var(--mui-primary, #1976d2); font-weight: 700;">▲高優</span></div>
 <div style="font-size: 1.0rem; font-weight: 700; color: var(--mui-primary, #1976d2);" class="tabular-nums">{f['sharpe_ratio']:.2f}</div>
 </div>
 <div>
-<div style="font-size: 0.72rem; color: var(--secondary-text-color);">最大ドローダウン</div>
+<div style="font-size: 0.72rem; color: var(--secondary-text-color);">最大ドローダウン <span style="font-size: 0.68rem; color: var(--color-gain, #10b981); font-weight: 700;">▼小優</span></div>
 <div style="font-size: 1.0rem; font-weight: 700; color: var(--color-loss, #f43f5e);" class="tabular-nums">{f['max_drawdown']:.1f}%</div>
 </div>
 </div>
@@ -9517,21 +9526,30 @@ div[class*="st-key-sbi_fund_category_filter"] button span {
 <td style="padding: 10px 8px; text-align: right; color: var(--color-loss, #f43f5e);" class="tabular-nums">{f.get('max_drawdown', 0.0):.1f}%</td>
 </tr>''')
 
-        st.html(f'''<div style="overflow-x: auto; margin-bottom: 24px; border: 1px solid var(--border-color); border-radius: 8px; background: rgba(255,255,255,0.02);">
+        st.html(f'''<div style="background: rgba(25, 118, 210, 0.04); border: 1px solid rgba(25, 118, 210, 0.2); border-radius: 6px; padding: 7px 14px; margin-bottom: 10px; font-size: 0.76rem; color: var(--secondary-text-color); display: flex; align-items: center; flex-wrap: wrap; gap: 8px;">
+<span style="font-weight: 700; color: var(--mui-primary, #1976d2);">💡 指標の高低早見ガイド:</span>
+<span>信託報酬: <b style="color: var(--color-gain, #10b981);">▼ 低いほど優 (長期低コスト)</b></span>
+<span style="opacity: 0.4;">|</span>
+<span>最大下落(DD): <b style="color: var(--color-gain, #10b981);">▼ 0%に近いほど優 (暴落に強い)</b></span>
+<span style="opacity: 0.4;">|</span>
+<span>シャープレシオ・リターン・純資産・スコア: <b style="color: var(--mui-primary, #1976d2);">▲ 高い/大きいほど優</b></span>
+</div>
+
+<div style="overflow-x: auto; margin-bottom: 24px; border: 1px solid var(--border-color); border-radius: 8px; background: rgba(255,255,255,0.02);">
 <table style="width: 100%; border-collapse: collapse; min-width: 850px;">
 <thead>
-<tr style="background: rgba(0,0,0,0.04); border-bottom: 1px solid var(--border-color); font-size: 0.76rem; color: var(--secondary-text-color); text-transform: uppercase;">
+<tr style="background: rgba(0,0,0,0.04); border-bottom: 1px solid var(--border-color); font-size: 0.75rem; color: var(--secondary-text-color); text-transform: uppercase;">
 <th style="padding: 10px 8px; text-align: center;">RANK</th>
-<th style="padding: 10px 8px; text-align: center;">AIスコア</th>
+<th style="padding: 10px 8px; text-align: center;">AIスコア <span style="font-size: 0.68rem; color: var(--mui-primary, #1976d2);">▲</span></th>
 <th style="padding: 10px 10px; text-align: left;">投資信託名 / 役割</th>
 <th style="padding: 10px 6px; text-align: center;">つみたて</th>
 <th style="padding: 10px 6px; text-align: center;">成長枠</th>
-<th style="padding: 10px 8px; text-align: right;">信託報酬(年率)</th>
-<th style="padding: 10px 8px; text-align: right;">純資産総額</th>
-<th style="padding: 10px 8px; text-align: right;">1年リターン</th>
-<th style="padding: 10px 8px; text-align: right;">3年年率</th>
-<th style="padding: 10px 8px; text-align: right;">シャープレシオ</th>
-<th style="padding: 10px 8px; text-align: right;">最大下落(DD)</th>
+<th style="padding: 10px 8px; text-align: right;">信託報酬 <span style="font-size: 0.68rem; color: var(--color-gain, #10b981);">▼低優</span></th>
+<th style="padding: 10px 8px; text-align: right;">純資産総額 <span style="font-size: 0.68rem; color: var(--mui-primary, #1976d2);">▲大優</span></th>
+<th style="padding: 10px 8px; text-align: right;">1年リターン <span style="font-size: 0.68rem; color: var(--color-gain, #10b981);">▲高優</span></th>
+<th style="padding: 10px 8px; text-align: right;">3年年率 <span style="font-size: 0.68rem; color: var(--color-gain, #10b981);">▲高優</span></th>
+<th style="padding: 10px 8px; text-align: right;">シャープレシオ <span style="font-size: 0.68rem; color: var(--mui-primary, #1976d2);">▲高優</span></th>
+<th style="padding: 10px 8px; text-align: right;">最大下落(DD) <span style="font-size: 0.68rem; color: var(--color-gain, #10b981);">▼小優</span></th>
 </tr>
 </thead>
 <tbody>
