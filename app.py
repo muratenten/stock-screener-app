@@ -6770,16 +6770,20 @@ if query_user == "default":
         display: flex !important;
         align-items: center !important;
         justify-content: center !important;
-        gap: 10px !important;
+        gap: 12px !important;
         width: 100% !important;
-        padding: 9px 16px !important;
-        border-radius: 4px !important;
-        font-family: 'Roboto', 'Noto Sans JP', sans-serif !important;
-        font-size: 0.875rem !important;
-        font-weight: 500 !important;
-        letter-spacing: 0.02857em !important;
+        height: 48px !important;
+        min-height: 48px !important;
+        padding: 0 16px !important;
+        border-radius: 12px !important;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Noto Sans JP', sans-serif !important;
+        font-size: 0.92rem !important;
+        font-weight: 600 !important;
+        letter-spacing: 0.015em !important;
         text-decoration: none !important;
-        transition: background-color 250ms cubic-bezier(0.4, 0, 0.2, 1) 0ms, box-shadow 250ms cubic-bezier(0.4, 0, 0.2, 1) 0ms, border-color 250ms cubic-bezier(0.4, 0, 0.2, 1) 0ms !important;
+        white-space: nowrap !important;
+        word-break: keep-all !important;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
         box-shadow: 0px 2px 1px -1px rgba(0,0,0,0.2), 0px 1px 1px 0px rgba(0,0,0,0.14), 0px 1px 3px 0px rgba(0,0,0,0.12) !important;
         border: 1px solid transparent !important;
         cursor: pointer !important;
@@ -6794,7 +6798,8 @@ if query_user == "default":
     }
     .google-btn:hover {
         background-color: rgba(0, 0, 0, 0.04) !important;
-        box-shadow: 0px 3px 3px -2px rgba(0,0,0,0.2), 0px 3px 4px 0px rgba(0,0,0,0.14), 0px 1px 8px 0px rgba(0,0,0,0.12) !important;
+        box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.15) !important;
+        transform: translateY(-1px) !important;
     }
     .line-btn {
         background-color: #06c755 !important;
@@ -6802,7 +6807,8 @@ if query_user == "default":
     }
     .line-btn:hover {
         background-color: #05b34c !important;
-        box-shadow: 0px 3px 3px -2px rgba(6, 199, 85, 0.3), 0px 3px 4px 0px rgba(6, 199, 85, 0.2), 0px 1px 8px 0px rgba(6, 199, 85, 0.15) !important;
+        box-shadow: 0px 4px 14px rgba(6, 199, 85, 0.35) !important;
+        transform: translateY(-1px) !important;
     }
     .social-icon {
         width: 18px !important;
@@ -7057,6 +7063,129 @@ if query_user == "default":
     }
     </style>
     """).replace("{portal_bg}", portal_bg))
+
+    if is_dark:
+        st.html("""
+        <style>
+        html, body {
+            background-color: #070b14 !important;
+            background: radial-gradient(ellipse at 50% 10%, #0d1a36 0%, #060912 100%) !important;
+        }
+        .portal-blob {
+            filter: blur(150px) !important;
+            opacity: 0.75 !important;
+        }
+        .portal-blob-1 {
+            background: rgba(37, 99, 235, 0.4) !important;
+            width: 580px !important;
+            height: 580px !important;
+        }
+        .portal-blob-2 {
+            background: rgba(79, 70, 229, 0.35) !important;
+            width: 600px !important;
+            height: 600px !important;
+        }
+        .portal-blob-3 {
+            background: rgba(14, 165, 233, 0.3) !important;
+            width: 440px !important;
+            height: 440px !important;
+        }
+        .login-title-glow {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Noto Sans JP', sans-serif !important;
+            font-size: clamp(2rem, 4vw, 2.75rem) !important;
+            font-weight: 800 !important;
+            color: #ffffff !important;
+            background: linear-gradient(135deg, #ffffff 25%, #93c5fd 65%, #60a5fa 100%) !important;
+            -webkit-background-clip: text !important;
+            -webkit-text-fill-color: transparent !important;
+            filter: drop-shadow(0 4px 24px rgba(59, 130, 246, 0.5)) !important;
+            text-align: center !important;
+            margin-top: 20px !important;
+            margin-bottom: 8px !important;
+            letter-spacing: -0.02em !important;
+            display: block !important;
+            white-space: nowrap !important;
+            word-break: keep-all !important;
+        }
+        .login-subtitle-glow {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Noto Sans JP', sans-serif !important;
+            font-size: 1rem !important;
+            color: #94a3b8 !important;
+            text-align: center !important;
+            margin-bottom: 32px !important;
+            font-weight: 500 !important;
+            letter-spacing: 0.03em !important;
+            display: block !important;
+        }
+        .google-btn {
+            background-color: #ffffff !important;
+            color: #1e293b !important;
+            border: 1px solid rgba(255, 255, 255, 0.2) !important;
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35) !important;
+        }
+        .google-btn:hover {
+            background-color: #f8fafc !important;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.45) !important;
+            transform: translateY(-1.5px) !important;
+        }
+        .line-btn {
+            background-color: #06c755 !important;
+            color: #ffffff !important;
+            border: 1px solid rgba(6, 199, 85, 0.4) !important;
+            box-shadow: 0 4px 16px rgba(6, 199, 85, 0.35) !important;
+        }
+        .line-btn:hover {
+            background-color: #05b34c !important;
+            box-shadow: 0 6px 22px rgba(6, 199, 85, 0.5) !important;
+            transform: translateY(-1.5px) !important;
+        }
+
+        /* Sidebar toggle unselected button styling in dark mode (Clear icon visibility) */
+        [data-testid="stSidebar"] [data-baseweb="button-group"] button[aria-checked="false"],
+        [data-testid="stSidebar"] [data-testid="stButtonGroup"] button[aria-checked="false"],
+        [data-testid="stSidebar"] button[data-testid*="segmented_control"][aria-checked="false"],
+        [data-testid="stSidebar"] [role="radiogroup"] button[aria-checked="false"],
+        [data-testid="stSidebar"] div[data-testid="stSegmentedControl"] button[aria-checked="false"] {
+            background-color: rgba(255, 255, 255, 0.07) !important;
+            border: 1px solid rgba(255, 255, 255, 0.12) !important;
+            color: #94a3b8 !important;
+        }
+        [data-testid="stSidebar"] [data-baseweb="button-group"] button[aria-checked="false"] svg.lucide,
+        [data-testid="stSidebar"] [data-baseweb="button-group"] button[aria-checked="false"] .feather-icon,
+        [data-testid="stSidebar"] [data-testid="stButtonGroup"] button[aria-checked="false"] svg.lucide,
+        [data-testid="stSidebar"] [data-testid="stButtonGroup"] button[aria-checked="false"] .feather-icon,
+        [data-testid="stSidebar"] button[data-testid*="segmented_control"][aria-checked="false"] svg.lucide,
+        [data-testid="stSidebar"] button[data-testid*="segmented_control"][aria-checked="false"] .feather-icon {
+            stroke: #94a3b8 !important;
+        }
+        [data-testid="stSidebar"] [data-baseweb="button-group"] button[aria-checked="false"]:hover,
+        [data-testid="stSidebar"] [data-testid="stButtonGroup"] button[aria-checked="false"]:hover,
+        [data-testid="stSidebar"] button[data-testid*="segmented_control"][aria-checked="false"]:hover {
+            background-color: rgba(255, 255, 255, 0.12) !important;
+            color: #f8fafc !important;
+        }
+        [data-testid="stSidebar"] [data-baseweb="button-group"] button[aria-checked="false"]:hover svg.lucide,
+        [data-testid="stSidebar"] [data-baseweb="button-group"] button[aria-checked="false"]:hover .feather-icon {
+            stroke: #f8fafc !important;
+        }
+
+        /* Tokusho Button in Dark Mode */
+        div[class*="st-key-portal_tokusho_btn"] button {
+            background: rgba(15, 23, 42, 0.6) !important;
+            border: 1px solid rgba(255, 255, 255, 0.15) !important;
+            color: #94a3b8 !important;
+            border-radius: 10px !important;
+            backdrop-filter: blur(10px) !important;
+            transition: all 0.2s ease !important;
+        }
+        div[class*="st-key-portal_tokusho_btn"] button:hover {
+            background: rgba(30, 41, 59, 0.8) !important;
+            border-color: #60a5fa !important;
+            color: #ffffff !important;
+            transform: translateY(-1px) !important;
+        }
+        </style>
+        """)
     
     # Active JS badge & footer purger and Lucide Icons for login page
     st.components.v1.html("""
@@ -7250,10 +7379,11 @@ if query_user == "default":
     if is_mobile:
         col_w1, col_w2, col_w3 = st.columns([0.02, 0.96, 0.02])
     else:
-        col_w1, col_w2, col_w3 = st.columns([0.6, 2.8, 0.6])
+        col_w1, col_w2, col_w3 = st.columns([0.65, 2.7, 0.65])
         
     with col_w2:
-        login_logo_html = f'<div style="text-align: center; margin-bottom: 16px;"><img src="{logo_data_uri}" style="width: 72px; height: 72px; border-radius: 18px; box-shadow: 0 8px 24px rgba(37,99,235,0.4); border: 1.5px solid rgba(59,130,246,0.4);" /></div>' if logo_data_uri else ""
+        logo_shadow = "box-shadow: 0 0 35px rgba(59, 130, 246, 0.45); border: 1.5px solid rgba(96, 165, 250, 0.4);" if is_dark else "box-shadow: 0 8px 24px rgba(37,99,235,0.25); border: 1.5px solid rgba(59,130,246,0.3);"
+        login_logo_html = f'<div style="text-align: center; margin-bottom: 16px;"><img src="{logo_data_uri}" style="width: 76px; height: 76px; border-radius: 20px; {logo_shadow}" /></div>' if logo_data_uri else ""
         st.markdown(login_logo_html, unsafe_allow_html=True)
         st.markdown('<div class="login-title-glow">ZenStockScreener</div>', unsafe_allow_html=True)
         st.markdown('<div class="login-subtitle-glow">AI・ファンダメンタルズ指標分析システム</div>', unsafe_allow_html=True)
@@ -7294,9 +7424,32 @@ if query_user == "default":
         theme_query_param = f"&theme={current_theme_slug}"
         oauth_theme_state = f"__{current_theme_slug}"
         
-        st.markdown("""
-        <div style="background: #ffffff !important; padding: 20px 24px 14px 24px !important; border-radius: 8px !important; box-shadow: 0px 2px 1px -1px rgba(0,0,0,0.2), 0px 1px 1px 0px rgba(0,0,0,0.14), 0px 1px 3px 0px rgba(0,0,0,0.12) !important; border: 1px solid rgba(0, 0, 0, 0.12) !important; margin-bottom: 20px; position: relative; z-index: 1;">
-            <h3 class="login-section-title" style="margin-bottom: 12px; font-family: 'Roboto', 'Noto Sans JP', sans-serif; font-size: 1.125rem; font-weight: 500; color: rgba(0, 0, 0, 0.87);">🔐 アカウントでログイン</h3>
+        login_card_style = """
+            background: rgba(15, 23, 42, 0.7) !important;
+            backdrop-filter: blur(20px) !important;
+            -webkit-backdrop-filter: blur(20px) !important;
+            border: 1px solid rgba(255, 255, 255, 0.12) !important;
+            box-shadow: 0 10px 35px -5px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.05) !important;
+            border-radius: 14px !important;
+            padding: 16px 20px 12px 20px !important;
+            margin-bottom: 20px;
+            position: relative;
+            z-index: 1;
+        """ if is_dark else """
+            background: #ffffff !important;
+            border: 1px solid rgba(0, 0, 0, 0.12) !important;
+            box-shadow: 0px 2px 1px -1px rgba(0,0,0,0.2), 0px 1px 1px 0px rgba(0,0,0,0.14), 0px 1px 3px 0px rgba(0,0,0,0.12) !important;
+            border-radius: 12px !important;
+            padding: 18px 24px 12px 24px !important;
+            margin-bottom: 20px;
+            position: relative;
+            z-index: 1;
+        """
+        login_card_title_color = "#f8fafc" if is_dark else "rgba(0, 0, 0, 0.87)"
+        
+        st.markdown(f"""
+        <div style="{login_card_style}">
+            <h3 class="login-section-title" style="margin-bottom: 0px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Noto Sans JP', sans-serif; font-size: 1.15rem; font-weight: 600; color: {login_card_title_color}; text-align: center;">🔐 アカウントでログイン</h3>
         </div>
         """, unsafe_allow_html=True)
         
