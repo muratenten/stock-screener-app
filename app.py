@@ -8700,36 +8700,34 @@ with tab_geopolitics:
 
     with col_news:
         st.markdown("""
-        <div style="font-size: 0.85rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--secondary-text-color); margin-bottom: 8px;">
-            📰 最新マクロ情勢・金融速報（一次開示・専門メディア連携）
-        </div>
-        """, unsafe_allow_html=True)
+<div style="font-size: 0.85rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--secondary-text-color); margin-bottom: 8px;">
+📰 最新マクロ情勢・金融速報（一次開示・専門メディア連携）
+</div>
+""", unsafe_allow_html=True)
         
         with st.spinner("最新ニュースと情勢ヘッドラインを取得中..."):
             live_news = gs.fetch_latest_news(current_theme_key, max_items=4)
 
-        news_html = '<div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px;">'
+        news_cards_html = []
         for n in live_news:
-            news_html += f"""
-            <div style="padding: 9px 13px; background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border-color); border-radius: 8px; font-size: 0.84rem;">
-                <div style="font-weight: 600; color: var(--text-color); margin-bottom: 3px;">
-                    {n['title']}
-                </div>
-                <div style="display: flex; gap: 10px; font-size: 0.74rem; color: var(--secondary-text-color);">
-                    <span>🏛️ 出典: {n['source']}</span>
-                    <span>⏱️ {n['pubDate'][:16] if len(n['pubDate']) >= 16 else n['pubDate']}</span>
-                </div>
-            </div>
-            """
-        news_html += '</div>'
-        st.markdown(news_html, unsafe_allow_html=True)
+            pub_date = n['pubDate'][:16] if len(n['pubDate']) >= 16 else n['pubDate']
+            news_cards_html.append(
+f'''<div style="padding: 10px 14px; background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border-color); border-radius: 8px; margin-bottom: 8px;">
+<div style="font-weight: 600; font-size: 0.86rem; color: var(--text-color); line-height: 1.4; margin-bottom: 4px;">{n['title']}</div>
+<div style="display: flex; gap: 12px; font-size: 0.74rem; color: var(--secondary-text-color);">
+<span>🏛️ 出典: {n['source']}</span>
+<span>⏱️ {pub_date}</span>
+</div>
+</div>'''
+            )
+        st.html(''.join(news_cards_html))
 
     with col_pulse:
         st.markdown("""
-        <div style="font-size: 0.85rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--secondary-text-color); margin-bottom: 8px;">
-            📊 セクター資金流入ステータス
-        </div>
-        """, unsafe_allow_html=True)
+<div style="font-size: 0.85rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--secondary-text-color); margin-bottom: 8px;">
+📊 セクター資金流入ステータス
+</div>
+""", unsafe_allow_html=True)
 
         with st.spinner("テーマ構成銘柄のリアルタイム需給をスキャン中..."):
             theme_stocks = gs.analyze_theme_stocks(current_theme_key)
@@ -8740,35 +8738,23 @@ with tab_geopolitics:
         pulse_status = "🔥 強い資金流入を検知" if avg_vol_ratio >= 1.2 or len(spike_stocks) >= 2 else ("🟢 安定推移・押し目形成中" if avg_vol_ratio >= 0.9 else "⚪ 静かな助走局面")
         pulse_color = "var(--color-gain)" if "流入" in pulse_status else "var(--mui-primary, #1976d2)"
 
-        st.markdown(f"""
-        <div class="card" style="padding: 16px; text-align: center; margin-bottom: 16px;">
-            <div class="metric-title">セクター需給モメンタム</div>
-            <div style="font-size: 1.15rem; font-weight: 700; color: {pulse_color}; margin: 6px 0;">
-                {pulse_status}
-            </div>
-            <div style="font-size: 0.82rem; color: var(--secondary-text-color); line-height: 1.5; margin-top: 8px;">
-                平均出来高比率: <b class="tabular-nums">{avg_vol_ratio:.1f}倍</b><br>
-                大口資金急増検知: <b class="tabular-nums">{len(spike_stocks)} 銘柄</b>
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
+        st.html(f'''<div class="card" style="padding: 16px; text-align: center; margin-bottom: 16px;">
+<div class="metric-title">セクター需給モメンタム</div>
+<div style="font-size: 1.15rem; font-weight: 700; color: {pulse_color}; margin: 6px 0;">{pulse_status}</div>
+<div style="font-size: 0.82rem; color: var(--secondary-text-color); line-height: 1.5; margin-top: 8px;">
+平均出来高比率: <b class="tabular-nums">{avg_vol_ratio:.1f}倍</b><br>
+大口資金急増検知: <b class="tabular-nums">{len(spike_stocks)} 銘柄</b>
+</div>
+</div>''')
 
     st.markdown("---")
-    st.markdown(f"""
-    <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 16px;">
-        <div>
-            <h3 style="margin: 0 0 4px 0; font-size: 1.25rem; font-weight: 700; color: var(--text-color);">
-                🎯 本日の厳選注目銘柄（勝率・出来高スコア順）
-            </h3>
-            <div style="font-size: 0.82rem; color: var(--secondary-text-color);">
-                直近の出来高変化、過去波形勝率、および本命度により毎日リアルタイムに自動ランキング
-            </div>
-        </div>
-        <div style="font-size: 0.78rem; opacity: 0.7; color: var(--secondary-text-color);">
-            ※毎営業日 最新株価連動
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
+    st.html('''<div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 16px;">
+<div>
+<h3 style="margin: 0 0 4px 0; font-size: 1.25rem; font-weight: 700; color: var(--text-color);">🎯 本日の厳選注目銘柄（勝率・出来高スコア順）</h3>
+<div style="font-size: 0.82rem; color: var(--secondary-text-color);">直近の出来高変化、過去波形勝率、および本命度により毎日リアルタイムに自動ランキング</div>
+</div>
+<div style="font-size: 0.78rem; opacity: 0.7; color: var(--secondary-text-color);">※毎営業日 最新株価連動</div>
+</div>''')
 
     # Render Stock Cards
     for idx, s in enumerate(theme_stocks, 1):
@@ -8787,66 +8773,41 @@ with tab_geopolitics:
             vol_badge = '<span class="pill-badge pill-gain" style="font-size: 0.72rem; padding: 2px 7px;">🔥 出来高急増</span>'
 
         with st.container():
-            st.markdown(f"""
-            <div class="card" style="padding: 20px; margin-bottom: 18px;">
-                <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 8px; margin-bottom: 12px;">
-                    <div>
-                        <div style="display: flex; align-items: center; gap: 8px;">
-                            <span style="font-size: 1.15rem; font-weight: 700; color: var(--text-color); font-family: 'Roboto', sans-serif;">
-                                {idx}. {s['name']}
-                            </span>
-                            <span style="font-size: 0.85rem; font-family: monospace; color: var(--secondary-text-color);">
-                                ({s['ticker']})
-                            </span>
-                            <span style="background: {rank_badge_bg}; color: {rank_badge_color}; font-size: 0.72rem; font-weight: 700; padding: 2px 8px; border-radius: 4px;">
-                                {s['rank']}
-                            </span>
-                            {vol_badge}
-                        </div>
-                        <div style="font-size: 0.82rem; color: var(--secondary-text-color); margin-top: 4px;">
-                            {s['sub']}
-                        </div>
-                    </div>
-                    <div style="text-align: right;">
-                        <div style="font-size: 1.35rem; font-weight: 700; color: var(--text-color);" class="tabular-nums">
-                            {p_disp}
-                        </div>
-                        <div>
-                            <span class="pill-badge {pill_cls}">
-                                {chg_disp}
-                            </span>
-                        </div>
-                    </div>
-                </div>
-
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; background: rgba(0, 0, 0, 0.02); padding: 12px; border-radius: 8px; border: 1px solid var(--border-color); margin-bottom: 14px;">
-                    <div>
-                        <div style="font-size: 0.75rem; color: var(--secondary-text-color);">20日出来高比率</div>
-                        <div style="font-size: 1.05rem; font-weight: 700; color: var(--text-color);" class="tabular-nums">
-                            {s['vol_ratio']:.1f}倍
-                        </div>
-                    </div>
-                    <div>
-                        <div style="font-size: 0.75rem; color: var(--secondary-text-color);">過去幾何波形勝率</div>
-                        <div style="font-size: 1.05rem; font-weight: 700; color: var(--color-gain);" class="tabular-nums">
-                            {s['win_rate']:.1f}%
-                        </div>
-                    </div>
-                    <div>
-                        <div style="font-size: 0.75rem; color: var(--secondary-text-color);">目標ターゲット想定</div>
-                        <div style="font-size: 1.05rem; font-weight: 700; color: var(--mui-primary, #1976d2);" class="tabular-nums">
-                            ¥{s['target_price']:,.1f} <span style="font-size: 0.72rem;">(+{s['avg_future_ret']:.1f}%)</span>
-                        </div>
-                    </div>
-                    <div>
-                        <div style="font-size: 0.75rem; color: var(--secondary-text-color);">規律損切り撤退目安</div>
-                        <div style="font-size: 1.05rem; font-weight: 700; color: var(--color-loss);" class="tabular-nums">
-                            ¥{s['stop_price']:,.1f} <span style="font-size: 0.72rem;">(-4.5%)</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            """, unsafe_allow_html=True)
+            st.html(f'''<div class="card" style="padding: 20px; margin-bottom: 18px;">
+<div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 8px; margin-bottom: 12px;">
+<div>
+<div style="display: flex; align-items: center; gap: 8px;">
+<span style="font-size: 1.15rem; font-weight: 700; color: var(--text-color); font-family: 'Roboto', sans-serif;">{idx}. {s['name']}</span>
+<span style="font-size: 0.85rem; font-family: monospace; color: var(--secondary-text-color);">({s['ticker']})</span>
+<span style="background: {rank_badge_bg}; color: {rank_badge_color}; font-size: 0.72rem; font-weight: 700; padding: 2px 8px; border-radius: 4px;">{s['rank']}</span>
+{vol_badge}
+</div>
+<div style="font-size: 0.82rem; color: var(--secondary-text-color); margin-top: 4px;">{s['sub']}</div>
+</div>
+<div style="text-align: right;">
+<div style="font-size: 1.35rem; font-weight: 700; color: var(--text-color);" class="tabular-nums">{p_disp}</div>
+<div><span class="pill-badge {pill_cls}">{chg_disp}</span></div>
+</div>
+</div>
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; background: rgba(0, 0, 0, 0.02); padding: 12px; border-radius: 8px; border: 1px solid var(--border-color); margin-bottom: 14px;">
+<div>
+<div style="font-size: 0.75rem; color: var(--secondary-text-color);">20日出来高比率</div>
+<div style="font-size: 1.05rem; font-weight: 700; color: var(--text-color);" class="tabular-nums">{s['vol_ratio']:.1f}倍</div>
+</div>
+<div>
+<div style="font-size: 0.75rem; color: var(--secondary-text-color);">過去幾何波形勝率</div>
+<div style="font-size: 1.05rem; font-weight: 700; color: var(--color-gain);" class="tabular-nums">{s['win_rate']:.1f}%</div>
+</div>
+<div>
+<div style="font-size: 0.75rem; color: var(--secondary-text-color);">目標ターゲット想定</div>
+<div style="font-size: 1.05rem; font-weight: 700; color: var(--mui-primary, #1976d2);" class="tabular-nums">¥{s['target_price']:,.1f} <span style="font-size: 0.72rem;">(+{s['avg_future_ret']:.1f}%)</span></div>
+</div>
+<div>
+<div style="font-size: 0.75rem; color: var(--secondary-text-color);">規律損切り撤退目安</div>
+<div style="font-size: 1.05rem; font-weight: 700; color: var(--color-loss);" class="tabular-nums">¥{s['stop_price']:,.1f} <span style="font-size: 0.72rem;">(-4.5%)</span></div>
+</div>
+</div>
+</div>''')
 
             with st.expander(f"📝 Gemini 3.8 / 専門アナリストの戦略解説レポートを開く（{s['name']}）", expanded=False):
                 report_text = gs.generate_analyst_report(s, cfg, live_news)
