@@ -9501,29 +9501,62 @@ div[class*="st-key-sbi_fund_category_filter"] button span {
         st.info("💡 上の各銘柄カードにある **『📊 比較リストに追加』** ボタンを押すと、ここに選択した銘柄同士の累積リターン比較チャート、スペック横並び比較表、および **AI最適パック自動生成** がリアルタイム表示されます。")
     else:
         # Comparison Header Bar with Individual Delete Buttons and Clear Button
-        st.markdown("<div style='font-size: 0.88rem; font-weight: 700; color: var(--text-color); margin-bottom: 8px;'>現在比較中の銘柄（クリックで個別削除できます）:</div>", unsafe_allow_html=True)
-        
-        # Display individual delete buttons as responsive columns
-        c_chips_cols = st.columns(len(selected_comp_funds) + 1)
-        for c_idx, f_item in enumerate(selected_comp_funds):
-            with c_chips_cols[c_idx]:
-                if st.button(f"✖ {f_item['nickname']}", key=f"btn_del_cmp_{f_item['id']}", help="クリックして比較リストから削除", use_container_width=True):
-                    compare_list.remove(f_item["id"])
-                    st.toast(f"{f_item['nickname']} を比較リストから削除しました")
-                    st.rerun()
-        with c_chips_cols[-1]:
-            if st.button("🗑️ 全てクリア", key="btn_clear_comp_list", use_container_width=True):
+        st.html('''<style>
+div[class*="st-key-btn_del_cmp_"] button {
+    padding: 6px 10px !important;
+    font-size: 0.82rem !important;
+    border-radius: 6px !important;
+    border: 1px solid var(--border-color) !important;
+    background: rgba(0, 0, 0, 0.02) !important;
+    color: var(--text-color) !important;
+    transition: all 0.15s ease !important;
+    height: 38px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    white-space: nowrap !important;
+    text-overflow: ellipsis !important;
+    overflow: hidden !important;
+}
+div[class*="st-key-btn_del_cmp_"] button:hover {
+    border-color: #f43f5e !important;
+    color: #f43f5e !important;
+    background: rgba(244, 63, 94, 0.06) !important;
+}
+div[class*="st-key-btn_generate_ai_pack"] button {
+    white-space: nowrap !important;
+    font-weight: 700 !important;
+}
+</style>''')
+
+        col_c_head_txt, col_c_head_clr = st.columns([3.2, 1.1]) if not is_mobile else (st.container(), st.container())
+        with col_c_head_txt:
+            st.markdown(f"<div style='font-size: 0.9rem; font-weight: 700; color: var(--text-color); margin-bottom: 6px;'>現在比較中の銘柄 ({len(selected_comp_funds)}本) <span style='font-size: 0.76rem; font-weight: normal; color: var(--secondary-text-color);'>※クリックで個別削除できます</span></div>", unsafe_allow_html=True)
+        with col_c_head_clr:
+            if st.button("🗑️ 比較リストを空にする", key="btn_clear_comp_list", use_container_width=True):
                 st.session_state["fund_compare_list"] = []
                 st.session_state.pop("generated_custom_pack", None)
                 st.rerun()
 
+        # Display individual delete buttons in a uniform, fixed-column grid (4 cols on desktop, 2 on mobile)
+        cols_per_row = 4 if not is_mobile else 2
+        for i in range(0, len(selected_comp_funds), cols_per_row):
+            chunk = selected_comp_funds[i:i + cols_per_row]
+            c_cols = st.columns(cols_per_row)
+            for c_idx, f_item in enumerate(chunk):
+                with c_cols[c_idx]:
+                    if st.button(f"✕ {f_item['nickname']}", key=f"btn_del_cmp_{f_item['id']}", help=f"『{f_item['name']}』を比較リストから除外", use_container_width=True):
+                        compare_list.remove(f_item["id"])
+                        st.toast(f"{f_item['nickname']} を比較リストから削除しました")
+                        st.rerun()
+
         # AI Custom Pack Generator Button & Display Section
         st.markdown("<div style='margin-top: 14px; margin-bottom: 10px;'></div>", unsafe_allow_html=True)
-        col_gen_txt, col_gen_btn = st.columns([2.5, 1.4])
+        col_gen_txt, col_gen_btn = st.columns([2.0, 1.6]) if not is_mobile else (st.container(), st.container())
         with col_gen_txt:
-            st.markdown("<div style='font-size: 0.88rem; color: var(--secondary-text-color); line-height: 1.5;'>🤖 <b>AI最適ポートフォリオ作成</b>: 比較リストの銘柄をAIが数理最適化し、下落耐性と収益性を両立した黄金ブレンド比率を自動算出します。</div>", unsafe_allow_html=True)
+            st.markdown("<div style='font-size: 0.86rem; color: var(--secondary-text-color); line-height: 1.5;'>🤖 <b>AI最適ポートフォリオ作成</b>: 比較中の銘柄をAIが数理最適化し、下落耐性と収益性を両立した黄金ブレンド比率を自動算出します。</div>", unsafe_allow_html=True)
         with col_gen_btn:
-            if st.button("🤖 選択銘柄でAI最適パックを自動生成", type="primary", use_container_width=True, key="btn_generate_ai_pack"):
+            if st.button("🤖 AI最適パックを自動生成", type="primary", use_container_width=True, key="btn_generate_ai_pack"):
                 if len(selected_comp_funds) < 2:
                     st.warning("AI最適パックを生成するには、2銘柄以上を比較リストに追加してください。")
                 else:
