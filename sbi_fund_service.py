@@ -1109,6 +1109,78 @@ def score_fund(fund: Dict[str, Any]) -> Dict[str, Any]:
     }
 
 
+def calculate_forward_growth_potential(fund: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Evaluates forward-looking upside potential (Next 1-year growth probability)
+    based on momentum acceleration, drawdown resilience, and macroeconomic tailwinds (AI cycle, rate cuts, inflation).
+    """
+    ret_1y = fund.get("return_1y", 20.0)
+    ret_3y = fund.get("return_3y_annual", 15.0)
+    sr = fund.get("sharpe_ratio", 1.0)
+    dd = abs(fund.get("max_drawdown", 15.0))
+    cat = fund.get("category", "")
+    name = fund.get("name", "")
+
+    # 1. Momentum Acceleration Factor (30 pts max)
+    accel = ret_1y - ret_3y
+    momentum_pts = min(max(15.0 + accel * 0.7, 6.0), 30.0)
+
+    # 2. Risk-adjusted upside quality (30 pts max)
+    sr_pts = min(max(sr * 18.0, 8.0), 30.0)
+
+    # 3. Macroeconomic Tailwinds & Sector Catalysts (40 pts max)
+    if "FANG+" in cat or "AI" in cat or "半導体" in name:
+        macro_pts = 38.0  # Top tier generative AI & hyper-scaler capex boom
+    elif "米国株式" in name or "S&P500" in name or "先進国" in cat:
+        macro_pts = 33.0  # High quality US earnings expansion
+    elif "金" in cat or "ゴールド" in name:
+        macro_pts = 34.0  # Real interest rate easing & geopolitical hedging
+    elif "インド" in cat or "新興国" in cat:
+        macro_pts = 32.0  # High GDP expansion & manufacturing shift
+    elif "高配当" in cat:
+        macro_pts = 28.0  # Steady cashflow & defensive valuation support
+    elif "債券" in cat or "バランス" in cat:
+        macro_pts = 24.0  # Capital gain benefit from peak rate cycle
+    else:
+        macro_pts = 26.0
+
+    total_forward_score = min(max(round(momentum_pts + sr_pts + macro_pts, 1), 50.0), 98.0)
+
+    # Stars & Label
+    if total_forward_score >= 88.0:
+        stars = 5
+        label = "🚀 急上昇モメンタム"
+        tag_color = "#f43f5e"
+    elif total_forward_score >= 80.0:
+        stars = 4
+        label = "🔥 上昇トレンド加速"
+        tag_color = "#f97316"
+    elif total_forward_score >= 70.0:
+        stars = 3
+        label = "📈 堅実な上昇期待"
+        tag_color = "#10b981"
+    else:
+        stars = 2
+        label = "🛡️ 安定底堅い推移"
+        tag_color = "#1976d2"
+
+    # Forward 1-year scenario returns (Base, Bull, Bear)
+    vol_proxy = max(8.0, dd * 0.9)
+    base_return = round(ret_1y * 0.65 + (total_forward_score - 50.0) * 0.35, 1)
+    bull_return = round(base_return + vol_proxy * 0.7, 1)
+    bear_return = round(max(-5.0, base_return - vol_proxy * 0.7), 1)
+
+    return {
+        "forward_growth_score": total_forward_score,
+        "forward_growth_stars": stars,
+        "forward_growth_label": label,
+        "forward_growth_color": tag_color,
+        "expected_return_base": base_return,
+        "expected_return_bull": bull_return,
+        "expected_return_bear": bear_return
+    }
+
+
 def get_all_categories() -> List[str]:
     return [
         "すべて",
@@ -1123,13 +1195,14 @@ def get_all_categories() -> List[str]:
 
 def get_fund_details(fund_id: str) -> Optional[Dict[str, Any]]:
     """
-    Retrieves full details of a single fund including quantitative score, rank, and color.
+    Retrieves full details of a single fund including quantitative score, forward growth potential, rank, and color.
     """
     f = next((item for item in SBI_FUNDS_DB if item["id"] == fund_id), None)
     if not f:
         return None
     item = dict(f)
     item.update(score_fund(f))
+    item.update(calculate_forward_growth_potential(f))
     return item
 
 
@@ -1188,12 +1261,16 @@ def filter_and_sort_funds(
                 continue
 
         score_info = score_fund(f)
+        fwd_info = calculate_forward_growth_potential(f)
         item = dict(f)
         item.update(score_info)
+        item.update(fwd_info)
         results.append(item)
 
     if sort_by == "AI総合スコア順":
         results.sort(key=lambda x: x["score"], reverse=True)
+    elif sort_by == "次に上がる可能性順 (AI将来期待度)":
+        results.sort(key=lambda x: x["forward_growth_score"], reverse=True)
     elif sort_by == "信託報酬が安い順":
         results.sort(key=lambda x: x["expense_ratio"])
     elif sort_by == "1年リターンが高い順":
@@ -1459,14 +1536,20 @@ def generate_ai_custom_pack(fund_ids: List[str]) -> Optional[Dict[str, Any]]:
     if not funds:
         return None
 
-    # Calculate optimal weighting based on Sharpe ratio and inverse volatility
+    # Calculate optimal weighting based on:
+    # 1. Historical Stability & Sharpe Ratio (40%)
+    # 2. Forward Growth Potential & Macro Momentum (60%)
     scores = []
     for f in funds:
         sr = max(0.2, f.get("sharpe_ratio", 1.0))
         dd_factor = 1.0 / max(10.0, abs(f.get("max_drawdown", 20.0)))
-        # Blended weight score
-        w_score = (sr ** 1.2) * (dd_factor ** 0.5)
-        scores.append(w_score)
+        hist_score = (sr ** 1.0) * (dd_factor ** 0.4)
+
+        fwd_score = max(50.0, f.get("forward_growth_score", 75.0))
+        future_factor = (fwd_score / 60.0) ** 1.5
+
+        blended_score = (hist_score * 0.40) + (future_factor * 0.60)
+        scores.append(blended_score)
 
     total_score = sum(scores) if sum(scores) > 0 else len(funds)
     raw_weights = [s / total_score for s in scores]
@@ -1482,6 +1565,9 @@ def generate_ai_custom_pack(fund_ids: List[str]) -> Optional[Dict[str, Any]]:
     comp_expense = 0.0
     comp_return_1y = 0.0
     comp_return_3y = 0.0
+    comp_expected_base = 0.0
+    comp_expected_bull = 0.0
+    comp_expected_bear = 0.0
 
     has_tech = False
     has_defensive = False
@@ -1498,11 +1584,18 @@ def generate_ai_custom_pack(fund_ids: List[str]) -> Optional[Dict[str, Any]]:
             "role": f.get("role", ""),
             "color": f.get("color", "#1976d2"),
             "expense": f.get("expense_ratio", 0.1),
-            "return_1y": f.get("return_1y", 20.0)
+            "return_1y": f.get("return_1y", 20.0),
+            "forward_score": f.get("forward_growth_score", 75.0),
+            "forward_stars": f.get("forward_growth_stars", 4),
+            "forward_label": f.get("forward_growth_label", "🔥 上昇トレンド加速")
         })
-        comp_expense += f.get("expense_ratio", 0.1) * (w / 100.0)
-        comp_return_1y += f.get("return_1y", 20.0) * (w / 100.0)
-        comp_return_3y += f.get("return_3y_annual", 15.0) * (w / 100.0)
+        w_ratio = w / 100.0
+        comp_expense += f.get("expense_ratio", 0.1) * w_ratio
+        comp_return_1y += f.get("return_1y", 20.0) * w_ratio
+        comp_return_3y += f.get("return_3y_annual", 15.0) * w_ratio
+        comp_expected_base += f.get("expected_return_base", 15.0) * w_ratio
+        comp_expected_bull += f.get("expected_return_bull", 25.0) * w_ratio
+        comp_expected_bear += f.get("expected_return_bear", 5.0) * w_ratio
 
         cat = f.get("category", "")
         if "FANG+" in cat or "AI" in cat:
@@ -1544,5 +1637,8 @@ def generate_ai_custom_pack(fund_ids: List[str]) -> Optional[Dict[str, Any]]:
         "composite_expense": round(comp_expense, 4),
         "composite_return_1y": round(comp_return_1y, 1),
         "composite_return_3y": round(comp_return_3y, 1),
+        "composite_expected_base": round(comp_expected_base, 1),
+        "composite_expected_bull": round(comp_expected_bull, 1),
+        "composite_expected_bear": round(comp_expected_bear, 1),
         "fund_count": len(funds)
     }

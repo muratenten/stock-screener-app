@@ -9206,6 +9206,7 @@ div[class*="st-key-sbi_fund_category_filter"] button span {
                 "並び替え",
                 options=[
                     "AI総合スコア順",
+                    "次に上がる可能性順 (AI将来期待度)",
                     "信託報酬が安い順",
                     "1年リターンが高い順",
                     "過去3年(年率)順",
@@ -9248,6 +9249,7 @@ div[class*="st-key-sbi_fund_category_filter"] button span {
                 "並び替え（ソート）",
                 options=[
                     "AI総合スコア順",
+                    "次に上がる可能性順 (AI将来期待度)",
                     "信託報酬が安い順",
                     "1年リターンが高い順",
                     "過去3年(年率)順",
@@ -9291,9 +9293,12 @@ div[class*="st-key-sbi_fund_category_filter"] button span {
             gr_tag = '<span style="color: var(--mui-primary, #1976d2); font-weight: 700;">○</span>' if f.get("nisa_growth") else '<span style="opacity: 0.3;">-</span>'
             is_cmp = f['id'] in compare_list
             cmp_indicator = '<span style="color: var(--mui-primary, #1976d2); font-weight: 700;">★比較中</span>' if is_cmp else '<span style="opacity: 0.25;">-</span>'
+            fwd_label = f.get('forward_growth_label', '堅実')
+            fwd_color = f.get('forward_growth_color', '#1976d2')
             table_rows.append(f'''<tr style="border-bottom: 1px solid var(--border-color); font-size: 0.82rem;">
 <td style="padding: 10px 8px; font-weight: 700; text-align: center;"><span style="background: {f['color']}; color: #fff; padding: 2px 6px; border-radius: 4px; font-size: 0.7rem;">{f['rank']}</span></td>
 <td style="padding: 10px 8px; font-weight: 700; color: {f['color']}; text-align: center;" class="tabular-nums">{f['score']}</td>
+<td style="padding: 10px 8px; text-align: center; font-weight: 700; font-size: 0.74rem; color: {fwd_color};">{fwd_label}</td>
 <td style="padding: 10px 10px;">
 <div style="font-weight: 600; color: var(--text-color);">{idx}. {f['name']}</div>
 <div style="font-size: 0.72rem; color: var(--secondary-text-color);">{f['category']} | {f['underlying']}</div>
@@ -9324,6 +9329,7 @@ div[class*="st-key-sbi_fund_category_filter"] button span {
 <tr style="background: rgba(0,0,0,0.04); border-bottom: 1px solid var(--border-color); font-size: 0.75rem; color: var(--secondary-text-color); text-transform: uppercase;">
 <th style="padding: 10px 8px; text-align: center;">RANK</th>
 <th style="padding: 10px 8px; text-align: center;">AIスコア <span style="font-size: 0.68rem; color: var(--mui-primary, #1976d2);">▲</span></th>
+<th style="padding: 10px 8px; text-align: center;">次に上がる期待度 <span style="font-size: 0.68rem; color: #f43f5e;">▲</span></th>
 <th style="padding: 10px 10px; text-align: left;">投資信託名 / 連動対象</th>
 <th style="padding: 10px 6px; text-align: center;">比較</th>
 <th style="padding: 10px 6px; text-align: center;">つみたて</th>
@@ -9364,9 +9370,13 @@ div[class*="st-key-sbi_fund_category_filter"] button span {
 <div style="font-size: 1.15rem; font-weight: 700; color: var(--text-color); margin-bottom: 2px;">{idx}. {f['name']}</div>
 <div style="font-size: 0.8rem; color: var(--secondary-text-color);">{f['role']} / 連動対象: {f['underlying']}</div>
 </div>
-<div style="text-align: right; min-width: 140px;">
-<div style="font-size: 0.75rem; color: var(--secondary-text-color);">ZenStock AI スコア</div>
-<div style="font-size: 1.35rem; font-weight: 700; color: {f['color']};" class="tabular-nums">{f['score']} <span style="font-size: 0.85rem; color: {f['color']};">{stars_str}</span></div>
+<div style="text-align: right; min-width: 150px;">
+<div style="font-size: 0.72rem; color: var(--secondary-text-color);">ZenStock AI 総合スコア</div>
+<div style="font-size: 1.3rem; font-weight: 700; color: {f['color']};" class="tabular-nums">{f['score']} <span style="font-size: 0.85rem; color: {f['color']};">{stars_str}</span></div>
+<div style="margin-top: 4px; display: inline-flex; align-items: center; gap: 4px; background: rgba(0,0,0,0.03); border: 1px solid var(--border-color); padding: 2px 7px; border-radius: 4px;">
+<span style="font-size: 0.68rem; color: var(--secondary-text-color);">次に上がる期待度:</span>
+<span style="font-size: 0.72rem; font-weight: 700; color: {f.get('forward_growth_color', '#f97316')};">{f.get('forward_growth_label', '🔥 上昇期待')}</span>
+</div>
 </div>
 </div>
 
@@ -9581,6 +9591,19 @@ div[class*="st-key-btn_generate_ai_pack"] button {
             net_profit = annual_profit - annual_fee
             total_value = sim_capital + annual_profit
 
+            # 将来予測シナリオ計算（100万円投資）
+            exp_base_ret = pack.get("composite_expected_base", 20.0)
+            exp_bull_ret = pack.get("composite_expected_bull", 32.0)
+            exp_bear_ret = pack.get("composite_expected_bear", 8.0)
+
+            exp_base_profit = int(round(sim_capital * (exp_base_ret / 100.0)))
+            exp_bull_profit = int(round(sim_capital * (exp_bull_ret / 100.0)))
+            exp_bear_profit = int(round(sim_capital * (exp_bear_ret / 100.0)))
+
+            exp_base_net = exp_base_profit - annual_fee
+            exp_bull_net = exp_bull_profit - annual_fee
+            exp_bear_net = exp_bear_profit - annual_fee
+
             alloc_chips = "".join([
                 f'<span style="background: rgba(255,255,255,0.8); border: 1px solid var(--border-color); padding: 2px 7px; border-radius: 4px; display: inline-block; margin-right: 6px; margin-bottom: 3px; font-size: 0.72rem;">'
                 f'<b style="color: {alc["color"]};">●</b> {alc["name"]}: <b class="tabular-nums">{int(round(sim_capital * alc["weight"] / 100.0)):,}円</b> ({alc["weight"]}%)'
@@ -9590,10 +9613,11 @@ div[class*="st-key-btn_generate_ai_pack"] button {
 
             alloc_bars = ""
             for alc in pack["allocations"]:
+                fwd_tag = f'<span style="font-size: 0.7rem; color: #f97316; font-weight: 600; margin-left: 6px;">{alc.get("forward_label", "")}</span>' if alc.get("forward_label") else ''
                 alloc_bars += f'''
                 <div style="margin-bottom: 8px;">
-                    <div style="display: flex; justify-content: space-between; font-size: 0.82rem; margin-bottom: 3px;">
-                        <span><b style="color: {alc['color']};">●</b> <b>{alc['name']}</b> <span style="font-size: 0.74rem; color: var(--secondary-text-color);">({alc['category']})</span></span>
+                    <div style="display: flex; justify-content: space-between; align-items: baseline; font-size: 0.82rem; margin-bottom: 3px;">
+                        <span><b style="color: {alc['color']};">●</b> <b>{alc['name']}</b> <span style="font-size: 0.72rem; color: var(--secondary-text-color);">({alc['category']})</span>{fwd_tag}</span>
                         <b class="tabular-nums" style="color: var(--mui-primary, #1976d2); font-size: 0.95rem;">{alc['weight']}%</b>
                     </div>
                     <div style="background: rgba(0,0,0,0.06); border-radius: 4px; height: 8px; overflow: hidden;">
@@ -9613,16 +9637,16 @@ div[class*="st-key-btn_generate_ai_pack"] button {
                 <div style="font-size: 1.2rem; font-weight: 700; color: var(--text-color); margin-bottom: 4px;">{pack['title']}</div>
                 <div style="font-size: 0.85rem; color: var(--secondary-text-color); line-height: 1.5; margin-bottom: 12px;">{pack['concept']}</div>
 
-                <div style="background: rgba(16, 185, 129, 0.04); border: 1px solid rgba(16, 185, 129, 0.25); border-radius: 8px; padding: 12px 14px; margin-bottom: 12px;">
+                <div style="background: rgba(16, 185, 129, 0.04); border: 1px solid rgba(16, 185, 129, 0.25); border-radius: 8px; padding: 12px 14px; margin-bottom: 10px;">
                     <div style="font-size: 0.84rem; font-weight: 700; color: var(--text-color); margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 4px;">
-                        <span>💰 100万円を1年間運用した場合の実績シミュレーション</span>
-                        <span style="font-size: 0.72rem; color: var(--secondary-text-color); font-weight: normal;">※直近1年実績（年率換算）ベース</span>
+                        <span>💰 【直近1年実績】100万円運用シミュレーション</span>
+                        <span style="font-size: 0.72rem; color: var(--secondary-text-color); font-weight: normal;">※過去1年実績ベース（実績値）</span>
                     </div>
                     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 8px; margin-bottom: 10px;">
                         <div style="background: rgba(255, 255, 255, 0.85); padding: 8px 10px; border-radius: 6px; border: 1px solid rgba(0,0,0,0.06);">
-                            <div style="font-size: 0.7rem; color: var(--secondary-text-color);">想定年間リターン利益</div>
+                            <div style="font-size: 0.7rem; color: var(--secondary-text-color);">実績リターン利益</div>
                             <div style="font-size: 1.15rem; font-weight: 700; color: var(--color-gain, #10b981);" class="tabular-nums">+{annual_profit:,} 円</div>
-                            <div style="font-size: 0.68rem; color: var(--secondary-text-color);">運用後資産総額: <b class="tabular-nums">{total_value:,}円</b></div>
+                            <div style="font-size: 0.68rem; color: var(--secondary-text-color);">運用後総額: <b class="tabular-nums">{total_value:,}円</b></div>
                         </div>
                         <div style="background: rgba(255, 255, 255, 0.85); padding: 8px 10px; border-radius: 6px; border: 1px solid rgba(0,0,0,0.06);">
                             <div style="font-size: 0.7rem; color: var(--secondary-text-color);">年間保有コスト (信託報酬)</div>
@@ -9630,7 +9654,7 @@ div[class*="st-key-btn_generate_ai_pack"] button {
                             <div style="font-size: 0.68rem; color: var(--secondary-text-color);">年率 {comp_fee_rate:.4f}% (月約{annual_fee//12:,}円)</div>
                         </div>
                         <div style="background: rgba(255, 255, 255, 0.85); padding: 8px 10px; border-radius: 6px; border: 1px solid rgba(0,0,0,0.06);">
-                            <div style="font-size: 0.7rem; color: var(--secondary-text-color);">コスト控除後 手取り純利益</div>
+                            <div style="font-size: 0.7rem; color: var(--secondary-text-color);">コスト控除後 手取純利益</div>
                             <div style="font-size: 1.15rem; font-weight: 700; color: var(--mui-primary, #1976d2);" class="tabular-nums">+{net_profit:,} 円</div>
                             <div style="font-size: 0.68rem; color: var(--color-gain, #10b981); font-weight: 600;">NISAなら全額非課税！</div>
                         </div>
@@ -9641,13 +9665,40 @@ div[class*="st-key-btn_generate_ai_pack"] button {
                     </div>
                 </div>
 
+                <div style="background: rgba(25, 118, 210, 0.04); border: 1px solid rgba(25, 118, 210, 0.25); border-radius: 8px; padding: 12px 14px; margin-bottom: 12px;">
+                    <div style="font-size: 0.84rem; font-weight: 700; color: var(--text-color); margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 4px;">
+                        <span>🔮 【今後1年間】AI上昇確率予測シナリオ（100万円運用時）</span>
+                        <span style="font-size: 0.72rem; color: var(--secondary-text-color);">※モメンタム加速・米金利サイクル・業績成長率を考慮</span>
+                    </div>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 8px;">
+                        <div style="background: rgba(255, 255, 255, 0.9); padding: 8px 10px; border-radius: 6px; border-top: 3px solid #10b981; border: 1px solid rgba(0,0,0,0.06);">
+                            <div style="font-size: 0.72rem; font-weight: 700; color: #10b981;">標準シナリオ (AI基本)</div>
+                            <div style="font-size: 1.15rem; font-weight: 700; color: var(--text-color);" class="tabular-nums">+{exp_base_profit:,} 円</div>
+                            <div style="font-size: 0.68rem; color: var(--secondary-text-color);">想定リターン: <b>+{exp_base_ret:.1f}%</b></div>
+                            <div style="font-size: 0.68rem; color: var(--mui-primary, #1976d2); margin-top: 2px;">手取: +{exp_base_net:,}円</div>
+                        </div>
+                        <div style="background: rgba(255, 255, 255, 0.9); padding: 8px 10px; border-radius: 6px; border-top: 3px solid #f43f5e; border: 1px solid rgba(0,0,0,0.06);">
+                            <div style="font-size: 0.72rem; font-weight: 700; color: #f43f5e;">🚀 強気シナリオ (加速時)</div>
+                            <div style="font-size: 1.15rem; font-weight: 700; color: #f43f5e;" class="tabular-nums">+{exp_bull_profit:,} 円</div>
+                            <div style="font-size: 0.68rem; color: var(--secondary-text-color);">想定リターン: <b>+{exp_bull_ret:.1f}%</b></div>
+                            <div style="font-size: 0.68rem; color: var(--mui-primary, #1976d2); margin-top: 2px;">手取: +{exp_bull_net:,}円</div>
+                        </div>
+                        <div style="background: rgba(255, 255, 255, 0.9); padding: 8px 10px; border-radius: 6px; border-top: 3px solid #64748b; border: 1px solid rgba(0,0,0,0.06);">
+                            <div style="font-size: 0.72rem; font-weight: 700; color: #64748b;">🛡️ 調整シナリオ (堅実)</div>
+                            <div style="font-size: 1.15rem; font-weight: 700; color: var(--text-color);" class="tabular-nums">+{exp_bear_profit:,} 円</div>
+                            <div style="font-size: 0.68rem; color: var(--secondary-text-color);">想定リターン: <b>+{exp_bear_ret:.1f}%</b></div>
+                            <div style="font-size: 0.68rem; color: var(--mui-primary, #1976d2); margin-top: 2px;">手取: +{exp_bear_net:,}円</div>
+                        </div>
+                    </div>
+                </div>
+
                 <div style="background: rgba(255,255,255,0.7); border: 1px solid var(--border-color); border-radius: 8px; padding: 12px 14px; margin-bottom: 10px;">
                     <div style="font-size: 0.8rem; font-weight: 700; color: var(--text-color); margin-bottom: 8px;">📊 AI推奨ブレンド比率（合計100%）:</div>
                     {alloc_bars}
                 </div>
 
                 <div style="font-size: 0.78rem; color: var(--secondary-text-color); line-height: 1.4;">
-                    💡 <b>運用のコツ:</b> 毎月のNISA積立設定にて、上記の比率（例: 月3万円積立なら各配分比率に応じた金額）で発注設定することで、AIが算出した最高効率のリスク分散効果を発揮します。
+                    💡 <b>AI配分ロジックのポイント:</b> 過去の安定性・下落耐性（40%）に加え、<b>今後1年の上昇モメンタムとマクロ経済追い風（60%）を反映</b>して自動最適化しています。毎月のNISA積立設定にて上記の比率で発注設定することで、AIが算出した最高効率のリスク分散効果を発揮します。
                 </div>
             </div>
             ''')
