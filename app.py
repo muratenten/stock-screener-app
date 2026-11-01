@@ -1439,6 +1439,25 @@ st.html(f"""
     div[data-testid="stButtonGroup"] button[aria-selected="true"] .lucide-wrapper[data-lucide-replaced="flame"] svg {{
         stroke: #ffffff !important;
     }}
+    div[data-testid="stButtonGroup"] button[data-testid^="stBaseButton-segmented_control"] {{
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        padding-top: 5px !important;
+        padding-bottom: 7px !important;
+    }}
+    div[data-testid="stButtonGroup"] button[data-testid^="stBaseButton-segmented_control"] .lucide-wrapper,
+    div[data-testid="stButtonGroup"] button[data-testid^="stBaseButton-segmented_control"] .feather-wrapper {{
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        transform: translateY(-1.5px) !important;
+    }}
+    div[data-testid="stButtonGroup"] button[data-testid^="stBaseButton-segmented_control"] .lucide-wrapper svg,
+    div[data-testid="stButtonGroup"] button[data-testid^="stBaseButton-segmented_control"] .feather-wrapper svg {{
+        vertical-align: middle !important;
+        margin: 0 !important;
+    }}
 
     /* ==========================================================================
        MUI Dialog / Modal
@@ -8702,6 +8721,34 @@ with tab_geopolitics:
 
     if not default_theme_label:
         default_theme_label = list(theme_options.keys())[0]
+
+    st.html('''<style>
+div[class*="st-key-geo_theme_selected"] button[data-testid^="stBaseButton-segmented_control"] {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding-top: 5px !important;
+    padding-bottom: 7px !important;
+}
+div[class*="st-key-geo_theme_selected"] button .lucide-wrapper,
+div[class*="st-key-geo_theme_selected"] button .feather-wrapper {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    transform: translateY(-1.5px) !important;
+    margin-right: 0.35em !important;
+}
+div[class*="st-key-geo_theme_selected"] button .lucide-wrapper svg,
+div[class*="st-key-geo_theme_selected"] button .feather-wrapper svg {
+    vertical-align: middle !important;
+    margin: 0 !important;
+}
+div[class*="st-key-geo_theme_selected"] button p,
+div[class*="st-key-geo_theme_selected"] button span {
+    line-height: 1.25 !important;
+    transform: translateY(-0.5px) !important;
+}
+</style>''')
 
     selected_theme_label = st.segmented_control(
         "注目の社会情勢テーマを選択（🔥 マークは本日ニュース急増中のAIおすすめテーマ）",
