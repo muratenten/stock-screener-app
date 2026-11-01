@@ -55,12 +55,13 @@ with st.sidebar:
     curr_theme = st.session_state.get('color_theme', 'light')
     theme_default = "☀️" if curr_theme == 'light' else "🌙"
     
+    st.markdown("<div style='font-size: 0.88rem; font-weight: 600; color: var(--text-color); margin: 10px 0 6px 0;'>テーマモード</div>", unsafe_allow_html=True)
     selected_theme = st.segmented_control(
         "テーマモード",
         options=["☀️", "🌙"],
         default=theme_default,
         key="mui_theme_selector",
-        help="ライトモード / ダークモードを瞬時に切り替えます"
+        label_visibility="collapsed"
     )
     if selected_theme:
         new_theme = 'dark' if selected_theme == "🌙" else 'light'
@@ -77,12 +78,13 @@ with st.sidebar:
     # Layout optimization
     curr_ui = st.session_state.get('ui_mode', 'PC')
     ui_default = "💻" if curr_ui == 'PC' else "📱"
+    st.markdown("<div style='font-size: 0.88rem; font-weight: 600; color: var(--text-color); margin: 12px 0 6px 0;'>画面レイアウト</div>", unsafe_allow_html=True)
     selected_ui = st.segmented_control(
         "画面レイアウト",
         options=["💻", "📱"],
         default=ui_default,
         key="mui_layout_selector",
-        help="PC版（マルチカラム）/ スマホ版（縦並び）を切り替えます"
+        label_visibility="collapsed"
     )
     if selected_ui:
         st.session_state['ui_mode'] = 'スマホ' if selected_ui == "📱" else 'PC'
@@ -1176,24 +1178,18 @@ st.html(f"""
         stroke: var(--text-color) !important;
     }}
 
-    /* Sidebar-specific Segmented Control: Stack label on top, buttons below across full width */
+    /* Sidebar-specific Segmented Control: Full width, clean two buttons below label */
     [data-testid="stSidebar"] div[data-testid*="SegmentedControl"],
     [data-testid="stSidebar"] div[data-testid="stSegmentedControl"],
     [data-testid="stSidebar"] .stSegmentedControl,
     [data-testid="stSidebar"] div:has(> [data-testid="stButtonGroup"]) {{
-        display: flex !important;
-        flex-direction: column !important;
-        align-items: stretch !important;
-        width: 100% !important;
-        margin-bottom: 14px !important;
-    }}
-    [data-testid="stSidebar"] div[data-testid*="SegmentedControl"] > label,
-    [data-testid="stSidebar"] div[data-testid="stSegmentedControl"] > label,
-    [data-testid="stSidebar"] [data-testid="stWidgetLabel"] {{
         display: block !important;
         width: 100% !important;
-        margin-bottom: 8px !important;
-        text-align: left !important;
+        margin-bottom: 12px !important;
+    }}
+    [data-testid="stSidebar"] div[data-testid*="SegmentedControl"] > label,
+    [data-testid="stSidebar"] [data-testid="stWidgetLabel"] {{
+        display: none !important;
     }}
     [data-testid="stSidebar"] [data-testid="stButtonGroup"],
     [data-testid="stSidebar"] [role="radiogroup"],
@@ -6806,24 +6802,18 @@ if query_user == "default":
         color: inherit !important;
     }
 
-    /* Sidebar-specific Segmented Control in Portal: Stack label on top, buttons below across full width */
+    /* Sidebar-specific Segmented Control in Portal: Full width, clean two buttons below label */
     [data-testid="stSidebar"] div[data-testid*="SegmentedControl"],
     [data-testid="stSidebar"] div[data-testid="stSegmentedControl"],
     [data-testid="stSidebar"] .stSegmentedControl,
     [data-testid="stSidebar"] div:has(> [data-testid="stButtonGroup"]) {
-        display: flex !important;
-        flex-direction: column !important;
-        align-items: stretch !important;
-        width: 100% !important;
-        margin-bottom: 14px !important;
-    }
-    [data-testid="stSidebar"] div[data-testid*="SegmentedControl"] > label,
-    [data-testid="stSidebar"] div[data-testid="stSegmentedControl"] > label,
-    [data-testid="stSidebar"] [data-testid="stWidgetLabel"] {
         display: block !important;
         width: 100% !important;
-        margin-bottom: 8px !important;
-        text-align: left !important;
+        margin-bottom: 12px !important;
+    }
+    [data-testid="stSidebar"] div[data-testid*="SegmentedControl"] > label,
+    [data-testid="stSidebar"] [data-testid="stWidgetLabel"] {
+        display: none !important;
     }
     [data-testid="stSidebar"] [data-testid="stButtonGroup"],
     [data-testid="stSidebar"] [role="radiogroup"],
