@@ -23,7 +23,7 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 THEMES_CONFIG = {
     "cyber": {
         "id": "cyber",
-        "title": "🔒 情報漏洩・サイバーセキュリティ",
+        "title": "情報漏洩・サイバーセキュリティ",
         "badge_label": "サイバー防衛",
         "icon": "lock",
         "description": "企業・重要インフラへのランサムウェア攻撃や個人情報漏洩事件の多発、政府の『能動的サイバー防御』法制化を背景にセキュリティ投資が急拡大。",
@@ -41,7 +41,7 @@ THEMES_CONFIG = {
     },
     "ai_datacenter": {
         "id": "ai_datacenter",
-        "title": "🤖 AIインフラ・電力・データセンター",
+        "title": "AIインフラ・電力・データセンター",
         "badge_label": "AI電力インフラ",
         "icon": "cpu",
         "description": "生成AIの爆発的普及に伴うデータセンター新設ラッシュと、世界的な電力・変圧器・光ファイバー不足による特需セクター。",
@@ -58,7 +58,7 @@ THEMES_CONFIG = {
     },
     "defense": {
         "id": "defense",
-        "title": "🛡️ 有事・防衛・地政学リスク",
+        "title": "有事・防衛・地政学リスク",
         "badge_label": "防衛・有事",
         "icon": "shield",
         "description": "台湾有事懸念・中東紛争や防衛予算倍増に伴い、防衛省中央調達実績の高い装備品・重工・アビオニクス中核企業群に資金が集中。",
@@ -76,7 +76,7 @@ THEMES_CONFIG = {
     },
     "rate_hike": {
         "id": "rate_hike",
-        "title": "🪙 日銀利上げ・金利復活（メガバンク/保険）",
+        "title": "日銀利上げ・金利復活（メガバンク/保険）",
         "badge_label": "金利上昇・銀行",
         "icon": "coins",
         "description": "マイナス金利解除後の追加利上げ観測と国債利回り上昇に伴い、利ざや改善と運用利回り拡大で最高益を更新する金融セクター。",
@@ -93,7 +93,7 @@ THEMES_CONFIG = {
     },
     "energy": {
         "id": "energy",
-        "title": "⚡ 資源・エネルギー・コモディティ高",
+        "title": "資源・エネルギー・コモディティ高",
         "badge_label": "資源・エネルギー",
         "icon": "zap",
         "description": "中東産油国情勢の緊張や化石燃料・LNG供給不安、世界的電力需要増に伴うエネルギー価格高騰の直接恩恵セクター。",
@@ -109,7 +109,7 @@ THEMES_CONFIG = {
     },
     "inflation_consumer": {
         "id": "inflation_consumer",
-        "title": "🛒 物価高・インフレ価格転嫁（値上げ勝者）",
+        "title": "物価高・インフレ価格転嫁（値上げ勝者）",
         "badge_label": "インフレ・価格転嫁",
         "icon": "shopping-bag",
         "description": "原材料・物流費高騰を強力なブランド力で販売価格に転嫁し、利益率向上と客離れ防止を両立するデフレ脱却の本命消費財。",
@@ -125,7 +125,7 @@ THEMES_CONFIG = {
     },
     "shipping": {
         "id": "shipping",
-        "title": "🚢 海運・サプライチェーン分断",
+        "title": "海運・サプライチェーン分断",
         "badge_label": "海運・航路危機",
         "icon": "anchor",
         "description": "スエズ運河・紅海航路の封鎖危機や喜望峰回り迂回により海上運賃指数が急騰。定期船・不定期船の利益が急拡大する特需シナリオ。",
@@ -139,7 +139,7 @@ THEMES_CONFIG = {
     },
     "inbound": {
         "id": "inbound",
-        "title": "🎌 インバウンド・円安観光消費爆発",
+        "title": "インバウンド・円安観光消費",
         "badge_label": "インバウンド消費",
         "icon": "plane",
         "description": "訪日外国人数が過去最高を更新。富裕層旅行者の高額消費と円安恩恵を直接受ける百貨店・航空・ホテル・免税セクター。",

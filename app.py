@@ -8680,13 +8680,13 @@ with tab_geopolitics:
 <div style="font-size: 0.76rem; color: var(--secondary-text-color);">毎時 Google News 金融速報解析</div>
 </div>''')
 
-    # Build options mapping with hot badges
+    # Build options mapping with hot indicators (Text-clean, no raw emojis)
     theme_options = {}
     default_theme_label = None
     for h in hot_rankings:
         tid = h["id"]
         cfg_item = gs.THEMES_CONFIG[tid]
-        label = f"🔥 {cfg_item['title']}" if h["is_hot"] else cfg_item["title"]
+        label = f"[HOT] {cfg_item['title']}" if h["is_hot"] else cfg_item["title"]
         theme_options[label] = tid
         if default_theme_label is None and h["is_hot"]:
             default_theme_label = label
@@ -8695,7 +8695,7 @@ with tab_geopolitics:
         default_theme_label = list(theme_options.keys())[0]
 
     selected_theme_label = st.segmented_control(
-        "注目の社会情勢テーマを選択（🔥マークは本日ニュース急増中のAIおすすめテーマ）",
+        "注目の社会情勢テーマを選択（[HOT] 表示は本日ニュース急増中のAIおすすめテーマ）",
         options=list(theme_options.keys()),
         default=default_theme_label,
         key="geo_theme_selected"
