@@ -1182,38 +1182,47 @@ st.html(f"""
     [data-testid="stSidebar"] div[data-testid*="SegmentedControl"],
     [data-testid="stSidebar"] div[data-testid="stSegmentedControl"],
     [data-testid="stSidebar"] .stSegmentedControl,
-    [data-testid="stSidebar"] div:has(> [data-testid="stButtonGroup"]) {{
+    [data-testid="stSidebar"] div:has(> [data-testid="stButtonGroup"]),
+    [data-testid="stSidebar"] div:has(> [data-baseweb="button-group"]) {{
         display: block !important;
         width: 100% !important;
+        max-width: 100% !important;
         margin-bottom: 12px !important;
     }}
     [data-testid="stSidebar"] div[data-testid*="SegmentedControl"] > label,
     [data-testid="stSidebar"] [data-testid="stWidgetLabel"] {{
         display: none !important;
     }}
+    [data-testid="stSidebar"] [data-baseweb="button-group"],
     [data-testid="stSidebar"] [data-testid="stButtonGroup"],
     [data-testid="stSidebar"] [role="radiogroup"],
     [data-testid="stSidebar"] div[data-testid="stSegmentedControl"] > div {{
         flex-wrap: nowrap !important;
         display: flex !important;
+        flex-direction: row !important;
         align-items: center !important;
         justify-content: space-between !important;
         width: 100% !important;
+        max-width: 100% !important;
         gap: 8px !important;
     }}
+    [data-testid="stSidebar"] [data-baseweb="button-group"] button,
     [data-testid="stSidebar"] [data-testid="stButtonGroup"] button,
     [data-testid="stSidebar"] button[data-testid^="stBaseButton-segmented_control"],
+    [data-testid="stSidebar"] [role="radiogroup"] button,
     [data-testid="stSidebar"] div[data-testid="stSegmentedControl"] button {{
-        flex: 1 1 0px !important;
-        width: 50% !important;
+        flex: 1 1 0% !important;
+        width: 100% !important;
+        min-width: 0 !important;
         padding: 0 !important;
         min-height: 44px !important;
         height: 44px !important;
+        max-height: 44px !important;
         display: flex !important;
         align-items: center !important;
         justify-content: center !important;
         text-align: center !important;
-        border-radius: 8px !important;
+        border-radius: 10px !important;
         overflow: visible !important;
     }}
     [data-testid="stSidebar"] [data-testid="stButtonGroup"] button *,
@@ -6806,38 +6815,47 @@ if query_user == "default":
     [data-testid="stSidebar"] div[data-testid*="SegmentedControl"],
     [data-testid="stSidebar"] div[data-testid="stSegmentedControl"],
     [data-testid="stSidebar"] .stSegmentedControl,
-    [data-testid="stSidebar"] div:has(> [data-testid="stButtonGroup"]) {
+    [data-testid="stSidebar"] div:has(> [data-testid="stButtonGroup"]),
+    [data-testid="stSidebar"] div:has(> [data-baseweb="button-group"]) {
         display: block !important;
         width: 100% !important;
+        max-width: 100% !important;
         margin-bottom: 12px !important;
     }
     [data-testid="stSidebar"] div[data-testid*="SegmentedControl"] > label,
     [data-testid="stSidebar"] [data-testid="stWidgetLabel"] {
         display: none !important;
     }
+    [data-testid="stSidebar"] [data-baseweb="button-group"],
     [data-testid="stSidebar"] [data-testid="stButtonGroup"],
     [data-testid="stSidebar"] [role="radiogroup"],
     [data-testid="stSidebar"] div[data-testid="stSegmentedControl"] > div {
         flex-wrap: nowrap !important;
         display: flex !important;
+        flex-direction: row !important;
         align-items: center !important;
         justify-content: space-between !important;
         width: 100% !important;
+        max-width: 100% !important;
         gap: 8px !important;
     }
+    [data-testid="stSidebar"] [data-baseweb="button-group"] button,
     [data-testid="stSidebar"] [data-testid="stButtonGroup"] button,
     [data-testid="stSidebar"] button[data-testid^="stBaseButton-segmented_control"],
+    [data-testid="stSidebar"] [role="radiogroup"] button,
     [data-testid="stSidebar"] div[data-testid="stSegmentedControl"] button {
-        flex: 1 1 0px !important;
-        width: 50% !important;
+        flex: 1 1 0% !important;
+        width: 100% !important;
+        min-width: 0 !important;
         padding: 0 !important;
         min-height: 44px !important;
         height: 44px !important;
+        max-height: 44px !important;
         display: flex !important;
         align-items: center !important;
         justify-content: center !important;
         text-align: center !important;
-        border-radius: 8px !important;
+        border-radius: 10px !important;
         overflow: visible !important;
     }
     [data-testid="stSidebar"] [data-testid="stButtonGroup"] button *,
