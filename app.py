@@ -8957,6 +8957,44 @@ with tab_fund:
 </div>
 </div>''')
 
+    # 1.5. Interactive Performance Comparison Chart
+    with st.expander("主要アセット・ファンドの累積リターン比較チャートを見る", expanded=True):
+        col_c_head, col_c_period = st.columns([2.5, 1.0])
+        with col_c_head:
+            st.markdown("<div style='font-size: 0.85rem; color: var(--secondary-text-color); padding-top: 6px;'>S&P500、インド、ゴールド、全世界、高配当、半導体の累積リターン推移（%）を相対比較。凡例クリックで個別表示切替が可能。</div>", unsafe_allow_html=True)
+        with col_c_period:
+            chart_period = st.segmented_control(
+                "表示期間",
+                options=["6mo", "1y", "3y", "5y"],
+                default="1y",
+                key="fund_chart_period_selector"
+            ) or "1y"
+
+        chart_series_dict = sfs.fetch_comparison_chart_data(period=chart_period)
+        if chart_series_dict:
+            fig_fund = go.Figure()
+            for s_name, s_data in chart_series_dict.items():
+                fig_fund.add_trace(go.Scatter(
+                    x=s_data["dates"],
+                    y=s_data["returns"],
+                    mode="lines",
+                    name=f"{s_name} ({s_data['latest']:+.1f}%)",
+                    line=dict(color=s_data["color"], width=2),
+                    hovertemplate="<b>%{fullData.name}</b><br>日付: %{x}<br>累積リターン: %{y:+.2f}%<extra></extra>"
+                ))
+            fig_fund.add_hline(y=0, line_dash="dash", line_color="rgba(128,128,128,0.35)")
+            fig_fund.update_layout(
+                height=350,
+                margin=dict(l=10, r=10, t=10, b=10),
+                paper_bgcolor="rgba(0,0,0,0)",
+                plot_bgcolor="rgba(0,0,0,0)",
+                hovermode="x unified",
+                legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1, font=dict(size=10.5)),
+                xaxis=dict(showgrid=True, gridcolor="rgba(128,128,128,0.12)"),
+                yaxis=dict(showgrid=True, gridcolor="rgba(128,128,128,0.12)", ticksuffix="%")
+            )
+            st.plotly_chart(fig_fund, use_container_width=True, config=PLOTLY_CONFIG)
+
     st.markdown("<div style='margin-bottom: 16px;'></div>", unsafe_allow_html=True)
 
     # 2. Filter & Search Controls
@@ -8984,7 +9022,7 @@ div[class*="st-key-sbi_fund_category_filter"] button span {
         key="sbi_fund_category_filter"
     ) or "すべて"
 
-    col_f1, col_f2, col_f3 = st.columns([1.8, 1.0, 1.2])
+    col_f1, col_f2, col_f3, col_f4 = st.columns([1.6, 0.9, 1.1, 1.0])
     with col_f1:
         fund_search = st.text_input(
             "ファンド名・キーワード・主要組入銘柄で検索",
@@ -9005,6 +9043,13 @@ div[class*="st-key-sbi_fund_category_filter"] button span {
             index=0,
             key="fund_sort_choice"
         )
+    with col_f4:
+        view_mode = st.segmented_control(
+            "表示形式",
+            options=["詳細カード", "一覧表テーブル"],
+            default="詳細カード",
+            key="fund_view_mode_toggle"
+        ) or "詳細カード"
 
     # 3. Retrieve Filtered & Ranked Funds
     filtered_funds = sfs.filter_and_sort_funds(
@@ -9024,7 +9069,53 @@ div[class*="st-key-sbi_fund_category_filter"] button span {
 
     if not filtered_funds:
         st.info("条件に一致する投資信託が見つかりませんでした。条件を変更して再検索してください。")
+    elif view_mode == "一覧表テーブル":
+        # Comprehensive Comparison Table View
+        table_rows = []
+        for idx, f in enumerate(filtered_funds, 1):
+            ts_tag = '<span style="color: var(--color-gain, #10b981); font-weight: 700;">○</span>' if f.get("nisa_tsumitate") else '<span style="opacity: 0.3;">-</span>'
+            gr_tag = '<span style="color: var(--mui-primary, #1976d2); font-weight: 700;">○</span>' if f.get("nisa_growth") else '<span style="opacity: 0.3;">-</span>'
+            table_rows.append(f'''<tr style="border-bottom: 1px solid var(--border-color); font-size: 0.82rem;">
+<td style="padding: 10px 8px; font-weight: 700; text-align: center;"><span style="background: {f['color']}; color: #fff; padding: 2px 6px; border-radius: 4px; font-size: 0.7rem;">{f['rank']}</span></td>
+<td style="padding: 10px 8px; font-weight: 700; color: {f['color']}; text-align: center;" class="tabular-nums">{f['score']}</td>
+<td style="padding: 10px 10px;">
+<div style="font-weight: 600; color: var(--text-color);">{idx}. {f['name']}</div>
+<div style="font-size: 0.72rem; color: var(--secondary-text-color);">{f['category']} | {f['underlying']}</div>
+</td>
+<td style="padding: 10px 6px; text-align: center;">{ts_tag}</td>
+<td style="padding: 10px 6px; text-align: center;">{gr_tag}</td>
+<td style="padding: 10px 8px; text-align: right; font-weight: 600;" class="tabular-nums">{f['expense_ratio']:.4f}%</td>
+<td style="padding: 10px 8px; text-align: right;" class="tabular-nums">{f['aum_oku']:,}億</td>
+<td style="padding: 10px 8px; text-align: right; font-weight: 700; color: var(--color-gain, #10b981);" class="tabular-nums">+{f['return_1y']:.1f}%</td>
+<td style="padding: 10px 8px; text-align: right; color: var(--color-gain, #10b981);" class="tabular-nums">+{f['return_3y_annual']:.1f}%</td>
+<td style="padding: 10px 8px; text-align: right; font-weight: 600; color: var(--mui-primary, #1976d2);" class="tabular-nums">{f['sharpe_ratio']:.2f}</td>
+<td style="padding: 10px 8px; text-align: right; color: var(--color-loss, #f43f5e);" class="tabular-nums">{f['max_drawdown']:.1f}%</td>
+</tr>''')
+
+        st.html(f'''<div style="overflow-x: auto; margin-bottom: 24px; border: 1px solid var(--border-color); border-radius: 8px; background: rgba(255,255,255,0.02);">
+<table style="width: 100%; border-collapse: collapse; min-width: 850px;">
+<thead>
+<tr style="background: rgba(0,0,0,0.04); border-bottom: 1px solid var(--border-color); font-size: 0.76rem; color: var(--secondary-text-color); text-transform: uppercase;">
+<th style="padding: 10px 8px; text-align: center;">RANK</th>
+<th style="padding: 10px 8px; text-align: center;">AIスコア</th>
+<th style="padding: 10px 10px; text-align: left;">投資信託名 / 連動対象</th>
+<th style="padding: 10px 6px; text-align: center;">つみたて</th>
+<th style="padding: 10px 6px; text-align: center;">成長枠</th>
+<th style="padding: 10px 8px; text-align: right;">信託報酬</th>
+<th style="padding: 10px 8px; text-align: right;">純資産</th>
+<th style="padding: 10px 8px; text-align: right;">直近1年</th>
+<th style="padding: 10px 8px; text-align: right;">過去3年(年率)</th>
+<th style="padding: 10px 8px; text-align: right;">効率(SR)</th>
+<th style="padding: 10px 8px; text-align: right;">最大下落</th>
+</tr>
+</thead>
+<tbody>
+{''.join(table_rows)}
+</tbody>
+</table>
+</div>''')
     else:
+        # Detailed Card View
         for idx, f in enumerate(filtered_funds, 1):
             stars_str = "★" * f["stars"] + "☆" * (5 - f["stars"])
             tsumitate_badge = '<span style="background: rgba(16, 185, 129, 0.12); color: var(--color-gain, #10b981); font-size: 0.7rem; font-weight: 700; padding: 2px 6px; border-radius: 4px;">つみたて枠</span>' if f.get("nisa_tsumitate") else ''
