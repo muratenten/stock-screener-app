@@ -110,7 +110,7 @@ SBI_FUNDS_DB: List[Dict[str, Any]] = [
         "type": "インデックス",
         "trustee": "三菱UFJアセットマネジメント",
         "underlying": "日経平均株価 (日経225)",
-        "proxy_ticker": "1321.T",
+        "proxy_ticker": "^N225",
         "expense_ratio": 0.14300,
         "aum_oku": 2200,
         "nisa_tsumitate": True,
@@ -1210,6 +1210,29 @@ def filter_and_sort_funds(
     return results
 
 
+def _clean_price_series(s: pd.Series) -> pd.Series:
+    """
+    Cleans stock/ETF price series from Yahoo Finance split adjustment anomalies.
+    Detects sudden abnormal 1-day drops (<0.25x) or spikes (>4.0x) and smooths them.
+    """
+    if len(s) < 3:
+        return s
+    s_clean = s.copy()
+    for i in range(1, len(s_clean)):
+        prev = s_clean.iloc[i - 1]
+        curr = s_clean.iloc[i]
+        if prev > 0 and curr > 0:
+            ratio = curr / prev
+            if ratio < 0.25 or ratio > 4.0:
+                if i + 1 < len(s_clean) and 0.5 < (s_clean.iloc[i + 1] / prev) < 2.0:
+                    s_clean.iloc[i] = prev
+                elif i + 2 < len(s_clean) and 0.5 < (s_clean.iloc[i + 2] / prev) < 2.0:
+                    s_clean.iloc[i] = prev
+                else:
+                    s_clean.iloc[i] = prev
+    return s_clean
+
+
 def fetch_comparison_chart_data(period: str = "1y", fund_ids: Optional[List[str]] = None, *args, **kwargs) -> Dict[str, Any]:
     """
     Fetches historical cumulative return series for selected or representative funds.
@@ -1276,6 +1299,7 @@ def fetch_comparison_chart_data(period: str = "1y", fund_ids: Optional[List[str]
                             s = close_data.dropna()
 
                         s = pd.to_numeric(s, errors="coerce").dropna()
+                        s = _clean_price_series(s)
                         if len(s) > 3:
                             first_raw = s.iloc[0]
                             first_val = float(first_raw.item() if hasattr(first_raw, 'item') else first_raw)
@@ -1337,6 +1361,8 @@ def fetch_individual_fund_chart(fund_id: str, period: str = "1y") -> Optional[Di
         df = t.history(period=period, interval="1d", auto_adjust=True)
         if df is None or df.empty or len(df) < 5:
             return None
+
+        df["Close"] = _clean_price_series(df["Close"])
 
         df["SMA25"] = df["Close"].rolling(window=min(25, len(df))).mean()
         df["SMA75"] = df["Close"].rolling(window=min(75, len(df))).mean()
