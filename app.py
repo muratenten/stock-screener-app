@@ -8920,13 +8920,29 @@ f'''<div style="padding: 10px 14px; background: rgba(255, 255, 255, 0.03); borde
 # -----------------------------------------------------------------------------
 with tab_fund:
     st.markdown("""
-    <div style="margin-bottom: 20px;">
+    <div style="margin-bottom: 16px;">
         <h2 style="margin: 0 0 6px 0; font-size: 1.6rem; font-weight: 700; color: var(--text-color);">
             SBI投資信託パック選定 & 総合分析
         </h2>
         <div style="font-size: 0.92rem; color: var(--secondary-text-color); line-height: 1.5;">
-            SBI証券で圧倒的人気の<b>『eMAXIS Slimシリーズ』『SBI・Vシリーズ』『サクっとシリーズ』『FANG+』『高配当・厳選アクティブ』</b>を全30銘柄以上網羅。<br>
+            SBI証券で圧倒的人気の<b>『eMAXIS Slim』『SBI・V』『サクっと』『楽天プラス』『FANG+/レバナス』『高配当・REIT・ゴールド・債券』</b>を全46銘柄網羅。<br>
             信託報酬コスト、シャープレシオ（収益効率）、下落耐性（最大ドローダウン）、純資産総額を個別銘柄同様に多面的スクリーニングし、個別テクニカルチャートまでリアルタイム分析できます。
+        </div>
+    </div>
+    
+    <div class="card" style="padding: 14px 18px; margin-bottom: 20px; background: rgba(25, 118, 210, 0.04); border-left: 4px solid var(--mui-primary, #1976d2); border-radius: 8px;">
+        <div style="font-weight: 700; font-size: 0.95rem; color: var(--text-color); margin-bottom: 6px; display: flex; align-items: center; gap: 6px;">
+            <span>💡 「投資信託の銘柄」と「パック」の違いとは？</span>
+        </div>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px; font-size: 0.85rem; color: var(--secondary-text-color); line-height: 1.55;">
+            <div style="background: rgba(255, 255, 255, 0.7); padding: 10px 12px; border-radius: 6px; border: 1px solid rgba(0,0,0,0.06);">
+                <b style="color: var(--mui-primary, #1976d2);">① 投資信託の銘柄（単体ファンド）</b><br>
+                「オルカン」や「S&P500」「FANG+」など、<b>1本ずつ独立した商品（単品）</b>のことです。国内に約6,000本、SBI証券に約2,600本ありますが、手数料が高く損しやすい地雷商品を除き、本アプリでは<b>本当に買う価値のある実績上位46本</b>を厳選搭載しています。
+            </div>
+            <div style="background: rgba(255, 255, 255, 0.7); padding: 10px 12px; border-radius: 6px; border: 1px solid rgba(0,0,0,0.06);">
+                <b style="color: #f59e0b;">② パック（最適ポートフォリオ組み合わせ）</b><br>
+                「株＋金」「米国＋インド」のように、<b>複数の優良銘柄を黄金比率でブレンドした買い方のセット（コース料理）</b>のことです。1銘柄だけに集中せず、下落耐性と高成長を両立できるようAIが理想の配分率をパッケージ化しています。
+            </div>
         </div>
     </div>
     """, unsafe_allow_html=True)
@@ -9292,14 +9308,11 @@ div[class*="st-key-sbi_fund_category_filter"] button span {
         sort_by=sort_choice
     )
 
-    # Prominent Action / Status Bar
-    col_act1, col_act2 = st.columns([2.2, 1.0])
-    with col_act1:
-        st.markdown(f"**現在のスクリーニング該当数**: <span style='font-size: 1.2rem; color: var(--mui-primary, #1976d2); font-weight: 700;'>{len(filtered_funds)} 本</span> / 全 {len(sfs.SBI_FUNDS_DB)} 本", unsafe_allow_html=True)
-    with col_act2:
-        if st.button("🔍 スクリーニング実行", type="primary", use_container_width=True, key="btn_run_fund_screen"):
-            st.toast("スクリーニング条件を適用しました！")
-            st.rerun()
+    # Centered prominent action bar (Identical to Single Stock Screener)
+    st.markdown(f"<div style='margin-bottom: 6px; font-weight: 600;'>現在のスクリーニング該当数: <span style='font-size: 1.15rem; color: var(--mui-primary, #1976d2); font-weight: 700;'>{len(filtered_funds)} 本</span> / 全 {len(sfs.SBI_FUNDS_DB)} 本</div>", unsafe_allow_html=True)
+    if st.button("🔍 スクリーニング実行", type="primary", use_container_width=True, key="btn_run_fund_screen"):
+        st.toast("スクリーニング条件を適用しました！")
+        st.rerun()
 
     st.markdown("<div style='margin-bottom: 14px;'></div>", unsafe_allow_html=True)
 
@@ -9308,7 +9321,7 @@ div[class*="st-key-sbi_fund_category_filter"] button span {
 <h3 style="margin: 0 0 2px 0; font-size: 1.25rem; font-weight: 700; color: var(--text-color);">厳選投資信託スクリーニング結果 ({len(filtered_funds)}本)</h3>
 <div style="font-size: 0.8rem; color: var(--secondary-text-color);">信託報酬・シャープレシオ・最大ドローダウン・純資産を多面的に数理評価</div>
 </div>
-<div style="font-size: 0.78rem; opacity: 0.8; color: var(--secondary-text-color);">全30銘柄以上 基準価額・純資産データ連動</div>
+<div style="font-size: 0.78rem; opacity: 0.8; color: var(--secondary-text-color);">全 {len(sfs.SBI_FUNDS_DB)} 銘柄 基準価額・純資産データ連動</div>
 </div>''')
 
     if not filtered_funds:
