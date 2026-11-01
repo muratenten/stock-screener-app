@@ -8973,6 +8973,111 @@ with tab_fund:
 </div>
 </div>''')
 
+    # 1.8. Technical Terms & Genre Explanation Guide (Dedicated Knowledge Hub)
+    with st.expander("📖 投資信託の専門用語・重要指標 & ジャンル徹底解説ガイドを見る", expanded=False):
+        st.html('''
+<div style="padding: 6px 0;">
+    <div style="font-size: 0.95rem; font-weight: 700; color: var(--mui-primary, #1976d2); margin-bottom: 12px; display: flex; align-items: center; gap: 6px;">
+        <span>📊 1. 投資信託の重要テクニカル・運用指標</span>
+    </div>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px; margin-bottom: 20px;">
+        <div style="background: rgba(0,0,0,0.02); border: 1px solid var(--border-color); border-radius: 8px; padding: 14px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                <b style="font-size: 0.92rem; color: var(--text-color);">🛡️ 最大ドローダウン (Max Drawdown)</b>
+                <span style="font-size: 0.72rem; background: rgba(244, 63, 94, 0.1); color: #f43f5e; padding: 2px 6px; border-radius: 4px; font-weight: 700;">下落耐性</span>
+            </div>
+            <div style="font-size: 0.83rem; color: var(--secondary-text-color); line-height: 1.55;">
+                <b>「過去の高値から最も深く下落した時の落ち幅（%）」</b>です。<br>
+                例えば「-16.5%」なら、コロナショックや金利上昇などの大暴落時でも資産は最大16.5%減で踏みとどまったことを示します。<b>マイナスが小さい（0%に近い）ほど暴落に強く、狼狽売りせず安心して保有できる守りの堅いファンド</b>です。
+            </div>
+        </div>
+
+        <div style="background: rgba(0,0,0,0.02); border: 1px solid var(--border-color); border-radius: 8px; padding: 14px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                <b style="font-size: 0.92rem; color: var(--text-color);">⚡ シャープレシオ (Sharpe Ratio)</b>
+                <span style="font-size: 0.72rem; background: rgba(25, 118, 210, 0.1); color: var(--mui-primary, #1976d2); padding: 2px 6px; border-radius: 4px; font-weight: 700;">運用効率</span>
+            </div>
+            <div style="font-size: 0.83rem; color: var(--secondary-text-color); line-height: 1.55;">
+                <b>「取ったリスク（値動きの荒さ）に対して、どれだけ効率よくリターンを得られたか」</b>を表す数値です。<br>
+                <b>1.0以上なら極めて優秀</b>（無駄な荒波なしで着実に稼ぐ優等生ファンド）。逆に0.5未満は「価格の浮き沈みが激しい割に利益が少ない」と判断できます。
+            </div>
+        </div>
+
+        <div style="background: rgba(0,0,0,0.02); border: 1px solid var(--border-color); border-radius: 8px; padding: 14px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                <b style="font-size: 0.92rem; color: var(--text-color);">💰 信託報酬 (年率・保有コスト)</b>
+                <span style="font-size: 0.72rem; background: rgba(16, 185, 129, 0.1); color: #10b981; padding: 2px 6px; border-radius: 4px; font-weight: 700;">最重要コスト</span>
+            </div>
+            <div style="font-size: 0.83rem; color: var(--secondary-text-color); line-height: 1.55;">
+                投資信託を保有している間、<b>毎日基準価額から自動的に差し引かれる運用・管理手数料</b>です。<br>
+                <b>年0.1%以下なら超低コスト</b>（オルカンやS&P500など）。10年・20年の長期投資では、年0.1%と年1.5%で将来の手取り資産に数十万〜数百万円の決定的な差がつきます。
+            </div>
+        </div>
+
+        <div style="background: rgba(0,0,0,0.02); border: 1px solid var(--border-color); border-radius: 8px; padding: 14px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                <b style="font-size: 0.92rem; color: var(--text-color);">🏦 純資産総額 (AUM)</b>
+                <span style="font-size: 0.72rem; background: rgba(139, 92, 246, 0.1); color: #8b5cf6; padding: 2px 6px; border-radius: 4px; font-weight: 700;">ファンド規模</span>
+            </div>
+            <div style="font-size: 0.83rem; color: var(--secondary-text-color); line-height: 1.55;">
+                <b>世界中の投資家からそのファンドに集まっているお金の合計額</b>です。<br>
+                最低でも100億〜300億円以上、できれば1,000億円以上あると安心です。数兆円規模（オルカンやSlim S&P500など）は資金流出で途中で運用が打ち切られる（繰上償還）心配がほぼゼロです。
+            </div>
+        </div>
+    </div>
+
+    <div style="font-size: 0.95rem; font-weight: 700; color: var(--mui-primary, #1976d2); margin-bottom: 12px; display: flex; align-items: center; gap: 6px;">
+        <span>🏷️ 2. ファンド分類（ジャンル・カテゴリー）ごとの特徴と役割</span>
+    </div>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px; margin-bottom: 20px;">
+        <div style="background: rgba(0,0,0,0.02); border: 1px solid var(--border-color); border-radius: 8px; padding: 14px;">
+            <b style="font-size: 0.9rem; color: var(--text-color); color: var(--mui-primary, #1976d2);">👑 王道インデックス</b>
+            <div style="font-size: 0.82rem; color: var(--secondary-text-color); line-height: 1.5; margin-top: 4px;">
+                全世界（オルカン）や米国500社（S&P500）など。手数料が最安（年0.05%〜0.09%台）で世界経済の成長を丸ごと享受する<b>「資産形成の土台（コア資産）」</b>。
+            </div>
+        </div>
+        <div style="background: rgba(0,0,0,0.02); border: 1px solid var(--border-color); border-radius: 8px; padding: 14px;">
+            <b style="font-size: 0.9rem; color: #f43f5e;">🚀 FANG+・ハイテク</b>
+            <div style="font-size: 0.82rem; color: var(--secondary-text-color); line-height: 1.5; margin-top: 4px;">
+                NVIDIA・Apple・Microsoftなど米国を代表する超巨大メガテック10社や半導体に集中。年率30〜40%超の爆発的リターンを狙えるが下落時の振れ幅も大きい<b>「攻めのブースター（サテライト）」</b>。
+            </div>
+        </div>
+        <div style="background: rgba(0,0,0,0.02); border: 1px solid var(--border-color); border-radius: 8px; padding: 14px;">
+            <b style="font-size: 0.9rem; color: #f59e0b;">🇮🇳 インド・新興国</b>
+            <div style="font-size: 0.82rem; color: var(--secondary-text-color); line-height: 1.5; margin-top: 4px;">
+                世界1位の人口と平均年齢28歳の超若年化で高成長が続くインド等に投資。世界分散に上乗せして今後10〜20年の超高成長を取り込むサテライト枠。
+            </div>
+        </div>
+        <div style="background: rgba(0,0,0,0.02); border: 1px solid var(--border-color); border-radius: 8px; padding: 14px;">
+            <b style="font-size: 0.9rem; color: #10b981;">💰 高配当・インカム</b>
+            <div style="font-size: 0.82rem; color: var(--secondary-text-color); line-height: 1.5; margin-top: 4px;">
+                好財務で連続増配する日米欧の優良株やREIT（不動産）に投資。下値が堅く、定期的な分配金や配当による安定キャッシュフローを重視する方向け。
+            </div>
+        </div>
+        <div style="background: rgba(0,0,0,0.02); border: 1px solid var(--border-color); border-radius: 8px; padding: 14px;">
+            <b style="font-size: 0.9rem; color: #eab308;">🛡️ 金・債券・バランス</b>
+            <div style="font-size: 0.82rem; color: var(--secondary-text-color); line-height: 1.5; margin-top: 4px;">
+                株が急落した時に資産を守る<b>「最強の盾（ディフェンス）」</b>。有事・インフレ耐性の高い金現物や、信用力の高い国債。ポートフォリオの下落幅を劇的に抑えます。
+            </div>
+        </div>
+        <div style="background: rgba(0,0,0,0.02); border: 1px solid var(--border-color); border-radius: 8px; padding: 14px;">
+            <b style="font-size: 0.9rem; color: #8b5cf6;">✨ 厳選アクティブ・AIテーマ</b>
+            <div style="font-size: 0.82rem; color: var(--secondary-text-color); line-height: 1.5; margin-top: 4px;">
+                プロのファンドマネージャーやAIが市場平均を超える銘柄を目利きして選別（ひふみ、おおぶね、宇宙開発、自動運転など）。市場平均を上回る超過リターンを狙います。
+            </div>
+        </div>
+    </div>
+
+    <div style="font-size: 0.95rem; font-weight: 700; color: var(--mui-primary, #1976d2); margin-bottom: 8px; display: flex; align-items: center; gap: 6px;">
+        <span>🏛️ 3. NISA投資枠（つみたて投資枠 vs 成長投資枠）の使い分け</span>
+    </div>
+    <div style="background: rgba(0,0,0,0.015); border: 1px solid var(--border-color); border-radius: 8px; padding: 12px 16px; font-size: 0.83rem; color: var(--secondary-text-color); line-height: 1.6;">
+        ・<b>つみたて投資枠（年120万円まで）</b>: 金融庁が定めた厳しい基準（低コスト・長期投資向き）を満たした健全なインデックス投信・指定アクティブ投信のみ購入可能。<br>
+        ・<b>成長投資枠（年240万円まで）</b>: つみたて枠の対象投信に加え、FANG+、高配当投信、アクティブ投信、REIT、ゴールド、個別株式なども自由に一括・積立購入可能。
+    </div>
+</div>
+''')
+
     st.markdown("<div style='margin-bottom: 20px;'></div>", unsafe_allow_html=True)
 
     # 2. Comprehensive Screening & Filter Panel (Real-time Filter by Genre)
@@ -11314,6 +11419,38 @@ with tab_explanation:
     7. **高配当インカム (配当利回り 3.0%以上) [+1点]**
        - **仕組み**: 株価に対する年間配当金の割合。
        - **上昇期待の理由**: 高い配当利回りは、株価が下落した際に「利回り妙味」から下値支持（クッション）として機能します。また、**長期投資家が保有し続けやすいポートフォリオの土台**となります。
+    """)
+
+    st.markdown("""
+    ---
+    
+    ## 📦 投資信託・インデックス投資の選定指標とテクニカル解説
+    
+    個別銘柄（株式）とは異なり、投資信託では「分散されたポートフォリオ全体の運用効率や下落耐性、コスト」を数理的に評価することが不可欠です。
+    
+    ### 🛡️ 1. 最大ドローダウン（Max Drawdown）
+    - **仕組み**: 過去の算出期間において、基準価額が「最高値（ピーク）」から「最安値（ボトム）」まで最も大きく落ち込んだ際の下落率（%）。
+    - **見方**: 例えば「-16.5%」の場合、コロナショックや利上げ局面などの大暴落時でも、資産の目減りは最大16.5%で踏みとどまったことを示します。
+    - **活用のポイント**: マイナスが小さい（0%に近い）ほど**「暴落耐性が高く、資産を守る力が強いファンド」**です。株式100%のファンドは-20%〜-40%程度まで落ち込むことがありますが、純金や債券を組み合わせることでドローダウンを小さく抑えられます。
+    
+    ### ⚡ 2. シャープレシオ（Sharpe Ratio）
+    - **仕組み**: 「ファンドのリターン － 無リスク金利」を「リターンの変動幅（標準偏差・リスク）」で割った数値。
+    - **見方**: 取ったリスク（価格の上下動の激しさ）に対して、どれだけ効率よくリターンを得られたかを示す世界標準の運用効率指標です。
+    - **目安**: 
+      - **1.0以上**: 極めて優秀（無駄な荒波なしで着実に稼ぐ優等生ファンド）
+      - **0.7〜0.9**: 一般的な優良インデックス投信の水準
+      - **0.5未満**: 値動きが激しい割にリターンが低め
+    
+    ### 💰 3. 信託報酬（年率・保有コスト）
+    - **仕組み**: 投資信託を保有している間、毎日基準価額から自動的に差し引かれる運用・管理費用。
+    - **活用のポイント**: 10年・20年の長期積立投資において最も確実なリターン改善要因です。
+      - **超低コスト（0.1%以下）**: オルカン、S&P500など。つみたてNISAの王道。
+      - **低〜中コスト（0.2%〜0.8%）**: インド株、高配当、REIT、テーマ型。
+      - **高コスト（1.0%〜2.0%超）**: アクティブ型。手数料に見合う超過リターンを出しているか要チェック。
+    
+    ### 🏦 4. 純資産総額（AUM）
+    - **仕組み**: その投資信託に集まっている総資金の合計額。
+    - **活用のポイント**: 資産規模が小さい（30億円未満など）ファンドは、運用効率が悪化したり、途中で強制終了（繰上償還）されるリスクがあります。1,000億円以上、数兆円規模のメガファンドを選ぶのが鉄則です。
     """)
 
 # --- localStorage SET synchronization block ---
