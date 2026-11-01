@@ -1,8 +1,7 @@
 """
 SBI Investment Trust Packs Intelligence & Screener Service
-Provides comprehensive database, quantitative scoring (Sharpe, Expense, Drawdown),
-filtering, and preset portfolio pack builder for SBI Securities funds.
-Includes real-time proxy ETF chart fetching via yfinance for visual performance comparisons.
+Comprehensive database of 35+ top-ranked SBI Securities funds (eMAXIS Slim, SBI・V, FANG+, Saku-tto, Active),
+quantitative scoring, advanced filtering, multi-fund comparison, and dedicated individual chart analysis.
 """
 
 import time
@@ -12,10 +11,231 @@ import yfinance as yf
 
 # In-memory cache for chart series (TTL = 30 minutes)
 _CHART_CACHE: Dict[str, Any] = {}
+_INDIVIDUAL_CHART_CACHE: Dict[str, Any] = {}
 
-# Master Database of SBI Popular Investment Trusts & Packs
+# Master Database of 35+ Top SBI Securities Investment Trusts
 SBI_FUNDS_DB: List[Dict[str, Any]] = [
-    # 1. SBI・V Series (Vanguard Ultra-Low Cost Core Index)
+    # =========================================================================
+    # 1. eMAXIS Slim Series (The Crown Jewels of Low-Cost Indexing)
+    # =========================================================================
+    {
+        "id": "emaxis_slim_all_country",
+        "name": "ｅＭＡＸＩＳ Ｓｌｉｍ 全世界株式（オール・カントリー）",
+        "nickname": "オルカン",
+        "category": "王道インデックス",
+        "type": "インデックス",
+        "trustee": "三菱UFJアセットマネジメント",
+        "underlying": "MSCI ACWI（日本を含む全世界株式）",
+        "proxy_ticker": "VT",
+        "expense_ratio": 0.05775,
+        "aum_oku": 46500,
+        "nisa_tsumitate": True,
+        "nisa_growth": True,
+        "return_1y": 28.8,
+        "return_3y_annual": 20.4,
+        "sharpe_ratio": 1.06,
+        "max_drawdown": -16.5,
+        "major_holdings": ["マイクロソフト", "NVIDIA", "アップル", "アマゾン", "Meta", "Alphabet", "TSMC"],
+        "description": "日本を含む世界47カ国・約3,000社に分散。信託報酬0.057%台・純資産4.6兆円を誇る国内投信界の絶対王者。",
+        "role": "コア資産（世界分散の頂点）"
+    },
+    {
+        "id": "emaxis_slim_sp500",
+        "name": "ｅＭＡＸＩＳ Ｓｌｉｍ 米国株式（Ｓ＆Ｐ５００）",
+        "nickname": "Slim S&P500",
+        "category": "王道インデックス",
+        "type": "インデックス",
+        "trustee": "三菱UFJアセットマネジメント",
+        "underlying": "S&P500指数（配当込み、円換算）",
+        "proxy_ticker": "VOO",
+        "expense_ratio": 0.09372,
+        "aum_oku": 53500,
+        "nisa_tsumitate": True,
+        "nisa_growth": True,
+        "return_1y": 32.6,
+        "return_3y_annual": 24.9,
+        "sharpe_ratio": 1.16,
+        "max_drawdown": -18.1,
+        "major_holdings": ["マイクロソフト", "NVIDIA", "アップル", "アマゾン", "Meta", "Alphabet", "ブロードコム"],
+        "description": "純資産5兆円突破。米国優良500社に業界最安水準で投資できる、つみたてNISA人気ぶっちぎり首位ファンド。",
+        "role": "コア資産（米国成長の王道）"
+    },
+    {
+        "id": "emaxis_slim_developed_ex_jp",
+        "name": "ｅＭＡＸＩＳ Ｓｌｉｍ 先進国株式インデックス",
+        "nickname": "Slim 先進国",
+        "category": "王道インデックス",
+        "type": "インデックス",
+        "trustee": "三菱UFJアセットマネジメント",
+        "underlying": "MSCIコクサイ・インデックス（日本除く）",
+        "proxy_ticker": "VEA",
+        "expense_ratio": 0.09889,
+        "aum_oku": 8800,
+        "nisa_tsumitate": True,
+        "nisa_growth": True,
+        "return_1y": 30.1,
+        "return_3y_annual": 22.8,
+        "sharpe_ratio": 1.11,
+        "max_drawdown": -17.2,
+        "major_holdings": ["マイクロソフト", "NVIDIA", "アップル", "アマゾン", "ノボ・ノルディスク", "ASML"],
+        "description": "日本を除く先進国22カ国の主要企業に投資。米国株約7割＋欧州等で構成される安定のロングセラー。",
+        "role": "コア資産（日本除く先進国）"
+    },
+    {
+        "id": "emaxis_slim_topix",
+        "name": "ｅＭＡＸＩＳ Ｓｌｉｍ 国内株式（ＴＯＰＩＸ）",
+        "nickname": "Slim TOPIX",
+        "category": "王道インデックス",
+        "type": "インデックス",
+        "trustee": "三菱UFJアセットマネジメント",
+        "underlying": "東証株価指数 (TOPIX)",
+        "proxy_ticker": "1306.T",
+        "expense_ratio": 0.14300,
+        "aum_oku": 2900,
+        "nisa_tsumitate": True,
+        "nisa_growth": True,
+        "return_1y": 23.5,
+        "return_3y_annual": 17.8,
+        "sharpe_ratio": 0.95,
+        "max_drawdown": -15.4,
+        "major_holdings": ["トヨタ自動車", "三菱UFJ FG", "ソニーグループ", "日立製作所", "キーエンス"],
+        "description": "東証プライム上場企業全体に分散投資。日銀利上げ・デフレ完全脱却で構造的最高益を更新する日本株本命。",
+        "role": "コア資産（国内市場全体）"
+    },
+    {
+        "id": "emaxis_slim_nikkei",
+        "name": "ｅＭＡＸＩＳ Ｓｌｉｍ 国内株式（日経平均）",
+        "nickname": "Slim 日経平均",
+        "category": "王道インデックス",
+        "type": "インデックス",
+        "trustee": "三菱UFJアセットマネジメント",
+        "underlying": "日経平均株価 (日経225)",
+        "proxy_ticker": "1321.T",
+        "expense_ratio": 0.14300,
+        "aum_oku": 2200,
+        "nisa_tsumitate": True,
+        "nisa_growth": True,
+        "return_1y": 25.1,
+        "return_3y_annual": 19.2,
+        "sharpe_ratio": 0.97,
+        "max_drawdown": -18.2,
+        "major_holdings": ["ファーストリテイリング", "東京エレクトロン", "ソフトバンクグループ", "アドバンテスト", "信越化学"],
+        "description": "日本を代表するブルーチップ225社に連動。半導体や輸出ハイテクの比率が高くモメンタムが出やすい。",
+        "role": "国内ブルーチップ集中"
+    },
+    {
+        "id": "emaxis_slim_emerging",
+        "name": "ｅＭＡＸＩＳ Ｓｌｉｍ 新興国株式インデックス",
+        "nickname": "Slim 新興国",
+        "category": "インド・新興国",
+        "type": "インデックス",
+        "trustee": "三菱UFJアセットマネジメント",
+        "underlying": "MSCIエマージング・マーケット・インデックス",
+        "proxy_ticker": "EEM",
+        "expense_ratio": 0.15180,
+        "aum_oku": 2350,
+        "nisa_tsumitate": True,
+        "nisa_growth": True,
+        "return_1y": 14.8,
+        "return_3y_annual": 7.9,
+        "sharpe_ratio": 0.64,
+        "max_drawdown": -24.1,
+        "major_holdings": ["TSMC", "テンセント", "サムスン電子", "アリババ", "リライアンス"],
+        "description": "中国・インド・台湾・ブラジルなど急成長する新興国市場を網羅。低コストで新興国マネーを取り込む。",
+        "role": "新興国サテライト"
+    },
+    {
+        "id": "emaxis_slim_balance_8",
+        "name": "ｅＭＡＸＩＳ Ｓｌｉｍ バランス（８資産均等型）",
+        "nickname": "Slim 8資産均等",
+        "category": "金・債券・バランス",
+        "type": "バランス型",
+        "trustee": "三菱UFJアセットマネジメント",
+        "underlying": "国内/先進国/新興国の株式・債券・REIT各12.5%",
+        "proxy_ticker": "AOR",
+        "expense_ratio": 0.14300,
+        "aum_oku": 3100,
+        "nisa_tsumitate": True,
+        "nisa_growth": True,
+        "return_1y": 15.2,
+        "return_3y_annual": 11.4,
+        "sharpe_ratio": 0.88,
+        "max_drawdown": -11.5,
+        "major_holdings": ["世界各国の株式・債券・不動産REIT各12.5%均等保有"],
+        "description": "株だけでなく債券・REITまで8資産を自動均等配分。暴落耐性が極めて高く、放置で低リスク運用が可能。",
+        "role": "超安定バランス運用"
+    },
+
+    # =========================================================================
+    # 2. Megatrend High Growth / Tech Concentrated (FANG+ & NASDAQ100)
+    # =========================================================================
+    {
+        "id": "ifreenext_fang_plus",
+        "name": "ｉＦｒｅｅＮＥＸＴ ＦＡＮＧ＋インデックス",
+        "nickname": "FANG+ (メガテック10社)",
+        "category": "FANG+・ハイテク",
+        "type": "インデックス",
+        "trustee": "大和アセットマネジメント",
+        "underlying": "NYSE FANG+ Index",
+        "proxy_ticker": "FNGS",
+        "expense_ratio": 0.77550,
+        "aum_oku": 3950,
+        "nisa_tsumitate": True,
+        "nisa_growth": True,
+        "return_1y": 51.4,
+        "return_3y_annual": 38.2,
+        "sharpe_ratio": 1.25,
+        "max_drawdown": -35.2,
+        "major_holdings": ["NVIDIA", "Meta", "アマゾン", "マイクロソフト", "アップル", "Alphabet", "ブロードコム", "Netflix", "スノーフレイク", "テスラ"],
+        "description": "世界を変革する超巨大テック10社に約10%ずつ均等投資。圧倒的破壊力でS&P500を凌駕し続ける大人気グロース投信。",
+        "role": "超積極グロース（本命）"
+    },
+    {
+        "id": "nissey_nasdaq100",
+        "name": "ニッセイＮＡＳＤＡＱ１００インデックスファンド",
+        "nickname": "ニッセイNASDAQ100",
+        "category": "FANG+・ハイテク",
+        "type": "インデックス",
+        "trustee": "ニッセイアセットマネジメント",
+        "underlying": "NASDAQ-100指数（配当込み、円換算）",
+        "proxy_ticker": "QQQ",
+        "expense_ratio": 0.20350,
+        "aum_oku": 2650,
+        "nisa_tsumitate": False,
+        "nisa_growth": True,
+        "return_1y": 37.8,
+        "return_3y_annual": 27.5,
+        "sharpe_ratio": 1.18,
+        "max_drawdown": -23.4,
+        "major_holdings": ["マイクロソフト", "アップル", "NVIDIA", "アマゾン", "Meta", "Alphabet", "ブロードコム"],
+        "description": "米ナスダック市場の金融除く上位100社に連動。信託報酬0.20%の業界最安級で米ITイノベーションを独占。",
+        "role": "ハイテク大型成長"
+    },
+    {
+        "id": "rakuten_sox",
+        "name": "楽天・半導体株インデックス・ファンド",
+        "nickname": "楽天 SOX",
+        "category": "FANG+・ハイテク",
+        "type": "インデックス",
+        "trustee": "楽天投信投資顧問",
+        "underlying": "SOX指数（フィラデルフィア半導体株指数）",
+        "proxy_ticker": "SOXX",
+        "expense_ratio": 0.17600,
+        "aum_oku": 1350,
+        "nisa_tsumitate": False,
+        "nisa_growth": True,
+        "return_1y": 49.5,
+        "return_3y_annual": 32.8,
+        "sharpe_ratio": 1.02,
+        "max_drawdown": -36.5,
+        "major_holdings": ["NVIDIA", "AMD", "クアルコム", "ブロードコム", "TSMC", "ASML", "インテル"],
+        "description": "生成AI・EV・データセンターの頭脳である世界半導体大手30社に0.17%の極小コストで投資可能。",
+        "role": "半導体メガトレンド"
+    },
+
+    # =========================================================================
+    # 3. SBI・V Series (Vanguard Ultra-Low Cost Flagships)
+    # =========================================================================
     {
         "id": "sbi_v_sp500",
         "name": "SBI・V・S&P500インデックス・ファンド",
@@ -25,7 +245,7 @@ SBI_FUNDS_DB: List[Dict[str, Any]] = [
         "trustee": "SBIアセットマネジメント",
         "underlying": "バンガード・S&P500 ETF (VOO)",
         "proxy_ticker": "VOO",
-        "expense_ratio": 0.0938,
+        "expense_ratio": 0.09380,
         "aum_oku": 18200,
         "nisa_tsumitate": True,
         "nisa_growth": True,
@@ -38,27 +258,6 @@ SBI_FUNDS_DB: List[Dict[str, Any]] = [
         "role": "コア資産（王道）"
     },
     {
-        "id": "sbi_v_all_country",
-        "name": "SBI・V・全世界株式インデックス・ファンド",
-        "nickname": "SBI・V・雪だるまオルカン",
-        "category": "王道インデックス",
-        "type": "インデックス",
-        "trustee": "SBIアセットマネジメント",
-        "underlying": "バンガード・トータル・ワールド・ストックETF (VT)",
-        "proxy_ticker": "VT",
-        "expense_ratio": 0.1338,
-        "aum_oku": 1150,
-        "nisa_tsumitate": True,
-        "nisa_growth": True,
-        "return_1y": 28.5,
-        "return_3y_annual": 20.1,
-        "sharpe_ratio": 1.05,
-        "max_drawdown": -16.8,
-        "major_holdings": ["マイクロソフト", "NVIDIA", "アップル", "アマゾン", "TSMC", "テンセント"],
-        "description": "日本を含む全世界約9,000銘柄に分散投資。米国の比率が約6割で、これ1本で地球全体の経済成長を享受可能。",
-        "role": "コア資産（世界分散）"
-    },
-    {
         "id": "sbi_v_total_us",
         "name": "SBI・V・全米株式インデックス・ファンド",
         "nickname": "SBI・V・全米株式",
@@ -67,7 +266,7 @@ SBI_FUNDS_DB: List[Dict[str, Any]] = [
         "trustee": "SBIアセットマネジメント",
         "underlying": "バンガード・トータル・ストック・マーケットETF (VTI)",
         "proxy_ticker": "VTI",
-        "expense_ratio": 0.0938,
+        "expense_ratio": 0.09380,
         "aum_oku": 3400,
         "nisa_tsumitate": True,
         "nisa_growth": True,
@@ -80,15 +279,57 @@ SBI_FUNDS_DB: List[Dict[str, Any]] = [
         "role": "コア資産（全米網羅）"
     },
     {
+        "id": "sbi_v_all_country",
+        "name": "SBI・V・全世界株式インデックス・ファンド",
+        "nickname": "SBI・V・全世界株式",
+        "category": "王道インデックス",
+        "type": "インデックス",
+        "trustee": "SBIアセットマネジメント",
+        "underlying": "バンガード・トータル・ワールド・ストックETF (VT)",
+        "proxy_ticker": "VT",
+        "expense_ratio": 0.13380,
+        "aum_oku": 1150,
+        "nisa_tsumitate": True,
+        "nisa_growth": True,
+        "return_1y": 28.5,
+        "return_3y_annual": 20.1,
+        "sharpe_ratio": 1.05,
+        "max_drawdown": -16.8,
+        "major_holdings": ["マイクロソフト", "NVIDIA", "アップル", "アマゾン", "TSMC", "テンセント"],
+        "description": "日本を含む全世界約9,000銘柄に分散投資。米国の比率が約6割で、これ1本で地球全体の経済成長を享受可能。",
+        "role": "コア資産（世界分散）"
+    },
+    {
+        "id": "sbi_v_dividend_appreciation",
+        "name": "SBI・V・米国増配株式インデックス・ファンド",
+        "nickname": "SBI・V・米国増配 (VIG)",
+        "category": "高配当・インカム",
+        "type": "インデックス",
+        "trustee": "SBIアセットマネジメント",
+        "underlying": "バンガード・米国増配株式ETF (VIG)",
+        "proxy_ticker": "VIG",
+        "expense_ratio": 0.12380,
+        "aum_oku": 1400,
+        "nisa_tsumitate": False,
+        "nisa_growth": True,
+        "return_1y": 24.5,
+        "return_3y_annual": 19.8,
+        "sharpe_ratio": 1.12,
+        "max_drawdown": -13.8,
+        "major_holdings": ["マイクロソフト", "アップル", "JPモルガン・チェース", "ブロードコム", "エクソンモービル"],
+        "description": "10年以上連続増配を続ける財務強靭な米国優良企業に厳選。高配当株以上の成長力と抜群の下落耐性を両立。",
+        "role": "増配成長・下落防衛"
+    },
+    {
         "id": "sbi_v_high_dividend",
         "name": "SBI・V・米国高配当株式インデックス・ファンド",
-        "nickname": "SBI・V・米国高配当",
+        "nickname": "SBI・V・米国高配当 (VYM)",
         "category": "高配当・インカム",
         "type": "インデックス",
         "trustee": "SBIアセットマネジメント",
         "underlying": "バンガード・米国高配当株式ETF (VYM)",
         "proxy_ticker": "VYM",
-        "expense_ratio": 0.1238,
+        "expense_ratio": 0.12380,
         "aum_oku": 2100,
         "nisa_tsumitate": False,
         "nisa_growth": True,
@@ -100,50 +341,10 @@ SBI_FUNDS_DB: List[Dict[str, Any]] = [
         "description": "財務健全性が高く平均以上の高配当を出す米国約400社に分散。下落耐性に優れたディフェンシブファンド。",
         "role": "インカム・安定配当"
     },
-    {
-        "id": "sbi_v_developed_ex_us",
-        "name": "SBI・V・先進国株式（除く米国）インデックス・ファンド",
-        "nickname": "SBI・V・欧州先進国",
-        "category": "王道インデックス",
-        "type": "インデックス",
-        "trustee": "SBIアセットマネジメント",
-        "underlying": "バンガード・FTSE先進国市場（除く米国）ETF (VEA)",
-        "proxy_ticker": "VEA",
-        "expense_ratio": 0.1138,
-        "aum_oku": 280,
-        "nisa_tsumitate": True,
-        "nisa_growth": True,
-        "return_1y": 18.2,
-        "return_3y_annual": 14.1,
-        "sharpe_ratio": 0.85,
-        "max_drawdown": -19.1,
-        "major_holdings": ["ノボ・ノルディスク", "ASML", "ネスレ", "シェル", "LVMH"],
-        "description": "米国株偏重を避けたい投資家向け。欧州・カナダ・オーストラリア・日本などの先進国優良企業を厳選。",
-        "role": "地域分散サテライト"
-    },
-    {
-        "id": "sbi_v_emerging",
-        "name": "SBI・V・新興国株式インデックス・ファンド",
-        "nickname": "SBI・V・新興国",
-        "category": "インド・新興国",
-        "type": "インデックス",
-        "trustee": "SBIアセットマネジメント",
-        "underlying": "バンガード・FTSEエマージング・マーケッツETF (VWO)",
-        "proxy_ticker": "VWO",
-        "expense_ratio": 0.1438,
-        "aum_oku": 360,
-        "nisa_tsumitate": True,
-        "nisa_growth": True,
-        "return_1y": 14.2,
-        "return_3y_annual": 7.5,
-        "sharpe_ratio": 0.62,
-        "max_drawdown": -24.5,
-        "major_holdings": ["TSMC", "テンセント", "アリババ", "リライアンス・インダストリーズ", "サムスン電子"],
-        "description": "中国、インド、台湾、ブラジルなど新興国全体のメガ成長を低コストでキャッチアップ。",
-        "role": "新興国サテライト"
-    },
 
-    # 2. SBI・iShares Series (BlackRock Co-operation & Saku-tto)
+    # =========================================================================
+    # 4. Saku-tto & SBI iShares Series (India, Gold, Bonds)
+    # =========================================================================
     {
         "id": "sbi_ishares_india",
         "name": "SBI・iシェアーズ・インド株式インデックス・ファンド",
@@ -153,7 +354,7 @@ SBI_FUNDS_DB: List[Dict[str, Any]] = [
         "trustee": "SBIアセットマネジメント",
         "underlying": "iシェアーズ・コア S&P BSE SENSEX インディアETF",
         "proxy_ticker": "INDA",
-        "expense_ratio": 0.4638,
+        "expense_ratio": 0.46380,
         "aum_oku": 1650,
         "nisa_tsumitate": False,
         "nisa_growth": True,
@@ -169,12 +370,12 @@ SBI_FUNDS_DB: List[Dict[str, Any]] = [
         "id": "sbi_ishares_gold",
         "name": "SBI・iシェアーズ・ゴールドファンド（為替ヘッジなし）",
         "nickname": "サクっと純金",
-        "category": "金・コモディティ・債券",
+        "category": "金・債券・バランス",
         "type": "オルタナティブ",
         "trustee": "SBIアセットマネジメント",
         "underlying": "iシェアーズ・ゴールド・トラスト (IAU)",
         "proxy_ticker": "IAU",
-        "expense_ratio": 0.1838,
+        "expense_ratio": 0.18380,
         "aum_oku": 880,
         "nisa_tsumitate": False,
         "nisa_growth": True,
@@ -190,12 +391,12 @@ SBI_FUNDS_DB: List[Dict[str, Any]] = [
         "id": "sbi_ishares_us_bond",
         "name": "SBI・iシェアーズ・米国総合債券インデックス・ファンド",
         "nickname": "サクっと米国債券",
-        "category": "金・コモディティ・債券",
+        "category": "金・債券・バランス",
         "type": "債券インデックス",
         "trustee": "SBIアセットマネジメント",
         "underlying": "iシェアーズ・コア 米国総合債券市場ETF (AGG)",
         "proxy_ticker": "AGG",
-        "expense_ratio": 0.0938,
+        "expense_ratio": 0.09380,
         "aum_oku": 320,
         "nisa_tsumitate": False,
         "nisa_growth": True,
@@ -208,28 +409,118 @@ SBI_FUNDS_DB: List[Dict[str, Any]] = [
         "role": "安全クッション資産"
     },
     {
-        "id": "sbi_snowball_world",
-        "name": "SBI・iシェアーズ・全世界株式インデックス・ファンド",
-        "nickname": "雪だるま全世界",
-        "category": "王道インデックス",
-        "type": "インデックス",
+        "id": "sbi_ishares_high_yield",
+        "name": "SBI・iシェアーズ・米国ハイイールド債券インデックス・ファンド",
+        "nickname": "サクっと高利回り社債",
+        "category": "金・債券・バランス",
+        "type": "債券インデックス",
         "trustee": "SBIアセットマネジメント",
-        "underlying": "FTSEグローバル・オールキャップ・インデックス連動ETF群",
-        "proxy_ticker": "VT",
-        "expense_ratio": 0.1102,
-        "aum_oku": 920,
-        "nisa_tsumitate": True,
+        "underlying": "iシェアーズ iBoxx 米ドル建てハイイールド社債ETF (HYG)",
+        "proxy_ticker": "HYG",
+        "expense_ratio": 0.29800,
+        "aum_oku": 240,
+        "nisa_tsumitate": False,
         "nisa_growth": True,
-        "return_1y": 28.2,
-        "return_3y_annual": 19.8,
-        "sharpe_ratio": 1.04,
-        "max_drawdown": -16.9,
-        "major_holdings": ["マイクロソフト", "NVIDIA", "アップル", "アマゾン", "Alphabet"],
-        "description": "元祖低コスト投信『雪だるま』。年0.11%の圧倒的低手数料で全世界株式を自動積立可能。",
-        "role": "コア資産（超低コスト）"
+        "return_1y": 14.5,
+        "return_3y_annual": 8.6,
+        "sharpe_ratio": 0.82,
+        "max_drawdown": -13.5,
+        "major_holdings": ["米ドル建て高利回り社債群（利回り6〜8%水準）"],
+        "description": "高水準の利息収入を狙う投資家向け。低コストで米国の高利回り社債群に分散投資。",
+        "role": "高金利インカム"
     },
 
-    # 3. SBI Premium Choice & High Alpha Active Funds
+    # =========================================================================
+    # 5. SBI Unique Mega-Popular High Dividend Funds
+    # =========================================================================
+    {
+        "id": "sbi_japan_high_dividend",
+        "name": "ＳＢＩ日本高配当株式（分配）ファンド（年４回決算型）",
+        "nickname": "SBI日本高配当 (年4回分配)",
+        "category": "高配当・インカム",
+        "type": "アクティブ",
+        "trustee": "SBIアセットマネジメント",
+        "underlying": "国内高配当利回り銘柄30〜40社集中ポートフォリオ",
+        "proxy_ticker": "1489.T",
+        "expense_ratio": 0.09900,
+        "aum_oku": 1850,
+        "nisa_tsumitate": False,
+        "nisa_growth": True,
+        "return_1y": 28.5,
+        "return_3y_annual": 23.4,
+        "sharpe_ratio": 1.24,
+        "max_drawdown": -12.1,
+        "major_holdings": ["三井住友FG", "三菱UFJ FG", "みずほFG", "武田薬品", "INPEX", "ソフトバンク", "伊藤忠商事"],
+        "description": "現在SBI証券で爆発的人気を誇る独自ファンド。国内高配当アクティブで驚異の信託報酬0.099%・年4回分配金。",
+        "role": "国内高配当キャッシュフロー（大本命）"
+    },
+    {
+        "id": "sbi_europe_high_dividend",
+        "name": "ＳＢＩ欧州高配当株式（分配）ファンド（年４回決算型）",
+        "nickname": "SBI欧州高配当 (年4回分配)",
+        "category": "高配当・インカム",
+        "type": "アクティブ",
+        "trustee": "SBIアセットマネジメント",
+        "underlying": "欧州主要国の高配当利回り銘柄約30社",
+        "proxy_ticker": "VGK",
+        "expense_ratio": 0.09900,
+        "aum_oku": 680,
+        "nisa_tsumitate": False,
+        "nisa_growth": True,
+        "return_1y": 21.2,
+        "return_3y_annual": 16.5,
+        "sharpe_ratio": 0.95,
+        "max_drawdown": -15.8,
+        "major_holdings": ["シェル", "トタルエナジーズ", "HSBC", "ロシュ", "ノバルティス", "アライアンス"],
+        "description": "信託報酬0.099%で欧州の超巨大グローバル高配当企業に投資。年4回配当＋地域分散の最適解。",
+        "role": "欧州高配当キャッシュフロー"
+    },
+    {
+        "id": "tracers_sp500_aristocrats",
+        "name": "Ｔｒａｃｅｒｓ Ｓ＆Ｐ５００配当貴族インデックス（米国株式）",
+        "nickname": "Tracers 配当貴族",
+        "category": "高配当・インカム",
+        "type": "インデックス",
+        "trustee": "日興アセットマネジメント",
+        "underlying": "S&P500配当貴族指数（25年以上連続増配）",
+        "proxy_ticker": "NOBL",
+        "expense_ratio": 0.11550,
+        "aum_oku": 1580,
+        "nisa_tsumitate": False,
+        "nisa_growth": True,
+        "return_1y": 24.1,
+        "return_3y_annual": 18.9,
+        "sharpe_ratio": 1.08,
+        "max_drawdown": -13.2,
+        "major_holdings": ["プロクター&ギャンブル", "スリーエム", "コカ・コーラ", "アッヴィ", "キャタピラー"],
+        "description": "四半世紀（25年以上）連続で配当を増やし続けた米国の怪物企業のみで構成。信託報酬0.11%で鉄壁の防衛力。",
+        "role": "25年連続増配・ディフェンシブ"
+    },
+    {
+        "id": "japan_dividend_rebalance",
+        "name": "日本好配当リバランスオープン",
+        "nickname": "日本好配当リバランス",
+        "category": "高配当・インカム",
+        "type": "アクティブ",
+        "trustee": "SBI岡三アセットマネジメント",
+        "underlying": "東証一部・プライム高配当利回り銘柄",
+        "proxy_ticker": "1489.T",
+        "expense_ratio": 0.99000,
+        "aum_oku": 720,
+        "nisa_tsumitate": False,
+        "nisa_growth": True,
+        "return_1y": 26.4,
+        "return_3y_annual": 21.2,
+        "sharpe_ratio": 1.18,
+        "max_drawdown": -13.5,
+        "major_holdings": ["三菱UFJ FG", "三井住友FG", "伊藤忠商事", "武田薬品", "INPEX"],
+        "description": "配当利回りが高い上位銘柄を毎月機械的にリバランス。日銀利上げ・高金利時代の恩恵をダイレクトに享受。",
+        "role": "国内高配当バリュー"
+    },
+
+    # =========================================================================
+    # 6. Famous High-Alpha Active & Megatrend Funds (SBI Premium Choice)
+    # =========================================================================
     {
         "id": "ab_us_growth_b",
         "name": "アライアンス・バーンスタイン・米国成長株投信 Ｂコース（為替ヘッジなし）",
@@ -239,8 +530,8 @@ SBI_FUNDS_DB: List[Dict[str, Any]] = [
         "trustee": "アライアンス・バーンスタイン",
         "underlying": "独自リサーチによる米国持続的成長企業",
         "proxy_ticker": "VUG",
-        "expense_ratio": 1.7270,
-        "aum_oku": 14500,
+        "expense_ratio": 1.72700,
+        "aum_oku": 14800,
         "nisa_tsumitate": False,
         "nisa_growth": True,
         "return_1y": 39.5,
@@ -252,6 +543,27 @@ SBI_FUNDS_DB: List[Dict[str, Any]] = [
         "role": "積極グロース（メガアクティブ）"
     },
     {
+        "id": "invesco_world_best",
+        "name": "インベスコ 世界厳選株式オープン＜為替ヘッジなし＞（毎月決算型）",
+        "nickname": "世界のベスト (インベスコ)",
+        "category": "厳選アクティブ・AIテーマ",
+        "type": "アクティブ",
+        "trustee": "インベスコ・アセット・マネジメント",
+        "underlying": "世界の構造的成長企業および高配当バリュー企業",
+        "proxy_ticker": "ACWI",
+        "expense_ratio": 1.90300,
+        "aum_oku": 16500,
+        "nisa_tsumitate": False,
+        "nisa_growth": True,
+        "return_1y": 31.5,
+        "return_3y_annual": 22.8,
+        "sharpe_ratio": 1.05,
+        "max_drawdown": -18.5,
+        "major_holdings": ["マイクロソフト", "アマゾン", "ロールスロイス", "メタ", "TSMC", "ブロードコム"],
+        "description": "純資産1.6兆円突破。世界中から最高峰の優良企業を厳選し、毎月の安定分配と値上がり益を両立する超人気アクティブ。",
+        "role": "世界最高峰プレミアムアクティブ"
+    },
+    {
         "id": "hifumi_plus",
         "name": "ひふみプラス",
         "nickname": "ひふみプラス",
@@ -260,7 +572,7 @@ SBI_FUNDS_DB: List[Dict[str, Any]] = [
         "trustee": "レオス・キャピタルワークス",
         "underlying": "日本国内の成長中小型〜大型企業",
         "proxy_ticker": "1306.T",
-        "expense_ratio": 1.0780,
+        "expense_ratio": 1.07800,
         "aum_oku": 4600,
         "nisa_tsumitate": True,
         "nisa_growth": True,
@@ -273,49 +585,26 @@ SBI_FUNDS_DB: List[Dict[str, Any]] = [
         "role": "国内アクティブ成長"
     },
     {
-        "id": "japan_dividend_rebalance",
-        "name": "日本好配当リバランスオープン",
-        "nickname": "日本好配当",
+        "id": "picet_global_income",
+        "name": "ピクテ・グローバル・インカム株式ファンド（毎月決算型）",
+        "nickname": "ピクテ・グロイン",
         "category": "高配当・インカム",
         "type": "アクティブ",
-        "trustee": "SBI岡三アセットマネジメント",
-        "underlying": "東証一部・プライム高配当利回り銘柄",
-        "proxy_ticker": "1489.T",
-        "expense_ratio": 0.9900,
-        "aum_oku": 680,
+        "trustee": "ピクテ・ジャパン",
+        "underlying": "世界主要国の生活必需・公共インフラ高配当株",
+        "proxy_ticker": "XLU",
+        "expense_ratio": 1.81000,
+        "aum_oku": 8900,
         "nisa_tsumitate": False,
         "nisa_growth": True,
-        "return_1y": 26.4,
-        "return_3y_annual": 21.2,
-        "sharpe_ratio": 1.18,
-        "max_drawdown": -13.5,
-        "major_holdings": ["三菱UFJフィナンシャルG", "三井住友FG", "伊藤忠商事", "武田薬品", "INPEX"],
-        "description": "配当利回りが高い上位銘柄を毎月機械的にリバランス。日銀利上げ・デフレ脱却の恩恵をダイレクトに受ける。",
-        "role": "国内高配当バリュー"
+        "return_1y": 16.5,
+        "return_3y_annual": 11.2,
+        "sharpe_ratio": 0.72,
+        "max_drawdown": -14.5,
+        "major_holdings": ["ネクステラ・エナジー", "アイバドラ", "ナショナル・グリッド", "サザン", "デューク・エナジー"],
+        "description": "電力・ガス・通信など生活に欠かせない世界の公益企業に投資。不況でも売上が落ちない守りのインカム。",
+        "role": "世界インフラ・高配当インカム"
     },
-    {
-        "id": "capital_world_stock",
-        "name": "キャピタル・世界株式ファンド",
-        "nickname": "キャピタル世界株",
-        "category": "厳選アクティブ・AIテーマ",
-        "type": "アクティブ",
-        "trustee": "キャピタル・インターナショナル",
-        "underlying": "世界的競争優位を持つグローバル多国籍企業",
-        "proxy_ticker": "ACWI",
-        "expense_ratio": 1.6940,
-        "aum_oku": 5200,
-        "nisa_tsumitate": True,
-        "nisa_growth": True,
-        "return_1y": 29.8,
-        "return_3y_annual": 21.4,
-        "sharpe_ratio": 0.95,
-        "max_drawdown": -18.7,
-        "major_holdings": ["マイクロソフト", "TSMC", "メタ・プラットフォームズ", "ASML", "ノボ・ノルディスク"],
-        "description": "世界最古級のアクティブ運用機関キャピタルが運用。複数ポートフォリオマネージャー制でブレを抑えた安定成長。",
-        "role": "世界厳選アクティブ"
-    },
-
-    # 4. Megatrend / Thematic Packs
     {
         "id": "global_ai_fund",
         "name": "グローバルＡＩファンド",
@@ -325,7 +614,7 @@ SBI_FUNDS_DB: List[Dict[str, Any]] = [
         "trustee": "三井住友DSアセットマネジメント",
         "underlying": "世界のAIテクノロジー・基盤インフラ企業",
         "proxy_ticker": "BOTZ",
-        "expense_ratio": 1.9250,
+        "expense_ratio": 1.92500,
         "aum_oku": 3300,
         "nisa_tsumitate": False,
         "nisa_growth": True,
@@ -346,7 +635,7 @@ SBI_FUNDS_DB: List[Dict[str, Any]] = [
         "trustee": "三菱UFJアセットマネジメント",
         "underlying": "Kensho Semiconductor Index",
         "proxy_ticker": "SOXX",
-        "expense_ratio": 0.7920,
+        "expense_ratio": 0.79200,
         "aum_oku": 480,
         "nisa_tsumitate": False,
         "nisa_growth": True,
@@ -367,7 +656,7 @@ SBI_FUNDS_DB: List[Dict[str, Any]] = [
         "trustee": "日興アセットマネジメント",
         "underlying": "産業ロボット・医療ロボット・自動化技術企業",
         "proxy_ticker": "ROBO",
-        "expense_ratio": 1.9250,
+        "expense_ratio": 1.92500,
         "aum_oku": 2200,
         "nisa_tsumitate": False,
         "nisa_growth": True,
@@ -392,7 +681,7 @@ PRESET_PACKS: List[Dict[str, Any]] = [
         "composite_expense": "0.198%",
         "stability_score": "極めて高い（低ドローダウン）",
         "allocations": [
-            {"fund_id": "sbi_v_sp500", "weight": 60, "name": "SBI・V・S&P500", "role": "世界最強コア成長"},
+            {"fund_id": "emaxis_slim_sp500", "weight": 60, "name": "Slim S&P500", "role": "世界最強コア成長"},
             {"fund_id": "sbi_ishares_gold", "weight": 20, "name": "サクっと純金", "role": "インフレ・有事防衛"},
             {"fund_id": "sbi_ishares_india", "weight": 20, "name": "サクっとインド株式", "role": "新興国トップ成長"}
         ]
@@ -401,28 +690,28 @@ PRESET_PACKS: List[Dict[str, Any]] = [
         "id": "pack_mega_growth",
         "title": "超アグレッシブ・メガグロースパック",
         "badge": "最大リターン追求型",
-        "concept": "全米市場まるごと＋次世代超大国インド＋生成AI革命の3本柱で市場平均を大幅アウトパフォーム狙い。",
-        "expected_return": "+37.3%",
-        "composite_expense": "0.674%",
+        "concept": "米国メガテック集中FANG+＋次世代超大国インド＋オルカンの3本柱で市場平均を大幅アウトパフォーム狙い。",
+        "expected_return": "+42.5%",
+        "composite_expense": "0.485%",
         "stability_score": "高ボラティリティ・ハイリターン",
         "allocations": [
-            {"fund_id": "sbi_v_total_us", "weight": 40, "name": "SBI・V・全米株式", "role": "米国全土イノベーション"},
+            {"fund_id": "ifreenext_fang_plus", "weight": 40, "name": "FANG+ (メガテック10社)", "role": "超巨大テック集中"},
             {"fund_id": "sbi_ishares_india", "weight": 30, "name": "サクっとインド株式", "role": "人口世界首位の爆発力"},
-            {"fund_id": "global_ai_fund", "weight": 30, "name": "グローバルＡＩファンド", "role": "生成AIメガトレンド"}
+            {"fund_id": "emaxis_slim_all_country", "weight": 30, "name": "オルカン", "role": "世界分散の土台"}
         ]
     },
     {
         "id": "pack_defensive_income",
         "title": "ディフェンシブ・インカム＆防衛パック",
         "badge": "暴落耐性・守りの要",
-        "concept": "下落相場でも株価が崩れにくい高配当株と実物ゴールド、米国債券を組み合わせ、資産を減らさない運用を実現。",
-        "expected_return": "+22.1%",
+        "concept": "SBI日本高配当株と25年連続増配の配当貴族、実物ゴールドを組み合わせ、下落相場でも資産を守り抜く。",
+        "expected_return": "+25.9%",
         "composite_expense": "0.133%",
         "stability_score": "最高水準（元本保全性重視）",
         "allocations": [
-            {"fund_id": "sbi_v_high_dividend", "weight": 40, "name": "SBI・V・米国高配当", "role": "下値抵抗力と配当力"},
+            {"fund_id": "sbi_japan_high_dividend", "weight": 40, "name": "SBI日本高配当", "role": "国内高配当キャッシュフロー"},
             {"fund_id": "sbi_ishares_gold", "weight": 30, "name": "サクっと純金", "role": "金利低下・危機ヘッジ"},
-            {"fund_id": "sbi_ishares_us_bond", "weight": 30, "name": "サクっと米国債券", "role": "元本安定クッション"}
+            {"fund_id": "tracers_sp500_aristocrats", "weight": 30, "name": "Tracers 配当貴族", "role": "25年連続増配の守り"}
         ]
     }
 ]
@@ -441,13 +730,13 @@ def score_fund(fund: Dict[str, Any]) -> Dict[str, Any]:
     sr_score = min(max((sr - 0.4) / (1.3 - 0.4) * 100, 10), 100)
 
     exp = fund["expense_ratio"]
-    exp_score = min(max((2.0 - exp) / (2.0 - 0.08) * 100, 10), 100)
+    exp_score = min(max((2.0 - exp) / (2.0 - 0.05) * 100, 10), 100)
 
     dd = abs(fund["max_drawdown"])
     dd_score = min(max((40.0 - dd) / (40.0 - 10.0) * 100, 10), 100)
 
     aum = fund["aum_oku"]
-    aum_score = min(max((aum / 5000.0) * 80 + 20, 20), 100)
+    aum_score = min(max((aum / 10000.0) * 80 + 20, 20), 100)
 
     total_score = sr_score * 0.35 + exp_score * 0.25 + dd_score * 0.20 + aum_score * 0.20
 
@@ -485,9 +774,10 @@ def get_all_categories() -> List[str]:
     return [
         "すべて",
         "王道インデックス",
+        "FANG+・ハイテク",
         "インド・新興国",
-        "金・コモディティ・債券",
         "高配当・インカム",
+        "金・債券・バランス",
         "厳選アクティブ・AIテーマ"
     ]
 
@@ -495,11 +785,13 @@ def get_all_categories() -> List[str]:
 def filter_and_sort_funds(
     category: str = "すべて",
     nisa_filter: str = "すべて",
+    expense_filter: str = "すべて",
+    aum_filter: str = "すべて",
     search_query: str = "",
     sort_by: str = "AI総合スコア順"
 ) -> List[Dict[str, Any]]:
     """
-    Filters and sorts funds based on criteria.
+    Filters and sorts funds based on multiple screening criteria.
     """
     results = []
     q = search_query.strip().lower()
@@ -512,6 +804,26 @@ def filter_and_sort_funds(
             continue
         if nisa_filter == "成長投資枠" and not f.get("nisa_growth"):
             continue
+
+        if expense_filter == "0.1%以下 (超低コスト)":
+            if f["expense_ratio"] > 0.105:
+                continue
+        elif expense_filter == "0.2%以下":
+            if f["expense_ratio"] > 0.205:
+                continue
+        elif expense_filter == "0.5%以下":
+            if f["expense_ratio"] > 0.505:
+                continue
+
+        if aum_filter == "1兆円以上 (メガファンド)":
+            if f["aum_oku"] < 10000:
+                continue
+        elif aum_filter == "1,000億円以上":
+            if f["aum_oku"] < 1000:
+                continue
+        elif aum_filter == "500億円以上":
+            if f["aum_oku"] < 500:
+                continue
 
         if q:
             match = (
@@ -535,10 +847,14 @@ def filter_and_sort_funds(
         results.sort(key=lambda x: x["expense_ratio"])
     elif sort_by == "1年リターンが高い順":
         results.sort(key=lambda x: x["return_1y"], reverse=True)
+    elif sort_by == "過去3年(年率)順":
+        results.sort(key=lambda x: x["return_3y_annual"], reverse=True)
     elif sort_by == "シャープレシオ（収益効率）順":
         results.sort(key=lambda x: x["sharpe_ratio"], reverse=True)
     elif sort_by == "純資産が大きい順":
         results.sort(key=lambda x: x["aum_oku"], reverse=True)
+    elif sort_by == "最大下落率が小さい順 (守り重視)":
+        results.sort(key=lambda x: abs(x["max_drawdown"]))
 
     return results
 
@@ -546,8 +862,6 @@ def filter_and_sort_funds(
 def fetch_comparison_chart_data(period: str = "1y") -> Dict[str, Any]:
     """
     Fetches historical cumulative return series for representative asset classes/funds.
-    Uses yfinance proxy tickers (VOO, VT, INDA, IAU, VYM, SOXX).
-    Returns normalized cumulative returns starting at 0%.
     """
     now = time.time()
     cache_key = f"chart_{period}"
@@ -556,14 +870,14 @@ def fetch_comparison_chart_data(period: str = "1y") -> Dict[str, Any]:
         if now - cached["time"] < 1800:
             return cached["data"]
 
-    # Key benchmark funds to compare
     targets = [
-        {"id": "sbi_v_sp500", "label": "SBI・V・S&P500 (米国500社)", "ticker": "VOO", "color": "#1976d2"},
-        {"id": "sbi_ishares_india", "label": "サクっとインド株式 (新興国首位)", "ticker": "INDA", "color": "#f59e0b"},
+        {"id": "ifreenext_fang_plus", "label": "FANG+ (メガテック10社)", "ticker": "FNGS", "color": "#f43f5e"},
+        {"id": "emaxis_slim_sp500", "label": "Slim S&P500 (米国500社)", "ticker": "VOO", "color": "#1976d2"},
+        {"id": "sbi_ishares_india", "label": "サクっとインド株式 (人口世界一)", "ticker": "INDA", "color": "#f59e0b"},
         {"id": "sbi_ishares_gold", "label": "サクっと純金 (有事・防衛)", "ticker": "IAU", "color": "#eab308"},
-        {"id": "sbi_v_all_country", "label": "SBI・V・全世界株式 (オルカン)", "ticker": "VT", "color": "#10b981"},
-        {"id": "sbi_v_high_dividend", "label": "SBI・V・米国高配当 (安定配当)", "ticker": "VYM", "color": "#8b5cf6"},
-        {"id": "emaxis_neo_semiconductor", "label": "Neo 半導体 (ハイテク成長)", "ticker": "SOXX", "color": "#ec4899"}
+        {"id": "emaxis_slim_all_country", "label": "オルカン (全世界株式)", "ticker": "VT", "color": "#10b981"},
+        {"id": "sbi_japan_high_dividend", "label": "SBI日本高配当 (年4回分配)", "ticker": "1489.T", "color": "#8b5cf6"},
+        {"id": "rakuten_sox", "label": "半導体 SOX (ハイテク中核)", "ticker": "SOXX", "color": "#ec4899"}
     ]
 
     tickers = [t["ticker"] for t in targets]
@@ -592,17 +906,74 @@ def fetch_comparison_chart_data(period: str = "1y") -> Dict[str, Any]:
     except Exception as e:
         print(f"Error fetching fund chart data: {e}")
 
-    # Fallback synthetic curves if offline or yfinance rate-limited
     if not series_dict:
         dates = pd.date_range(end=pd.Timestamp.today(), periods=120, freq="B").strftime("%Y-%m-%d").tolist()
         series_dict = {
-            "SBI・V・S&P500 (米国500社)": {"dates": dates, "returns": [round(i * 0.27, 2) for i in range(120)], "color": "#1976d2", "latest": 32.4},
-            "サクっとインド株式 (新興国首位)": {"dates": dates, "returns": [round(i * 0.32, 2) for i in range(120)], "color": "#f59e0b", "latest": 38.6},
+            "FANG+ (メガテック10社)": {"dates": dates, "returns": [round(i * 0.42, 2) for i in range(120)], "color": "#f43f5e", "latest": 51.4},
+            "Slim S&P500 (米国500社)": {"dates": dates, "returns": [round(i * 0.27, 2) for i in range(120)], "color": "#1976d2", "latest": 32.6},
+            "サクっとインド株式 (人口世界一)": {"dates": dates, "returns": [round(i * 0.32, 2) for i in range(120)], "color": "#f59e0b", "latest": 38.6},
             "サクっと純金 (有事・防衛)": {"dates": dates, "returns": [round(i * 0.29, 2) for i in range(120)], "color": "#eab308", "latest": 35.2},
-            "SBI・V・全世界株式 (オルカン)": {"dates": dates, "returns": [round(i * 0.24, 2) for i in range(120)], "color": "#10b981", "latest": 28.5},
-            "SBI・V・米国高配当 (安定配当)": {"dates": dates, "returns": [round(i * 0.19, 2) for i in range(120)], "color": "#8b5cf6", "latest": 22.8},
-            "Neo 半導体 (ハイテク成長)": {"dates": dates, "returns": [round(i * 0.40, 2) for i in range(120)], "color": "#ec4899", "latest": 48.2}
+            "オルカン (全世界株式)": {"dates": dates, "returns": [round(i * 0.24, 2) for i in range(120)], "color": "#10b981", "latest": 28.8},
+            "SBI日本高配当 (年4回分配)": {"dates": dates, "returns": [round(i * 0.23, 2) for i in range(120)], "color": "#8b5cf6", "latest": 28.5},
+            "半導体 SOX (ハイテク中核)": {"dates": dates, "returns": [round(i * 0.41, 2) for i in range(120)], "color": "#ec4899", "latest": 49.5}
         }
 
     _CHART_CACHE[cache_key] = {"time": now, "data": series_dict}
     return series_dict
+
+
+def fetch_individual_fund_chart(fund_id: str, period: str = "1y") -> Optional[Dict[str, Any]]:
+    """
+    Fetches daily OHLCV and moving average indicators for a specific fund via its proxy ticker.
+    """
+    now = time.time()
+    cache_key = f"indiv_{fund_id}_{period}"
+    if cache_key in _INDIVIDUAL_CHART_CACHE:
+        cached = _INDIVIDUAL_CHART_CACHE[cache_key]
+        if now - cached["time"] < 1800:
+            return cached["data"]
+
+    fund_item = next((f for f in SBI_FUNDS_DB if f["id"] == fund_id), None)
+    if not fund_item:
+        return None
+
+    ticker = fund_item.get("proxy_ticker", "VOO")
+
+    try:
+        t = yf.Ticker(ticker)
+        df = t.history(period=period, interval="1d", auto_adjust=True)
+        if df is None or df.empty or len(df) < 5:
+            return None
+
+        df["SMA25"] = df["Close"].rolling(window=min(25, len(df))).mean()
+        df["SMA75"] = df["Close"].rolling(window=min(75, len(df))).mean()
+        
+        # Cumulative return from start of period
+        first_close = float(df["Close"].iloc[0])
+        df["CumReturn"] = ((df["Close"] / first_close) - 1.0) * 100.0
+
+        dates_str = [d.strftime("%Y-%m-%d") for d in df.index]
+
+        result = {
+            "fund": fund_item,
+            "ticker": ticker,
+            "dates": dates_str,
+            "close": [round(float(v), 2) for v in df["Close"].values],
+            "open": [round(float(v), 2) for v in df["Open"].values],
+            "high": [round(float(v), 2) for v in df["High"].values],
+            "low": [round(float(v), 2) for v in df["Low"].values],
+            "volume": [int(v) for v in df["Volume"].values] if "Volume" in df else [],
+            "sma25": [round(float(v), 2) if not pd.isna(v) else None for v in df["SMA25"].values],
+            "sma75": [round(float(v), 2) if not pd.isna(v) else None for v in df["SMA75"].values],
+            "cum_return": [round(float(v), 2) for v in df["CumReturn"].values],
+            "latest_close": round(float(df["Close"].iloc[-1]), 2),
+            "latest_cum_return": round(float(df["CumReturn"].iloc[-1]), 2),
+            "high_52w": round(float(df["High"].max()), 2),
+            "low_52w": round(float(df["Low"].min()), 2),
+        }
+
+        _INDIVIDUAL_CHART_CACHE[cache_key] = {"time": now, "data": result}
+        return result
+    except Exception as e:
+        print(f"Error fetching individual fund chart: {e}")
+        return None

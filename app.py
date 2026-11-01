@@ -8925,14 +8925,14 @@ with tab_fund:
             SBI投資信託パック選定 & 総合分析
         </h2>
         <div style="font-size: 0.92rem; color: var(--secondary-text-color); line-height: 1.5;">
-            SBI証券で人気の<b>『SBI・Vシリーズ』『サクっとシリーズ』『厳選アクティブ』</b>を網羅。<br>
-            信託報酬コスト、シャープレシオ（収益効率）、下落耐性（最大ドローダウン）、純資産流入トレンドをAIが数理選別してスコアリング。
+            SBI証券で圧倒的人気の<b>『eMAXIS Slimシリーズ』『SBI・Vシリーズ』『サクっとシリーズ』『FANG+』『高配当・厳選アクティブ』</b>を全30銘柄以上網羅。<br>
+            信託報酬コスト、シャープレシオ（収益効率）、下落耐性（最大ドローダウン）、純資産総額を個別銘柄同様に多面的スクリーニングし、個別テクニカルチャートまでリアルタイム分析できます。
         </div>
     </div>
     """, unsafe_allow_html=True)
 
     # 1. Curated Preset Packs (Portfolio Builder)
-    with st.expander("AI厳選おすすめパック（最適ポートフォリオ配分）を見る", expanded=True):
+    with st.expander("AI厳選おすすめパック（最適ポートフォリオ配分）を見る", expanded=False):
         st.markdown("<div style='font-size: 0.84rem; color: var(--secondary-text-color); margin-bottom: 12px;'>複数のファンドを黄金比率で組み合わせ、リスクを分散しながら期待リターンを最大化する実戦的パックです。</div>", unsafe_allow_html=True)
         col_p1, col_p2, col_p3 = st.columns(3)
         cols = [col_p1, col_p2, col_p3]
@@ -8961,7 +8961,7 @@ with tab_fund:
     with st.expander("主要アセット・ファンドの累積リターン比較チャートを見る", expanded=True):
         col_c_head, col_c_period = st.columns([2.5, 1.0])
         with col_c_head:
-            st.markdown("<div style='font-size: 0.85rem; color: var(--secondary-text-color); padding-top: 6px;'>S&P500、インド、ゴールド、全世界、高配当、半導体の累積リターン推移（%）を相対比較。凡例クリックで個別表示切替が可能。</div>", unsafe_allow_html=True)
+            st.markdown("<div style='font-size: 0.85rem; color: var(--secondary-text-color); padding-top: 6px;'>FANG+、S&P500、インド、ゴールド、オルカン、日本高配当、半導体の累積リターン推移（%）を相対比較。</div>", unsafe_allow_html=True)
         with col_c_period:
             chart_period = st.segmented_control(
                 "表示期間",
@@ -8995,9 +8995,115 @@ with tab_fund:
             )
             st.plotly_chart(fig_fund, use_container_width=True, config=PLOTLY_CONFIG)
 
-    st.markdown("<div style='margin-bottom: 16px;'></div>", unsafe_allow_html=True)
+    # 1.6 Dedicated Individual Fund Technical Chart (Same as Single Stock Chart)
+    with st.expander("個別ファンドの詳細チャート・テクニカル分析（25日・75日移動平均線）を見る", expanded=True):
+        all_fund_options = {f"{f['nickname']} ({f['category']})": f["id"] for f in sfs.SBI_FUNDS_DB}
+        default_indiv_id = st.session_state.get("selected_indiv_fund_id", "emaxis_slim_all_country")
+        default_label = next((k for k, v in all_fund_options.items() if v == default_indiv_id), list(all_fund_options.keys())[0])
 
-    # 2. Filter & Search Controls
+        col_sel_f, col_sel_period = st.columns([2.5, 1.0])
+        with col_sel_f:
+            selected_indiv_label = st.selectbox(
+                "分析する投資信託を選択",
+                options=list(all_fund_options.keys()),
+                index=list(all_fund_options.keys()).index(default_label) if default_label in all_fund_options else 0,
+                key="indiv_fund_selector"
+            )
+        with col_sel_period:
+            indiv_period = st.segmented_control(
+                "チャート期間",
+                options=["6mo", "1y", "3y", "5y"],
+                default="1y",
+                key="indiv_fund_period_selector"
+            ) or "1y"
+
+        curr_fund_id = all_fund_options[selected_indiv_label]
+        indiv_data = sfs.fetch_individual_fund_chart(curr_fund_id, period=indiv_period)
+
+        if indiv_data:
+            fund_meta = indiv_data["fund"]
+            
+            st.html(f'''<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 8px; margin-bottom: 12px; background: rgba(0,0,0,0.02); padding: 10px 14px; border-radius: 8px; border: 1px solid var(--border-color);">
+<div>
+<div style="font-size: 0.72rem; color: var(--secondary-text-color);">期間累積リターン</div>
+<div style="font-size: 1.15rem; font-weight: 700; color: {'var(--color-gain, #10b981)' if indiv_data['latest_cum_return'] >= 0 else 'var(--color-loss, #f43f5e)'};" class="tabular-nums">{indiv_data['latest_cum_return']:+.2f}%</div>
+</div>
+<div>
+<div style="font-size: 0.72rem; color: var(--secondary-text-color);">期間最高値 / 最安値</div>
+<div style="font-size: 0.95rem; font-weight: 700; color: var(--text-color);" class="tabular-nums">{indiv_data['high_52w']:,} / {indiv_data['low_52w']:,}</div>
+</div>
+<div>
+<div style="font-size: 0.72rem; color: var(--secondary-text-color);">信託報酬 (年率)</div>
+<div style="font-size: 1.05rem; font-weight: 700; color: var(--text-color);" class="tabular-nums">{fund_meta['expense_ratio']:.4f}%</div>
+</div>
+<div>
+<div style="font-size: 0.72rem; color: var(--secondary-text-color);">純資産総額</div>
+<div style="font-size: 1.05rem; font-weight: 700; color: var(--text-color);" class="tabular-nums">{fund_meta['aum_oku']:,} 億円</div>
+</div>
+<div>
+<div style="font-size: 0.72rem; color: var(--secondary-text-color);">シャープレシオ</div>
+<div style="font-size: 1.05rem; font-weight: 700; color: var(--mui-primary, #1976d2);" class="tabular-nums">{fund_meta['sharpe_ratio']:.2f}</div>
+</div>
+</div>''')
+
+            fig_indiv = make_subplots(rows=2, cols=1, shared_xaxes=True, vertical_spacing=0.08, row_heights=[0.7, 0.3])
+
+            fig_indiv.add_trace(go.Scatter(
+                x=indiv_data["dates"],
+                y=indiv_data["close"],
+                mode="lines",
+                name="基準価格 (連動指数)",
+                line=dict(color="#1976d2", width=2),
+                hovertemplate="価格: %{y:,.1f}<extra></extra>"
+            ), row=1, col=1)
+
+            if indiv_data["sma25"] and any(v is not None for v in indiv_data["sma25"]):
+                fig_indiv.add_trace(go.Scatter(
+                    x=indiv_data["dates"],
+                    y=indiv_data["sma25"],
+                    mode="lines",
+                    name="25日移動平均",
+                    line=dict(color="#f97316", width=1.5, dash="dot"),
+                    hovertemplate="25日線: %{y:,.1f}<extra></extra>"
+                ), row=1, col=1)
+
+            if indiv_data["sma75"] and any(v is not None for v in indiv_data["sma75"]):
+                fig_indiv.add_trace(go.Scatter(
+                    x=indiv_data["dates"],
+                    y=indiv_data["sma75"],
+                    mode="lines",
+                    name="75日移動平均",
+                    line=dict(color="#10b981", width=1.5, dash="dash"),
+                    hovertemplate="75日線: %{y:,.1f}<extra></extra>"
+                ), row=1, col=1)
+
+            fig_indiv.add_trace(go.Scatter(
+                x=indiv_data["dates"],
+                y=indiv_data["cum_return"],
+                mode="lines",
+                name="累積リターン (%)",
+                line=dict(color="#8b5cf6", width=1.8),
+                fill="tozeroy",
+                fillcolor="rgba(139, 92, 246, 0.08)",
+                hovertemplate="リターン: %{y:+.2f}%<extra></extra>"
+            ), row=2, col=1)
+
+            fig_indiv.update_layout(
+                height=400,
+                margin=dict(l=10, r=10, t=10, b=10),
+                paper_bgcolor="rgba(0,0,0,0)",
+                plot_bgcolor="rgba(0,0,0,0)",
+                hovermode="x unified",
+                legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1, font=dict(size=10)),
+                xaxis2=dict(showgrid=True, gridcolor="rgba(128,128,128,0.12)"),
+                yaxis=dict(showgrid=True, gridcolor="rgba(128,128,128,0.12)"),
+                yaxis2=dict(showgrid=True, gridcolor="rgba(128,128,128,0.12)", ticksuffix="%")
+            )
+            st.plotly_chart(fig_indiv, use_container_width=True, config=PLOTLY_CONFIG)
+
+    st.markdown("<div style='margin-bottom: 20px;'></div>", unsafe_allow_html=True)
+
+    # 2. Comprehensive Screening & Filter Panel (Same as Single Stock Screener)
     categories = sfs.get_all_categories()
     
     st.html('''<style>
@@ -9022,11 +9128,11 @@ div[class*="st-key-sbi_fund_category_filter"] button span {
         key="sbi_fund_category_filter"
     ) or "すべて"
 
-    col_f1, col_f2, col_f3, col_f4 = st.columns([1.6, 0.9, 1.1, 1.0])
+    col_f1, col_f2, col_f3, col_f4, col_f5 = st.columns([1.5, 0.9, 1.0, 1.0, 1.2])
     with col_f1:
         fund_search = st.text_input(
-            "ファンド名・キーワード・主要組入銘柄で検索",
-            placeholder="例: S&P500、インド、ゴールド、高配当、NVIDIA、ひふみ...",
+            "ファンド名・キーワード・組入銘柄で検索",
+            placeholder="例: オルカン、S&P500、FANG+、インド、高配当、NVIDIA...",
             key="fund_search_query"
         )
     with col_f2:
@@ -9037,39 +9143,65 @@ div[class*="st-key-sbi_fund_category_filter"] button span {
             key="fund_nisa_choice"
         )
     with col_f3:
+        expense_choice = st.selectbox(
+            "信託報酬上限",
+            options=["すべて", "0.1%以下 (超低コスト)", "0.2%以下", "0.5%以下"],
+            index=0,
+            key="fund_expense_choice"
+        )
+    with col_f4:
+        aum_choice = st.selectbox(
+            "純資産規模",
+            options=["すべて", "1兆円以上 (メガファンド)", "1,000億円以上", "500億円以上"],
+            index=0,
+            key="fund_aum_choice"
+        )
+    with col_f5:
         sort_choice = st.selectbox(
             "並び替え（ソート）",
-            options=["AI総合スコア順", "信託報酬が安い順", "1年リターンが高い順", "シャープレシオ（収益効率）順", "純資産が大きい順"],
+            options=[
+                "AI総合スコア順",
+                "信託報酬が安い順",
+                "1年リターンが高い順",
+                "過去3年(年率)順",
+                "シャープレシオ（収益効率）順",
+                "純資産が大きい順",
+                "最大下落率が小さい順 (守り重視)"
+            ],
             index=0,
             key="fund_sort_choice"
         )
-    with col_f4:
+
+    col_view1, col_view2 = st.columns([2.5, 1.0])
+    with col_view2:
         view_mode = st.segmented_control(
-            "表示形式",
-            options=["詳細カード", "一覧表テーブル"],
-            default="詳細カード",
+            "表示形式の選択",
+            options=["詳細カード表示", "徹底比較一覧表"],
+            default="詳細カード表示",
             key="fund_view_mode_toggle"
-        ) or "詳細カード"
+        ) or "詳細カード表示"
 
     # 3. Retrieve Filtered & Ranked Funds
     filtered_funds = sfs.filter_and_sort_funds(
         category=selected_fund_cat,
         nisa_filter=nisa_choice,
+        expense_filter=expense_choice,
+        aum_filter=aum_choice,
         search_query=fund_search,
         sort_by=sort_choice
     )
 
     st.html(f'''<div style="display: flex; justify-content: space-between; align-items: flex-end; margin: 18px 0 12px 0;">
 <div>
-<h3 style="margin: 0 0 2px 0; font-size: 1.2rem; font-weight: 700; color: var(--text-color);">厳選投資信託一覧 ({len(filtered_funds)}本)</h3>
+<h3 style="margin: 0 0 2px 0; font-size: 1.25rem; font-weight: 700; color: var(--text-color);">厳選投資信託スクリーニング結果 ({len(filtered_funds)}本)</h3>
 <div style="font-size: 0.8rem; color: var(--secondary-text-color);">信託報酬・シャープレシオ・最大ドローダウン・純資産を多面的に数理評価</div>
 </div>
-<div style="font-size: 0.78rem; opacity: 0.8; color: var(--secondary-text-color);">基準価額・純資産データ連動</div>
+<div style="font-size: 0.78rem; opacity: 0.8; color: var(--secondary-text-color);">全30銘柄以上 基準価額・純資産データ連動</div>
 </div>''')
 
     if not filtered_funds:
         st.info("条件に一致する投資信託が見つかりませんでした。条件を変更して再検索してください。")
-    elif view_mode == "一覧表テーブル":
+    elif view_mode == "徹底比較一覧表":
         # Comprehensive Comparison Table View
         table_rows = []
         for idx, f in enumerate(filtered_funds, 1):
@@ -9121,7 +9253,7 @@ div[class*="st-key-sbi_fund_category_filter"] button span {
             tsumitate_badge = '<span style="background: rgba(16, 185, 129, 0.12); color: var(--color-gain, #10b981); font-size: 0.7rem; font-weight: 700; padding: 2px 6px; border-radius: 4px;">つみたて枠</span>' if f.get("nisa_tsumitate") else ''
             growth_badge = '<span style="background: rgba(25, 118, 210, 0.12); color: var(--mui-primary, #1976d2); font-size: 0.7rem; font-weight: 700; padding: 2px 6px; border-radius: 4px;">成長枠</span>' if f.get("nisa_growth") else ''
             
-            holdings_html = " ".join([f'<span style="background: rgba(0,0,0,0.04); border: 1px solid var(--border-color); font-size: 0.72rem; padding: 2px 7px; border-radius: 4px; color: var(--text-color);">{h}</span>' for h in f.get("major_holdings", [])[:5]])
+            holdings_html = " ".join([f'<span style="background: rgba(0,0,0,0.04); border: 1px solid var(--border-color); font-size: 0.72rem; padding: 2px 7px; border-radius: 4px; color: var(--text-color);">{h}</span>' for h in f.get("major_holdings", [])[:6]])
 
             st.html(f'''<div class="card" style="padding: 18px 20px; margin-bottom: 16px;">
 <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 10px; margin-bottom: 10px;">
@@ -9173,7 +9305,7 @@ div[class*="st-key-sbi_fund_category_filter"] button span {
 </div>
 </div>
 
-<div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+<div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 12px;">
 <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
 <span style="font-size: 0.72rem; color: var(--secondary-text-color); font-weight: 600;">主要組入対象:</span>
 {holdings_html}
@@ -9181,16 +9313,20 @@ div[class*="st-key-sbi_fund_category_filter"] button span {
 </div>
 </div>''')
 
-            col_fb1, col_fb2 = st.columns([1, 1])
+            col_fb1, col_fb2, col_fb3 = st.columns([1.2, 1.2, 1.0])
             with col_fb1:
-                if st.button("この投資信託をシミュレーション購入準備に追加", key=f"fund_sim_{f['id']}"):
+                if st.button("この投信の個別チャートを表示", key=f"fund_view_chart_{f['id']}"):
+                    st.session_state["selected_indiv_fund_id"] = f["id"]
+                    st.rerun()
+            with col_fb2:
+                if st.button("仮想購入準備に追加", key=f"fund_sim_{f['id']}"):
                     st.session_state["sim_purchase_ticker"] = f"FUND:{f['id']}"
                     st.session_state["sim_purchase_name"] = f['nickname']
                     st.session_state["sim_purchase_price"] = 10000.0
                     st.toast(f"{f['nickname']} をシミュレーション購入準備に追加しました")
-            with col_fb2:
-                if st.button("SBI証券でこの銘柄の詳細・目論見書を確認", key=f"fund_sbi_{f['id']}"):
-                    st.info(f"SBI証券サイトまたはSBI証券アプリで『{f['name']}』を検索して目論見書・運用報告書をご確認いただけます。")
+            with col_fb3:
+                if st.button("SBI証券目論見書", key=f"fund_sbi_{f['id']}"):
+                    st.info(f"SBI証券アプリで『{f['name']}』を検索して目論見書をご確認いただけます。")
 
             st.markdown("<div style='margin-bottom: 20px;'></div>", unsafe_allow_html=True)
 
