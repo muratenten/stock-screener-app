@@ -9119,70 +9119,8 @@ with tab_fund:
 
     st.markdown("<div style='margin-bottom: 20px;'></div>", unsafe_allow_html=True)
 
-    # 2. Comprehensive Screening & Filter Panel (Same as Single Stock Screener)
-    st.markdown("### ⚙️ 投資信託スクリーニング条件の設定")
-    
-    # Preset quick-selector buttons (Like Tab 1)
-    st.markdown("<div style='font-size: 0.88rem; font-weight: 600; color: var(--secondary-text-color); margin-bottom: 6px;'>💡 スクリーニング・プリセット選択:</div>", unsafe_allow_html=True)
-    
-    col_pre1, col_pre2, col_pre3, col_pre4, col_pre5 = st.columns(5) if not is_mobile else (st.container(), st.container(), st.container(), st.container(), st.container())
-    active_fund_pre = st.session_state.get("fund_active_preset", "すべて")
-    
-    if is_mobile:
-        m_p1, m_p2 = st.columns(2)
-        with m_p1:
-            if st.button("全銘柄表示", key="pre_all", use_container_width=True, type="primary" if active_fund_pre == "すべて" else "secondary"):
-                st.session_state["fund_active_preset"] = "すべて"
-                st.session_state["sbi_fund_category_filter"] = "すべて"
-                st.session_state["fund_expense_choice"] = "すべて"
-                st.session_state["fund_aum_choice"] = "すべて"
-                st.rerun()
-            if st.button("👑 低コスト王道", key="pre_core", use_container_width=True, type="primary" if active_fund_pre == "王道インデックス" else "secondary"):
-                st.session_state["fund_active_preset"] = "王道インデックス"
-                st.session_state["sbi_fund_category_filter"] = "王道インデックス"
-                st.session_state["fund_expense_choice"] = "0.1%以下 (超低コスト)"
-                st.rerun()
-        with m_p2:
-            if st.button("🚀 FANG+ハイテク", key="pre_tech", use_container_width=True, type="primary" if active_fund_pre == "FANG+・ハイテク" else "secondary"):
-                st.session_state["fund_active_preset"] = "FANG+・ハイテク"
-                st.session_state["sbi_fund_category_filter"] = "FANG+・ハイテク"
-                st.rerun()
-            if st.button("💰 高配当インカム", key="pre_div", use_container_width=True, type="primary" if active_fund_pre == "高配当・インカム" else "secondary"):
-                st.session_state["fund_active_preset"] = "高配当・インカム"
-                st.session_state["sbi_fund_category_filter"] = "高配当・インカム"
-                st.rerun()
-    else:
-        with col_pre1:
-            if st.button("全銘柄表示", key="pre_all", use_container_width=True, type="primary" if active_fund_pre == "すべて" else "secondary"):
-                st.session_state["fund_active_preset"] = "すべて"
-                st.session_state["sbi_fund_category_filter"] = "すべて"
-                st.session_state["fund_expense_choice"] = "すべて"
-                st.session_state["fund_aum_choice"] = "すべて"
-                st.rerun()
-        with col_pre2:
-            if st.button("👑 低コスト王道", key="pre_core", use_container_width=True, type="primary" if active_fund_pre == "王道インデックス" else "secondary"):
-                st.session_state["fund_active_preset"] = "王道インデックス"
-                st.session_state["sbi_fund_category_filter"] = "王道インデックス"
-                st.session_state["fund_expense_choice"] = "0.1%以下 (超低コスト)"
-                st.rerun()
-        with col_pre3:
-            if st.button("🚀 FANG+ハイテク", key="pre_tech", use_container_width=True, type="primary" if active_fund_pre == "FANG+・ハイテク" else "secondary"):
-                st.session_state["fund_active_preset"] = "FANG+・ハイテク"
-                st.session_state["sbi_fund_category_filter"] = "FANG+・ハイテク"
-                st.rerun()
-        with col_pre4:
-            if st.button("💰 高配当インカム", key="pre_div", use_container_width=True, type="primary" if active_fund_pre == "高配当・インカム" else "secondary"):
-                st.session_state["fund_active_preset"] = "高配当・インカム"
-                st.session_state["sbi_fund_category_filter"] = "高配当・インカム"
-                st.rerun()
-        with col_pre5:
-            if st.button("🛡️ 守り・下落耐性", key="pre_def", use_container_width=True, type="primary" if active_fund_pre == "金・債券・バランス" else "secondary"):
-                st.session_state["fund_active_preset"] = "金・債券・バランス"
-                st.session_state["sbi_fund_category_filter"] = "金・債券・バランス"
-                st.session_state["fund_sort_choice"] = "最大下落率が小さい順 (守り重視)"
-                st.rerun()
-
-    st.markdown("<div style='margin-bottom: 12px;'></div>", unsafe_allow_html=True)
+    # 2. Comprehensive Screening & Filter Panel (Real-time Filter by Genre)
+    st.markdown("### ⚙️ 投資信託の条件絞り込み")
 
     categories = sfs.get_all_categories()
     
@@ -9202,9 +9140,9 @@ div[class*="st-key-sbi_fund_category_filter"] button span {
 </style>''')
 
     selected_fund_cat = st.segmented_control(
-        "ファンド分類（カテゴリー）を選択",
+        "ファンド分類（ジャンル・カテゴリー）を選択",
         options=categories,
-        default=st.session_state.get("sbi_fund_category_filter", "すべて"),
+        default="すべて",
         key="sbi_fund_category_filter"
     ) or "すべて"
 
@@ -9298,7 +9236,7 @@ div[class*="st-key-sbi_fund_category_filter"] button span {
             key="fund_view_mode_toggle"
         ) or "詳細カード表示"
 
-    # 3. Retrieve Filtered & Ranked Funds
+    # 3. Retrieve Filtered & Ranked Funds (Instantly Reactive)
     filtered_funds = sfs.filter_and_sort_funds(
         category=selected_fund_cat,
         nisa_filter=nisa_choice,
@@ -9308,20 +9246,12 @@ div[class*="st-key-sbi_fund_category_filter"] button span {
         sort_by=sort_choice
     )
 
-    # Centered prominent action bar (Identical to Single Stock Screener)
-    st.markdown(f"<div style='margin-bottom: 6px; font-weight: 600;'>現在のスクリーニング該当数: <span style='font-size: 1.15rem; color: var(--mui-primary, #1976d2); font-weight: 700;'>{len(filtered_funds)} 本</span> / 全 {len(sfs.SBI_FUNDS_DB)} 本</div>", unsafe_allow_html=True)
-    if st.button("🔍 スクリーニング実行", type="primary", use_container_width=True, key="btn_run_fund_screen"):
-        st.toast("スクリーニング条件を適用しました！")
-        st.rerun()
-
-    st.markdown("<div style='margin-bottom: 14px;'></div>", unsafe_allow_html=True)
-
     st.html(f'''<div style="display: flex; justify-content: space-between; align-items: flex-end; margin: 18px 0 12px 0;">
 <div>
 <h3 style="margin: 0 0 2px 0; font-size: 1.25rem; font-weight: 700; color: var(--text-color);">厳選投資信託スクリーニング結果 ({len(filtered_funds)}本)</h3>
-<div style="font-size: 0.8rem; color: var(--secondary-text-color);">信託報酬・シャープレシオ・最大ドローダウン・純資産を多面的に数理評価</div>
+<div style="font-size: 0.8rem; color: var(--secondary-text-color);">ジャンルや条件を選択するとリアルタイムに即時絞り込まれます</div>
 </div>
-<div style="font-size: 0.78rem; opacity: 0.8; color: var(--secondary-text-color);">全 {len(sfs.SBI_FUNDS_DB)} 銘柄 基準価額・純資産データ連動</div>
+<div style="font-size: 0.84rem; font-weight: 600; color: var(--mui-primary, #1976d2);">該当: <span style="font-size: 1.15rem; font-weight: 700;" class="tabular-nums">{len(filtered_funds)}</span> / 全 {len(sfs.SBI_FUNDS_DB)} 本</div>
 </div>''')
 
     if not filtered_funds:
