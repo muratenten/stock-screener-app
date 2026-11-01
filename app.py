@@ -9104,6 +9104,70 @@ with tab_fund:
     st.markdown("<div style='margin-bottom: 20px;'></div>", unsafe_allow_html=True)
 
     # 2. Comprehensive Screening & Filter Panel (Same as Single Stock Screener)
+    st.markdown("### ⚙️ 投資信託スクリーニング条件の設定")
+    
+    # Preset quick-selector buttons (Like Tab 1)
+    st.markdown("<div style='font-size: 0.88rem; font-weight: 600; color: var(--secondary-text-color); margin-bottom: 6px;'>💡 スクリーニング・プリセット選択:</div>", unsafe_allow_html=True)
+    
+    col_pre1, col_pre2, col_pre3, col_pre4, col_pre5 = st.columns(5) if not is_mobile else (st.container(), st.container(), st.container(), st.container(), st.container())
+    active_fund_pre = st.session_state.get("fund_active_preset", "すべて")
+    
+    if is_mobile:
+        m_p1, m_p2 = st.columns(2)
+        with m_p1:
+            if st.button("全銘柄表示", key="pre_all", use_container_width=True, type="primary" if active_fund_pre == "すべて" else "secondary"):
+                st.session_state["fund_active_preset"] = "すべて"
+                st.session_state["sbi_fund_category_filter"] = "すべて"
+                st.session_state["fund_expense_choice"] = "すべて"
+                st.session_state["fund_aum_choice"] = "すべて"
+                st.rerun()
+            if st.button("👑 低コスト王道", key="pre_core", use_container_width=True, type="primary" if active_fund_pre == "王道インデックス" else "secondary"):
+                st.session_state["fund_active_preset"] = "王道インデックス"
+                st.session_state["sbi_fund_category_filter"] = "王道インデックス"
+                st.session_state["fund_expense_choice"] = "0.1%以下 (超低コスト)"
+                st.rerun()
+        with m_p2:
+            if st.button("🚀 FANG+ハイテク", key="pre_tech", use_container_width=True, type="primary" if active_fund_pre == "FANG+・ハイテク" else "secondary"):
+                st.session_state["fund_active_preset"] = "FANG+・ハイテク"
+                st.session_state["sbi_fund_category_filter"] = "FANG+・ハイテク"
+                st.rerun()
+            if st.button("💰 高配当インカム", key="pre_div", use_container_width=True, type="primary" if active_fund_pre == "高配当・インカム" else "secondary"):
+                st.session_state["fund_active_preset"] = "高配当・インカム"
+                st.session_state["sbi_fund_category_filter"] = "高配当・インカム"
+                st.rerun()
+    else:
+        with col_pre1:
+            if st.button("全銘柄表示", key="pre_all", use_container_width=True, type="primary" if active_fund_pre == "すべて" else "secondary"):
+                st.session_state["fund_active_preset"] = "すべて"
+                st.session_state["sbi_fund_category_filter"] = "すべて"
+                st.session_state["fund_expense_choice"] = "すべて"
+                st.session_state["fund_aum_choice"] = "すべて"
+                st.rerun()
+        with col_pre2:
+            if st.button("👑 低コスト王道", key="pre_core", use_container_width=True, type="primary" if active_fund_pre == "王道インデックス" else "secondary"):
+                st.session_state["fund_active_preset"] = "王道インデックス"
+                st.session_state["sbi_fund_category_filter"] = "王道インデックス"
+                st.session_state["fund_expense_choice"] = "0.1%以下 (超低コスト)"
+                st.rerun()
+        with col_pre3:
+            if st.button("🚀 FANG+ハイテク", key="pre_tech", use_container_width=True, type="primary" if active_fund_pre == "FANG+・ハイテク" else "secondary"):
+                st.session_state["fund_active_preset"] = "FANG+・ハイテク"
+                st.session_state["sbi_fund_category_filter"] = "FANG+・ハイテク"
+                st.rerun()
+        with col_pre4:
+            if st.button("💰 高配当インカム", key="pre_div", use_container_width=True, type="primary" if active_fund_pre == "高配当・インカム" else "secondary"):
+                st.session_state["fund_active_preset"] = "高配当・インカム"
+                st.session_state["sbi_fund_category_filter"] = "高配当・インカム"
+                st.rerun()
+        with col_pre5:
+            if st.button("🛡️ 守り・下落耐性", key="pre_def", use_container_width=True, type="primary" if active_fund_pre == "金・債券・バランス" else "secondary"):
+                st.session_state["fund_active_preset"] = "金・債券・バランス"
+                st.session_state["sbi_fund_category_filter"] = "金・債券・バランス"
+                st.session_state["fund_sort_choice"] = "最大下落率が小さい順 (守り重視)"
+                st.rerun()
+
+    st.markdown("<div style='margin-bottom: 12px;'></div>", unsafe_allow_html=True)
+
     categories = sfs.get_all_categories()
     
     st.html('''<style>
@@ -9124,55 +9188,92 @@ div[class*="st-key-sbi_fund_category_filter"] button span {
     selected_fund_cat = st.segmented_control(
         "ファンド分類（カテゴリー）を選択",
         options=categories,
-        default="すべて",
+        default=st.session_state.get("sbi_fund_category_filter", "すべて"),
         key="sbi_fund_category_filter"
     ) or "すべて"
 
-    col_f1, col_f2, col_f3, col_f4, col_f5 = st.columns([1.5, 0.9, 1.0, 1.0, 1.2])
-    with col_f1:
+    # Responsive Filter Layout (Mobile friendly, never squished!)
+    if is_mobile:
         fund_search = st.text_input(
-            "ファンド名・キーワード・組入銘柄で検索",
+            "🔍 ファンド名・キーワード・組入銘柄で検索",
             placeholder="例: オルカン、S&P500、FANG+、インド、高配当、NVIDIA...",
             key="fund_search_query"
         )
-    with col_f2:
-        nisa_choice = st.selectbox(
-            "NISA投資枠",
-            options=["すべて", "つみたて投資枠", "成長投資枠"],
-            index=0,
-            key="fund_nisa_choice"
-        )
-    with col_f3:
-        expense_choice = st.selectbox(
-            "信託報酬上限",
-            options=["すべて", "0.1%以下 (超低コスト)", "0.2%以下", "0.5%以下"],
-            index=0,
-            key="fund_expense_choice"
-        )
-    with col_f4:
-        aum_choice = st.selectbox(
-            "純資産規模",
-            options=["すべて", "1兆円以上 (メガファンド)", "1,000億円以上", "500億円以上"],
-            index=0,
-            key="fund_aum_choice"
-        )
-    with col_f5:
-        sort_choice = st.selectbox(
-            "並び替え（ソート）",
-            options=[
-                "AI総合スコア順",
-                "信託報酬が安い順",
-                "1年リターンが高い順",
-                "過去3年(年率)順",
-                "シャープレシオ（収益効率）順",
-                "純資産が大きい順",
-                "最大下落率が小さい順 (守り重視)"
-            ],
-            index=0,
-            key="fund_sort_choice"
-        )
+        col_m_f1, col_m_f2 = st.columns(2)
+        with col_m_f1:
+            nisa_choice = st.selectbox(
+                "NISA投資枠",
+                options=["すべて", "つみたて投資枠", "成長投資枠"],
+                key="fund_nisa_choice"
+            )
+            expense_choice = st.selectbox(
+                "信託報酬上限",
+                options=["すべて", "0.1%以下 (超低コスト)", "0.2%以下", "0.5%以下"],
+                key="fund_expense_choice"
+            )
+        with col_m_f2:
+            aum_choice = st.selectbox(
+                "純資産規模",
+                options=["すべて", "1兆円以上 (メガファンド)", "1,000億円以上", "500億円以上"],
+                key="fund_aum_choice"
+            )
+            sort_choice = st.selectbox(
+                "並び替え",
+                options=[
+                    "AI総合スコア順",
+                    "信託報酬が安い順",
+                    "1年リターンが高い順",
+                    "過去3年(年率)順",
+                    "シャープレシオ（収益効率）順",
+                    "純資産が大きい順",
+                    "最大下落率が小さい順 (守り重視)"
+                ],
+                key="fund_sort_choice"
+            )
+    else:
+        col_f_row1_1, col_f_row1_2 = st.columns([2.2, 1.2])
+        with col_f_row1_1:
+            fund_search = st.text_input(
+                "🔍 ファンド名・キーワード・組入銘柄で検索",
+                placeholder="例: オルカン、S&P500、FANG+、インド、高配当、NVIDIA、ひふみ...",
+                key="fund_search_query"
+            )
+        with col_f_row1_2:
+            nisa_choice = st.selectbox(
+                "NISA投資枠の絞り込み",
+                options=["すべて", "つみたて投資枠", "成長投資枠"],
+                key="fund_nisa_choice"
+            )
 
-    col_view1, col_view2 = st.columns([2.5, 1.0])
+        col_f_row2_1, col_f_row2_2, col_f_row2_3 = st.columns([1, 1, 1.3])
+        with col_f_row2_1:
+            expense_choice = st.selectbox(
+                "信託報酬コスト上限",
+                options=["すべて", "0.1%以下 (超低コスト)", "0.2%以下", "0.5%以下"],
+                key="fund_expense_choice"
+            )
+        with col_f_row2_2:
+            aum_choice = st.selectbox(
+                "純資産総額規模",
+                options=["すべて", "1兆円以上 (メガファンド)", "1,000億円以上", "500億円以上"],
+                key="fund_aum_choice"
+            )
+        with col_f_row2_3:
+            sort_choice = st.selectbox(
+                "並び替え（ソート）",
+                options=[
+                    "AI総合スコア順",
+                    "信託報酬が安い順",
+                    "1年リターンが高い順",
+                    "過去3年(年率)順",
+                    "シャープレシオ（収益効率）順",
+                    "純資産が大きい順",
+                    "最大下落率が小さい順 (守り重視)"
+                ],
+                key="fund_sort_choice"
+            )
+
+    col_view1, col_view2 = st.columns([2.0, 1.2])
     with col_view2:
         view_mode = st.segmented_control(
             "表示形式の選択",
@@ -9190,6 +9291,17 @@ div[class*="st-key-sbi_fund_category_filter"] button span {
         search_query=fund_search,
         sort_by=sort_choice
     )
+
+    # Prominent Action / Status Bar
+    col_act1, col_act2 = st.columns([2.2, 1.0])
+    with col_act1:
+        st.markdown(f"**現在のスクリーニング該当数**: <span style='font-size: 1.2rem; color: var(--mui-primary, #1976d2); font-weight: 700;'>{len(filtered_funds)} 本</span> / 全 {len(sfs.SBI_FUNDS_DB)} 本", unsafe_allow_html=True)
+    with col_act2:
+        if st.button("🔍 スクリーニング実行", type="primary", use_container_width=True, key="btn_run_fund_screen"):
+            st.toast("スクリーニング条件を適用しました！")
+            st.rerun()
+
+    st.markdown("<div style='margin-bottom: 14px;'></div>", unsafe_allow_html=True)
 
     st.html(f'''<div style="display: flex; justify-content: space-between; align-items: flex-end; margin: 18px 0 12px 0;">
 <div>
