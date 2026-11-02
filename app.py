@@ -269,95 +269,70 @@ else:
         -webkit-text-fill-color: #1e293b !important;
     }
 
-    /* 7. Segmented Controls - Active State (Royal Blue) */
-    div[data-testid="stButtonGroup"] button[aria-checked="true"],
-    div[data-baseweb="button-group"] button[aria-checked="true"],
-    div[data-testid="stSegmentedControl"] button[aria-checked="true"],
-    button[data-testid*="segmented_control"][aria-checked="true"],
-    button[data-testid="stBaseButton-segmented_controlActive"],
-    [data-testid="stSidebar"] [data-baseweb="button-group"] button[aria-checked="true"],
-    [data-testid="stSidebar"] [data-testid="stButtonGroup"] button[aria-checked="true"],
-    [data-testid="stSidebar"] div[data-testid="stSegmentedControl"] button[aria-checked="true"],
-    [data-testid="stSidebar"] button[data-testid*="segmented_control"][aria-checked="true"],
-    [data-testid="stSidebar"] button[data-testid="stBaseButton-segmented_controlActive"] {
+    /* 7. Segmented Controls - Active State (Royal Blue Button) */
+    html body [data-testid="stApp"] [data-testid="stSidebar"] button[data-testid="stBaseButton-segmented_controlActive"],
+    html body [data-testid="stApp"] button[data-testid="stBaseButton-segmented_controlActive"],
+    [data-testid="stSidebar"] button[data-testid="stBaseButton-segmented_controlActive"],
+    button[data-testid="stBaseButton-segmented_controlActive"] {
         background-color: #1976d2 !important;
         background: #1976d2 !important;
         border: 1px solid #1976d2 !important;
         color: #ffffff !important;
-        box-shadow: 0 2px 8px rgba(25, 118, 210, 0.3) !important;
+        box-shadow: 0 2px 8px rgba(25, 118, 210, 0.35) !important;
     }
-    div[data-testid="stButtonGroup"] button[aria-checked="true"] *,
-    div[data-baseweb="button-group"] button[aria-checked="true"] *,
-    div[data-testid="stSegmentedControl"] button[aria-checked="true"] *,
-    button[data-testid*="segmented_control"][aria-checked="true"] *,
-    button[data-testid="stBaseButton-segmented_controlActive"] *,
-    [data-testid="stSidebar"] [data-baseweb="button-group"] button[aria-checked="true"] *,
-    [data-testid="stSidebar"] [data-testid="stButtonGroup"] button[aria-checked="true"] *,
-    [data-testid="stSidebar"] div[data-testid="stSegmentedControl"] button[aria-checked="true"] *,
-    [data-testid="stSidebar"] button[data-testid*="segmented_control"][aria-checked="true"] *,
-    [data-testid="stSidebar"] button[data-testid="stBaseButton-segmented_controlActive"] * {
+    html body [data-testid="stApp"] [data-testid="stSidebar"] button[data-testid="stBaseButton-segmented_controlActive"] *,
+    html body [data-testid="stApp"] button[data-testid="stBaseButton-segmented_controlActive"] *,
+    [data-testid="stSidebar"] button[data-testid="stBaseButton-segmented_controlActive"] *,
+    button[data-testid="stBaseButton-segmented_controlActive"] * {
         color: #ffffff !important;
         -webkit-text-fill-color: #ffffff !important;
     }
-    div[data-testid="stButtonGroup"] button[aria-checked="true"] svg,
-    div[data-baseweb="button-group"] button[aria-checked="true"] svg,
-    div[data-testid="stSegmentedControl"] button[aria-checked="true"] svg,
-    button[data-testid*="segmented_control"][aria-checked="true"] svg,
-    button[data-testid="stBaseButton-segmented_controlActive"] svg,
-    [data-testid="stSidebar"] [data-baseweb="button-group"] button[aria-checked="true"] svg,
-    [data-testid="stSidebar"] [data-testid="stButtonGroup"] button[aria-checked="true"] svg,
-    [data-testid="stSidebar"] div[data-testid="stSegmentedControl"] button[aria-checked="true"] svg,
-    [data-testid="stSidebar"] button[data-testid*="segmented_control"][aria-checked="true"] svg,
-    [data-testid="stSidebar"] button[data-testid="stBaseButton-segmented_controlActive"] svg {
+    html body [data-testid="stApp"] [data-testid="stSidebar"] button[data-testid="stBaseButton-segmented_controlActive"] svg,
+    html body [data-testid="stApp"] button[data-testid="stBaseButton-segmented_controlActive"] svg,
+    [data-testid="stSidebar"] button[data-testid="stBaseButton-segmented_controlActive"] svg,
+    button[data-testid="stBaseButton-segmented_controlActive"] svg {
         stroke: #ffffff !important;
+        fill: #ffffff !important;
     }
 
-    /* 8. Segmented Controls - Unselected State (White Background + Slate Text) */
-    div[data-testid="stButtonGroup"] button[aria-checked="false"],
-    div[data-baseweb="button-group"] button[aria-checked="false"],
-    div[data-testid="stSegmentedControl"] button[aria-checked="false"],
-    button[data-testid*="segmented_control"][aria-checked="false"],
-    [data-testid="stSidebar"] [data-baseweb="button-group"] button[aria-checked="false"],
-    [data-testid="stSidebar"] [data-testid="stButtonGroup"] button[aria-checked="false"],
-    [data-testid="stSidebar"] div[data-testid="stSegmentedControl"] button[aria-checked="false"],
-    [data-testid="stSidebar"] button[data-testid*="segmented_control"][aria-checked="false"] {
+    /* 8. Segmented Controls - Unselected State (Light Crisp White/Slate) */
+    html body [data-testid="stApp"] [data-testid="stSidebar"] button[data-testid="stBaseButton-segmented_control"],
+    html body [data-testid="stApp"] button[data-testid="stBaseButton-segmented_control"],
+    [data-testid="stSidebar"] button[data-testid="stBaseButton-segmented_control"],
+    button[data-testid="stBaseButton-segmented_control"] {
         background-color: #ffffff !important;
         background: #ffffff !important;
-        border: 1px solid rgba(0, 0, 0, 0.15) !important;
+        border: 1px solid rgba(0, 0, 0, 0.16) !important;
         color: #1e293b !important;
     }
-    div[data-testid="stButtonGroup"] button[aria-checked="false"] *,
-    div[data-baseweb="button-group"] button[aria-checked="false"] *,
-    div[data-testid="stSegmentedControl"] button[aria-checked="false"] *,
-    button[data-testid*="segmented_control"][aria-checked="false"] *,
-    [data-testid="stSidebar"] [data-baseweb="button-group"] button[aria-checked="false"] *,
-    [data-testid="stSidebar"] [data-testid="stButtonGroup"] button[aria-checked="false"] *,
-    [data-testid="stSidebar"] div[data-testid="stSegmentedControl"] button[aria-checked="false"] *,
-    [data-testid="stSidebar"] button[data-testid*="segmented_control"][aria-checked="false"] * {
+    html body [data-testid="stApp"] [data-testid="stSidebar"] button[data-testid="stBaseButton-segmented_control"] *,
+    html body [data-testid="stApp"] button[data-testid="stBaseButton-segmented_control"] *,
+    [data-testid="stSidebar"] button[data-testid="stBaseButton-segmented_control"] *,
+    button[data-testid="stBaseButton-segmented_control"] * {
         color: #1e293b !important;
         -webkit-text-fill-color: #1e293b !important;
     }
-    div[data-testid="stButtonGroup"] button[aria-checked="false"] svg,
-    div[data-baseweb="button-group"] button[aria-checked="false"] svg,
-    div[data-testid="stSegmentedControl"] button[aria-checked="false"] svg,
-    button[data-testid*="segmented_control"][aria-checked="false"] svg,
-    [data-testid="stSidebar"] [data-baseweb="button-group"] button[aria-checked="false"] svg,
-    [data-testid="stSidebar"] [data-testid="stButtonGroup"] button[aria-checked="false"] svg,
-    [data-testid="stSidebar"] div[data-testid="stSegmentedControl"] button[aria-checked="false"] svg,
-    [data-testid="stSidebar"] button[data-testid*="segmented_control"][aria-checked="false"] svg {
+    html body [data-testid="stApp"] [data-testid="stSidebar"] button[data-testid="stBaseButton-segmented_control"] svg,
+    html body [data-testid="stApp"] button[data-testid="stBaseButton-segmented_control"] svg,
+    [data-testid="stSidebar"] button[data-testid="stBaseButton-segmented_control"] svg,
+    button[data-testid="stBaseButton-segmented_control"] svg {
         stroke: #1e293b !important;
     }
 
     /* 9. Dropdown Selectboxes in Light Mode (Pristine White with Subtle Border) */
-    html body [data-testid="stApp"] div[data-testid="stSelectbox"] div[data-baseweb="select"],
-    html body [data-testid="stApp"] div[data-testid="stSelectbox"] div[data-baseweb="select"] > div,
+    html body [data-testid="stApp"] [data-testid="stSelectbox"] [data-baseweb="select"],
+    html body [data-testid="stApp"] [data-testid="stSelectbox"] [data-baseweb="select"] div,
+    html body [data-testid="stApp"] [data-testid="stSelectbox"] [data-baseweb="select"] > div,
+    html body [data-testid="stApp"] [data-testid="stSelectbox"] [data-baseweb="select"] [role="combobox"],
     html body [data-testid="stApp"] div[data-baseweb="select"],
+    html body [data-testid="stApp"] div[data-baseweb="select"] div,
     html body [data-testid="stApp"] div[data-baseweb="select"] > div,
     html body [data-testid="stApp"] div[data-baseweb="select"] [role="combobox"],
-    html body [data-testid="stApp"] [data-baseweb="select"] > div:first-child,
     div[data-testid="stSelectbox"] div[data-baseweb="select"],
+    div[data-testid="stSelectbox"] div[data-baseweb="select"] div,
     div[data-testid="stSelectbox"] div[data-baseweb="select"] > div,
     div[data-baseweb="select"],
+    div[data-baseweb="select"] div,
     div[data-baseweb="select"] > div,
     div[data-baseweb="select"] [role="combobox"] {
         background-color: #ffffff !important;
@@ -365,12 +340,12 @@ else:
         border: 1px solid rgba(0, 0, 0, 0.23) !important;
         color: #1e293b !important;
     }
-    html body [data-testid="stApp"] div[data-testid="stSelectbox"] div[data-baseweb="select"] *,
+    html body [data-testid="stApp"] [data-testid="stSelectbox"] [data-baseweb="select"] *,
+    html body [data-testid="stApp"] [data-testid="stSelectbox"] [data-baseweb="select"] div *,
     html body [data-testid="stApp"] div[data-baseweb="select"] *,
-    html body [data-testid="stApp"] div[data-baseweb="select"] [role="combobox"] *,
+    html body [data-testid="stApp"] div[data-baseweb="select"] div *,
     div[data-testid="stSelectbox"] div[data-baseweb="select"] *,
     div[data-baseweb="select"] *,
-    div[data-baseweb="select"] [role="combobox"] *,
     div[data-baseweb="select"] p,
     div[data-baseweb="select"] span {
         color: #1e293b !important;
@@ -420,6 +395,9 @@ else:
     div[role="tablist"] {
         border-bottom: 1px solid rgba(0, 0, 0, 0.12) !important;
     }
+    html body [data-testid="stApp"] [data-testid="stTabs"] button[role="tab"]:not([aria-selected="true"]),
+    html body [data-testid="stApp"] [data-testid="stTabs"] button[data-baseweb="tab"]:not([aria-selected="true"]),
+    html body [data-testid="stApp"] [data-testid="stTabs"] [data-baseweb="tab"]:not([aria-selected="true"]),
     div[data-testid="stTabs"] button[role="tab"]:not([aria-selected="true"]),
     div[data-testid="stTabs"] button[data-baseweb="tab"]:not([aria-selected="true"]),
     div[data-testid="stTabs"] [data-baseweb="tab"]:not([aria-selected="true"]),
@@ -428,12 +406,22 @@ else:
         font-weight: 600 !important;
         opacity: 1 !important;
     }
+    html body [data-testid="stApp"] [data-testid="stTabs"] button[role="tab"]:not([aria-selected="true"]) *,
+    html body [data-testid="stApp"] [data-testid="stTabs"] button[data-baseweb="tab"]:not([aria-selected="true"]) *,
+    html body [data-testid="stApp"] [data-testid="stTabs"] [data-baseweb="tab"]:not([aria-selected="true"]) *,
+    html body [data-testid="stApp"] [data-testid="stTabs"] [data-baseweb="tab"]:not([aria-selected="true"]) div,
+    html body [data-testid="stApp"] [data-testid="stTabs"] [data-baseweb="tab"]:not([aria-selected="true"]) p,
+    html body [data-testid="stApp"] [data-testid="stTabs"] [data-baseweb="tab"]:not([aria-selected="true"]) span,
     div[data-testid="stTabs"] button[role="tab"]:not([aria-selected="true"]) *,
+    div[data-testid="stTabs"] button[data-baseweb="tab"]:not([aria-selected="true"]) *,
+    div[data-testid="stTabs"] [data-baseweb="tab"]:not([aria-selected="true"]) *,
     button[data-baseweb="tab"]:not([aria-selected="true"]) * {
         color: #334155 !important;
         -webkit-text-fill-color: #334155 !important;
         opacity: 1 !important;
     }
+    html body [data-testid="stApp"] [data-testid="stTabs"] button[role="tab"]:not([aria-selected="true"]) svg,
+    html body [data-testid="stApp"] [data-testid="stTabs"] [data-baseweb="tab"]:not([aria-selected="true"]) svg,
     div[data-testid="stTabs"] button[role="tab"]:not([aria-selected="true"]) svg,
     button[data-baseweb="tab"]:not([aria-selected="true"]) svg {
         stroke: #334155 !important;
@@ -2524,6 +2512,8 @@ st.components.v1.html(f"""<script>
 
     // Embedded Lucide Icons SVG dictionary for 0ms instantaneous rendering
     const lucideSvgMap = {
+        'sun': '<svg class="lucide lucide-sun feather-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2"></path><path d="M12 20v2"></path><path d="m4.93 4.93 1.41 1.41"></path><path d="m17.66 17.66 1.41 1.41"></path><path d="M2 12h2"></path><path d="M20 12h2"></path><path d="m6.34 17.66-1.41 1.41"></path><path d="m19.07 4.93-1.41 1.41"></path></svg>',
+        'moon': '<svg class="lucide lucide-moon feather-icon" viewBox="0 0 24 24"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"></path></svg>',
         'search': '<svg class="lucide lucide-search feather-icon" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path></svg>',
         'star': '<svg class="lucide lucide-star feather-icon" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>',
         'sparkles': '<svg class="lucide lucide-sparkles feather-icon" viewBox="0 0 24 24"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275z"></path></svg>',
@@ -2880,25 +2870,47 @@ st.components.v1.html(f"""<script>
                     }
                 }
                 
-                // Clean inline styles on tabs and selectboxes so CSS controls them 100% reliably
-                doc.querySelectorAll('[data-testid="stTabs"] [data-baseweb="tab"], [data-baseweb="tab"], button[role="tab"]').forEach(tab => {
-                    tab.style.removeProperty('color');
-                    tab.style.removeProperty('opacity');
-                    tab.querySelectorAll('p, span, div').forEach(el => {
-                        el.style.removeProperty('color');
-                        el.style.removeProperty('-webkit-text-fill-color');
-                        el.style.removeProperty('opacity');
+                // Enforce strict separation between themes for tabs and selectboxes
+                if (!isDark) {
+                    // LIGHT MODE: Guarantee pristine pure white selectboxes and high-contrast slate unselected tabs
+                    doc.querySelectorAll('[data-testid="stSelectbox"] [data-baseweb="select"], [data-testid="stSelectbox"] [data-baseweb="select"] > div, [data-testid="stSelectbox"] [data-baseweb="select"] div').forEach(box => {
+                        box.style.setProperty('background-color', '#ffffff', 'important');
+                        box.style.setProperty('background', '#ffffff', 'important');
+                        box.style.setProperty('border-color', 'rgba(0, 0, 0, 0.23)', 'important');
+                        box.querySelectorAll('p, span').forEach(el => {
+                            el.style.setProperty('color', '#1e293b', 'important');
+                            el.style.setProperty('-webkit-text-fill-color', '#1e293b', 'important');
+                        });
                     });
-                });
-                doc.querySelectorAll('div[data-testid="stSelectbox"] div[data-baseweb="select"], div[data-baseweb="select"], div[data-baseweb="select"] > div, div[data-baseweb="select"] [role="combobox"]').forEach(box => {
-                    box.style.removeProperty('background');
-                    box.style.removeProperty('background-color');
-                    box.style.removeProperty('border');
-                    box.querySelectorAll('p, span, div, [role="combobox"]').forEach(el => {
-                        el.style.removeProperty('color');
-                        el.style.removeProperty('-webkit-text-fill-color');
+                    doc.querySelectorAll('[data-testid="stTabs"] [data-baseweb="tab"]:not([aria-selected="true"]), [data-testid="stTabs"] button[role="tab"]:not([aria-selected="true"])').forEach(tab => {
+                        tab.style.setProperty('color', '#334155', 'important');
+                        tab.querySelectorAll('p, span').forEach(el => {
+                            el.style.setProperty('color', '#334155', 'important');
+                            el.style.setProperty('-webkit-text-fill-color', '#334155', 'important');
+                        });
                     });
-                });
+                } else {
+                    // DARK MODE: Strictly preserve pristine dark state by cleaning any potential light inline styles
+                    doc.querySelectorAll('[data-testid="stTabs"] [data-baseweb="tab"], [data-baseweb="tab"], button[role="tab"]').forEach(tab => {
+                        tab.style.removeProperty('color');
+                        tab.style.removeProperty('opacity');
+                        tab.querySelectorAll('p, span, div').forEach(el => {
+                            el.style.removeProperty('color');
+                            el.style.removeProperty('-webkit-text-fill-color');
+                            el.style.removeProperty('opacity');
+                        });
+                    });
+                    doc.querySelectorAll('div[data-testid="stSelectbox"] div[data-baseweb="select"], div[data-baseweb="select"], div[data-baseweb="select"] > div, div[data-baseweb="select"] [role="combobox"]').forEach(box => {
+                        box.style.removeProperty('background');
+                        box.style.removeProperty('background-color');
+                        box.style.removeProperty('border');
+                        box.style.removeProperty('border-color');
+                        box.querySelectorAll('p, span, div, [role="combobox"]').forEach(el => {
+                            el.style.removeProperty('color');
+                            el.style.removeProperty('-webkit-text-fill-color');
+                        });
+                    });
+                }
             } catch(e) {}
         });
     }
