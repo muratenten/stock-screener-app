@@ -99,22 +99,30 @@ st.html(f"""
 }}
 
 /* Early Dropdown Selectbox Theme Sync (Dark Slate in Dark Mode) */
+div[data-testid="stSelectbox"] div[data-baseweb="select"],
 div[data-testid="stSelectbox"] div[data-baseweb="select"] > div,
-div[data-baseweb="select"] > div {{
+div[data-baseweb="select"],
+div[data-baseweb="select"] > div,
+div[data-baseweb="select"] [role="combobox"] {{
     background-color: {'rgba(255, 255, 255, 0.08)' if is_dark else '#ffffff'} !important;
     background: {'rgba(255, 255, 255, 0.08)' if is_dark else '#ffffff'} !important;
     border: 1px solid {'rgba(255, 255, 255, 0.18)' if is_dark else 'rgba(0, 0, 0, 0.23)'} !important;
     color: {'#f1f5f9' if is_dark else '#1e293b'} !important;
 }}
-div[data-testid="stSelectbox"] div[data-baseweb="select"] > div *,
-div[data-baseweb="select"] > div *,
-div[data-baseweb="select"] [role="combobox"] * {{
+div[data-testid="stSelectbox"] div[data-baseweb="select"] *,
+div[data-baseweb="select"] *,
+div[data-baseweb="select"] [role="combobox"] *,
+div[data-baseweb="select"] p,
+div[data-baseweb="select"] span {{
     color: {'#f1f5f9' if is_dark else '#1e293b'} !important;
+    -webkit-text-fill-color: {'#f1f5f9' if is_dark else '#1e293b'} !important;
 }}
-div[data-testid="stSelectbox"] div[data-baseweb="select"] [data-baseweb="icon"] svg,
+div[data-testid="stSelectbox"] svg,
+div[data-baseweb="select"] svg,
 div[data-baseweb="select"] [data-baseweb="icon"] svg {{
     fill: {'#cbd5e1' if is_dark else '#64748b'} !important;
     color: {'#cbd5e1' if is_dark else '#64748b'} !important;
+    stroke: {'#cbd5e1' if is_dark else '#64748b'} !important;
 }}
 
 /* Early Tab Typography Luminance Sync (High Luminance Pure White in Dark Mode) */
@@ -127,14 +135,24 @@ button[data-baseweb="tab"]:not([aria-selected="true"]) {{
     font-weight: 600 !important;
 }}
 div[data-testid="stTabs"] button[role="tab"]:not([aria-selected="true"]) *,
+div[data-testid="stTabs"] button[role="tab"]:not([aria-selected="true"]) p,
+div[data-testid="stTabs"] button[role="tab"]:not([aria-selected="true"]) span,
 div[data-testid="stTabs"] button[data-baseweb="tab"]:not([aria-selected="true"]) *,
+div[data-testid="stTabs"] button[data-baseweb="tab"]:not([aria-selected="true"]) p,
+div[data-testid="stTabs"] button[data-baseweb="tab"]:not([aria-selected="true"]) span,
 div[data-testid="stTabs"] [data-baseweb="tab"]:not([aria-selected="true"]) *,
-button[data-baseweb="tab"]:not([aria-selected="true"]) * {{
+div[data-testid="stTabs"] [data-baseweb="tab"]:not([aria-selected="true"]) p,
+div[data-testid="stTabs"] [data-baseweb="tab"]:not([aria-selected="true"]) span,
+button[data-baseweb="tab"]:not([aria-selected="true"]) *,
+button[data-baseweb="tab"]:not([aria-selected="true"]) p,
+button[data-baseweb="tab"]:not([aria-selected="true"]) span {{
     color: {'#ffffff' if is_dark else '#475569'} !important;
     opacity: 1 !important;
+    -webkit-text-fill-color: {'#ffffff' if is_dark else '#475569'} !important;
 }}
 div[data-testid="stTabs"] button[role="tab"]:not([aria-selected="true"]) svg,
-div[data-testid="stTabs"] [data-baseweb="tab"]:not([aria-selected="true"]) svg {{
+div[data-testid="stTabs"] [data-baseweb="tab"]:not([aria-selected="true"]) svg,
+button[data-baseweb="tab"]:not([aria-selected="true"]) svg {{
     stroke: {'#ffffff' if is_dark else '#475569'} !important;
     opacity: 1 !important;
 }}
@@ -2496,14 +2514,22 @@ st.components.v1.html("""
                 });
 
                 // Force high-luminance typography and reactive button aesthetics for both themes
-                const win = window.parent || window;
-                const urlParams = new URLSearchParams(win.location.search);
-                const isDark = urlParams.get('theme') !== 'light' && (
-                    urlParams.get('theme') === 'dark' || 
-                    (localStorage && localStorage.getItem('zen_color_theme') === 'dark') ||
-                    (win.matchMedia && win.matchMedia('(prefers-color-scheme: dark)').matches) ||
-                    !urlParams.has('theme')
-                );
+                let isDark = true;
+                try {
+                    const win = window.parent || window;
+                    if (win && win.location && win.location.search) {
+                        const urlParams = new URLSearchParams(win.location.search);
+                        if (urlParams.get('theme') === 'light') {
+                            isDark = false;
+                        }
+                    }
+                } catch(e) {
+                    try {
+                        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) {
+                            isDark = false;
+                        }
+                    } catch(err) {}
+                }
                 
                 // 1. Tab Typography Luminance (Ultra high luminance for unselected tabs)
                 doc.querySelectorAll('[data-testid="stTabs"] [data-baseweb="tab"], [data-baseweb="tab"], button[role="tab"]').forEach(tab => {
@@ -2563,7 +2589,7 @@ st.components.v1.html("""
 
                 // 3. Dropdown select boxes (Tone down brightness to dark slate in dark mode)
                 if (isDark) {
-                    doc.querySelectorAll('div[data-testid="stSelectbox"] div[data-baseweb="select"] > div, div[data-baseweb="select"] > div, div[data-baseweb="select"]').forEach(box => {
+                    doc.querySelectorAll('div[data-testid="stSelectbox"] div[data-baseweb="select"], div[data-testid="stSelectbox"] div[data-baseweb="select"] > div, div[data-baseweb="select"], div[data-baseweb="select"] > div, div[data-baseweb="select"] [role="combobox"]').forEach(box => {
                         box.style.setProperty('background', 'rgba(255, 255, 255, 0.08)', 'important');
                         box.style.setProperty('background-color', 'rgba(255, 255, 255, 0.08)', 'important');
                         box.style.setProperty('border', '1px solid rgba(255, 255, 255, 0.18)', 'important');
@@ -2574,6 +2600,7 @@ st.components.v1.html("""
                         box.querySelectorAll('[data-baseweb="icon"] svg, svg').forEach(svg => {
                             svg.style.setProperty('fill', '#cbd5e1', 'important');
                             svg.style.setProperty('color', '#cbd5e1', 'important');
+                            svg.style.setProperty('stroke', '#cbd5e1', 'important');
                         });
                     });
                 }
