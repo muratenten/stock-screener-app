@@ -1748,19 +1748,20 @@ st.html(f"""
     div[data-testid="stTabs"] button[data-baseweb="tab"],
     [data-baseweb="tab"] {{
         color: {'#ffffff' if is_dark else secondary_text_color} !important;
-        font-weight: 500 !important;
+        font-weight: 600 !important;
         font-size: 0.875rem !important;
         letter-spacing: 0.02857em !important;
         border-bottom: 2px solid transparent !important;
         padding: 12px 18px !important;
-        transition: color 250ms cubic-bezier(0.4, 0, 0.2, 1) 0ms, border-color 250ms cubic-bezier(0.4, 0, 0.2, 1) 0ms !important;
-        opacity: {'0.9' if is_dark else '0.7'} !important;
+        transition: all 200ms cubic-bezier(0.4, 0, 0.2, 1) !important;
+        opacity: 1 !important;
     }}
     div[data-testid="stTabs"] [data-baseweb="tab"] *,
     div[data-testid="stTabs"] button[role="tab"] *,
     div[data-testid="stTabs"] button[data-baseweb="tab"] *,
     [data-baseweb="tab"] * {{
         color: {'#ffffff' if is_dark else secondary_text_color} !important;
+        opacity: 1 !important;
     }}
     div[data-testid="stTabs"] [data-baseweb="tab"] svg,
     div[data-testid="stTabs"] button[role="tab"] svg,
@@ -1768,6 +1769,7 @@ st.html(f"""
     div[data-testid="stTabs"] [data-baseweb="tab"] .lucide-icon,
     [data-baseweb="tab"] svg {{
         stroke: {'#ffffff' if is_dark else secondary_text_color} !important;
+        opacity: 1 !important;
     }}
     div[data-testid="stTabs"] [data-baseweb="tab"]:hover,
     div[data-testid="stTabs"] button[role="tab"]:hover,
@@ -2094,6 +2096,7 @@ st.components.v1.html("""
             '[role="dialog"]',
             'div.stMarkdown',
             'p',
+            'a',
             'table', 'th', 'td',
             '.login-section-title',
             '.login-info-title',
@@ -2299,10 +2302,13 @@ st.components.v1.html("""
                 if (isDark) {
                     doc.querySelectorAll('[data-testid="stTabs"] [data-baseweb="tab"], [data-baseweb="tab"]').forEach(tab => {
                         tab.style.setProperty('color', '#ffffff', 'important');
+                        tab.style.setProperty('opacity', '1', 'important');
                         tab.querySelectorAll('*').forEach(el => {
                             el.style.setProperty('color', '#ffffff', 'important');
+                            el.style.setProperty('opacity', '1', 'important');
                             if (el.tagName && el.tagName.toLowerCase() === 'svg') {
                                 el.style.setProperty('stroke', '#ffffff', 'important');
+                                el.style.setProperty('opacity', '1', 'important');
                             }
                         });
                     });
@@ -10300,7 +10306,7 @@ div[class*="st-key-sbi_fund_category_filter"] button span {
 <div style="display: flex; align-items: center; gap: 8px; font-size: 0.84rem; color: var(--text-color);">
 <span style="font-weight: 600;">現在比較中:</span>
 {cmp_badge}
-<span style="color: var(--secondary-text-color); font-size: 0.78rem;">（各銘柄カードの『📊 比較リストに追加』で選択）</span>
+<span style="color: var(--secondary-text-color); font-size: 0.78rem;">（各銘柄カードの『<svg class="lucide lucide-candlestick-chart feather-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -2px; margin-right: 2px;"><path d="M9 5v4"></path><rect width="4" height="6" x="7" y="9" rx="1"></rect><path d="M9 15v2"></path><path d="M17 3v2"></path><rect width="4" height="8" x="15" y="5" rx="1"></rect><path d="M17 13v3"></path><path d="M3 3v16a2 2 0 0 0 2 2h16"></path></svg>比較リストに追加』で選択）</span>
 </div>
 <a href="#fund_comparison_section"
    onclick="event.preventDefault(); (function() {{
@@ -10320,7 +10326,7 @@ div[class*="st-key-sbi_fund_category_filter"] button span {
        }}
    }})();"
    style="display: inline-flex; align-items: center; justify-content: center; gap: 6px; background-color: var(--mui-primary, #1976d2); color: #ffffff !important; border: 1px solid var(--mui-primary, #1976d2); padding: 6px 18px; min-height: 38px; border-radius: 8px; font-weight: 600; font-size: 0.875rem; cursor: pointer; text-decoration: none !important; box-shadow: 0 1px 3px rgba(25,118,210,0.25); transition: background-color 0.15s ease;">
-   <span style="color: #ffffff !important;">📊 比較リストへ</span>
+   <span style="color: #ffffff !important; display: inline-flex; align-items: center; gap: 6px;"><svg class="lucide lucide-candlestick-chart feather-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle;"><path d="M9 5v4"></path><rect width="4" height="6" x="7" y="9" rx="1"></rect><path d="M9 15v2"></path><path d="M17 3v2"></path><rect width="4" height="8" x="15" y="5" rx="1"></rect><path d="M17 13v3"></path><path d="M3 3v16a2 2 0 0 0 2 2h16"></path></svg>比較リストへ</span>
 </a>
 </div>''')
 
