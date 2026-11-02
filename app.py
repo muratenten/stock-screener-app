@@ -3073,28 +3073,28 @@ st.components.v1.html(f"""<script>
                 
                 // Enforce strict separation between themes for tabs, selectboxes, expanders, and checkboxes
                 if (!isDark) {
-                    // LIGHT MODE: Crisp white dropdown selectboxes (#ffffff) with pure black text and dark icons
+                    // LIGHT MODE: Crisp pure white dropdown selectboxes (#ffffff) with black text
                     doc.querySelectorAll('[data-testid="stSelectbox"]').forEach(sb => {
                         sb.style.setProperty('background-color', 'transparent', 'important');
                         sb.style.setProperty('background', 'transparent', 'important');
                     });
-                    doc.querySelectorAll('[data-testid="stSelectbox"] [data-baseweb="select"], [data-testid="stSelectbox"] [data-baseweb="select"] > div, [data-testid="stSelectbox"] [data-baseweb="select"] div, [data-baseweb="select"], [data-baseweb="select"] > div').forEach(box => {
-                        box.style.setProperty('background-color', '#ffffff', 'important');
-                        box.style.setProperty('background', '#ffffff', 'important');
-                        box.style.setProperty('border-color', 'rgba(0, 0, 0, 0.23)', 'important');
-                        box.style.setProperty('border-radius', '4px', 'important');
-                        box.querySelectorAll('p, span, div, [role="combobox"]').forEach(el => {
-                            el.style.setProperty('color', '#000000', 'important');
-                            el.style.setProperty('-webkit-text-fill-color', '#000000', 'important');
-                            el.style.setProperty('background-color', 'transparent', 'important');
-                            el.style.setProperty('background', 'transparent', 'important');
-                        });
-                        box.querySelectorAll('svg').forEach(s => {
-                            s.style.setProperty('color', '#000000', 'important');
-                            s.style.setProperty('fill', '#000000', 'important');
-                            s.style.setProperty('stroke', '#000000', 'important');
-                        });
+                    doc.querySelectorAll('[data-testid="stSelectbox"] [data-baseweb="select"], [data-testid="stSelectbox"] [data-baseweb="select"] *').forEach(el => {
+                        el.style.setProperty('background-color', '#ffffff', 'important');
+                        el.style.setProperty('background', '#ffffff', 'important');
+                        el.style.setProperty('color', '#000000', 'important');
+                        el.style.setProperty('-webkit-text-fill-color', '#000000', 'important');
                     });
+                    doc.querySelectorAll('[data-testid="stSelectbox"] [data-baseweb="select"] > div').forEach(div => {
+                        div.style.setProperty('border', '1px solid rgba(0, 0, 0, 0.23)', 'important');
+                        div.style.setProperty('border-radius', '4px', 'important');
+                    });
+                    doc.querySelectorAll('[data-testid="stSelectbox"] svg').forEach(s => {
+                        s.style.setProperty('color', '#000000', 'important');
+                        s.style.setProperty('fill', '#000000', 'important');
+                        s.style.setProperty('stroke', '#000000', 'important');
+                    });
+
+                    // LIGHT MODE: Unselected Tab typography (pure black #000000)
                     doc.querySelectorAll('[data-testid="stTabs"] [data-baseweb="tab"]:not([aria-selected="true"]), [data-testid="stTabs"] button[role="tab"]:not([aria-selected="true"]), [data-baseweb="tab"]:not([aria-selected="true"])').forEach(tab => {
                         tab.style.setProperty('color', '#000000', 'important');
                         tab.querySelectorAll('p, span, div').forEach(el => {
@@ -3108,6 +3108,7 @@ st.components.v1.html(f"""<script>
                             s.style.setProperty('opacity', '1', 'important');
                         });
                     });
+
                     // LIGHT MODE: Expander header (pure white with black text)
                     doc.querySelectorAll('[data-testid="stExpander"], [data-testid="stExpander"] details, [data-testid="stExpander"] summary').forEach(el => {
                         el.style.setProperty('background-color', '#ffffff', 'important');
@@ -3118,42 +3119,36 @@ st.components.v1.html(f"""<script>
                         el.style.setProperty('color', '#000000', 'important');
                         el.style.setProperty('-webkit-text-fill-color', '#000000', 'important');
                     });
+
                     // LIGHT MODE: Checkboxes (pure white box with dark border, blue when checked, black label)
-                    doc.querySelectorAll('[data-testid="stCheckbox"] [data-baseweb="checkbox"] span, [data-testid="stCheckbox"] [data-baseweb="checkbox"] > span:first-child').forEach(span => {
-                        if (span.querySelector('svg') || (span.className && typeof span.className === 'string' && span.className.includes('st-')) || !span.textContent.trim()) {
-                            const parent = span.closest('[data-baseweb="checkbox"]') || span.parentElement;
-                            const input = parent ? parent.querySelector('input') : null;
-                            const isChecked = input && (input.checked || input.getAttribute('aria-checked') === 'true' || parent.getAttribute('aria-checked') === 'true');
+                    doc.querySelectorAll('[data-testid="stCheckbox"]').forEach(cb => {
+                        const label = cb.querySelector('label[data-baseweb="checkbox"]') || cb.querySelector('label');
+                        const input = cb.querySelector('input[type="checkbox"]') || cb.querySelector('input');
+                        const checkmark = label ? (label.querySelector('span') || label.querySelector('div:first-of-type')) : null;
+                        const isChecked = input && (input.checked || input.getAttribute('aria-checked') === 'true' || cb.getAttribute('aria-checked') === 'true');
+                        
+                        if (checkmark) {
                             if (!isChecked) {
-                                span.style.setProperty('background-color', '#ffffff', 'important');
-                                span.style.setProperty('background', '#ffffff', 'important');
-                                span.style.setProperty('border', '2px solid rgba(0, 0, 0, 0.4)', 'important');
-                                span.style.setProperty('border-color', 'rgba(0, 0, 0, 0.4)', 'important');
-                                span.style.setProperty('border-left-color', 'rgba(0, 0, 0, 0.4)', 'important');
-                                span.style.setProperty('border-right-color', 'rgba(0, 0, 0, 0.4)', 'important');
-                                span.style.setProperty('border-top-color', 'rgba(0, 0, 0, 0.4)', 'important');
-                                span.style.setProperty('border-bottom-color', 'rgba(0, 0, 0, 0.4)', 'important');
-                                span.style.setProperty('border-width', '2px', 'important');
-                                span.style.setProperty('border-style', 'solid', 'important');
-                                span.style.setProperty('border-radius', '4px', 'important');
+                                checkmark.style.setProperty('background-color', '#ffffff', 'important');
+                                checkmark.style.setProperty('background', '#ffffff', 'important');
+                                checkmark.style.setProperty('border', '2px solid rgba(0, 0, 0, 0.4)', 'important');
+                                checkmark.style.setProperty('border-color', 'rgba(0, 0, 0, 0.4)', 'important');
+                                checkmark.style.setProperty('border-radius', '4px', 'important');
                             } else {
-                                span.style.setProperty('background-color', '#1976d2', 'important');
-                                span.style.setProperty('background', '#1976d2', 'important');
-                                span.style.setProperty('border', '2px solid #1976d2', 'important');
-                                span.style.setProperty('border-color', '#1976d2', 'important');
-                                span.style.setProperty('border-left-color', '#1976d2', 'important');
-                                span.style.setProperty('border-right-color', '#1976d2', 'important');
-                                span.style.setProperty('border-top-color', '#1976d2', 'important');
-                                span.style.setProperty('border-bottom-color', '#1976d2', 'important');
-                                span.style.setProperty('border-width', '2px', 'important');
-                                span.style.setProperty('border-style', 'solid', 'important');
-                                span.style.setProperty('border-radius', '4px', 'important');
+                                checkmark.style.setProperty('background-color', '#1976d2', 'important');
+                                checkmark.style.setProperty('background', '#1976d2', 'important');
+                                checkmark.style.setProperty('border', '2px solid #1976d2', 'important');
+                                checkmark.style.setProperty('border-color', '#1976d2', 'important');
+                                checkmark.style.setProperty('border-radius', '4px', 'important');
                             }
                         }
-                    });
-                    doc.querySelectorAll('[data-testid="stCheckbox"] p, [data-testid="stCheckbox"] label span:not(:first-child), [data-testid="stCheckbox"] div').forEach(el => {
-                        el.style.setProperty('color', '#000000', 'important');
-                        el.style.setProperty('-webkit-text-fill-color', '#000000', 'important');
+                        
+                        cb.querySelectorAll('p, label > div:last-child').forEach(txt => {
+                            txt.style.setProperty('color', '#000000', 'important');
+                            txt.style.setProperty('-webkit-text-fill-color', '#000000', 'important');
+                            txt.style.setProperty('background-color', 'transparent', 'important');
+                            txt.style.setProperty('background', 'transparent', 'important');
+                        });
                     });
                 } else {
                     // DARK MODE: Strictly preserve pristine dark state by cleaning any potential light inline styles
@@ -8942,7 +8937,7 @@ else:
 
 logo_header_html = f'<img src="{logo_data_uri}" style="width: 42px; height: 42px; border-radius: 11px; box-shadow: 0 2px 10px rgba(37,99,235,0.2); border: 1px solid rgba(226,232,240,0.8); background: #ffffff; object-fit: contain; padding: 2px;" />' if logo_data_uri else ""
 
-BUILD_VERSION = "2026.11.02-1605"
+BUILD_VERSION = "2026.11.02-1627"
 st.markdown(f'<div class="title-container" style="display: flex; flex-direction: column; gap: 6px;"><div style="display: flex; align-items: center; gap: 14px; flex-wrap: wrap;">{logo_header_html}<div class="title-text" style="margin: 0; line-height: 1;">ZenStockScreener</div>{badge_html}<span style="font-size: 0.72rem; color: var(--secondary-text-color); opacity: 0.7; font-family: monospace;">build:{BUILD_VERSION}</span></div><div class="subtitle-text" style="margin-top: 4px;">AI分析とファンダメンタルズ指標による日本株上昇期待銘柄の選定システム</div></div>', unsafe_allow_html=True)
 
 # Mobile-friendly Quick Action Header (LINE integration & status)
