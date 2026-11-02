@@ -64,13 +64,13 @@ st.html(f"""
 <style>
 /* Early Global Canvas & Sidebar Background Sync (Sophisticated dark slate gray in dark mode) */
 .stApp {{
-    background-color: {'#222938' if is_dark else '#ffffff'} !important;
+    background-color: {'#2f384b' if is_dark else '#ffffff'} !important;
     color: {'#ffffff' if is_dark else '#1e293b'} !important;
 }}
 section[data-testid="stSidebar"],
 [data-testid="stSidebar"],
 section[data-testid="stSidebar"] > div {{
-    background-color: {'#1b212d' if is_dark else '#f4f6f8'} !important;
+    background-color: {'#283040' if is_dark else '#f4f6f8'} !important;
 }}
 
 /* Early Sidebar & Segmented Control Theme Sync */
@@ -117,8 +117,8 @@ div[data-testid="stSelectbox"] > div {{
 }}
 div[data-testid="stSelectbox"] div[data-baseweb="select"] > div,
 div[data-baseweb="select"] > div {{
-    background-color: {'#2b3446' if is_dark else '#ffffff'} !important;
-    background: {'#2b3446' if is_dark else '#ffffff'} !important;
+    background-color: {'#3d495f' if is_dark else '#ffffff'} !important;
+    background: {'#3d495f' if is_dark else '#ffffff'} !important;
     border: 1px solid {'rgba(255, 255, 255, 0.18)' if is_dark else 'rgba(0, 0, 0, 0.20)'} !important;
     border-radius: 8px !important;
     color: {'#f8fafc' if is_dark else '#000000'} !important;
@@ -154,9 +154,9 @@ div[data-testid="stSelectbox"] div[data-baseweb="select"] [data-baseweb="icon"] 
 div[data-baseweb="select"] [data-baseweb="icon"] svg,
 div[data-testid="stSelectbox"] svg,
 div[data-baseweb="select"] svg {{
-    fill: {'#94a3b8' if is_dark else '#334155'} !important;
     color: {'#94a3b8' if is_dark else '#334155'} !important;
-    stroke: {'#94a3b8' if is_dark else '#334155'} !important;
+    fill: currentColor !important;
+    stroke: none !important;
     width: 18px !important;
     height: 18px !important;
 }}
@@ -229,16 +229,37 @@ button[data-baseweb="tab"][aria-selected="true"] svg {{
     opacity: 1 !important;
 }}
 
-/* Early Tab Overflow Fade Mask Sync (Eliminate Streamlit white gradient fade on tab overflow) */
+/* Early Tab Overflow Fade Mask Sync & Navigation Arrow Buttons (Eliminate Streamlit white gradient fade on tab overflow) */
 div[data-testid="stTabs"]::before,
 div[data-testid="stTabs"]::after,
 div[data-testid="stTabs"] > div::before,
 div[data-testid="stTabs"] > div::after,
 div[data-testid="stTabs"] [data-baseweb="tab-list"]::before,
-div[data-testid="stTabs"] [data-baseweb="tab-list"]::after {{
+div[data-testid="stTabs"] [data-baseweb="tab-list"]::after,
+div[class*="StyledTabContainer"]::before,
+div[class*="StyledTabContainer"]::after {{
     display: none !important;
     background: transparent !important;
     background-image: none !important;
+    content: none !important;
+}}
+
+/* Tab navigation scroll buttons (< and >) sync with canvas background */
+div[data-testid="stTabs"] [data-baseweb="tab-list"] ~ button,
+div[data-testid="stTabs"] > div > button,
+div[data-testid="stTabs"] [data-baseweb="tab-list"] button:not([role="tab"]) {{
+    background-color: {'#2f384b' if is_dark else '#ffffff'} !important;
+    background: {'#2f384b' if is_dark else '#ffffff'} !important;
+    color: {'#ffffff' if is_dark else '#1e293b'} !important;
+    border: none !important;
+    box-shadow: none !important;
+}}
+div[data-testid="stTabs"] [data-baseweb="tab-list"] ~ button svg,
+div[data-testid="stTabs"] > div > button svg,
+div[data-testid="stTabs"] [data-baseweb="tab-list"] button:not([role="tab"]) svg {{
+    fill: currentColor !important;
+    color: {'#ffffff' if is_dark else '#1e293b'} !important;
+    stroke: none !important;
 }}
 </style>
 """)
@@ -924,10 +945,10 @@ if logo_data_uri:
 # Inject premium custom CSS dynamically based on theme selection
 # Inject Material-UI (MUI v5) custom CSS dynamically based on theme selection
 # Official MUI Dark Mode standard: https://mui.com/material-ui/customization/dark-mode/
-bg_color = "#222938" if is_dark else "#f4f6f8" # Sophisticated slate dark canvas (subtly tinted gray)
-card_bg = "#2b3446" if is_dark else "#ffffff" # Elevated slate card surface
-elevation_2 = "#334155" if is_dark else "#f8fafc" # MUI Paper surface (Elevation 2)
-elevation_3 = "#3f4f66" if is_dark else "#f1f5f9" # MUI Paper surface (Elevation 3)
+bg_color = "#2f384b" if is_dark else "#f4f6f8" # Sophisticated brighter slate dark canvas
+card_bg = "#3d495f" if is_dark else "#ffffff" # Elevated slate card surface
+elevation_2 = "#4a5770" if is_dark else "#f8fafc" # MUI Paper surface (Elevation 2)
+elevation_3 = "#566582" if is_dark else "#f1f5f9" # MUI Paper surface (Elevation 3)
 card_sub_bg = "rgba(255, 255, 255, 0.05)" if is_dark else "rgba(0, 0, 0, 0.02)"
 card_sub_border = "rgba(255, 255, 255, 0.10)" if is_dark else "rgba(0, 0, 0, 0.06)"
 
@@ -944,8 +965,8 @@ primary_sub_bg = "rgba(59, 130, 246, 0.16)" if is_dark else "rgba(25, 118, 210, 
 primary_sub_border = "rgba(59, 130, 246, 0.35)" if is_dark else "rgba(25, 118, 210, 0.18)"
 
 border_color = "rgba(255, 255, 255, 0.12)" if is_dark else "rgba(0, 0, 0, 0.12)" # MUI Divider
-unselected_btn_bg = "#2b3446" if is_dark else "#ffffff"
-title_bg = "linear-gradient(135deg, #2b3446 0%, #222938 100%)" if is_dark else "linear-gradient(135deg, #ffffff 0%, #f4f6f8 100%)"
+unselected_btn_bg = "#3d495f" if is_dark else "#ffffff"
+title_bg = "linear-gradient(135deg, #3d495f 0%, #2f384b 100%)" if is_dark else "linear-gradient(135deg, #ffffff 0%, #f4f6f8 100%)"
 title_border = "rgba(255, 255, 255, 0.12)" if is_dark else "rgba(0, 0, 0, 0.08)"
 title_text_color = "#3b82f6" if is_dark else "#1976d2"
 subtitle_text_color = "rgba(255, 255, 255, 0.85)" if is_dark else "rgba(0, 0, 0, 0.60)"
@@ -1872,8 +1893,8 @@ st.html(f"""
     div[data-testid="stSelectbox"] div[data-baseweb="select"] > div,
     div[data-baseweb="select"] > div,
     div[data-baseweb="select"] [role="combobox"] {{
-        background-color: {'#2b3446' if is_dark else '#ffffff'} !important;
-        background: {'#2b3446' if is_dark else '#ffffff'} !important;
+        background-color: {'#3d495f' if is_dark else '#ffffff'} !important;
+        background: {'#3d495f' if is_dark else '#ffffff'} !important;
         color: {'#f8fafc' if is_dark else '#000000'} !important;
         border: 1px solid {'rgba(255, 255, 255, 0.18)' if is_dark else 'rgba(0, 0, 0, 0.20)'} !important;
         border-radius: 8px !important;
@@ -1915,8 +1936,8 @@ st.html(f"""
     div[data-baseweb="select"] [data-baseweb="icon"] svg,
     div[data-baseweb="select"] svg {{
         color: {'#94a3b8' if is_dark else '#334155'} !important;
-        fill: {'#94a3b8' if is_dark else '#334155'} !important;
-        stroke: {'#94a3b8' if is_dark else '#334155'} !important;
+        fill: currentColor !important;
+        stroke: none !important;
         width: 18px !important;
         height: 18px !important;
     }}
@@ -2243,16 +2264,37 @@ st.html(f"""
         border-bottom: 1px solid var(--border-color) !important;
     }}
 
-    /* Tab Overflow Fade Mask Sync (Eliminate Streamlit white gradient fade on tab overflow) */
+    /* Tab Overflow Fade Mask Sync & Navigation Arrow Buttons (Eliminate Streamlit white gradient fade on tab overflow) */
     div[data-testid="stTabs"]::before,
     div[data-testid="stTabs"]::after,
     div[data-testid="stTabs"] > div::before,
     div[data-testid="stTabs"] > div::after,
     div[data-testid="stTabs"] [data-baseweb="tab-list"]::before,
-    div[data-testid="stTabs"] [data-baseweb="tab-list"]::after {{
+    div[data-testid="stTabs"] [data-baseweb="tab-list"]::after,
+    div[class*="StyledTabContainer"]::before,
+    div[class*="StyledTabContainer"]::after {{
         display: none !important;
         background: transparent !important;
         background-image: none !important;
+        content: none !important;
+    }}
+
+    /* Tab navigation scroll buttons (< and >) sync with canvas background */
+    div[data-testid="stTabs"] [data-baseweb="tab-list"] ~ button,
+    div[data-testid="stTabs"] > div > button,
+    div[data-testid="stTabs"] [data-baseweb="tab-list"] button:not([role="tab"]) {{
+        background-color: {'#2f384b' if is_dark else '#ffffff'} !important;
+        background: {'#2f384b' if is_dark else '#ffffff'} !important;
+        color: {'#ffffff' if is_dark else '#1e293b'} !important;
+        border: none !important;
+        box-shadow: none !important;
+    }}
+    div[data-testid="stTabs"] [data-baseweb="tab-list"] ~ button svg,
+    div[data-testid="stTabs"] > div > button svg,
+    div[data-testid="stTabs"] [data-baseweb="tab-list"] button:not([role="tab"]) svg {{
+        fill: currentColor !important;
+        color: {'#ffffff' if is_dark else '#1e293b'} !important;
+        stroke: none !important;
     }}
     
     /* ==========================================================================
@@ -8644,7 +8686,7 @@ else:
 
 logo_header_html = f'<img src="{logo_data_uri}" style="width: 42px; height: 42px; border-radius: 11px; box-shadow: 0 2px 10px rgba(37,99,235,0.2); border: 1px solid rgba(226,232,240,0.8); background: #ffffff; object-fit: contain; padding: 2px;" />' if logo_data_uri else ""
 
-BUILD_VERSION = "2026.11.02-2115"
+BUILD_VERSION = "2026.11.02-2125"
 st.markdown(f'<div class="title-container" style="display: flex; flex-direction: column; gap: 6px;"><div style="display: flex; align-items: center; gap: 14px; flex-wrap: wrap;">{logo_header_html}<div class="title-text" style="margin: 0; line-height: 1;">ZenStockScreener</div>{badge_html}<span style="font-size: 0.72rem; color: var(--secondary-text-color); opacity: 0.7; font-family: monospace;">build:{BUILD_VERSION}</span></div><div class="subtitle-text" style="margin-top: 4px;">AI分析とファンダメンタルズ指標による日本株上昇期待銘柄の選定システム</div></div>', unsafe_allow_html=True)
 
 # Mobile-friendly Quick Action Header (LINE integration & status)
