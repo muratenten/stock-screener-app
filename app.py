@@ -190,7 +190,16 @@ div[data-testid="stTabs"] button[role="tab"]:not([aria-selected="true"]) svg,
 div[data-testid="stTabs"] [data-baseweb="tab"]:not([aria-selected="true"]) svg,
 button[data-baseweb="tab"]:not([aria-selected="true"]) svg {{
     stroke: {'#ffffff' if is_dark else '#000000'} !important;
+    fill: none !important;
     opacity: 1 !important;
+}}
+/* Early Vector Icons Theme Sync (Crisp outline with hollow center: 黒縁・中白 in light mode) */
+.feather-icon, .lucide-icon, svg.lucide,
+[data-baseweb="tab"] svg,
+button:not([data-testid*="primary"]):not([class*="active"]) svg.lucide,
+button:not([data-testid*="primary"]):not([class*="active"]) .feather-icon {{
+    stroke: {'#ffffff' if is_dark else '#000000'} !important;
+    fill: none !important;
 }}
 </style>
 """)
@@ -2457,26 +2466,26 @@ st.components.v1.html(f"""<script>
         '👑': 'crown',
         '🏆': 'trophy',
         '💎': 'gem',
-        '💰': 'coins',
+        '💰': 'coins', '🪙': 'coins',
         '💴': 'japanese-yen',
         '💳': 'credit-card',
         '📊': 'candlestick-chart',
         '📈': 'trending-up',
         '📉': 'trending-down',
         '🔍': 'search', '🔎': 'search',
-        '⭐': 'star', '☆': 'star', '🌟': 'star', '✨': 'sparkles',
+        '⭐': 'star', '☆': 'star', '⭐️': 'star', '★': 'star', '🌟': 'star', '✨': 'sparkles', '✦': 'sparkles',
         '💼': 'briefcase',
-        '⚙': 'settings', '🛠': 'settings',
+        '⚙': 'settings', '⚙️': 'settings', '🛠': 'settings',
         '🎯': 'target',
         '📦': 'boxes',
         '🔄': 'refresh-cw',
         '✅': 'check-circle-2',
-        '⚠': 'alert-triangle', '🚨': 'alert-circle',
+        '⚠': 'alert-triangle', '⚠️': 'alert-triangle', '🚨': 'alert-circle',
         '💡': 'lightbulb', '⚡': 'sparkles', '🔥': 'flame', '🏋': 'trending-up',
         '📄': 'file-text', '📋': 'clipboard', '✏': 'pencil',
         '📚': 'book-open', '📖': 'book-open', '📰': 'file-text',
         '🔐': 'lock', '🔒': 'lock', '🔑': 'key', '🚪': 'log-out',
-        '🎁': 'gift', '🎟': 'tag', '🆓': 'tag',
+        '🎁': 'gift', '🎟': 'tag', '🆓': 'tag', '🏷': 'tag', '🏷️': 'tag',
         '🗑': 'trash-2', '➕': 'plus', '🔔': 'bell', '👁': 'eye', '🛡': 'shield-check', '🚢': 'anchor',
         '📅': 'calendar', '🕒': 'clock',
         '👤': 'user', '🤖': 'bot', '🌐': 'globe', '🌍': 'globe', '🌎': 'globe', '🌏': 'globe', '☁': 'cloud',
@@ -2484,10 +2493,11 @@ st.components.v1.html(f"""<script>
         '☕': 'coffee', '🍔': 'utensils', '🍱': 'utensils', '🍽': 'utensils', '🍎': 'utensils',
         '🛍': 'shopping-bag', '👕': 'shopping-bag', '💄': 'sparkles',
         '✈': 'plane', '🚗': 'car',
-        '🏢': 'building-2', '🏭': 'factory', '🎨': 'palette', '🎮': 'gamepad-2',
-        '➔': 'arrow-right', '✖': 'x', '✂': 'scissors',
-        '🟢': 'circle-dot',
-        '🎉': 'sparkles',
+        '🏢': 'building-2', '🏭': 'factory', '🏦': 'building-2', '🏛': 'building-2', '🎨': 'palette', '🎮': 'gamepad-2',
+        '➔': 'arrow-right', '👉': 'arrow-right', '✖': 'x', '✕': 'x', '❌': 'x', '✂': 'scissors',
+        '🟢': 'circle-dot', '○': 'circle-dot', '●': 'circle-dot',
+        '▲': 'trending-up', '▼': 'trending-down',
+        '🎉': 'sparkles', '🔮': 'sparkles',
         '📥': 'download', '💾': 'save', '📂': 'folder',
         '🇯': 'flag', '🇵': 'flag', '🇺': 'flag', '🇸': 'flag'
     };
@@ -7788,99 +7798,9 @@ if query_user == "default":
         </style>
         """)
     
-    # Active JS badge & footer purger and Lucide Icons for login page
+    # Active JS badge & footer purger for login page
     st.components.v1.html("""
     <script>
-    const lucideSvgMap = {
-        'lock': '<svg class="lucide lucide-lock feather-icon" viewBox="0 0 24 24"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>',
-        'key': '<svg class="lucide lucide-key feather-icon" viewBox="0 0 24 24"><circle cx="7.5" cy="15.5" r="5.5"></circle><path d="m21 2-9.6 9.6"></path><path d="m15.5 7.5 3 3L22 7l-3-3"></path></svg>',
-        'file-text': '<svg class="lucide lucide-file-text feather-icon" viewBox="0 0 24 24"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"></path><path d="M14 2v4a2 2 0 0 0 2 2h4"></path><path d="M10 9H8"></path><path d="M16 13H8"></path><path d="M16 17H8"></path></svg>',
-        'alert-triangle': '<svg class="lucide lucide-alert-triangle feather-icon" viewBox="0 0 24 24"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"></path><line x1="12" x2="12" y1="9" y2="13"></line><line x1="12" x2="12.01" y1="17" y2="17"></line></svg>',
-        'alert-circle': '<svg class="lucide lucide-alert-circle feather-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>',
-        'crown': '<svg class="lucide lucide-crown feather-icon" viewBox="0 0 24 24"><path d="M11.562 3.266a.5.5 0 0 1 .876 0L15.39 8.87a1 1 0 0 0 1.516.294L21.183 5.5a.5.5 0 0 1 .798.519l-2.834 10.246a1 1 0 0 1-.956.735H5.809a1 1 0 0 1-.956-.735L2.019 6.019a.5.5 0 0 1 .798-.519l4.276 3.664a1 1 0 0 0 1.516-.294z"></path><path d="M5 21h14"></path></svg>',
-        'lightbulb': '<svg class="lucide lucide-lightbulb feather-icon" viewBox="0 0 24 24"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"></path><path d="M9 18h6"></path><path d="M10 22h4"></path></svg>',
-        'trending-up': '<svg class="lucide lucide-trending-up feather-icon" viewBox="0 0 24 24"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"></polyline><polyline points="16 7 22 7 22 13"></polyline></svg>',
-        'settings': '<svg class="lucide lucide-settings feather-icon" viewBox="0 0 24 24"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path><circle cx="12" cy="12" r="3"></circle></svg>',
-        'sun': '<svg class="lucide lucide-sun feather-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2"></path><path d="M12 20v2"></path><path d="m4.93 4.93 1.41 1.41"></path><path d="m17.66 17.66 1.41 1.41"></path><path d="M2 12h2"></path><path d="M20 12h2"></path><path d="m6.34 17.66-1.41 1.41"></path><path d="m19.07 4.93-1.41 1.41"></path></svg>',
-        'moon': '<svg class="lucide lucide-moon feather-icon" viewBox="0 0 24 24"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"></path></svg>'
-    };
-
-    const emojiLucideMap = {
-        '☀️': 'sun', '☀': 'sun',
-        '🌙': 'moon',
-        '🔐': 'lock',
-        '🔒': 'lock',
-        '🔑': 'key',
-        '📄': 'file-text',
-        '⚠️': 'alert-triangle',
-        '🚨': 'alert-circle',
-        '👑': 'crown',
-        '💡': 'lightbulb',
-        '📈': 'trending-up',
-        '⚙️': 'settings',
-        '⚙': 'settings'
-    };
-
-    function replaceEmojisWithLucide(doc) {
-        if (!doc || !doc.body) return;
-        const targetSelectors = ['button', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', '.login-section-title', '.login-info-title', '.login-info-box', 'p'];
-        const elements = doc.querySelectorAll(targetSelectors.join(','));
-        elements.forEach(el => {
-            // STRICT PRESERVATION: Never touch Google or LINE brand buttons
-            if (el.closest('.social-login-btn') || el.classList.contains('social-login-btn') || 
-                el.closest('.google-btn') || el.closest('.line-btn') || 
-                el.querySelector('.social-icon')) {
-                return;
-            }
-            const walker = doc.createTreeWalker(el, NodeFilter.SHOW_TEXT, null, false);
-            const textNodes = [];
-            let n;
-            while (n = walker.nextNode()) {
-                if (n.parentElement && (
-                    n.parentElement.classList.contains('lucide-wrapper') || 
-                    n.parentElement.classList.contains('feather-wrapper') || 
-                    n.parentElement.classList.contains('lucide-icon') || 
-                    n.parentElement.classList.contains('feather-icon')
-                )) continue;
-                const val = n.nodeValue;
-                if (!val) continue;
-                const cleanVal = val.replace(/\ufe0f/g, '');
-                for (const em of Object.keys(emojiLucideMap)) {
-                    if (val.includes(em) || cleanVal.includes(em)) {
-                        textNodes.push(n);
-                        break;
-                    }
-                }
-            }
-            textNodes.forEach(node => {
-                const parent = node.parentNode;
-                if (!parent) return;
-                const text = node.nodeValue;
-                const span = doc.createElement('span');
-                span.className = 'lucide-converted-node feather-converted-node';
-                let replacedHtml = text;
-                for (const [em, iconName] of Object.entries(emojiLucideMap)) {
-                    const emWithVar = em + '\ufe0f';
-                    const emWithoutVar = em;
-                    const svg = lucideSvgMap[iconName] || '';
-                    if (svg) {
-                        const iconSpan = `<span class="lucide-wrapper feather-wrapper" data-lucide-replaced="${iconName}" data-feather-replaced="${iconName}">${svg}</span>`;
-                        if (replacedHtml.includes(emWithVar)) {
-                            replacedHtml = replacedHtml.split(emWithVar).join(iconSpan);
-                        }
-                        if (replacedHtml.includes(emWithoutVar)) {
-                            replacedHtml = replacedHtml.split(emWithoutVar).join(iconSpan);
-                        }
-                    }
-                }
-                if (replacedHtml !== text) {
-                    span.innerHTML = replacedHtml;
-                    parent.replaceChild(span, node);
-                }
-            });
-        });
-    }
-
     function purgePortalBadges() {
         const selectors = [
             'footer',
@@ -7906,7 +7826,6 @@ if query_user == "default":
 
         docs.forEach(doc => {
             try {
-                replaceEmojisWithLucide(doc);
                 selectors.forEach(sel => {
                     doc.querySelectorAll(sel).forEach(el => {
                         el.style.setProperty('display', 'none', 'important');
@@ -8499,7 +8418,7 @@ else:
 
 logo_header_html = f'<img src="{logo_data_uri}" style="width: 42px; height: 42px; border-radius: 11px; box-shadow: 0 2px 10px rgba(37,99,235,0.2); border: 1px solid rgba(226,232,240,0.8); background: #ffffff; object-fit: contain; padding: 2px;" />' if logo_data_uri else ""
 
-BUILD_VERSION = "2026.11.02-1655"
+BUILD_VERSION = "2026.11.02-1718"
 st.markdown(f'<div class="title-container" style="display: flex; flex-direction: column; gap: 6px;"><div style="display: flex; align-items: center; gap: 14px; flex-wrap: wrap;">{logo_header_html}<div class="title-text" style="margin: 0; line-height: 1;">ZenStockScreener</div>{badge_html}<span style="font-size: 0.72rem; color: var(--secondary-text-color); opacity: 0.7; font-family: monospace;">build:{BUILD_VERSION}</span></div><div class="subtitle-text" style="margin-top: 4px;">AI分析とファンダメンタルズ指標による日本株上昇期待銘柄の選定システム</div></div>', unsafe_allow_html=True)
 
 # Mobile-friendly Quick Action Header (LINE integration & status)
