@@ -1725,7 +1725,8 @@ st.html(f"""
     
     /* Native Streamlit Secondary Buttons (MUI Outlined Button) */
     div.stButton > button, div.stDownloadButton > button, [data-testid="stBaseButton-secondary"] button {{
-        background-color: transparent !important;
+        background-color: {'rgba(255, 255, 255, 0.05)' if is_dark else '#ffffff'} !important;
+        background: {'rgba(255, 255, 255, 0.05)' if is_dark else '#ffffff'} !important;
         color: var(--text-color) !important;
         border: 1px solid var(--border-color) !important;
         border-radius: var(--mui-radius-sm) !important;
@@ -1750,15 +1751,15 @@ st.html(f"""
     div.stButton > button[data-testid="stBaseButton-primary"],
     div.stButton > button.st-emotion-cache-16idsys,
     div.stButton > button.st-emotion-cache-1f81d1z {{
-        background-color: {active_btn_bg if is_dark else primary_color} !important;
-        background: {active_btn_bg if is_dark else primary_color} !important;
+        background-color: {primary_color} !important;
+        background: {primary_color} !important;
         color: #ffffff !important;
         font-weight: 500 !important;
         font-size: 0.875rem !important;
         letter-spacing: 0.02857em !important;
-        border: 1px solid {active_btn_border if is_dark else 'transparent'} !important;
+        border: 1px solid {primary_color} !important;
         border-radius: var(--mui-radius-sm) !important;
-        box-shadow: {'none' if is_dark else 'var(--mui-shadow-2)'} !important;
+        box-shadow: {'0 2px 8px rgba(59, 130, 246, 0.4)' if is_dark else 'var(--mui-shadow-2)'} !important;
         outline: none !important;
         transition: background-color 250ms cubic-bezier(0.4, 0, 0.2, 1) 0ms, box-shadow 250ms cubic-bezier(0.4, 0, 0.2, 1) 0ms, border-color 250ms cubic-bezier(0.4, 0, 0.2, 1) 0ms !important;
         padding: 8px 22px !important;
@@ -2011,11 +2012,26 @@ st.html(f"""
         border-top-color: {primary_color} !important;
         border-bottom-color: {primary_color} !important;
     }}
-    html body [data-testid="stApp"] [data-testid="stCheckbox"] svg,
-    [data-testid="stCheckbox"] svg {{
+    /* MUI Checkboxes - Only checkmark inside checkbox box is white */
+    html body [data-testid="stApp"] [data-testid="stCheckbox"] [data-baseweb="checkbox"] svg,
+    [data-testid="stCheckbox"] [data-baseweb="checkbox"] svg {{
         color: #ffffff !important;
         fill: #ffffff !important;
         stroke: #ffffff !important;
+    }}
+    /* Ensure label emojis/icons inside checkboxes inherit proper text color (black in light, white in dark) */
+    html body [data-testid="stApp"] [data-testid="stCheckbox"] label .feather-icon,
+    html body [data-testid="stApp"] [data-testid="stCheckbox"] label .lucide-icon,
+    html body [data-testid="stApp"] [data-testid="stCheckbox"] label svg.lucide,
+    [data-testid="stCheckbox"] label .feather-icon,
+    [data-testid="stCheckbox"] label .lucide-icon,
+    [data-testid="stCheckbox"] label svg.lucide {{
+        color: {text_color} !important;
+        stroke: {text_color} !important;
+        fill: none !important;
+        display: inline-block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
     }}
     [data-testid="stCheckbox"] *,
     [data-testid="stCheckbox"] p,
@@ -8499,7 +8515,7 @@ else:
 
 logo_header_html = f'<img src="{logo_data_uri}" style="width: 42px; height: 42px; border-radius: 11px; box-shadow: 0 2px 10px rgba(37,99,235,0.2); border: 1px solid rgba(226,232,240,0.8); background: #ffffff; object-fit: contain; padding: 2px;" />' if logo_data_uri else ""
 
-BUILD_VERSION = "2026.11.02-1736"
+BUILD_VERSION = "2026.11.02-1743"
 st.markdown(f'<div class="title-container" style="display: flex; flex-direction: column; gap: 6px;"><div style="display: flex; align-items: center; gap: 14px; flex-wrap: wrap;">{logo_header_html}<div class="title-text" style="margin: 0; line-height: 1;">ZenStockScreener</div>{badge_html}<span style="font-size: 0.72rem; color: var(--secondary-text-color); opacity: 0.7; font-family: monospace;">build:{BUILD_VERSION}</span></div><div class="subtitle-text" style="margin-top: 4px;">AI分析とファンダメンタルズ指標による日本株上昇期待銘柄の選定システム</div></div>', unsafe_allow_html=True)
 
 # Mobile-friendly Quick Action Header (LINE integration & status)
