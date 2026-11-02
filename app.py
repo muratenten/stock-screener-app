@@ -415,17 +415,20 @@ else:
     div[data-testid="stTabs"] button[data-baseweb="tab"]:not([aria-selected="true"]),
     div[data-testid="stTabs"] [data-baseweb="tab"]:not([aria-selected="true"]),
     button[data-baseweb="tab"]:not([aria-selected="true"]) {
-        color: #475569 !important;
+        color: #334155 !important;
         font-weight: 600 !important;
+        opacity: 1 !important;
     }
     div[data-testid="stTabs"] button[role="tab"]:not([aria-selected="true"]) *,
     button[data-baseweb="tab"]:not([aria-selected="true"]) * {
-        color: #475569 !important;
-        -webkit-text-fill-color: #475569 !important;
+        color: #334155 !important;
+        -webkit-text-fill-color: #334155 !important;
+        opacity: 1 !important;
     }
     div[data-testid="stTabs"] button[role="tab"]:not([aria-selected="true"]) svg,
     button[data-baseweb="tab"]:not([aria-selected="true"]) svg {
-        stroke: #475569 !important;
+        stroke: #334155 !important;
+        opacity: 1 !important;
     }
     div[data-testid="stTabs"] button[role="tab"][aria-selected="true"],
     div[data-testid="stTabs"] button[data-baseweb="tab"][aria-selected="true"],
@@ -2476,7 +2479,11 @@ st.html(f"""
 """)
 
 # Inject global Javascript for Lucide Icons (Feather evolved) replacement, premium button styling and badge removal
-st.components.v1.html("""
+theme_js_flag = "true" if is_dark else "false"
+st.components.v1.html(f"""<script>
+    window.__ZEN_IS_DARK__ = {theme_js_flag};
+    if (window.parent) window.parent.__ZEN_IS_DARK__ = {theme_js_flag};
+</script>""" + """
 <script>
     const parentDoc = window.parent.document;
 
@@ -2835,21 +2842,17 @@ st.components.v1.html("""
 
                 // Force high-luminance typography and reactive button aesthetics for both themes
                 let isDark = true;
-                const tracker = (typeof parentDoc !== 'undefined' && parentDoc.getElementById('zen-theme-tracker')) || 
-                                (doc && doc.getElementById('zen-theme-tracker')) ||
-                                document.getElementById('zen-theme-tracker');
-                if (tracker && tracker.getAttribute('data-theme')) {
-                    isDark = tracker.getAttribute('data-theme') === 'dark';
+                if (typeof window !== 'undefined' && typeof window.__ZEN_IS_DARK__ !== 'undefined') {
+                    isDark = window.__ZEN_IS_DARK__;
+                } else if (typeof window.parent !== 'undefined' && typeof window.parent.__ZEN_IS_DARK__ !== 'undefined') {
+                    isDark = window.parent.__ZEN_IS_DARK__;
                 } else {
-                    try {
-                        const win = window.parent || window;
-                        if (win && win.location && win.location.search) {
-                            const urlParams = new URLSearchParams(win.location.search);
-                            if (urlParams.get('theme') === 'light') {
-                                isDark = false;
-                            }
-                        }
-                    } catch(e) {}
+                    const tracker = (typeof parentDoc !== 'undefined' && parentDoc.getElementById('zen-theme-tracker')) || 
+                                    (doc && doc.getElementById('zen-theme-tracker')) ||
+                                    document.getElementById('zen-theme-tracker');
+                    if (tracker && tracker.getAttribute('data-theme')) {
+                        isDark = tracker.getAttribute('data-theme') === 'dark';
+                    }
                 }
                 
                 // 1. Tab Typography Luminance (Ultra high luminance for unselected tabs)
@@ -2859,7 +2862,7 @@ st.components.v1.html("""
                     if (isDark) {
                         targetColor = isSelected ? '#60a5fa' : '#ffffff';
                     } else {
-                        targetColor = isSelected ? '#1976d2' : '#475569';
+                        targetColor = isSelected ? '#1976d2' : '#334155';
                     }
                     tab.style.setProperty('color', targetColor, 'important');
                     tab.style.setProperty('opacity', '1', 'important');
