@@ -172,10 +172,10 @@ else:
     [data-testid="stHeader"] {
         background-color: #f4f6f8 !important;
         background: #f4f6f8 !important;
-        color: #1e293b !important;
+        color: #000000 !important;
     }
 
-    /* 2. Normal Headings & Text (Neutralizing config.toml textColor without touching badges, tags, or buttons) */
+    /* 2. Normal Headings & Text */
     [data-testid="stMainBlockContainer"] h1,
     [data-testid="stMainBlockContainer"] h2,
     [data-testid="stMainBlockContainer"] h3,
@@ -189,8 +189,8 @@ else:
     [data-testid="stWidgetLabel"] label,
     [data-testid="stWidgetLabel"] p,
     [data-testid="stWidgetLabel"] span {
-        color: #1e293b !important;
-        -webkit-text-fill-color: #1e293b !important;
+        color: #000000 !important;
+        -webkit-text-fill-color: #000000 !important;
     }
 
     /* 3. Sidebar Surface & Text */
@@ -319,7 +319,7 @@ else:
         stroke: #1e293b !important;
     }
 
-    /* 9. Dropdown Selectboxes in Light Mode (Matching App Background #f4f6f8) */
+    /* 9. Dropdown Selectboxes in Light Mode (Transparent to match any background) */
     html body [data-testid="stApp"] [data-testid="stSelectbox"] [data-baseweb="select"],
     html body [data-testid="stApp"] [data-testid="stSelectbox"] [data-baseweb="select"] div,
     html body [data-testid="stApp"] [data-testid="stSelectbox"] [data-baseweb="select"] > div,
@@ -335,8 +335,8 @@ else:
     div[data-baseweb="select"] div,
     div[data-baseweb="select"] > div,
     div[data-baseweb="select"] [role="combobox"] {
-        background-color: #f4f6f8 !important;
-        background: #f4f6f8 !important;
+        background-color: transparent !important;
+        background: transparent !important;
         border: 1px solid rgba(0, 0, 0, 0.23) !important;
         color: #000000 !important;
     }
@@ -354,9 +354,9 @@ else:
     div[data-testid="stSelectbox"] svg,
     div[data-baseweb="select"] svg,
     div[data-baseweb="select"] [data-baseweb="icon"] svg {
-        fill: #1e293b !important;
-        color: #1e293b !important;
-        stroke: #1e293b !important;
+        fill: #000000 !important;
+        color: #000000 !important;
+        stroke: #000000 !important;
     }
 
     /* 10. Popovers & Menus in Light Mode */
@@ -2069,8 +2069,8 @@ st.html(f"""
     div[data-testid="stSelectbox"] div[data-baseweb="select"] > div,
     div[data-baseweb="select"] > div,
     div[data-baseweb="select"] [role="combobox"] {{
-        background-color: {'rgba(255, 255, 255, 0.08)' if is_dark else '#f4f6f8'} !important;
-        background: {'rgba(255, 255, 255, 0.08)' if is_dark else '#f4f6f8'} !important;
+        background-color: {'rgba(255, 255, 255, 0.08)' if is_dark else 'transparent'} !important;
+        background: {'rgba(255, 255, 255, 0.08)' if is_dark else 'transparent'} !important;
         color: {'#f1f5f9' if is_dark else '#000000'} !important;
         border: 1px solid {'rgba(255, 255, 255, 0.18)' if is_dark else 'rgba(0, 0, 0, 0.23)'} !important;
         border-radius: var(--mui-radius-sm) !important;
@@ -2094,8 +2094,9 @@ st.html(f"""
     div[data-testid="stSelectbox"] div[data-baseweb="select"] [data-baseweb="icon"] svg,
     div[data-baseweb="select"] [data-baseweb="icon"] svg,
     div[data-baseweb="select"] [data-baseweb="icon"] {{
-        color: {'#cbd5e1' if is_dark else '#1e293b'} !important;
-        fill: {'#cbd5e1' if is_dark else '#1e293b'} !important;
+        color: {'#cbd5e1' if is_dark else '#000000'} !important;
+        fill: {'#cbd5e1' if is_dark else '#000000'} !important;
+        stroke: {'#cbd5e1' if is_dark else '#000000'} !important;
     }}
     
     /* MUI Chip / Tags */
@@ -2872,14 +2873,19 @@ st.components.v1.html(f"""<script>
                 
                 // Enforce strict separation between themes for tabs and selectboxes
                 if (!isDark) {
-                    // LIGHT MODE: Match dropdown background to page canvas (#f4f6f8) and force pure black tab labels (#000000)
+                    // LIGHT MODE: Match dropdown background to page canvas (transparent) and force pure black tab labels (#000000)
                     doc.querySelectorAll('[data-testid="stSelectbox"] [data-baseweb="select"], [data-testid="stSelectbox"] [data-baseweb="select"] > div, [data-testid="stSelectbox"] [data-baseweb="select"] div, [data-baseweb="select"], [data-baseweb="select"] > div').forEach(box => {
-                        box.style.setProperty('background-color', '#f4f6f8', 'important');
-                        box.style.setProperty('background', '#f4f6f8', 'important');
+                        box.style.setProperty('background-color', 'transparent', 'important');
+                        box.style.setProperty('background', 'transparent', 'important');
                         box.style.setProperty('border-color', 'rgba(0, 0, 0, 0.23)', 'important');
                         box.querySelectorAll('p, span, div, [role="combobox"]').forEach(el => {
                             el.style.setProperty('color', '#000000', 'important');
                             el.style.setProperty('-webkit-text-fill-color', '#000000', 'important');
+                        });
+                        box.querySelectorAll('svg').forEach(s => {
+                            s.style.setProperty('color', '#000000', 'important');
+                            s.style.setProperty('fill', '#000000', 'important');
+                            s.style.setProperty('stroke', '#000000', 'important');
                         });
                     });
                     doc.querySelectorAll('[data-testid="stTabs"] [data-baseweb="tab"]:not([aria-selected="true"]), [data-testid="stTabs"] button[role="tab"]:not([aria-selected="true"]), [data-baseweb="tab"]:not([aria-selected="true"])').forEach(tab => {
@@ -2888,6 +2894,11 @@ st.components.v1.html(f"""<script>
                             el.style.setProperty('color', '#000000', 'important');
                             el.style.setProperty('-webkit-text-fill-color', '#000000', 'important');
                             el.style.setProperty('opacity', '1', 'important');
+                        });
+                        tab.querySelectorAll('svg').forEach(s => {
+                            s.style.setProperty('color', '#000000', 'important');
+                            s.style.setProperty('stroke', '#000000', 'important');
+                            s.style.setProperty('opacity', '1', 'important');
                         });
                     });
                 } else {
