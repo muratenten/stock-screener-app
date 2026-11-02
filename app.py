@@ -228,6 +228,43 @@ button[data-baseweb="tab"][aria-selected="true"] svg {{
     stroke: {'#38bdf8' if is_dark else '#1976d2'} !important;
     opacity: 1 !important;
 }}
+
+/* Early Tab Overflow Fade Masks & Navigation Arrows Background Sync */
+div[data-testid="stTabs"]::before,
+div[data-testid="stTabs"] > div::before,
+div[data-testid="stTabs"] [data-baseweb="tab-list"]::before {{
+    background-image: {'linear-gradient(to right, #181f2c, transparent)' if is_dark else 'linear-gradient(to right, #ffffff, transparent)'} !important;
+}}
+div[data-testid="stTabs"]::after,
+div[data-testid="stTabs"] > div::after,
+div[data-testid="stTabs"] [data-baseweb="tab-list"]::after {{
+    background-image: {'linear-gradient(to left, #181f2c, transparent)' if is_dark else 'linear-gradient(to left, #ffffff, transparent)'} !important;
+}}
+div[data-testid="stTabs"] button:not([role="tab"]),
+div[data-testid="stTabs"] [role="button"]:not([role="tab"]),
+div[data-testid="stTabs"] > div > button,
+div[data-testid="stTabs"] [data-baseweb="tab-list"] button:not([role="tab"]),
+div[data-testid="stTabs"] [data-baseweb="tab-list"] ~ button {{
+    background-color: {'#181f2c' if is_dark else '#ffffff'} !important;
+    background: {'#181f2c' if is_dark else '#ffffff'} !important;
+    color: {'#ffffff' if is_dark else '#1e293b'} !important;
+    border: none !important;
+    box-shadow: none !important;
+}}
+div[data-testid="stTabs"] button:not([role="tab"]) *,
+div[data-testid="stTabs"] [role="button"]:not([role="tab"]) *,
+div[data-testid="stTabs"] > div > button *,
+div[data-testid="stTabs"] [data-baseweb="tab-list"] button:not([role="tab"]) * {{
+    color: {'#ffffff' if is_dark else '#1e293b'} !important;
+    stroke: {'#ffffff' if is_dark else '#1e293b'} !important;
+    fill: {'#ffffff' if is_dark else '#1e293b'} !important;
+}}
+div[data-testid="stTabs"] [data-baseweb="tab-list"]::-webkit-scrollbar-button,
+div[data-testid="stTabs"]::-webkit-scrollbar-button {{
+    background-color: {'#181f2c' if is_dark else '#ffffff'} !important;
+    background: {'#181f2c' if is_dark else '#ffffff'} !important;
+    color: {'#ffffff' if is_dark else '#1e293b'} !important;
+}}
 </style>
 """)
 
@@ -2230,6 +2267,43 @@ st.html(f"""
     div[role="tablist"] {{
         border-bottom: 1px solid var(--border-color) !important;
     }}
+
+    /* Tab Overflow Gradient Masks & Navigation Arrows Background Sync */
+    div[data-testid="stTabs"]::before,
+    div[data-testid="stTabs"] > div::before,
+    div[data-testid="stTabs"] [data-baseweb="tab-list"]::before {{
+        background-image: {'linear-gradient(to right, #181f2c, transparent)' if is_dark else 'linear-gradient(to right, #ffffff, transparent)'} !important;
+    }}
+    div[data-testid="stTabs"]::after,
+    div[data-testid="stTabs"] > div::after,
+    div[data-testid="stTabs"] [data-baseweb="tab-list"]::after {{
+        background-image: {'linear-gradient(to left, #181f2c, transparent)' if is_dark else 'linear-gradient(to left, #ffffff, transparent)'} !important;
+    }}
+    div[data-testid="stTabs"] button:not([role="tab"]),
+    div[data-testid="stTabs"] [role="button"]:not([role="tab"]),
+    div[data-testid="stTabs"] > div > button,
+    div[data-testid="stTabs"] [data-baseweb="tab-list"] button:not([role="tab"]),
+    div[data-testid="stTabs"] [data-baseweb="tab-list"] ~ button {{
+        background-color: {'#181f2c' if is_dark else '#ffffff'} !important;
+        background: {'#181f2c' if is_dark else '#ffffff'} !important;
+        color: {'#ffffff' if is_dark else '#1e293b'} !important;
+        border: none !important;
+        box-shadow: none !important;
+    }}
+    div[data-testid="stTabs"] button:not([role="tab"]) *,
+    div[data-testid="stTabs"] [role="button"]:not([role="tab"]) *,
+    div[data-testid="stTabs"] > div > button *,
+    div[data-testid="stTabs"] [data-baseweb="tab-list"] button:not([role="tab"]) * {{
+        color: {'#ffffff' if is_dark else '#1e293b'} !important;
+        stroke: {'#ffffff' if is_dark else '#1e293b'} !important;
+        fill: {'#ffffff' if is_dark else '#1e293b'} !important;
+    }}
+    div[data-testid="stTabs"] [data-baseweb="tab-list"]::-webkit-scrollbar-button,
+    div[data-testid="stTabs"]::-webkit-scrollbar-button {{
+        background-color: {'#181f2c' if is_dark else '#ffffff'} !important;
+        background: {'#181f2c' if is_dark else '#ffffff'} !important;
+        color: {'#ffffff' if is_dark else '#1e293b'} !important;
+    }}
     
     /* ==========================================================================
        MUI Accordion (Expander)
@@ -2809,6 +2883,22 @@ st.components.v1.html(f"""<script>
                         s.style.setProperty("color", activeColor, "important");
                         s.style.setProperty("stroke", activeColor, "important");
                         s.style.setProperty("opacity", "1", "important");
+                    });
+                });
+
+                // 1c. Tab Scroll Buttons and Navigation Arrows Background Sync
+                const tabNavBg = isDark ? "#181f2c" : "#ffffff";
+                const tabNavColor = isDark ? "#ffffff" : "#1e293b";
+                doc.querySelectorAll('[data-testid="stTabs"] button:not([role="tab"]), [data-testid="stTabs"] [role="button"]:not([role="tab"]), [data-testid="stTabs"] [data-baseweb="tab-list"] ~ button').forEach(btn => {
+                    btn.style.setProperty("background", tabNavBg, "important");
+                    btn.style.setProperty("background-color", tabNavBg, "important");
+                    btn.style.setProperty("color", tabNavColor, "important");
+                    btn.style.setProperty("border", "none", "important");
+                    btn.style.setProperty("box-shadow", "none", "important");
+                    btn.querySelectorAll("svg, path, polyline").forEach(s => {
+                        s.style.setProperty("color", tabNavColor, "important");
+                        s.style.setProperty("stroke", tabNavColor, "important");
+                        s.style.setProperty("fill", tabNavColor, "important");
                     });
                 });
 
@@ -8620,7 +8710,7 @@ else:
 
 logo_header_html = f'<img src="{logo_data_uri}" style="width: 42px; height: 42px; border-radius: 11px; box-shadow: 0 2px 10px rgba(37,99,235,0.2); border: 1px solid rgba(226,232,240,0.8); background: #ffffff; object-fit: contain; padding: 2px;" />' if logo_data_uri else ""
 
-BUILD_VERSION = "2026.11.02-1910"
+BUILD_VERSION = "2026.11.02-1935"
 st.markdown(f'<div class="title-container" style="display: flex; flex-direction: column; gap: 6px;"><div style="display: flex; align-items: center; gap: 14px; flex-wrap: wrap;">{logo_header_html}<div class="title-text" style="margin: 0; line-height: 1;">ZenStockScreener</div>{badge_html}<span style="font-size: 0.72rem; color: var(--secondary-text-color); opacity: 0.7; font-family: monospace;">build:{BUILD_VERSION}</span></div><div class="subtitle-text" style="margin-top: 4px;">AI分析とファンダメンタルズ指標による日本株上昇期待銘柄の選定システム</div></div>', unsafe_allow_html=True)
 
 # Mobile-friendly Quick Action Header (LINE integration & status)
