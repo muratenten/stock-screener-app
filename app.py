@@ -8339,6 +8339,51 @@ else:
     if st.sidebar.button("LINE連携（毎朝の速報を受信）", use_container_width=True, key="sidebar_line_link_btn"):
         show_line_link_dialog()
 
+# --- 財務データキャッシュ連携 & 手動更新 ---
+try:
+    meta_cache, _ = load_tse_fundamentals_cache()
+    cache_last_up = meta_cache.get("last_updated", "未更新")
+except Exception:
+    cache_last_up = "未更新"
+
+st.sidebar.markdown(f"""
+<div style="background: {'rgba(255, 255, 255, 0.05)' if is_dark else 'rgba(0, 0, 0, 0.03)'}; border: 1px solid {'rgba(255, 255, 255, 0.12)' if is_dark else 'rgba(0, 0, 0, 0.08)'}; border-radius: 8px; padding: 10px 12px; margin-top: 10px; margin-bottom: 8px;">
+    <div style="font-weight: 700; color: {'#38bdf8' if is_dark else '#2563eb'}; font-size: 0.82rem; margin-bottom: 2px;">⚡ 基礎財務キャッシュ連携</div>
+    <div style="font-size: 0.72rem; color: var(--text-color, #475569); line-height: 1.4;">
+        最終更新: <strong>{cache_last_up}</strong><br>
+        <span style="opacity: 0.75; font-size: 0.68rem;">※土曜深夜自動更新・株価連動</span>
+    </div>
+</div>
+""", unsafe_allow_html=True)
+
+if st.sidebar.button("🔄 財務キャッシュ手動更新", key="sidebar_refresh_fund_cache", use_container_width=True, help="通常は毎週土曜日の深夜に全自動更新されます。更新後はRender本番サーバーへも自動同期されます。"):
+    prog_container = st.sidebar.empty()
+    prog_bar = prog_container.progress(0, text="最新の財務データを取得中...")
+    def prog_cb(curr, total):
+        prog_bar.progress(curr / total, text=f"財務データ取得中... ({curr}/{total})")
+    try:
+        import update_fundamentals_cache
+        payload = update_fundamentals_cache.build_fundamentals_cache(max_workers=20, progress_callback=prog_cb)
+        st.cache_data.clear()
+        
+        # Auto-sync updated cache to Render
+        prog_bar.progress(0.95, text="🚀 Renderへ同期中...")
+        try:
+            from cache_sync import sync_cache_to_render
+            sync_ok, sync_msg = sync_cache_to_render(
+                files=["tse_fundamentals_cache.json", "screener_price_cache.pkl"],
+                commit_msg=f"Auto-sync updated cache to Render from App ({payload['metadata']['last_updated']})"
+            )
+        except Exception as sync_err:
+            sync_msg = f"同期警告: {sync_err}"
+            
+        prog_container.empty()
+        st.sidebar.success(f"🎉 財務データキャッシュを手動更新しました！（{payload['metadata']['last_updated']}）")
+        st.rerun()
+    except Exception as e:
+        prog_container.empty()
+        st.sidebar.error(f"更新エラー: {e}")
+
 st.sidebar.caption("💡 別のIDに切り替える、または初期画面に戻るには下のボタンからログアウトしてください。")
 
 if st.sidebar.button("🚪 ログアウト (ログイン画面に戻る)", use_container_width=True, key="sidebar_logout_btn"):
@@ -8575,7 +8620,7 @@ else:
 
 logo_header_html = f'<img src="{logo_data_uri}" style="width: 42px; height: 42px; border-radius: 11px; box-shadow: 0 2px 10px rgba(37,99,235,0.2); border: 1px solid rgba(226,232,240,0.8); background: #ffffff; object-fit: contain; padding: 2px;" />' if logo_data_uri else ""
 
-BUILD_VERSION = "2026.11.02-1905"
+BUILD_VERSION = "2026.11.02-1910"
 st.markdown(f'<div class="title-container" style="display: flex; flex-direction: column; gap: 6px;"><div style="display: flex; align-items: center; gap: 14px; flex-wrap: wrap;">{logo_header_html}<div class="title-text" style="margin: 0; line-height: 1;">ZenStockScreener</div>{badge_html}<span style="font-size: 0.72rem; color: var(--secondary-text-color); opacity: 0.7; font-family: monospace;">build:{BUILD_VERSION}</span></div><div class="subtitle-text" style="margin-top: 4px;">AI分析とファンダメンタルズ指標による日本株上昇期待銘柄の選定システム</div></div>', unsafe_allow_html=True)
 
 # Mobile-friendly Quick Action Header (LINE integration & status)
@@ -9438,48 +9483,6 @@ with tab_screen:
     if not filtered_pool:
         st.info("条件に該当する銘柄がありません。他の市場を選択するか、カスタムティッカーを入力してください。")
     else:
-        meta, fund_cache = load_tse_fundamentals_cache()
-        last_up_str = meta.get("last_updated", "未更新")
-        
-        with st.container(border=True):
-            col_c_info, col_c_btn = st.columns([4, 1.1])
-            with col_c_info:
-                st.markdown(f"""
-                <div style="font-weight: 700; color: #2563eb; font-size: 0.92rem; margin-bottom: 2px;">⚡ 基礎財務キャッシュ連携（毎週土曜深夜に全自動更新）</div>
-                <div style="font-size: 0.82rem; color: var(--text-color, #475569); line-height: 1.5;">
-                    最終更新: <strong>{last_up_str}</strong> — <span style="opacity: 0.8; font-size: 0.78rem;">※最新株価と連動してPER・PBR・利回りをリアルタイム算出</span>
-                </div>
-                """, unsafe_allow_html=True)
-            with col_c_btn:
-                st.markdown("<div style='margin-top: 2px;'></div>", unsafe_allow_html=True)
-                if st.button("🔄 手動更新", key="btn_refresh_fund_cache_inside", use_container_width=True, help="通常は毎週土曜日の深夜に全自動更新されます。更新後はRender本番サーバーへも自動同期されます。"):
-                    prog_container = st.empty()
-                    prog_bar = prog_container.progress(0, text="最新の財務データを取得中...")
-                    def prog_cb(curr, total):
-                        prog_bar.progress(curr / total, text=f"日本のYahoo!から財務データを取得中... ({curr}/{total})")
-                    try:
-                        import update_fundamentals_cache
-                        payload = update_fundamentals_cache.build_fundamentals_cache(max_workers=20, progress_callback=prog_cb)
-                        st.cache_data.clear()
-                        
-                        # Auto-sync updated cache to Render
-                        prog_bar.progress(0.95, text="🚀 Render本番サーバーへキャッシュを自動同期中...")
-                        try:
-                            from cache_sync import sync_cache_to_render
-                            sync_ok, sync_msg = sync_cache_to_render(
-                                files=["tse_fundamentals_cache.json", "screener_price_cache.pkl"],
-                                commit_msg=f"Auto-sync updated cache to Render from App ({payload['metadata']['last_updated']})"
-                            )
-                        except Exception as sync_err:
-                            sync_msg = f"同期警告: {sync_err}"
-                            
-                        prog_container.empty()
-                        st.success(f"🎉 財務データキャッシュを手動更新し、Render本番へも自動反映しました！（{payload['metadata']['last_updated']}）")
-                        st.rerun()
-                    except Exception as e:
-                        prog_container.empty()
-                        st.error(f"更新エラー: {e}")
-        
         st.markdown(f"**現在のスクリーニング対象候補数**: {len(filtered_pool)} 銘柄")
         
         start_screening_clicked = st.button("🔍 スクリーニングを開始する", type="primary", use_container_width=True)
