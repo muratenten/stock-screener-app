@@ -256,25 +256,56 @@ else:
         -webkit-text-fill-color: rgba(0, 0, 0, 0.60) !important;
     }
 
-    /* 4b. Checkboxes in Light Mode (Pure White Box with Border) */
-    div[data-testid="stCheckbox"] label,
-    div[data-testid="stCheckbox"] [data-baseweb="checkbox"],
-    div[data-testid="stCheckbox"] [data-baseweb="checkbox"] * {
-        color: #000000 !important;
-        -webkit-text-fill-color: #000000 !important;
-    }
-    div[data-testid="stCheckbox"] [data-baseweb="checkbox"] span {
+    /* 4b. Checkboxes in Light Mode (Pure White Box with Border, BaseWeb Checkmark div/span) */
+    html body [data-testid="stApp"] [data-testid="stCheckbox"] [data-baseweb="checkbox"] > div:first-of-type,
+    html body [data-testid="stApp"] [data-testid="stCheckbox"] [data-baseweb="checkbox"] > span:first-of-type,
+    html body [data-testid="stApp"] [data-testid="stCheckbox"] [data-baseweb="checkbox"] span,
+    html body [data-testid="stApp"] label[data-baseweb="checkbox"] > div:first-of-type,
+    html body [data-testid="stApp"] label[data-baseweb="checkbox"] > span:first-of-type,
+    html body [data-testid="stApp"] label[data-baseweb="checkbox"] span,
+    div[data-testid="stCheckbox"] [data-baseweb="checkbox"] > div:first-of-type,
+    div[data-testid="stCheckbox"] [data-baseweb="checkbox"] > span:first-of-type,
+    div[data-testid="stCheckbox"] [data-baseweb="checkbox"] span,
+    div[data-testid="stCheckbox"] span,
+    label[data-baseweb="checkbox"] > div:first-of-type,
+    label[data-baseweb="checkbox"] > span:first-of-type,
+    label[data-baseweb="checkbox"] span {
         background-color: #ffffff !important;
         background: #ffffff !important;
         border: 2px solid rgba(0, 0, 0, 0.4) !important;
         border-radius: 4px !important;
     }
+    html body [data-testid="stApp"] [data-testid="stCheckbox"] input:checked ~ div:first-of-type,
+    html body [data-testid="stApp"] [data-testid="stCheckbox"] input:checked + div,
+    html body [data-testid="stApp"] [data-testid="stCheckbox"] [aria-checked="true"] div:first-of-type,
+    html body [data-testid="stApp"] [data-testid="stCheckbox"] input:checked ~ span,
+    html body [data-testid="stApp"] [data-testid="stCheckbox"] [aria-checked="true"] span,
+    div[data-testid="stCheckbox"] input:checked ~ div:first-of-type,
+    div[data-testid="stCheckbox"] input:checked + div,
+    div[data-testid="stCheckbox"] [aria-checked="true"] div:first-of-type,
     div[data-testid="stCheckbox"] input:checked ~ span,
-    div[data-testid="stCheckbox"] [aria-checked="true"] span,
-    div[data-testid="stCheckbox"] input:checked + span {
+    div[data-testid="stCheckbox"] [aria-checked="true"] span {
         background-color: #1976d2 !important;
         background: #1976d2 !important;
         border-color: #1976d2 !important;
+    }
+    div[data-testid="stCheckbox"] svg {
+        color: #ffffff !important;
+        fill: #ffffff !important;
+        stroke: #ffffff !important;
+    }
+    html body [data-testid="stApp"] [data-testid="stCheckbox"] label *,
+    html body [data-testid="stApp"] [data-testid="stCheckbox"] p,
+    div[data-testid="stCheckbox"] label *,
+    div[data-testid="stCheckbox"] p,
+    div[data-testid="stCheckbox"] [data-baseweb="checkbox"] * {
+        color: #000000 !important;
+        -webkit-text-fill-color: #000000 !important;
+    }
+    div[data-testid="stCheckbox"] label > div:last-child,
+    div[data-testid="stCheckbox"] p {
+        background-color: transparent !important;
+        background: transparent !important;
     }
     [data-testid="stSlider"] label,
     [data-testid="stSlider"] p,
@@ -370,22 +401,38 @@ else:
         stroke: #1e293b !important;
     }
 
-    /* 9. Dropdown Selectboxes in Light Mode (Transparent Background, Pure Black Text) */
+    /* 9. Dropdown Selectboxes in Light Mode (Matching App Background, Pure Black Text) */
+    html body [data-testid="stApp"] [data-testid="stSelectbox"],
+    html body [data-testid="stApp"] [data-testid="stSelectbox"] > div,
     html body [data-testid="stApp"] [data-testid="stSelectbox"] [data-baseweb="select"],
     html body [data-testid="stApp"] [data-testid="stSelectbox"] [data-baseweb="select"] *,
+    html body [data-testid="stApp"] [data-testid="stSelectbox"] [data-baseweb="select"] div,
+    html body [data-testid="stApp"] [data-testid="stSelectbox"] [data-baseweb="select"] span,
+    html body [data-testid="stApp"] [data-testid="stSelectbox"] [data-baseweb="select"] input,
+    html body [data-testid="stApp"] div[data-baseweb="select"],
+    html body [data-testid="stApp"] div[data-baseweb="select"] *,
+    html body [data-testid="stApp"] div[data-baseweb="select"] div,
+    div[data-testid="stSelectbox"],
+    div[data-testid="stSelectbox"] > div,
     div[data-testid="stSelectbox"] [data-baseweb="select"],
     div[data-testid="stSelectbox"] [data-baseweb="select"] *,
+    div[data-testid="stSelectbox"] [data-baseweb="select"] div,
     div[data-baseweb="select"],
-    div[data-baseweb="select"] * {
-        background-color: transparent !important;
-        background: transparent !important;
+    div[data-baseweb="select"] *,
+    div[data-baseweb="select"] div {
+        background-color: #f4f6f8 !important;
+        background: #f4f6f8 !important;
         color: #000000 !important;
         -webkit-text-fill-color: #000000 !important;
     }
+    html body [data-testid="stApp"] [data-testid="stSelectbox"] [data-baseweb="select"] > div,
     div[data-testid="stSelectbox"] [data-baseweb="select"] > div,
     div[data-baseweb="select"] > div {
+        background-color: #f4f6f8 !important;
         border: 1px solid rgba(0, 0, 0, 0.23) !important;
+        border-radius: 4px !important;
     }
+    html body [data-testid="stApp"] [data-testid="stSelectbox"] svg,
     div[data-testid="stSelectbox"] svg,
     div[data-baseweb="select"] svg,
     div[data-baseweb="select"] [data-baseweb="icon"] svg {
@@ -2104,16 +2151,20 @@ st.html(f"""
     }}
     
     /* MUI Selectbox (BaseWeb dropdown select) */
+    html body [data-testid="stApp"] div[data-testid="stSelectbox"],
+    html body [data-testid="stApp"] div[data-testid="stSelectbox"] > div,
     html body [data-testid="stApp"] div[data-testid="stSelectbox"] div[data-baseweb="select"],
     html body [data-testid="stApp"] div[data-testid="stSelectbox"] div[data-baseweb="select"] > div,
     html body [data-testid="stApp"] div[data-baseweb="select"],
     html body [data-testid="stApp"] div[data-baseweb="select"] > div,
     html body [data-testid="stApp"] div[data-baseweb="select"] [role="combobox"],
+    div[data-testid="stSelectbox"],
+    div[data-testid="stSelectbox"] > div,
     div[data-testid="stSelectbox"] div[data-baseweb="select"] > div,
     div[data-baseweb="select"] > div,
     div[data-baseweb="select"] [role="combobox"] {{
-        background-color: {'rgba(255, 255, 255, 0.08)' if is_dark else 'transparent'} !important;
-        background: {'rgba(255, 255, 255, 0.08)' if is_dark else 'transparent'} !important;
+        background-color: {'rgba(255, 255, 255, 0.08)' if is_dark else '#f4f6f8'} !important;
+        background: {'rgba(255, 255, 255, 0.08)' if is_dark else '#f4f6f8'} !important;
         color: {'#f1f5f9' if is_dark else '#000000'} !important;
         border: 1px solid {'rgba(255, 255, 255, 0.18)' if is_dark else 'rgba(0, 0, 0, 0.23)'} !important;
         border-radius: var(--mui-radius-sm) !important;
@@ -2128,12 +2179,15 @@ st.html(f"""
     div[data-baseweb="select"] [role="combobox"] *,
     div[data-baseweb="select"] > div p,
     div[data-baseweb="select"] > div span {{
+        background-color: {'rgba(255, 255, 255, 0.08)' if is_dark else '#f4f6f8'} !important;
+        background: {'rgba(255, 255, 255, 0.08)' if is_dark else '#f4f6f8'} !important;
         color: {'#f1f5f9' if is_dark else '#000000'} !important;
         -webkit-text-fill-color: {'#f1f5f9' if is_dark else '#000000'} !important;
     }}
     div[data-baseweb="select"] > div:hover {{
         border-color: {'rgba(255, 255, 255, 0.87)' if is_dark else 'rgba(0, 0, 0, 0.87)'} !important;
     }}
+    html body [data-testid="stApp"] div[data-testid="stSelectbox"] svg,
     div[data-testid="stSelectbox"] div[data-baseweb="select"] [data-baseweb="icon"] svg,
     div[data-baseweb="select"] [data-baseweb="icon"] svg,
     div[data-baseweb="select"] [data-baseweb="icon"] {{
@@ -2233,16 +2287,34 @@ st.html(f"""
     }}
 
     /* MUI Checkboxes */
+    html body [data-testid="stApp"] [data-testid="stCheckbox"] label,
+    html body [data-testid="stApp"] [data-testid="stCheckbox"] [data-baseweb="checkbox"],
     [data-testid="stCheckbox"] label,
     [data-testid="stCheckbox"] [data-baseweb="checkbox"] {{
         color: {text_color} !important;
     }}
+    html body [data-testid="stApp"] [data-testid="stCheckbox"] [data-baseweb="checkbox"] > div:first-of-type,
+    html body [data-testid="stApp"] [data-testid="stCheckbox"] [data-baseweb="checkbox"] > span:first-of-type,
+    html body [data-testid="stApp"] [data-testid="stCheckbox"] [data-baseweb="checkbox"] span,
+    html body [data-testid="stApp"] label[data-baseweb="checkbox"] > div:first-of-type,
+    html body [data-testid="stApp"] label[data-baseweb="checkbox"] > span:first-of-type,
+    [data-testid="stCheckbox"] [data-baseweb="checkbox"] > div:first-of-type,
+    [data-testid="stCheckbox"] [data-baseweb="checkbox"] > span:first-of-type,
     [data-testid="stCheckbox"] [data-baseweb="checkbox"] span {{
         background-color: {'rgba(255, 255, 255, 0.08)' if is_dark else '#ffffff'} !important;
         background: {'rgba(255, 255, 255, 0.08)' if is_dark else '#ffffff'} !important;
         border: 2px solid {'rgba(255, 255, 255, 0.3)' if is_dark else 'rgba(0, 0, 0, 0.4)'} !important;
         border-radius: var(--mui-radius-sm) !important;
     }}
+    html body [data-testid="stApp"] [data-testid="stCheckbox"] input:checked ~ div:first-of-type,
+    html body [data-testid="stApp"] [data-testid="stCheckbox"] input:checked + div,
+    html body [data-testid="stApp"] [data-testid="stCheckbox"] [aria-checked="true"] div:first-of-type,
+    html body [data-testid="stApp"] [data-testid="stCheckbox"] input:checked ~ span,
+    html body [data-testid="stApp"] [data-testid="stCheckbox"] [aria-checked="true"] span,
+    html body [data-testid="stApp"] [data-testid="stCheckbox"] input:checked + span,
+    [data-testid="stCheckbox"] input:checked ~ div:first-of-type,
+    [data-testid="stCheckbox"] input:checked + div,
+    [data-testid="stCheckbox"] [aria-checked="true"] div:first-of-type,
     [data-testid="stCheckbox"] input:checked ~ span,
     [data-testid="stCheckbox"] [aria-checked="true"] span,
     [data-testid="stCheckbox"] input:checked + span {{
@@ -2250,12 +2322,23 @@ st.html(f"""
         background: {primary_color} !important;
         border-color: {primary_color} !important;
     }}
+    html body [data-testid="stApp"] [data-testid="stCheckbox"] svg,
+    [data-testid="stCheckbox"] svg {{
+        color: #ffffff !important;
+        fill: #ffffff !important;
+        stroke: #ffffff !important;
+    }}
     [data-testid="stCheckbox"] *,
     [data-testid="stCheckbox"] p,
     [data-testid="stCheckbox"] span,
     [data-testid="stCheckbox"] div {{
         color: {text_color} !important;
         -webkit-text-fill-color: {text_color} !important;
+    }}
+    [data-testid="stCheckbox"] label > div:last-child,
+    [data-testid="stCheckbox"] p {{
+        background-color: transparent !important;
+        background: transparent !important;
     }}
 
     /* MUI Menu Listbox */
@@ -8805,7 +8888,7 @@ else:
 
 logo_header_html = f'<img src="{logo_data_uri}" style="width: 42px; height: 42px; border-radius: 11px; box-shadow: 0 2px 10px rgba(37,99,235,0.2); border: 1px solid rgba(226,232,240,0.8); background: #ffffff; object-fit: contain; padding: 2px;" />' if logo_data_uri else ""
 
-BUILD_VERSION = "2026.11.02-1541"
+BUILD_VERSION = "2026.11.02-1552"
 st.markdown(f'<div class="title-container" style="display: flex; flex-direction: column; gap: 6px;"><div style="display: flex; align-items: center; gap: 14px; flex-wrap: wrap;">{logo_header_html}<div class="title-text" style="margin: 0; line-height: 1;">ZenStockScreener</div>{badge_html}<span style="font-size: 0.72rem; color: var(--secondary-text-color); opacity: 0.7; font-family: monospace;">build:{BUILD_VERSION}</span></div><div class="subtitle-text" style="margin-top: 4px;">AI分析とファンダメンタルズ指標による日本株上昇期待銘柄の選定システム</div></div>', unsafe_allow_html=True)
 
 # Mobile-friendly Quick Action Header (LINE integration & status)
