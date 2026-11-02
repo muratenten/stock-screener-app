@@ -256,7 +256,7 @@ else:
         -webkit-text-fill-color: rgba(0, 0, 0, 0.60) !important;
     }
 
-    /* 4b. Checkboxes in Light Mode (Pure White Box with Border, BaseWeb Checkmark div/span) */
+    /* 4b. Checkboxes in Light Mode (Pure White Box with Border, BaseWeb Checkmark span) */
     html body [data-testid="stApp"] [data-testid="stCheckbox"] [data-baseweb="checkbox"] > div:first-of-type,
     html body [data-testid="stApp"] [data-testid="stCheckbox"] [data-baseweb="checkbox"] > span:first-of-type,
     html body [data-testid="stApp"] [data-testid="stCheckbox"] [data-baseweb="checkbox"] span,
@@ -273,8 +273,17 @@ else:
         background-color: #ffffff !important;
         background: #ffffff !important;
         border: 2px solid rgba(0, 0, 0, 0.4) !important;
+        border-color: rgba(0, 0, 0, 0.4) !important;
+        border-left-color: rgba(0, 0, 0, 0.4) !important;
+        border-right-color: rgba(0, 0, 0, 0.4) !important;
+        border-top-color: rgba(0, 0, 0, 0.4) !important;
+        border-bottom-color: rgba(0, 0, 0, 0.4) !important;
         border-radius: 4px !important;
     }
+    html body [data-testid="stApp"] [data-testid="stCheckbox"]:has(input:checked) [data-baseweb="checkbox"] span,
+    html body [data-testid="stApp"] label[data-baseweb="checkbox"]:has(input:checked) span,
+    div[data-testid="stCheckbox"]:has(input:checked) [data-baseweb="checkbox"] span,
+    label[data-baseweb="checkbox"]:has(input:checked) span,
     html body [data-testid="stApp"] [data-testid="stCheckbox"] input:checked ~ div:first-of-type,
     html body [data-testid="stApp"] [data-testid="stCheckbox"] input:checked + div,
     html body [data-testid="stApp"] [data-testid="stCheckbox"] [aria-checked="true"] div:first-of-type,
@@ -288,6 +297,10 @@ else:
         background-color: #1976d2 !important;
         background: #1976d2 !important;
         border-color: #1976d2 !important;
+        border-left-color: #1976d2 !important;
+        border-right-color: #1976d2 !important;
+        border-top-color: #1976d2 !important;
+        border-bottom-color: #1976d2 !important;
     }
     div[data-testid="stCheckbox"] svg {
         color: #ffffff !important;
@@ -401,8 +414,11 @@ else:
         stroke: #1e293b !important;
     }
 
-    /* 9. Dropdown Selectboxes in Light Mode (Matching App Background, Pure Black Text) */
-    html body [data-testid="stApp"] [data-testid="stSelectbox"],
+    /* 9. Dropdown Selectboxes in Light Mode (Crisp White Background, Pure Black Text) */
+    html body [data-testid="stApp"] [data-testid="stSelectbox"] {
+        background-color: transparent !important;
+        background: transparent !important;
+    }
     html body [data-testid="stApp"] [data-testid="stSelectbox"] > div,
     html body [data-testid="stApp"] [data-testid="stSelectbox"] [data-baseweb="select"],
     html body [data-testid="stApp"] [data-testid="stSelectbox"] [data-baseweb="select"] *,
@@ -412,7 +428,6 @@ else:
     html body [data-testid="stApp"] div[data-baseweb="select"],
     html body [data-testid="stApp"] div[data-baseweb="select"] *,
     html body [data-testid="stApp"] div[data-baseweb="select"] div,
-    div[data-testid="stSelectbox"],
     div[data-testid="stSelectbox"] > div,
     div[data-testid="stSelectbox"] [data-baseweb="select"],
     div[data-testid="stSelectbox"] [data-baseweb="select"] *,
@@ -420,15 +435,15 @@ else:
     div[data-baseweb="select"],
     div[data-baseweb="select"] *,
     div[data-baseweb="select"] div {
-        background-color: #f4f6f8 !important;
-        background: #f4f6f8 !important;
+        background-color: #ffffff !important;
+        background: #ffffff !important;
         color: #000000 !important;
         -webkit-text-fill-color: #000000 !important;
     }
     html body [data-testid="stApp"] [data-testid="stSelectbox"] [data-baseweb="select"] > div,
     div[data-testid="stSelectbox"] [data-baseweb="select"] > div,
     div[data-baseweb="select"] > div {
-        background-color: #f4f6f8 !important;
+        background-color: #ffffff !important;
         border: 1px solid rgba(0, 0, 0, 0.23) !important;
         border-radius: 4px !important;
     }
@@ -2163,8 +2178,8 @@ st.html(f"""
     div[data-testid="stSelectbox"] div[data-baseweb="select"] > div,
     div[data-baseweb="select"] > div,
     div[data-baseweb="select"] [role="combobox"] {{
-        background-color: {'rgba(255, 255, 255, 0.08)' if is_dark else '#f4f6f8'} !important;
-        background: {'rgba(255, 255, 255, 0.08)' if is_dark else '#f4f6f8'} !important;
+        background-color: {'rgba(255, 255, 255, 0.08)' if is_dark else '#ffffff'} !important;
+        background: {'rgba(255, 255, 255, 0.08)' if is_dark else '#ffffff'} !important;
         color: {'#f1f5f9' if is_dark else '#000000'} !important;
         border: 1px solid {'rgba(255, 255, 255, 0.18)' if is_dark else 'rgba(0, 0, 0, 0.23)'} !important;
         border-radius: var(--mui-radius-sm) !important;
@@ -2179,8 +2194,8 @@ st.html(f"""
     div[data-baseweb="select"] [role="combobox"] *,
     div[data-baseweb="select"] > div p,
     div[data-baseweb="select"] > div span {{
-        background-color: {'rgba(255, 255, 255, 0.08)' if is_dark else '#f4f6f8'} !important;
-        background: {'rgba(255, 255, 255, 0.08)' if is_dark else '#f4f6f8'} !important;
+        background-color: {'rgba(255, 255, 255, 0.08)' if is_dark else '#ffffff'} !important;
+        background: {'rgba(255, 255, 255, 0.08)' if is_dark else '#ffffff'} !important;
         color: {'#f1f5f9' if is_dark else '#000000'} !important;
         -webkit-text-fill-color: {'#f1f5f9' if is_dark else '#000000'} !important;
     }}
@@ -2304,8 +2319,17 @@ st.html(f"""
         background-color: {'rgba(255, 255, 255, 0.08)' if is_dark else '#ffffff'} !important;
         background: {'rgba(255, 255, 255, 0.08)' if is_dark else '#ffffff'} !important;
         border: 2px solid {'rgba(255, 255, 255, 0.3)' if is_dark else 'rgba(0, 0, 0, 0.4)'} !important;
+        border-color: {'rgba(255, 255, 255, 0.3)' if is_dark else 'rgba(0, 0, 0, 0.4)'} !important;
+        border-left-color: {'rgba(255, 255, 255, 0.3)' if is_dark else 'rgba(0, 0, 0, 0.4)'} !important;
+        border-right-color: {'rgba(255, 255, 255, 0.3)' if is_dark else 'rgba(0, 0, 0, 0.4)'} !important;
+        border-top-color: {'rgba(255, 255, 255, 0.3)' if is_dark else 'rgba(0, 0, 0, 0.4)'} !important;
+        border-bottom-color: {'rgba(255, 255, 255, 0.3)' if is_dark else 'rgba(0, 0, 0, 0.4)'} !important;
         border-radius: var(--mui-radius-sm) !important;
     }}
+    html body [data-testid="stApp"] [data-testid="stCheckbox"]:has(input:checked) [data-baseweb="checkbox"] span,
+    html body [data-testid="stApp"] label[data-baseweb="checkbox"]:has(input:checked) span,
+    div[data-testid="stCheckbox"]:has(input:checked) [data-baseweb="checkbox"] span,
+    label[data-baseweb="checkbox"]:has(input:checked) span,
     html body [data-testid="stApp"] [data-testid="stCheckbox"] input:checked ~ div:first-of-type,
     html body [data-testid="stApp"] [data-testid="stCheckbox"] input:checked + div,
     html body [data-testid="stApp"] [data-testid="stCheckbox"] [aria-checked="true"] div:first-of-type,
@@ -2321,6 +2345,10 @@ st.html(f"""
         background-color: {primary_color} !important;
         background: {primary_color} !important;
         border-color: {primary_color} !important;
+        border-left-color: {primary_color} !important;
+        border-right-color: {primary_color} !important;
+        border-top-color: {primary_color} !important;
+        border-bottom-color: {primary_color} !important;
     }}
     html body [data-testid="stApp"] [data-testid="stCheckbox"] svg,
     [data-testid="stCheckbox"] svg {{
@@ -3045,14 +3073,21 @@ st.components.v1.html(f"""<script>
                 
                 // Enforce strict separation between themes for tabs, selectboxes, expanders, and checkboxes
                 if (!isDark) {
-                    // LIGHT MODE: Match dropdown background to page canvas (transparent) and force pure black tab labels (#000000)
+                    // LIGHT MODE: Crisp white dropdown selectboxes (#ffffff) with pure black text and dark icons
+                    doc.querySelectorAll('[data-testid="stSelectbox"]').forEach(sb => {
+                        sb.style.setProperty('background-color', 'transparent', 'important');
+                        sb.style.setProperty('background', 'transparent', 'important');
+                    });
                     doc.querySelectorAll('[data-testid="stSelectbox"] [data-baseweb="select"], [data-testid="stSelectbox"] [data-baseweb="select"] > div, [data-testid="stSelectbox"] [data-baseweb="select"] div, [data-baseweb="select"], [data-baseweb="select"] > div').forEach(box => {
-                        box.style.setProperty('background-color', 'transparent', 'important');
-                        box.style.setProperty('background', 'transparent', 'important');
+                        box.style.setProperty('background-color', '#ffffff', 'important');
+                        box.style.setProperty('background', '#ffffff', 'important');
                         box.style.setProperty('border-color', 'rgba(0, 0, 0, 0.23)', 'important');
+                        box.style.setProperty('border-radius', '4px', 'important');
                         box.querySelectorAll('p, span, div, [role="combobox"]').forEach(el => {
                             el.style.setProperty('color', '#000000', 'important');
                             el.style.setProperty('-webkit-text-fill-color', '#000000', 'important');
+                            el.style.setProperty('background-color', 'transparent', 'important');
+                            el.style.setProperty('background', 'transparent', 'important');
                         });
                         box.querySelectorAll('svg').forEach(s => {
                             s.style.setProperty('color', '#000000', 'important');
@@ -3083,18 +3118,37 @@ st.components.v1.html(f"""<script>
                         el.style.setProperty('color', '#000000', 'important');
                         el.style.setProperty('-webkit-text-fill-color', '#000000', 'important');
                     });
-                    // LIGHT MODE: Checkboxes (white box with dark border, black label)
-                    doc.querySelectorAll('[data-testid="stCheckbox"] [data-baseweb="checkbox"] > span:first-child').forEach(span => {
-                        const input = span.parentElement ? span.parentElement.querySelector('input') : null;
-                        const isChecked = input && (input.checked || input.getAttribute('aria-checked') === 'true');
-                        if (!isChecked) {
-                            span.style.setProperty('background-color', '#ffffff', 'important');
-                            span.style.setProperty('background', '#ffffff', 'important');
-                            span.style.setProperty('border', '2px solid rgba(0, 0, 0, 0.4)', 'important');
-                        } else {
-                            span.style.setProperty('background-color', '#1976d2', 'important');
-                            span.style.setProperty('background', '#1976d2', 'important');
-                            span.style.setProperty('border', '2px solid #1976d2', 'important');
+                    // LIGHT MODE: Checkboxes (pure white box with dark border, blue when checked, black label)
+                    doc.querySelectorAll('[data-testid="stCheckbox"] [data-baseweb="checkbox"] span, [data-testid="stCheckbox"] [data-baseweb="checkbox"] > span:first-child').forEach(span => {
+                        if (span.querySelector('svg') || (span.className && typeof span.className === 'string' && span.className.includes('st-')) || !span.textContent.trim()) {
+                            const parent = span.closest('[data-baseweb="checkbox"]') || span.parentElement;
+                            const input = parent ? parent.querySelector('input') : null;
+                            const isChecked = input && (input.checked || input.getAttribute('aria-checked') === 'true' || parent.getAttribute('aria-checked') === 'true');
+                            if (!isChecked) {
+                                span.style.setProperty('background-color', '#ffffff', 'important');
+                                span.style.setProperty('background', '#ffffff', 'important');
+                                span.style.setProperty('border', '2px solid rgba(0, 0, 0, 0.4)', 'important');
+                                span.style.setProperty('border-color', 'rgba(0, 0, 0, 0.4)', 'important');
+                                span.style.setProperty('border-left-color', 'rgba(0, 0, 0, 0.4)', 'important');
+                                span.style.setProperty('border-right-color', 'rgba(0, 0, 0, 0.4)', 'important');
+                                span.style.setProperty('border-top-color', 'rgba(0, 0, 0, 0.4)', 'important');
+                                span.style.setProperty('border-bottom-color', 'rgba(0, 0, 0, 0.4)', 'important');
+                                span.style.setProperty('border-width', '2px', 'important');
+                                span.style.setProperty('border-style', 'solid', 'important');
+                                span.style.setProperty('border-radius', '4px', 'important');
+                            } else {
+                                span.style.setProperty('background-color', '#1976d2', 'important');
+                                span.style.setProperty('background', '#1976d2', 'important');
+                                span.style.setProperty('border', '2px solid #1976d2', 'important');
+                                span.style.setProperty('border-color', '#1976d2', 'important');
+                                span.style.setProperty('border-left-color', '#1976d2', 'important');
+                                span.style.setProperty('border-right-color', '#1976d2', 'important');
+                                span.style.setProperty('border-top-color', '#1976d2', 'important');
+                                span.style.setProperty('border-bottom-color', '#1976d2', 'important');
+                                span.style.setProperty('border-width', '2px', 'important');
+                                span.style.setProperty('border-style', 'solid', 'important');
+                                span.style.setProperty('border-radius', '4px', 'important');
+                            }
                         }
                     });
                     doc.querySelectorAll('[data-testid="stCheckbox"] p, [data-testid="stCheckbox"] label span:not(:first-child), [data-testid="stCheckbox"] div').forEach(el => {
@@ -8888,7 +8942,7 @@ else:
 
 logo_header_html = f'<img src="{logo_data_uri}" style="width: 42px; height: 42px; border-radius: 11px; box-shadow: 0 2px 10px rgba(37,99,235,0.2); border: 1px solid rgba(226,232,240,0.8); background: #ffffff; object-fit: contain; padding: 2px;" />' if logo_data_uri else ""
 
-BUILD_VERSION = "2026.11.02-1552"
+BUILD_VERSION = "2026.11.02-1605"
 st.markdown(f'<div class="title-container" style="display: flex; flex-direction: column; gap: 6px;"><div style="display: flex; align-items: center; gap: 14px; flex-wrap: wrap;">{logo_header_html}<div class="title-text" style="margin: 0; line-height: 1;">ZenStockScreener</div>{badge_html}<span style="font-size: 0.72rem; color: var(--secondary-text-color); opacity: 0.7; font-family: monospace;">build:{BUILD_VERSION}</span></div><div class="subtitle-text" style="margin-top: 4px;">AI分析とファンダメンタルズ指標による日本株上昇期待銘柄の選定システム</div></div>', unsafe_allow_html=True)
 
 # Mobile-friendly Quick Action Header (LINE integration & status)
