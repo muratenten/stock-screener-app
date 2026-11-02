@@ -53,6 +53,53 @@ if 'color_theme' not in st.session_state:
     else:
         st.session_state['color_theme'] = 'dark'
 
+is_dark = st.session_state.get('color_theme', 'dark') == 'dark'
+if is_dark and st.query_params.get("theme") != "dark":
+    st.query_params["theme"] = "dark"
+elif not is_dark and st.query_params.get("theme") == "dark":
+    st.query_params["theme"] = "light"
+
+# Immediately inject early sidebar styles before sidebar renders so reactive buttons never flicker or invert
+st.html(f"""
+<style>
+/* Early Sidebar & Segmented Control Theme Sync */
+[data-testid="stSidebar"] [data-baseweb="button-group"] button[aria-checked="true"],
+[data-testid="stSidebar"] div[data-testid="stSegmentedControl"] button[aria-checked="true"],
+[data-testid="stSidebar"] button[data-testid*="segmented_control"][aria-checked="true"],
+[data-testid="stSidebar"] button[data-testid="stBaseButton-segmented_controlActive"] {{
+    background-color: {'#3b82f6' if is_dark else '#1976d2'} !important;
+    background: {'#3b82f6' if is_dark else '#1976d2'} !important;
+    border: 1px solid {'#3b82f6' if is_dark else '#1976d2'} !important;
+    color: #ffffff !important;
+    box-shadow: 0 2px 8px {'rgba(59, 130, 246, 0.4)' if is_dark else 'rgba(25, 118, 210, 0.3)'} !important;
+}}
+[data-testid="stSidebar"] [data-baseweb="button-group"] button[aria-checked="true"] *,
+[data-testid="stSidebar"] div[data-testid="stSegmentedControl"] button[aria-checked="true"] * {{
+    color: #ffffff !important;
+}}
+[data-testid="stSidebar"] [data-baseweb="button-group"] button[aria-checked="true"] svg,
+[data-testid="stSidebar"] div[data-testid="stSegmentedControl"] button[aria-checked="true"] svg {{
+    stroke: #ffffff !important;
+}}
+[data-testid="stSidebar"] [data-baseweb="button-group"] button[aria-checked="false"],
+[data-testid="stSidebar"] div[data-testid="stSegmentedControl"] button[aria-checked="false"],
+[data-testid="stSidebar"] button[data-testid*="segmented_control"][aria-checked="false"] {{
+    background-color: {'rgba(255, 255, 255, 0.08)' if is_dark else '#f1f5f9'} !important;
+    background: {'rgba(255, 255, 255, 0.08)' if is_dark else '#f1f5f9'} !important;
+    border: 1px solid {'rgba(255, 255, 255, 0.16)' if is_dark else 'rgba(0, 0, 0, 0.15)'} !important;
+    color: {'#94a3b8' if is_dark else '#1e293b'} !important;
+}}
+[data-testid="stSidebar"] [data-baseweb="button-group"] button[aria-checked="false"] *,
+[data-testid="stSidebar"] div[data-testid="stSegmentedControl"] button[aria-checked="false"] * {{
+    color: {'#94a3b8' if is_dark else '#1e293b'} !important;
+}}
+[data-testid="stSidebar"] [data-baseweb="button-group"] button[aria-checked="false"] svg,
+[data-testid="stSidebar"] div[data-testid="stSegmentedControl"] button[aria-checked="false"] svg {{
+    stroke: {'#94a3b8' if is_dark else '#1e293b'} !important;
+}}
+</style>
+""")
+
 with st.sidebar:
     st.markdown("### 🎨 デザイン・テーマ設定")
     
@@ -1157,31 +1204,40 @@ st.html(f"""
         margin: 0 !important;
     }}
     div[data-testid="stSegmentedControl"] button[aria-checked="true"] {{
-        background-color: var(--mui-active-bg) !important;
+        background-color: {'#3b82f6' if is_dark else '#1976d2'} !important;
+        background: {'#3b82f6' if is_dark else '#1976d2'} !important;
         color: #ffffff !important;
-        border: 1px solid var(--mui-active-border) !important;
-        box-shadow: {'none' if is_dark else '0 1px 3px rgba(0,0,0,0.18)'} !important;
+        border: 1px solid {'#3b82f6' if is_dark else '#1976d2'} !important;
+        box-shadow: 0 2px 8px {'rgba(59, 130, 246, 0.4)' if is_dark else 'rgba(25, 118, 210, 0.3)'} !important;
     }}
+    div[data-testid="stSegmentedControl"] button[aria-checked="true"] *,
     div[data-testid="stSegmentedControl"] button[aria-checked="true"] svg.lucide,
     div[data-testid="stSegmentedControl"] button[aria-checked="true"] .feather-icon {{
+        color: #ffffff !important;
         stroke: #ffffff !important;
     }}
     div[data-testid="stSegmentedControl"] button[aria-checked="false"] {{
-        background-color: transparent !important;
-        color: var(--secondary-text-color) !important;
-        border: 1px solid transparent !important;
+        background-color: {'rgba(255, 255, 255, 0.08)' if is_dark else '#f8fafc'} !important;
+        background: {'rgba(255, 255, 255, 0.08)' if is_dark else '#f8fafc'} !important;
+        color: {'#e2e8f0' if is_dark else '#1e293b'} !important;
+        border: 1px solid {'rgba(255, 255, 255, 0.16)' if is_dark else 'rgba(0, 0, 0, 0.15)'} !important;
     }}
+    div[data-testid="stSegmentedControl"] button[aria-checked="false"] *,
     div[data-testid="stSegmentedControl"] button[aria-checked="false"] svg.lucide,
     div[data-testid="stSegmentedControl"] button[aria-checked="false"] .feather-icon {{
-        stroke: var(--secondary-text-color) !important;
+        color: {'#e2e8f0' if is_dark else '#1e293b'} !important;
+        stroke: {'#e2e8f0' if is_dark else '#1e293b'} !important;
     }}
     div[data-testid="stSegmentedControl"] button[aria-checked="false"]:hover {{
-        color: var(--text-color) !important;
-        background-color: {'rgba(255, 255, 255, 0.08)' if is_dark else 'rgba(0, 0, 0, 0.04)'} !important;
+        color: {'#ffffff' if is_dark else '#1976d2'} !important;
+        border-color: {'#60a5fa' if is_dark else '#1976d2'} !important;
+        background-color: {'rgba(255, 255, 255, 0.14)' if is_dark else 'rgba(25, 118, 210, 0.08)'} !important;
     }}
+    div[data-testid="stSegmentedControl"] button[aria-checked="false"]:hover *,
     div[data-testid="stSegmentedControl"] button[aria-checked="false"]:hover svg.lucide,
     div[data-testid="stSegmentedControl"] button[aria-checked="false"]:hover .feather-icon {{
-        stroke: var(--text-color) !important;
+        color: {'#ffffff' if is_dark else '#1976d2'} !important;
+        stroke: {'#ffffff' if is_dark else '#1976d2'} !important;
     }}
 
     /* Sidebar-specific Segmented Control: Full width, clean two buttons below label */
@@ -1888,10 +1944,6 @@ st.html(f"""
     div[data-baseweb="button-group"] button,
     div[data-testid="stSegmentedControl"] button,
     button[data-testid*="segmented_control"] {{
-        background: {'rgba(255, 255, 255, 0.08)' if is_dark else '#ffffff'} !important;
-        background-color: {'rgba(255, 255, 255, 0.08)' if is_dark else '#ffffff'} !important;
-        color: {'#e2e8f0' if is_dark else secondary_text_color} !important;
-        border: 1px solid {'rgba(255, 255, 255, 0.16)' if is_dark else 'var(--border-color)'} !important;
         font-weight: 500 !important;
         font-size: 0.8125rem !important;
         letter-spacing: 0.02857em !important;
@@ -1902,10 +1954,22 @@ st.html(f"""
     div[data-testid="stSegmentedControl"] button[aria-checked="false"],
     button[data-testid*="segmented_control"][aria-checked="false"],
     div[data-testid="stButtonGroup"] button:not([aria-checked="true"]):not([data-testid="stBaseButton-segmented_controlActive"]) {{
-        background: {'rgba(255, 255, 255, 0.08)' if is_dark else '#ffffff'} !important;
-        background-color: {'rgba(255, 255, 255, 0.08)' if is_dark else '#ffffff'} !important;
-        color: {'#e2e8f0' if is_dark else secondary_text_color} !important;
-        border: 1px solid {'rgba(255, 255, 255, 0.16)' if is_dark else 'var(--border-color)'} !important;
+        background: {'rgba(255, 255, 255, 0.08)' if is_dark else '#f8fafc'} !important;
+        background-color: {'rgba(255, 255, 255, 0.08)' if is_dark else '#f8fafc'} !important;
+        color: {'#e2e8f0' if is_dark else '#1e293b'} !important;
+        border: 1px solid {'rgba(255, 255, 255, 0.16)' if is_dark else 'rgba(0, 0, 0, 0.15)'} !important;
+    }}
+    div[data-testid="stButtonGroup"] button[aria-checked="false"] *,
+    div[data-baseweb="button-group"] button[aria-checked="false"] *,
+    div[data-testid="stSegmentedControl"] button[aria-checked="false"] *,
+    button[data-testid*="segmented_control"][aria-checked="false"] * {{
+        color: {'#e2e8f0' if is_dark else '#1e293b'} !important;
+    }}
+    div[data-testid="stButtonGroup"] button[aria-checked="false"] svg,
+    div[data-baseweb="button-group"] button[aria-checked="false"] svg,
+    div[data-testid="stSegmentedControl"] button[aria-checked="false"] svg,
+    button[data-testid*="segmented_control"][aria-checked="false"] svg {{
+        stroke: {'#e2e8f0' if is_dark else '#1e293b'} !important;
     }}
     div[data-testid="stButtonGroup"] button:hover,
     div[data-baseweb="button-group"] button:hover,
@@ -1913,20 +1977,39 @@ st.html(f"""
     button[data-testid*="segmented_control"]:hover {{
         border-color: {'#60a5fa' if is_dark else 'var(--primary-color)'} !important;
         color: {'#ffffff' if is_dark else 'var(--primary-color)'} !important;
-        background: {'rgba(144, 202, 249, 0.15)' if is_dark else 'rgba(25, 118, 210, 0.04)'} !important;
-        background-color: {'rgba(144, 202, 249, 0.15)' if is_dark else 'rgba(25, 118, 210, 0.04)'} !important;
+        background: {'rgba(144, 202, 249, 0.15)' if is_dark else 'rgba(25, 118, 210, 0.08)'} !important;
+        background-color: {'rgba(144, 202, 249, 0.15)' if is_dark else 'rgba(25, 118, 210, 0.08)'} !important;
     }}
     div[data-testid="stButtonGroup"] button[data-testid="stBaseButton-segmented_controlActive"],
     div[data-testid="stButtonGroup"] button[aria-checked="true"],
     div[data-baseweb="button-group"] button[aria-checked="true"],
     div[data-testid="stButtonGroup"] button[aria-selected="true"],
     div[data-testid="stButtonGroup"] button[aria-pressed="true"],
-    div[data-testid="stSegmentedControl"] button[aria-checked="true"] {{
-        background: {'#3b82f6' if is_dark else 'var(--primary-color)'} !important;
-        background-color: {'#3b82f6' if is_dark else 'var(--primary-color)'} !important;
+    div[data-testid="stSegmentedControl"] button[aria-checked="true"],
+    [data-testid="stSidebar"] div[data-testid="stSegmentedControl"] button[aria-checked="true"],
+    [data-testid="stSidebar"] [data-baseweb="button-group"] button[aria-checked="true"] {{
+        background: {'#3b82f6' if is_dark else '#1976d2'} !important;
+        background-color: {'#3b82f6' if is_dark else '#1976d2'} !important;
         color: #ffffff !important;
-        border-color: {'#3b82f6' if is_dark else 'var(--primary-color)'} !important;
+        border-color: {'#3b82f6' if is_dark else '#1976d2'} !important;
+        border: 1px solid {'#3b82f6' if is_dark else '#1976d2'} !important;
         box-shadow: var(--mui-shadow-2) !important;
+    }}
+    div[data-testid="stButtonGroup"] button[aria-checked="true"] *,
+    div[data-baseweb="button-group"] button[aria-checked="true"] *,
+    div[data-testid="stSegmentedControl"] button[aria-checked="true"] *,
+    div[data-testid="stButtonGroup"] button[data-testid="stBaseButton-segmented_controlActive"] *,
+    [data-testid="stSidebar"] div[data-testid="stSegmentedControl"] button[aria-checked="true"] *,
+    [data-testid="stSidebar"] [data-baseweb="button-group"] button[aria-checked="true"] * {{
+        color: #ffffff !important;
+    }}
+    div[data-testid="stButtonGroup"] button[aria-checked="true"] svg,
+    div[data-baseweb="button-group"] button[aria-checked="true"] svg,
+    div[data-testid="stSegmentedControl"] button[aria-checked="true"] svg,
+    div[data-testid="stButtonGroup"] button[data-testid="stBaseButton-segmented_controlActive"] svg,
+    [data-testid="stSidebar"] div[data-testid="stSegmentedControl"] button[aria-checked="true"] svg,
+    [data-testid="stSidebar"] [data-baseweb="button-group"] button[aria-checked="true"] svg {{
+        stroke: #ffffff !important;
     }}
     div[data-testid="stButtonGroup"] button *,
     div[data-baseweb="button-group"] button *,
@@ -2353,7 +2436,7 @@ st.components.v1.html("""
                     });
                 });
 
-                // Force high-luminance typography and dark slate button aesthetics in dark mode
+                // Force high-luminance typography and reactive button aesthetics for both themes
                 const win = window.parent || window;
                 const urlParams = new URLSearchParams(win.location.search);
                 const isDark = urlParams.get('theme') !== 'light' && (
@@ -2362,37 +2445,64 @@ st.components.v1.html("""
                     (win.matchMedia && win.matchMedia('(prefers-color-scheme: dark)').matches) ||
                     !urlParams.has('theme')
                 );
-                if (isDark) {
-                    // Maximum luminance for unselected tabs & crisp blue for selected tab
-                    doc.querySelectorAll('[data-testid="stTabs"] [data-baseweb="tab"], [data-baseweb="tab"]').forEach(tab => {
-                        const isSelected = tab.getAttribute('aria-selected') === 'true';
-                        const targetColor = isSelected ? '#60a5fa' : '#ffffff';
-                        tab.style.setProperty('color', targetColor, 'important');
-                        tab.style.setProperty('opacity', '1', 'important');
-                        tab.querySelectorAll('*').forEach(el => {
-                            el.style.setProperty('color', targetColor, 'important');
+                
+                // 1. Tab Typography Luminance
+                doc.querySelectorAll('[data-testid="stTabs"] [data-baseweb="tab"], [data-baseweb="tab"]').forEach(tab => {
+                    const isSelected = tab.getAttribute('aria-selected') === 'true';
+                    let targetColor;
+                    if (isDark) {
+                        targetColor = isSelected ? '#60a5fa' : '#ffffff';
+                    } else {
+                        targetColor = isSelected ? '#1976d2' : '#1e293b';
+                    }
+                    tab.style.setProperty('color', targetColor, 'important');
+                    tab.style.setProperty('opacity', '1', 'important');
+                    tab.querySelectorAll('*').forEach(el => {
+                        el.style.setProperty('color', targetColor, 'important');
+                        el.style.setProperty('opacity', '1', 'important');
+                        if (el.tagName && el.tagName.toLowerCase() === 'svg') {
+                            el.style.setProperty('stroke', targetColor, 'important');
                             el.style.setProperty('opacity', '1', 'important');
-                            if (el.tagName && el.tagName.toLowerCase() === 'svg') {
-                                el.style.setProperty('stroke', targetColor, 'important');
-                                el.style.setProperty('opacity', '1', 'important');
-                            }
-                        });
+                        }
                     });
+                });
 
-                    // Tone down bright white background of unselected segmented buttons to dark slate
-                    doc.querySelectorAll('div[data-testid="stButtonGroup"] button[aria-checked="false"], div[data-baseweb="button-group"] button[aria-checked="false"], div[data-testid="stSegmentedControl"] button[aria-checked="false"], button[data-testid*="segmented_control"][aria-checked="false"]').forEach(btn => {
-                        btn.style.setProperty('background', 'rgba(255, 255, 255, 0.08)', 'important');
-                        btn.style.setProperty('background-color', 'rgba(255, 255, 255, 0.08)', 'important');
-                        btn.style.setProperty('border', '1px solid rgba(255, 255, 255, 0.16)', 'important');
-                        btn.style.setProperty('color', '#e2e8f0', 'important');
+                // 2. Segmented Control Buttons (Theme mode, layout, and filters)
+                doc.querySelectorAll('div[data-testid="stButtonGroup"] button, div[data-baseweb="button-group"] button, div[data-testid="stSegmentedControl"] button, button[data-testid*="segmented_control"]').forEach(btn => {
+                    const isSelected = btn.getAttribute('aria-checked') === 'true' || 
+                                       btn.getAttribute('data-testid') === 'stBaseButton-segmented_controlActive' || 
+                                       btn.getAttribute('aria-selected') === 'true';
+                    if (isSelected) {
+                        const activeBg = isDark ? '#3b82f6' : '#1976d2';
+                        btn.style.setProperty('background', activeBg, 'important');
+                        btn.style.setProperty('background-color', activeBg, 'important');
+                        btn.style.setProperty('border', `1px solid ${activeBg}`, 'important');
+                        btn.style.setProperty('color', '#ffffff', 'important');
+                        btn.querySelectorAll('*').forEach(el => el.style.setProperty('color', '#ffffff', 'important'));
+                        btn.querySelectorAll('svg').forEach(el => el.style.setProperty('stroke', '#ffffff', 'important'));
+                    } else {
+                        const unselectedBg = isDark ? 'rgba(255, 255, 255, 0.08)' : '#f8fafc';
+                        const unselectedBorder = isDark ? 'rgba(255, 255, 255, 0.16)' : 'rgba(0, 0, 0, 0.15)';
+                        const unselectedText = isDark ? '#e2e8f0' : '#1e293b';
+                        btn.style.setProperty('background', unselectedBg, 'important');
+                        btn.style.setProperty('background-color', unselectedBg, 'important');
+                        btn.style.setProperty('border', `1px solid ${unselectedBorder}`, 'important');
+                        btn.style.setProperty('color', unselectedText, 'important');
                         btn.querySelectorAll('*').forEach(el => {
                             if (!el.closest('.lucide-wrapper[data-lucide-replaced="flame"]')) {
-                                el.style.setProperty('color', '#e2e8f0', 'important');
+                                el.style.setProperty('color', unselectedText, 'important');
                             }
                         });
-                    });
+                        btn.querySelectorAll('svg').forEach(el => {
+                            if (!el.closest('.lucide-wrapper[data-lucide-replaced="flame"]')) {
+                                el.style.setProperty('stroke', unselectedText, 'important');
+                            }
+                        });
+                    }
+                });
 
-                    // Tone down dropdown select boxes
+                // 3. Dropdown select boxes
+                if (isDark) {
                     doc.querySelectorAll('div[data-baseweb="select"] > div').forEach(box => {
                         box.style.setProperty('background', 'rgba(255, 255, 255, 0.08)', 'important');
                         box.style.setProperty('background-color', 'rgba(255, 255, 255, 0.08)', 'important');
