@@ -62,6 +62,17 @@ elif not is_dark and st.query_params.get("theme") == "dark":
 # Immediately inject early global styles before any controls render so tabs, dropdowns, and buttons never flicker or invert
 st.html(f"""
 <style>
+/* Early Global Canvas & Sidebar Background Sync (Preserves pure black deep space #030508 in dark mode) */
+.stApp {{
+    background-color: {'#030508' if is_dark else '#ffffff'} !important;
+    color: {'#ffffff' if is_dark else '#1e293b'} !important;
+}}
+section[data-testid="stSidebar"],
+[data-testid="stSidebar"],
+section[data-testid="stSidebar"] > div {{
+    background-color: {'#060913' if is_dark else '#f4f6f8'} !important;
+}}
+
 /* Early Sidebar & Segmented Control Theme Sync */
 [data-testid="stSidebar"] [data-baseweb="button-group"] button[aria-checked="true"],
 [data-testid="stSidebar"] div[data-testid="stSegmentedControl"] button[aria-checked="true"],
@@ -98,41 +109,57 @@ st.html(f"""
     stroke: {'#94a3b8' if is_dark else 'rgba(0, 0, 0, 0.65)'} !important;
 }}
 
-/* Early Dropdown Selectbox Theme Sync (Clean unified rounded box with no inner border) */
+/* Early Dropdown Selectbox Theme Sync (Clean unified 8px rounded button shape) */
 div[data-testid="stSelectbox"],
-div[data-testid="stSelectbox"] > div {
+div[data-testid="stSelectbox"] > div {{
     background: transparent !important;
     border: none !important;
-}
+}}
 div[data-testid="stSelectbox"] div[data-baseweb="select"] > div,
-div[data-baseweb="select"] > div {
-    background-color: {'rgba(255, 255, 255, 0.08)' if is_dark else '#ffffff'} !important;
-    background: {'rgba(255, 255, 255, 0.08)' if is_dark else '#ffffff'} !important;
+div[data-baseweb="select"] > div {{
+    background-color: {'#0b0f19' if is_dark else '#ffffff'} !important;
+    background: {'#0b0f19' if is_dark else '#ffffff'} !important;
     border: 1px solid {'rgba(255, 255, 255, 0.18)' if is_dark else 'rgba(0, 0, 0, 0.20)'} !important;
     border-radius: 8px !important;
-    color: {'#f1f5f9' if is_dark else '#000000'} !important;
+    color: {'#f8fafc' if is_dark else '#000000'} !important;
     min-height: 42px !important;
-}
+    height: 42px !important;
+    padding-left: 12px !important;
+    padding-right: 12px !important;
+    box-sizing: border-box !important;
+    display: flex !important;
+    align-items: center !important;
+    cursor: pointer !important;
+    box-shadow: {'0 1px 3px rgba(0,0,0,0.3)' if is_dark else '0 1px 2px rgba(0,0,0,0.05)'} !important;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease !important;
+}}
+div[data-baseweb="select"] > div:hover {{
+    border-color: {'#3b82f6' if is_dark else '#1976d2'} !important;
+}}
 div[data-testid="stSelectbox"] div[data-baseweb="select"] > div *,
 div[data-baseweb="select"] > div *,
-div[data-baseweb="select"] [role="combobox"] * {
-    color: {'#f1f5f9' if is_dark else '#000000'} !important;
-    -webkit-text-fill-color: {'#f1f5f9' if is_dark else '#000000'} !important;
-}
+div[data-baseweb="select"] [role="combobox"] * {{
+    color: {'#f8fafc' if is_dark else '#000000'} !important;
+    -webkit-text-fill-color: {'#f8fafc' if is_dark else '#000000'} !important;
+    font-size: 0.92rem !important;
+}}
 div[data-baseweb="select"] [data-baseweb="icon"],
-div[data-baseweb="select"] [data-baseweb="icon"] * {
+div[data-baseweb="select"] [data-baseweb="icon"] * {{
     border: none !important;
     border-left: none !important;
     background: transparent !important;
-}
+    padding: 0 !important;
+}}
 div[data-testid="stSelectbox"] div[data-baseweb="select"] [data-baseweb="icon"] svg,
 div[data-baseweb="select"] [data-baseweb="icon"] svg,
 div[data-testid="stSelectbox"] svg,
-div[data-baseweb="select"] svg {
-    fill: {'#cbd5e1' if is_dark else '#000000'} !important;
-    color: {'#cbd5e1' if is_dark else '#000000'} !important;
-    stroke: {'#cbd5e1' if is_dark else '#000000'} !important;
-}
+div[data-baseweb="select"] svg {{
+    fill: {'#94a3b8' if is_dark else '#334155'} !important;
+    color: {'#94a3b8' if is_dark else '#334155'} !important;
+    stroke: {'#94a3b8' if is_dark else '#334155'} !important;
+    width: 18px !important;
+    height: 18px !important;
+}}
 
 /* Early Tab Typography Luminance Sync (Pure White in Dark Mode, Crisp Black in Light Mode) */
 div[data-testid="stTabs"] button[role="tab"]:not([aria-selected="true"]),
@@ -1778,7 +1805,7 @@ st.html(f"""
         outline: none !important;
     }}
     
-    /* MUI Selectbox (BaseWeb dropdown select - Unified smooth rounded control) */
+    /* MUI Selectbox (BaseWeb dropdown select - Unified smooth 8px rounded control) */
     html body [data-testid="stApp"] div[data-testid="stSelectbox"],
     html body [data-testid="stApp"] div[data-testid="stSelectbox"] > div,
     html body [data-testid="stApp"] div[data-testid="stSelectbox"] div[data-baseweb="select"],
@@ -1796,14 +1823,21 @@ st.html(f"""
     div[data-testid="stSelectbox"] div[data-baseweb="select"] > div,
     div[data-baseweb="select"] > div,
     div[data-baseweb="select"] [role="combobox"] {{
-        background-color: {'rgba(255, 255, 255, 0.08)' if is_dark else '#ffffff'} !important;
-        background: {'rgba(255, 255, 255, 0.08)' if is_dark else '#ffffff'} !important;
-        color: {'#f1f5f9' if is_dark else '#000000'} !important;
+        background-color: {'#0b0f19' if is_dark else '#ffffff'} !important;
+        background: {'#0b0f19' if is_dark else '#ffffff'} !important;
+        color: {'#f8fafc' if is_dark else '#000000'} !important;
         border: 1px solid {'rgba(255, 255, 255, 0.18)' if is_dark else 'rgba(0, 0, 0, 0.20)'} !important;
         border-radius: 8px !important;
         min-height: 42px !important;
-        transition: border-color 200ms cubic-bezier(0.0, 0, 0.2, 1) 0ms !important;
-        box-shadow: {'none' if is_dark else '0 1px 3px rgba(0, 0, 0, 0.04)'} !important;
+        height: 42px !important;
+        padding-left: 12px !important;
+        padding-right: 12px !important;
+        box-sizing: border-box !important;
+        display: flex !important;
+        align-items: center !important;
+        cursor: pointer !important;
+        transition: border-color 150ms ease, box-shadow 150ms ease !important;
+        box-shadow: {'0 1px 3px rgba(0,0,0,0.3)' if is_dark else '0 1px 2px rgba(0, 0, 0, 0.05)'} !important;
     }}
     html body [data-testid="stApp"] div[data-testid="stSelectbox"] div[data-baseweb="select"] *,
     html body [data-testid="stApp"] div[data-baseweb="select"] *,
@@ -1813,25 +1847,29 @@ st.html(f"""
     div[data-baseweb="select"] [role="combobox"] *,
     div[data-baseweb="select"] > div p,
     div[data-baseweb="select"] > div span {{
-        color: {'#f1f5f9' if is_dark else '#000000'} !important;
-        -webkit-text-fill-color: {'#f1f5f9' if is_dark else '#000000'} !important;
+        color: {'#f8fafc' if is_dark else '#000000'} !important;
+        -webkit-text-fill-color: {'#f8fafc' if is_dark else '#000000'} !important;
+        font-size: 0.92rem !important;
     }}
     div[data-baseweb="select"] [data-baseweb="icon"],
     div[data-baseweb="select"] [data-baseweb="icon"] * {{
         border: none !important;
         border-left: none !important;
         background: transparent !important;
+        padding: 0 !important;
     }}
     div[data-baseweb="select"] > div:hover {{
-        border-color: {'rgba(255, 255, 255, 0.87)' if is_dark else 'rgba(0, 0, 0, 0.50)'} !important;
+        border-color: {'#3b82f6' if is_dark else '#1976d2'} !important;
     }}
     html body [data-testid="stApp"] div[data-testid="stSelectbox"] svg,
     div[data-testid="stSelectbox"] div[data-baseweb="select"] [data-baseweb="icon"] svg,
     div[data-baseweb="select"] [data-baseweb="icon"] svg,
     div[data-baseweb="select"] svg {{
-        color: {'#cbd5e1' if is_dark else '#000000'} !important;
-        fill: {'#cbd5e1' if is_dark else '#000000'} !important;
-        stroke: {'#cbd5e1' if is_dark else '#000000'} !important;
+        color: {'#94a3b8' if is_dark else '#334155'} !important;
+        fill: {'#94a3b8' if is_dark else '#334155'} !important;
+        stroke: {'#94a3b8' if is_dark else '#334155'} !important;
+        width: 18px !important;
+        height: 18px !important;
     }}
     
     /* MUI Chip / Tags */
@@ -8461,7 +8499,7 @@ else:
 
 logo_header_html = f'<img src="{logo_data_uri}" style="width: 42px; height: 42px; border-radius: 11px; box-shadow: 0 2px 10px rgba(37,99,235,0.2); border: 1px solid rgba(226,232,240,0.8); background: #ffffff; object-fit: contain; padding: 2px;" />' if logo_data_uri else ""
 
-BUILD_VERSION = "2026.11.02-1647"
+BUILD_VERSION = "2026.11.02-1655"
 st.markdown(f'<div class="title-container" style="display: flex; flex-direction: column; gap: 6px;"><div style="display: flex; align-items: center; gap: 14px; flex-wrap: wrap;">{logo_header_html}<div class="title-text" style="margin: 0; line-height: 1;">ZenStockScreener</div>{badge_html}<span style="font-size: 0.72rem; color: var(--secondary-text-color); opacity: 0.7; font-family: monospace;">build:{BUILD_VERSION}</span></div><div class="subtitle-text" style="margin-top: 4px;">AI分析とファンダメンタルズ指標による日本株上昇期待銘柄の選定システム</div></div>', unsafe_allow_html=True)
 
 # Mobile-friendly Quick Action Header (LINE integration & status)
