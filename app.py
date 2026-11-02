@@ -98,25 +98,41 @@ st.html(f"""
     stroke: {'#94a3b8' if is_dark else 'rgba(0, 0, 0, 0.65)'} !important;
 }}
 
-/* Early Dropdown Selectbox Theme Sync (Dark Slate in Dark Mode, Pure White in Light Mode) */
+/* Early Dropdown Selectbox Theme Sync (Clean unified rounded box with no inner border) */
+div[data-testid="stSelectbox"],
+div[data-testid="stSelectbox"] > div {
+    background: transparent !important;
+    border: none !important;
+}
 div[data-testid="stSelectbox"] div[data-baseweb="select"] > div,
-div[data-baseweb="select"] > div {{
+div[data-baseweb="select"] > div {
     background-color: {'rgba(255, 255, 255, 0.08)' if is_dark else '#ffffff'} !important;
     background: {'rgba(255, 255, 255, 0.08)' if is_dark else '#ffffff'} !important;
-    border: 1px solid {'rgba(255, 255, 255, 0.18)' if is_dark else 'rgba(0, 0, 0, 0.23)'} !important;
+    border: 1px solid {'rgba(255, 255, 255, 0.18)' if is_dark else 'rgba(0, 0, 0, 0.20)'} !important;
+    border-radius: 8px !important;
     color: {'#f1f5f9' if is_dark else '#000000'} !important;
-}}
+    min-height: 42px !important;
+}
 div[data-testid="stSelectbox"] div[data-baseweb="select"] > div *,
 div[data-baseweb="select"] > div *,
-div[data-baseweb="select"] [role="combobox"] * {{
+div[data-baseweb="select"] [role="combobox"] * {
     color: {'#f1f5f9' if is_dark else '#000000'} !important;
     -webkit-text-fill-color: {'#f1f5f9' if is_dark else '#000000'} !important;
-}}
+}
+div[data-baseweb="select"] [data-baseweb="icon"],
+div[data-baseweb="select"] [data-baseweb="icon"] * {
+    border: none !important;
+    border-left: none !important;
+    background: transparent !important;
+}
 div[data-testid="stSelectbox"] div[data-baseweb="select"] [data-baseweb="icon"] svg,
-div[data-baseweb="select"] [data-baseweb="icon"] svg {{
+div[data-baseweb="select"] [data-baseweb="icon"] svg,
+div[data-testid="stSelectbox"] svg,
+div[data-baseweb="select"] svg {
     fill: {'#cbd5e1' if is_dark else '#000000'} !important;
     color: {'#cbd5e1' if is_dark else '#000000'} !important;
-}}
+    stroke: {'#cbd5e1' if is_dark else '#000000'} !important;
+}
 
 /* Early Tab Typography Luminance Sync (Pure White in Dark Mode, Crisp Black in Light Mode) */
 div[data-testid="stTabs"] button[role="tab"]:not([aria-selected="true"]),
@@ -833,30 +849,30 @@ if logo_data_uri:
 # Inject premium custom CSS dynamically based on theme selection
 # Inject Material-UI (MUI v5) custom CSS dynamically based on theme selection
 # Official MUI Dark Mode standard: https://mui.com/material-ui/customization/dark-mode/
-bg_color = "#121212" if is_dark else "#f4f6f8" # MUI canvas background
-card_bg = "#1e1e1e" if is_dark else "#ffffff" # MUI Paper surface (Elevation 1)
-elevation_2 = "#242424" if is_dark else "#f8fafc" # MUI Paper surface (Elevation 2)
-elevation_3 = "#272727" if is_dark else "#f1f5f9" # MUI Paper surface (Elevation 3)
-card_sub_bg = "rgba(255, 255, 255, 0.06)" if is_dark else "rgba(0, 0, 0, 0.02)"
-card_sub_border = "rgba(255, 255, 255, 0.12)" if is_dark else "rgba(0, 0, 0, 0.06)"
+bg_color = "#030508" if is_dark else "#f4f6f8" # Authentic deep-space canvas
+card_bg = "#0b0f19" if is_dark else "#ffffff" # Deep dark slate Paper surface
+elevation_2 = "#111827" if is_dark else "#f8fafc" # MUI Paper surface (Elevation 2)
+elevation_3 = "#1f2937" if is_dark else "#f1f5f9" # MUI Paper surface (Elevation 3)
+card_sub_bg = "rgba(255, 255, 255, 0.05)" if is_dark else "rgba(0, 0, 0, 0.02)"
+card_sub_border = "rgba(255, 255, 255, 0.10)" if is_dark else "rgba(0, 0, 0, 0.06)"
 
 # Pure white text in dark mode for maximum contrast and readability
 text_color = "#ffffff" if is_dark else "rgba(0, 0, 0, 0.87)"
 secondary_text_color = "rgba(255, 255, 255, 0.85)" if is_dark else "rgba(0, 0, 0, 0.60)"
 
 # Desaturated, elegant primary colors for dark mode (non-glaring, eye-friendly slate blue)
-primary_color = "#4a7bb0" if is_dark else "#1976d2"
-primary_dark = "#3b6594" if is_dark else "#1565c0"
+primary_color = "#3b82f6" if is_dark else "#1976d2"
+primary_dark = "#2563eb" if is_dark else "#1565c0"
 active_btn_bg = "#253b5c" if is_dark else "#1976d2"
 active_btn_border = "#415f85" if is_dark else "#1565c0"
-primary_sub_bg = "rgba(74, 123, 176, 0.16)" if is_dark else "rgba(25, 118, 210, 0.04)"
-primary_sub_border = "rgba(74, 123, 176, 0.35)" if is_dark else "rgba(25, 118, 210, 0.18)"
+primary_sub_bg = "rgba(59, 130, 246, 0.16)" if is_dark else "rgba(25, 118, 210, 0.04)"
+primary_sub_border = "rgba(59, 130, 246, 0.35)" if is_dark else "rgba(25, 118, 210, 0.18)"
 
 border_color = "rgba(255, 255, 255, 0.12)" if is_dark else "rgba(0, 0, 0, 0.12)" # MUI Divider
-unselected_btn_bg = "#1e1e1e" if is_dark else "#ffffff"
-title_bg = "linear-gradient(135deg, #1e1e1e 0%, #121212 100%)" if is_dark else "linear-gradient(135deg, #ffffff 0%, #f4f6f8 100%)"
+unselected_btn_bg = "#0b0f19" if is_dark else "#ffffff"
+title_bg = "linear-gradient(135deg, #0b0f19 0%, #030508 100%)" if is_dark else "linear-gradient(135deg, #ffffff 0%, #f4f6f8 100%)"
 title_border = "rgba(255, 255, 255, 0.12)" if is_dark else "rgba(0, 0, 0, 0.08)"
-title_text_color = "#6ba4e8" if is_dark else "#1976d2"
+title_text_color = "#3b82f6" if is_dark else "#1976d2"
 subtitle_text_color = "rgba(255, 255, 255, 0.85)" if is_dark else "rgba(0, 0, 0, 0.60)"
 
 # Unified Financial Gain/Loss Colors (Preserved authentic red/green)
@@ -1762,26 +1778,32 @@ st.html(f"""
         outline: none !important;
     }}
     
-    /* MUI Selectbox (BaseWeb dropdown select) */
+    /* MUI Selectbox (BaseWeb dropdown select - Unified smooth rounded control) */
     html body [data-testid="stApp"] div[data-testid="stSelectbox"],
     html body [data-testid="stApp"] div[data-testid="stSelectbox"] > div,
     html body [data-testid="stApp"] div[data-testid="stSelectbox"] div[data-baseweb="select"],
-    html body [data-testid="stApp"] div[data-testid="stSelectbox"] div[data-baseweb="select"] > div,
-    html body [data-testid="stApp"] div[data-baseweb="select"],
-    html body [data-testid="stApp"] div[data-baseweb="select"] > div,
-    html body [data-testid="stApp"] div[data-baseweb="select"] [role="combobox"],
     div[data-testid="stSelectbox"],
     div[data-testid="stSelectbox"] > div,
+    div[data-testid="stSelectbox"] div[data-baseweb="select"] {{
+        background: transparent !important;
+        background-color: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+    }}
+    html body [data-testid="stApp"] div[data-testid="stSelectbox"] div[data-baseweb="select"] > div,
+    html body [data-testid="stApp"] div[data-baseweb="select"] > div,
+    html body [data-testid="stApp"] div[data-baseweb="select"] [role="combobox"],
     div[data-testid="stSelectbox"] div[data-baseweb="select"] > div,
     div[data-baseweb="select"] > div,
     div[data-baseweb="select"] [role="combobox"] {{
         background-color: {'rgba(255, 255, 255, 0.08)' if is_dark else '#ffffff'} !important;
         background: {'rgba(255, 255, 255, 0.08)' if is_dark else '#ffffff'} !important;
         color: {'#f1f5f9' if is_dark else '#000000'} !important;
-        border: 1px solid {'rgba(255, 255, 255, 0.18)' if is_dark else 'rgba(0, 0, 0, 0.23)'} !important;
-        border-radius: var(--mui-radius-sm) !important;
+        border: 1px solid {'rgba(255, 255, 255, 0.18)' if is_dark else 'rgba(0, 0, 0, 0.20)'} !important;
+        border-radius: 8px !important;
         min-height: 42px !important;
         transition: border-color 200ms cubic-bezier(0.0, 0, 0.2, 1) 0ms !important;
+        box-shadow: {'none' if is_dark else '0 1px 3px rgba(0, 0, 0, 0.04)'} !important;
     }}
     html body [data-testid="stApp"] div[data-testid="stSelectbox"] div[data-baseweb="select"] *,
     html body [data-testid="stApp"] div[data-baseweb="select"] *,
@@ -1791,18 +1813,22 @@ st.html(f"""
     div[data-baseweb="select"] [role="combobox"] *,
     div[data-baseweb="select"] > div p,
     div[data-baseweb="select"] > div span {{
-        background-color: {'rgba(255, 255, 255, 0.08)' if is_dark else '#ffffff'} !important;
-        background: {'rgba(255, 255, 255, 0.08)' if is_dark else '#ffffff'} !important;
         color: {'#f1f5f9' if is_dark else '#000000'} !important;
         -webkit-text-fill-color: {'#f1f5f9' if is_dark else '#000000'} !important;
     }}
+    div[data-baseweb="select"] [data-baseweb="icon"],
+    div[data-baseweb="select"] [data-baseweb="icon"] * {{
+        border: none !important;
+        border-left: none !important;
+        background: transparent !important;
+    }}
     div[data-baseweb="select"] > div:hover {{
-        border-color: {'rgba(255, 255, 255, 0.87)' if is_dark else 'rgba(0, 0, 0, 0.87)'} !important;
+        border-color: {'rgba(255, 255, 255, 0.87)' if is_dark else 'rgba(0, 0, 0, 0.50)'} !important;
     }}
     html body [data-testid="stApp"] div[data-testid="stSelectbox"] svg,
     div[data-testid="stSelectbox"] div[data-baseweb="select"] [data-baseweb="icon"] svg,
     div[data-baseweb="select"] [data-baseweb="icon"] svg,
-    div[data-baseweb="select"] [data-baseweb="icon"] {{
+    div[data-baseweb="select"] svg {{
         color: {'#cbd5e1' if is_dark else '#000000'} !important;
         fill: {'#cbd5e1' if is_dark else '#000000'} !important;
         stroke: {'#cbd5e1' if is_dark else '#000000'} !important;
@@ -1970,7 +1996,7 @@ st.html(f"""
     ul[role="listbox"] {{
         background-color: var(--secondary-background-color) !important;
         border: 1px solid var(--border-color) !important;
-        border-radius: var(--mui-radius-sm) !important;
+        border-radius: 8px !important;
         box-shadow: var(--mui-shadow-8) !important;
     }}
     li[role="option"] {{
@@ -8435,7 +8461,7 @@ else:
 
 logo_header_html = f'<img src="{logo_data_uri}" style="width: 42px; height: 42px; border-radius: 11px; box-shadow: 0 2px 10px rgba(37,99,235,0.2); border: 1px solid rgba(226,232,240,0.8); background: #ffffff; object-fit: contain; padding: 2px;" />' if logo_data_uri else ""
 
-BUILD_VERSION = "2026.11.02-1638"
+BUILD_VERSION = "2026.11.02-1647"
 st.markdown(f'<div class="title-container" style="display: flex; flex-direction: column; gap: 6px;"><div style="display: flex; align-items: center; gap: 14px; flex-wrap: wrap;">{logo_header_html}<div class="title-text" style="margin: 0; line-height: 1;">ZenStockScreener</div>{badge_html}<span style="font-size: 0.72rem; color: var(--secondary-text-color); opacity: 0.7; font-family: monospace;">build:{BUILD_VERSION}</span></div><div class="subtitle-text" style="margin-top: 4px;">AI分析とファンダメンタルズ指標による日本株上昇期待銘柄の選定システム</div></div>', unsafe_allow_html=True)
 
 # Mobile-friendly Quick Action Header (LINE integration & status)
