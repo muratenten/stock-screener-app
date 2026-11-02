@@ -61,9 +61,20 @@ elif not is_dark and st.query_params.get("theme") == "dark":
 
 # Immediately inject early global styles before any controls render so tabs, dropdowns, and buttons never flicker or invert
 st.html(f"""
+<meta id="zen-theme-tracker" data-theme="{'dark' if is_dark else 'light'}">
 <style>
+/* Base container background & text color sync */
+html, body, [data-testid="stApp"], .stApp {{
+    background-color: {'#030508' if is_dark else '#ffffff'} !important;
+    color: {'#f1f5f9' if is_dark else '#1e293b'} !important;
+}}
+[data-testid="stSidebar"] {{
+    background-color: {'#0b0f19' if is_dark else '#f4f6f8'} !important;
+}}
+
 /* Early Sidebar & Segmented Control Theme Sync */
 [data-testid="stSidebar"] [data-baseweb="button-group"] button[aria-checked="true"],
+[data-testid="stSidebar"] [data-testid="stButtonGroup"] button[aria-checked="true"],
 [data-testid="stSidebar"] div[data-testid="stSegmentedControl"] button[aria-checked="true"],
 [data-testid="stSidebar"] button[data-testid*="segmented_control"][aria-checked="true"],
 [data-testid="stSidebar"] button[data-testid="stBaseButton-segmented_controlActive"] {{
@@ -74,27 +85,40 @@ st.html(f"""
     box-shadow: 0 2px 8px {'rgba(59, 130, 246, 0.4)' if is_dark else 'rgba(25, 118, 210, 0.3)'} !important;
 }}
 [data-testid="stSidebar"] [data-baseweb="button-group"] button[aria-checked="true"] *,
-[data-testid="stSidebar"] div[data-testid="stSegmentedControl"] button[aria-checked="true"] * {{
+[data-testid="stSidebar"] [data-testid="stButtonGroup"] button[aria-checked="true"] *,
+[data-testid="stSidebar"] div[data-testid="stSegmentedControl"] button[aria-checked="true"] *,
+[data-testid="stSidebar"] button[data-testid*="segmented_control"][aria-checked="true"] *,
+[data-testid="stSidebar"] button[data-testid="stBaseButton-segmented_controlActive"] * {{
     color: #ffffff !important;
+    -webkit-text-fill-color: #ffffff !important;
 }}
 [data-testid="stSidebar"] [data-baseweb="button-group"] button[aria-checked="true"] svg,
-[data-testid="stSidebar"] div[data-testid="stSegmentedControl"] button[aria-checked="true"] svg {{
+[data-testid="stSidebar"] [data-testid="stButtonGroup"] button[aria-checked="true"] svg,
+[data-testid="stSidebar"] div[data-testid="stSegmentedControl"] button[aria-checked="true"] svg,
+[data-testid="stSidebar"] button[data-testid*="segmented_control"][aria-checked="true"] svg,
+[data-testid="stSidebar"] button[data-testid="stBaseButton-segmented_controlActive"] svg {{
     stroke: #ffffff !important;
 }}
 [data-testid="stSidebar"] [data-baseweb="button-group"] button[aria-checked="false"],
+[data-testid="stSidebar"] [data-testid="stButtonGroup"] button[aria-checked="false"],
 [data-testid="stSidebar"] div[data-testid="stSegmentedControl"] button[aria-checked="false"],
 [data-testid="stSidebar"] button[data-testid*="segmented_control"][aria-checked="false"] {{
-    background-color: {'rgba(255, 255, 255, 0.08)' if is_dark else '#f1f5f9'} !important;
-    background: {'rgba(255, 255, 255, 0.08)' if is_dark else '#f1f5f9'} !important;
+    background-color: {'rgba(255, 255, 255, 0.08)' if is_dark else '#ffffff'} !important;
+    background: {'rgba(255, 255, 255, 0.08)' if is_dark else '#ffffff'} !important;
     border: 1px solid {'rgba(255, 255, 255, 0.16)' if is_dark else 'rgba(0, 0, 0, 0.15)'} !important;
     color: {'#94a3b8' if is_dark else '#1e293b'} !important;
 }}
 [data-testid="stSidebar"] [data-baseweb="button-group"] button[aria-checked="false"] *,
-[data-testid="stSidebar"] div[data-testid="stSegmentedControl"] button[aria-checked="false"] * {{
+[data-testid="stSidebar"] [data-testid="stButtonGroup"] button[aria-checked="false"] *,
+[data-testid="stSidebar"] div[data-testid="stSegmentedControl"] button[aria-checked="false"] *,
+[data-testid="stSidebar"] button[data-testid*="segmented_control"][aria-checked="false"] * {{
     color: {'#94a3b8' if is_dark else '#1e293b'} !important;
+    -webkit-text-fill-color: {'#94a3b8' if is_dark else '#1e293b'} !important;
 }}
 [data-testid="stSidebar"] [data-baseweb="button-group"] button[aria-checked="false"] svg,
-[data-testid="stSidebar"] div[data-testid="stSegmentedControl"] button[aria-checked="false"] svg {{
+[data-testid="stSidebar"] [data-testid="stButtonGroup"] button[aria-checked="false"] svg,
+[data-testid="stSidebar"] div[data-testid="stSegmentedControl"] button[aria-checked="false"] svg,
+[data-testid="stSidebar"] button[data-testid*="segmented_control"][aria-checked="false"] svg {{
     stroke: {'#94a3b8' if is_dark else '#1e293b'} !important;
 }}
 
@@ -1445,6 +1469,14 @@ st.html(f"""
     [data-testid="stSidebar"] button[data-testid*="segmented_control"][aria-checked="false"] .feather-icon {{
         stroke: {'#94a3b8' if is_dark else 'rgba(0, 0, 0, 0.65)'} !important;
     }}
+    [data-testid="stSidebar"] [data-baseweb="button-group"] button[aria-checked="false"] *,
+    [data-testid="stSidebar"] [data-testid="stButtonGroup"] button[aria-checked="false"] *,
+    [data-testid="stSidebar"] button[data-testid*="segmented_control"][aria-checked="false"] *,
+    [data-testid="stSidebar"] [role="radiogroup"] button[aria-checked="false"] *,
+    [data-testid="stSidebar"] div[data-testid="stSegmentedControl"] button[aria-checked="false"] * {{
+        color: {'#94a3b8' if is_dark else 'rgba(0, 0, 0, 0.75)'} !important;
+        -webkit-text-fill-color: {'#94a3b8' if is_dark else 'rgba(0, 0, 0, 0.75)'} !important;
+    }}
     [data-testid="stSidebar"] [data-baseweb="button-group"] button[aria-checked="false"]:hover,
     [data-testid="stSidebar"] [data-testid="stButtonGroup"] button[aria-checked="false"]:hover,
     [data-testid="stSidebar"] button[data-testid*="segmented_control"][aria-checked="false"]:hover {{
@@ -1468,6 +1500,15 @@ st.html(f"""
         border: 1px solid {'#3b82f6' if is_dark else '#1976d2'} !important;
         color: #ffffff !important;
         box-shadow: 0 2px 8px {'rgba(59, 130, 246, 0.4)' if is_dark else 'rgba(25, 118, 210, 0.3)'} !important;
+    }}
+    [data-testid="stSidebar"] [data-baseweb="button-group"] button[aria-checked="true"] *,
+    [data-testid="stSidebar"] [data-testid="stButtonGroup"] button[aria-checked="true"] *,
+    [data-testid="stSidebar"] button[data-testid*="segmented_control"][aria-checked="true"] *,
+    [data-testid="stSidebar"] [role="radiogroup"] button[aria-checked="true"] *,
+    [data-testid="stSidebar"] div[data-testid="stSegmentedControl"] button[aria-checked="true"] *,
+    [data-testid="stSidebar"] button[data-testid="stBaseButton-segmented_controlActive"] * {{
+        color: #ffffff !important;
+        -webkit-text-fill-color: #ffffff !important;
     }}
     [data-testid="stSidebar"] [data-baseweb="button-group"] button[aria-checked="true"] svg,
     [data-testid="stSidebar"] [data-testid="stButtonGroup"] button[aria-checked="true"] svg,
@@ -2515,20 +2556,21 @@ st.components.v1.html("""
 
                 // Force high-luminance typography and reactive button aesthetics for both themes
                 let isDark = true;
-                try {
-                    const win = window.parent || window;
-                    if (win && win.location && win.location.search) {
-                        const urlParams = new URLSearchParams(win.location.search);
-                        if (urlParams.get('theme') === 'light') {
-                            isDark = false;
-                        }
-                    }
-                } catch(e) {
+                const tracker = (typeof parentDoc !== 'undefined' && parentDoc.getElementById('zen-theme-tracker')) || 
+                                (doc && doc.getElementById('zen-theme-tracker')) ||
+                                document.getElementById('zen-theme-tracker');
+                if (tracker && tracker.getAttribute('data-theme')) {
+                    isDark = tracker.getAttribute('data-theme') === 'dark';
+                } else {
                     try {
-                        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) {
-                            isDark = false;
+                        const win = window.parent || window;
+                        if (win && win.location && win.location.search) {
+                            const urlParams = new URLSearchParams(win.location.search);
+                            if (urlParams.get('theme') === 'light') {
+                                isDark = false;
+                            }
                         }
-                    } catch(err) {}
+                    } catch(e) {}
                 }
                 
                 // 1. Tab Typography Luminance (Ultra high luminance for unselected tabs)
@@ -2564,10 +2606,13 @@ st.components.v1.html("""
                         btn.style.setProperty('background-color', activeBg, 'important');
                         btn.style.setProperty('border', `1px solid ${activeBg}`, 'important');
                         btn.style.setProperty('color', '#ffffff', 'important');
-                        btn.querySelectorAll('*').forEach(el => el.style.setProperty('color', '#ffffff', 'important'));
+                        btn.querySelectorAll('*').forEach(el => {
+                            el.style.setProperty('color', '#ffffff', 'important');
+                            el.style.setProperty('-webkit-text-fill-color', '#ffffff', 'important');
+                        });
                         btn.querySelectorAll('svg').forEach(el => el.style.setProperty('stroke', '#ffffff', 'important'));
                     } else {
-                        const unselectedBg = isDark ? 'rgba(255, 255, 255, 0.08)' : '#f8fafc';
+                        const unselectedBg = isDark ? 'rgba(255, 255, 255, 0.08)' : '#ffffff';
                         const unselectedBorder = isDark ? 'rgba(255, 255, 255, 0.16)' : 'rgba(0, 0, 0, 0.15)';
                         const unselectedText = isDark ? '#e2e8f0' : '#1e293b';
                         btn.style.setProperty('background', unselectedBg, 'important');
@@ -2577,6 +2622,7 @@ st.components.v1.html("""
                         btn.querySelectorAll('*').forEach(el => {
                             if (!el.closest('.lucide-wrapper[data-lucide-replaced="flame"]')) {
                                 el.style.setProperty('color', unselectedText, 'important');
+                                el.style.setProperty('-webkit-text-fill-color', unselectedText, 'important');
                             }
                         });
                         btn.querySelectorAll('svg').forEach(el => {
@@ -2587,7 +2633,7 @@ st.components.v1.html("""
                     }
                 });
 
-                // 3. Dropdown select boxes (Tone down brightness to dark slate in dark mode)
+                // 3. Dropdown select boxes
                 if (isDark) {
                     doc.querySelectorAll('div[data-testid="stSelectbox"] div[data-baseweb="select"], div[data-testid="stSelectbox"] div[data-baseweb="select"] > div, div[data-baseweb="select"], div[data-baseweb="select"] > div, div[data-baseweb="select"] [role="combobox"]').forEach(box => {
                         box.style.setProperty('background', 'rgba(255, 255, 255, 0.08)', 'important');
@@ -2601,6 +2647,21 @@ st.components.v1.html("""
                             svg.style.setProperty('fill', '#cbd5e1', 'important');
                             svg.style.setProperty('color', '#cbd5e1', 'important');
                             svg.style.setProperty('stroke', '#cbd5e1', 'important');
+                        });
+                    });
+                } else {
+                    doc.querySelectorAll('div[data-testid="stSelectbox"] div[data-baseweb="select"], div[data-testid="stSelectbox"] div[data-baseweb="select"] > div, div[data-baseweb="select"], div[data-baseweb="select"] > div, div[data-baseweb="select"] [role="combobox"]').forEach(box => {
+                        box.style.setProperty('background', '#ffffff', 'important');
+                        box.style.setProperty('background-color', '#ffffff', 'important');
+                        box.style.setProperty('border', '1px solid rgba(0, 0, 0, 0.23)', 'important');
+                        box.querySelectorAll('p, span, div, [role="combobox"]').forEach(el => {
+                            el.style.setProperty('color', '#1e293b', 'important');
+                            el.style.setProperty('-webkit-text-fill-color', '#1e293b', 'important');
+                        });
+                        box.querySelectorAll('[data-baseweb="icon"] svg, svg').forEach(svg => {
+                            svg.style.setProperty('fill', '#64748b', 'important');
+                            svg.style.setProperty('color', '#64748b', 'important');
+                            svg.style.setProperty('stroke', '#64748b', 'important');
                         });
                     });
                 }
