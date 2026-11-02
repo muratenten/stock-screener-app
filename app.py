@@ -60,128 +60,279 @@ elif not is_dark and st.query_params.get("theme") == "dark":
     st.query_params["theme"] = "light"
 
 # Immediately inject early global styles before any controls render so tabs, dropdowns, and buttons never flicker or invert
-st.html(f"""
-<meta id="zen-theme-tracker" data-theme="{'dark' if is_dark else 'light'}">
-<style>
-/* Base container background & text color sync */
-html, body, [data-testid="stApp"], .stApp {{
-    background-color: {'#030508' if is_dark else '#ffffff'} !important;
-    color: {'#f1f5f9' if is_dark else '#1e293b'} !important;
-}}
-[data-testid="stSidebar"] {{
-    background-color: {'#0b0f19' if is_dark else '#f4f6f8'} !important;
-}}
+if is_dark:
+    st.html("""
+    <meta id="zen-theme-tracker" data-theme="dark">
+    <style>
+    /* Early Sidebar & Segmented Control Theme Sync (Dark Mode - matching 83ebfd5) */
+    [data-testid="stSidebar"] [data-baseweb="button-group"] button[aria-checked="true"],
+    [data-testid="stSidebar"] div[data-testid="stSegmentedControl"] button[aria-checked="true"],
+    [data-testid="stSidebar"] button[data-testid*="segmented_control"][aria-checked="true"],
+    [data-testid="stSidebar"] button[data-testid="stBaseButton-segmented_controlActive"] {
+        background-color: #3b82f6 !important;
+        background: #3b82f6 !important;
+        border: 1px solid #3b82f6 !important;
+        color: #ffffff !important;
+        box-shadow: 0 2px 8px rgba(59, 130, 246, 0.4) !important;
+    }
+    [data-testid="stSidebar"] [data-baseweb="button-group"] button[aria-checked="true"] *,
+    [data-testid="stSidebar"] div[data-testid="stSegmentedControl"] button[aria-checked="true"] * {
+        color: #ffffff !important;
+    }
+    [data-testid="stSidebar"] [data-baseweb="button-group"] button[aria-checked="true"] svg,
+    [data-testid="stSidebar"] div[data-testid="stSegmentedControl"] button[aria-checked="true"] svg {
+        stroke: #ffffff !important;
+    }
+    [data-testid="stSidebar"] [data-baseweb="button-group"] button[aria-checked="false"],
+    [data-testid="stSidebar"] div[data-testid="stSegmentedControl"] button[aria-checked="false"],
+    [data-testid="stSidebar"] button[data-testid*="segmented_control"][aria-checked="false"] {
+        background-color: rgba(255, 255, 255, 0.08) !important;
+        background: rgba(255, 255, 255, 0.08) !important;
+        border: 1px solid rgba(255, 255, 255, 0.16) !important;
+        color: #94a3b8 !important;
+    }
+    [data-testid="stSidebar"] [data-baseweb="button-group"] button[aria-checked="false"] *,
+    [data-testid="stSidebar"] div[data-testid="stSegmentedControl"] button[aria-checked="false"] * {
+        color: #94a3b8 !important;
+    }
+    [data-testid="stSidebar"] [data-baseweb="button-group"] button[aria-checked="false"] svg,
+    [data-testid="stSidebar"] div[data-testid="stSegmentedControl"] button[aria-checked="false"] svg {
+        stroke: #94a3b8 !important;
+    }
 
-/* Early Sidebar & Segmented Control Theme Sync */
-[data-testid="stSidebar"] [data-baseweb="button-group"] button[aria-checked="true"],
-[data-testid="stSidebar"] [data-testid="stButtonGroup"] button[aria-checked="true"],
-[data-testid="stSidebar"] div[data-testid="stSegmentedControl"] button[aria-checked="true"],
-[data-testid="stSidebar"] button[data-testid*="segmented_control"][aria-checked="true"],
-[data-testid="stSidebar"] button[data-testid="stBaseButton-segmented_controlActive"] {{
-    background-color: {'#3b82f6' if is_dark else '#1976d2'} !important;
-    background: {'#3b82f6' if is_dark else '#1976d2'} !important;
-    border: 1px solid {'#3b82f6' if is_dark else '#1976d2'} !important;
-    color: #ffffff !important;
-    box-shadow: 0 2px 8px {'rgba(59, 130, 246, 0.4)' if is_dark else 'rgba(25, 118, 210, 0.3)'} !important;
-}}
-[data-testid="stSidebar"] [data-baseweb="button-group"] button[aria-checked="true"] *,
-[data-testid="stSidebar"] [data-testid="stButtonGroup"] button[aria-checked="true"] *,
-[data-testid="stSidebar"] div[data-testid="stSegmentedControl"] button[aria-checked="true"] *,
-[data-testid="stSidebar"] button[data-testid*="segmented_control"][aria-checked="true"] *,
-[data-testid="stSidebar"] button[data-testid="stBaseButton-segmented_controlActive"] * {{
-    color: #ffffff !important;
-    -webkit-text-fill-color: #ffffff !important;
-}}
-[data-testid="stSidebar"] [data-baseweb="button-group"] button[aria-checked="true"] svg,
-[data-testid="stSidebar"] [data-testid="stButtonGroup"] button[aria-checked="true"] svg,
-[data-testid="stSidebar"] div[data-testid="stSegmentedControl"] button[aria-checked="true"] svg,
-[data-testid="stSidebar"] button[data-testid*="segmented_control"][aria-checked="true"] svg,
-[data-testid="stSidebar"] button[data-testid="stBaseButton-segmented_controlActive"] svg {{
-    stroke: #ffffff !important;
-}}
-[data-testid="stSidebar"] [data-baseweb="button-group"] button[aria-checked="false"],
-[data-testid="stSidebar"] [data-testid="stButtonGroup"] button[aria-checked="false"],
-[data-testid="stSidebar"] div[data-testid="stSegmentedControl"] button[aria-checked="false"],
-[data-testid="stSidebar"] button[data-testid*="segmented_control"][aria-checked="false"] {{
-    background-color: {'rgba(255, 255, 255, 0.08)' if is_dark else '#ffffff'} !important;
-    background: {'rgba(255, 255, 255, 0.08)' if is_dark else '#ffffff'} !important;
-    border: 1px solid {'rgba(255, 255, 255, 0.16)' if is_dark else 'rgba(0, 0, 0, 0.15)'} !important;
-    color: {'#94a3b8' if is_dark else '#1e293b'} !important;
-}}
-[data-testid="stSidebar"] [data-baseweb="button-group"] button[aria-checked="false"] *,
-[data-testid="stSidebar"] [data-testid="stButtonGroup"] button[aria-checked="false"] *,
-[data-testid="stSidebar"] div[data-testid="stSegmentedControl"] button[aria-checked="false"] *,
-[data-testid="stSidebar"] button[data-testid*="segmented_control"][aria-checked="false"] * {{
-    color: {'#94a3b8' if is_dark else '#1e293b'} !important;
-    -webkit-text-fill-color: {'#94a3b8' if is_dark else '#1e293b'} !important;
-}}
-[data-testid="stSidebar"] [data-baseweb="button-group"] button[aria-checked="false"] svg,
-[data-testid="stSidebar"] [data-testid="stButtonGroup"] button[aria-checked="false"] svg,
-[data-testid="stSidebar"] div[data-testid="stSegmentedControl"] button[aria-checked="false"] svg,
-[data-testid="stSidebar"] button[data-testid*="segmented_control"][aria-checked="false"] svg {{
-    stroke: {'#94a3b8' if is_dark else '#1e293b'} !important;
-}}
+    /* Early Dropdown Selectbox Theme Sync (Dark Slate in Dark Mode) */
+    div[data-testid="stSelectbox"] div[data-baseweb="select"],
+    div[data-testid="stSelectbox"] div[data-baseweb="select"] > div,
+    div[data-baseweb="select"],
+    div[data-baseweb="select"] > div,
+    div[data-baseweb="select"] [role="combobox"] {
+        background-color: rgba(255, 255, 255, 0.08) !important;
+        background: rgba(255, 255, 255, 0.08) !important;
+        border: 1px solid rgba(255, 255, 255, 0.18) !important;
+        color: #f1f5f9 !important;
+    }
+    div[data-testid="stSelectbox"] div[data-baseweb="select"] *,
+    div[data-baseweb="select"] *,
+    div[data-baseweb="select"] [role="combobox"] *,
+    div[data-baseweb="select"] p,
+    div[data-baseweb="select"] span {
+        color: #f1f5f9 !important;
+        -webkit-text-fill-color: #f1f5f9 !important;
+    }
+    div[data-testid="stSelectbox"] svg,
+    div[data-baseweb="select"] svg,
+    div[data-baseweb="select"] [data-baseweb="icon"] svg {
+        fill: #cbd5e1 !important;
+        color: #cbd5e1 !important;
+        stroke: #cbd5e1 !important;
+    }
 
-/* Early Dropdown Selectbox Theme Sync (Dark Slate in Dark Mode) */
-div[data-testid="stSelectbox"] div[data-baseweb="select"],
-div[data-testid="stSelectbox"] div[data-baseweb="select"] > div,
-div[data-baseweb="select"],
-div[data-baseweb="select"] > div,
-div[data-baseweb="select"] [role="combobox"] {{
-    background-color: {'rgba(255, 255, 255, 0.08)' if is_dark else '#ffffff'} !important;
-    background: {'rgba(255, 255, 255, 0.08)' if is_dark else '#ffffff'} !important;
-    border: 1px solid {'rgba(255, 255, 255, 0.18)' if is_dark else 'rgba(0, 0, 0, 0.23)'} !important;
-    color: {'#f1f5f9' if is_dark else '#1e293b'} !important;
-}}
-div[data-testid="stSelectbox"] div[data-baseweb="select"] *,
-div[data-baseweb="select"] *,
-div[data-baseweb="select"] [role="combobox"] *,
-div[data-baseweb="select"] p,
-div[data-baseweb="select"] span {{
-    color: {'#f1f5f9' if is_dark else '#1e293b'} !important;
-    -webkit-text-fill-color: {'#f1f5f9' if is_dark else '#1e293b'} !important;
-}}
-div[data-testid="stSelectbox"] svg,
-div[data-baseweb="select"] svg,
-div[data-baseweb="select"] [data-baseweb="icon"] svg {{
-    fill: {'#cbd5e1' if is_dark else '#64748b'} !important;
-    color: {'#cbd5e1' if is_dark else '#64748b'} !important;
-    stroke: {'#cbd5e1' if is_dark else '#64748b'} !important;
-}}
+    /* Early Tab Typography Luminance Sync (High Luminance Pure White in Dark Mode) */
+    div[data-testid="stTabs"] button[role="tab"]:not([aria-selected="true"]),
+    div[data-testid="stTabs"] button[data-baseweb="tab"]:not([aria-selected="true"]),
+    div[data-testid="stTabs"] [data-baseweb="tab"]:not([aria-selected="true"]),
+    button[data-baseweb="tab"]:not([aria-selected="true"]) {
+        color: #ffffff !important;
+        opacity: 1 !important;
+        font-weight: 600 !important;
+    }
+    div[data-testid="stTabs"] button[role="tab"]:not([aria-selected="true"]) *,
+    div[data-testid="stTabs"] button[role="tab"]:not([aria-selected="true"]) p,
+    div[data-testid="stTabs"] button[role="tab"]:not([aria-selected="true"]) span,
+    div[data-testid="stTabs"] button[data-baseweb="tab"]:not([aria-selected="true"]) *,
+    div[data-testid="stTabs"] button[data-baseweb="tab"]:not([aria-selected="true"]) p,
+    div[data-testid="stTabs"] button[data-baseweb="tab"]:not([aria-selected="true"]) span,
+    div[data-testid="stTabs"] [data-baseweb="tab"]:not([aria-selected="true"]) *,
+    div[data-testid="stTabs"] [data-baseweb="tab"]:not([aria-selected="true"]) p,
+    div[data-testid="stTabs"] [data-baseweb="tab"]:not([aria-selected="true"]) span,
+    button[data-baseweb="tab"]:not([aria-selected="true"]) *,
+    button[data-baseweb="tab"]:not([aria-selected="true"]) p,
+    button[data-baseweb="tab"]:not([aria-selected="true"]) span {
+        color: #ffffff !important;
+        opacity: 1 !important;
+        -webkit-text-fill-color: #ffffff !important;
+    }
+    div[data-testid="stTabs"] button[role="tab"]:not([aria-selected="true"]) svg,
+    div[data-testid="stTabs"] [data-baseweb="tab"]:not([aria-selected="true"]) svg,
+    button[data-baseweb="tab"]:not([aria-selected="true"]) svg {
+        stroke: #ffffff !important;
+        opacity: 1 !important;
+    }
+    </style>
+    """)
+else:
+    st.html("""
+    <meta id="zen-theme-tracker" data-theme="light">
+    <style>
+    /* ===== LIGHT MODE DEDICATED OVERRIDES (PRESERVING PERFECTION) ===== */
+    html, body, [data-testid="stApp"], .stApp {
+        background-color: #ffffff !important;
+        background: #ffffff !important;
+        color: #1e293b !important;
+    }
+    [data-testid="stAppViewContainer"], [data-testid="stHeader"] {
+        background-color: #ffffff !important;
+        background: #ffffff !important;
+        color: #1e293b !important;
+    }
+    [data-testid="stSidebar"], section[data-testid="stSidebar"] {
+        background-color: #f4f6f8 !important;
+        background: #f4f6f8 !important;
+        color: #1e293b !important;
+    }
 
-/* Early Tab Typography Luminance Sync (High Luminance Pure White in Dark Mode) */
-div[data-testid="stTabs"] button[role="tab"]:not([aria-selected="true"]),
-div[data-testid="stTabs"] button[data-baseweb="tab"]:not([aria-selected="true"]),
-div[data-testid="stTabs"] [data-baseweb="tab"]:not([aria-selected="true"]),
-button[data-baseweb="tab"]:not([aria-selected="true"]) {{
-    color: {'#ffffff' if is_dark else '#475569'} !important;
-    opacity: 1 !important;
-    font-weight: 600 !important;
-}}
-div[data-testid="stTabs"] button[role="tab"]:not([aria-selected="true"]) *,
-div[data-testid="stTabs"] button[role="tab"]:not([aria-selected="true"]) p,
-div[data-testid="stTabs"] button[role="tab"]:not([aria-selected="true"]) span,
-div[data-testid="stTabs"] button[data-baseweb="tab"]:not([aria-selected="true"]) *,
-div[data-testid="stTabs"] button[data-baseweb="tab"]:not([aria-selected="true"]) p,
-div[data-testid="stTabs"] button[data-baseweb="tab"]:not([aria-selected="true"]) span,
-div[data-testid="stTabs"] [data-baseweb="tab"]:not([aria-selected="true"]) *,
-div[data-testid="stTabs"] [data-baseweb="tab"]:not([aria-selected="true"]) p,
-div[data-testid="stTabs"] [data-baseweb="tab"]:not([aria-selected="true"]) span,
-button[data-baseweb="tab"]:not([aria-selected="true"]) *,
-button[data-baseweb="tab"]:not([aria-selected="true"]) p,
-button[data-baseweb="tab"]:not([aria-selected="true"]) span {{
-    color: {'#ffffff' if is_dark else '#475569'} !important;
-    opacity: 1 !important;
-    -webkit-text-fill-color: {'#ffffff' if is_dark else '#475569'} !important;
-}}
-div[data-testid="stTabs"] button[role="tab"]:not([aria-selected="true"]) svg,
-div[data-testid="stTabs"] [data-baseweb="tab"]:not([aria-selected="true"]) svg,
-button[data-baseweb="tab"]:not([aria-selected="true"]) svg {{
-    stroke: {'#ffffff' if is_dark else '#475569'} !important;
-    opacity: 1 !important;
-}}
-</style>
-""")
+    /* Early Sidebar & Segmented Control Theme Sync */
+    [data-testid="stSidebar"] [data-baseweb="button-group"] button[aria-checked="true"],
+    [data-testid="stSidebar"] [data-testid="stButtonGroup"] button[aria-checked="true"],
+    [data-testid="stSidebar"] div[data-testid="stSegmentedControl"] button[aria-checked="true"],
+    [data-testid="stSidebar"] button[data-testid*="segmented_control"][aria-checked="true"],
+    [data-testid="stSidebar"] button[data-testid="stBaseButton-segmented_controlActive"] {
+        background-color: #1976d2 !important;
+        background: #1976d2 !important;
+        border: 1px solid #1976d2 !important;
+        color: #ffffff !important;
+        box-shadow: 0 2px 8px rgba(25, 118, 210, 0.3) !important;
+    }
+    [data-testid="stSidebar"] [data-baseweb="button-group"] button[aria-checked="true"] *,
+    [data-testid="stSidebar"] [data-testid="stButtonGroup"] button[aria-checked="true"] *,
+    [data-testid="stSidebar"] div[data-testid="stSegmentedControl"] button[aria-checked="true"] *,
+    [data-testid="stSidebar"] button[data-testid*="segmented_control"][aria-checked="true"] *,
+    [data-testid="stSidebar"] button[data-testid="stBaseButton-segmented_controlActive"] * {
+        color: #ffffff !important;
+        -webkit-text-fill-color: #ffffff !important;
+    }
+    [data-testid="stSidebar"] [data-baseweb="button-group"] button[aria-checked="true"] svg,
+    [data-testid="stSidebar"] [data-testid="stButtonGroup"] button[aria-checked="true"] svg,
+    [data-testid="stSidebar"] div[data-testid="stSegmentedControl"] button[aria-checked="true"] svg,
+    [data-testid="stSidebar"] button[data-testid*="segmented_control"][aria-checked="true"] svg,
+    [data-testid="stSidebar"] button[data-testid="stBaseButton-segmented_controlActive"] svg {
+        stroke: #ffffff !important;
+    }
+    [data-testid="stSidebar"] [data-baseweb="button-group"] button[aria-checked="false"],
+    [data-testid="stSidebar"] [data-testid="stButtonGroup"] button[aria-checked="false"],
+    [data-testid="stSidebar"] div[data-testid="stSegmentedControl"] button[aria-checked="false"],
+    [data-testid="stSidebar"] button[data-testid*="segmented_control"][aria-checked="false"] {
+        background-color: #ffffff !important;
+        background: #ffffff !important;
+        border: 1px solid rgba(0, 0, 0, 0.15) !important;
+        color: #1e293b !important;
+    }
+    [data-testid="stSidebar"] [data-baseweb="button-group"] button[aria-checked="false"] *,
+    [data-testid="stSidebar"] [data-testid="stButtonGroup"] button[aria-checked="false"] *,
+    [data-testid="stSidebar"] div[data-testid="stSegmentedControl"] button[aria-checked="false"] *,
+    [data-testid="stSidebar"] button[data-testid*="segmented_control"][aria-checked="false"] * {
+        color: #1e293b !important;
+        -webkit-text-fill-color: #1e293b !important;
+    }
+    [data-testid="stSidebar"] [data-baseweb="button-group"] button[aria-checked="false"] svg,
+    [data-testid="stSidebar"] [data-testid="stButtonGroup"] button[aria-checked="false"] svg,
+    [data-testid="stSidebar"] div[data-testid="stSegmentedControl"] button[aria-checked="false"] svg,
+    [data-testid="stSidebar"] button[data-testid*="segmented_control"][aria-checked="false"] svg {
+        stroke: #1e293b !important;
+    }
+
+    /* Early Dropdown Selectbox Theme Sync (Pure White in Light Mode) */
+    div[data-testid="stSelectbox"] div[data-baseweb="select"],
+    div[data-testid="stSelectbox"] div[data-baseweb="select"] > div,
+    div[data-baseweb="select"],
+    div[data-baseweb="select"] > div,
+    div[data-baseweb="select"] [role="combobox"] {
+        background-color: #ffffff !important;
+        background: #ffffff !important;
+        border: 1px solid rgba(0, 0, 0, 0.23) !important;
+        color: #1e293b !important;
+    }
+    div[data-testid="stSelectbox"] div[data-baseweb="select"] *,
+    div[data-baseweb="select"] *,
+    div[data-baseweb="select"] [role="combobox"] *,
+    div[data-baseweb="select"] p,
+    div[data-baseweb="select"] span {
+        color: #1e293b !important;
+        -webkit-text-fill-color: #1e293b !important;
+    }
+    div[data-testid="stSelectbox"] svg,
+    div[data-baseweb="select"] svg,
+    div[data-baseweb="select"] [data-baseweb="icon"] svg {
+        fill: #64748b !important;
+        color: #64748b !important;
+        stroke: #64748b !important;
+    }
+
+    /* Early Tab Typography Luminance Sync (Clear Slate Typography in Light Mode) */
+    div[data-testid="stTabs"] button[role="tab"]:not([aria-selected="true"]),
+    div[data-testid="stTabs"] button[data-baseweb="tab"]:not([aria-selected="true"]),
+    div[data-testid="stTabs"] [data-baseweb="tab"]:not([aria-selected="true"]),
+    button[data-baseweb="tab"]:not([aria-selected="true"]) {
+        color: #475569 !important;
+        opacity: 1 !important;
+        font-weight: 600 !important;
+    }
+    div[data-testid="stTabs"] button[role="tab"]:not([aria-selected="true"]) *,
+    div[data-testid="stTabs"] button[role="tab"]:not([aria-selected="true"]) p,
+    div[data-testid="stTabs"] button[role="tab"]:not([aria-selected="true"]) span,
+    div[data-testid="stTabs"] button[data-baseweb="tab"]:not([aria-selected="true"]) *,
+    div[data-testid="stTabs"] button[data-baseweb="tab"]:not([aria-selected="true"]) p,
+    div[data-testid="stTabs"] button[data-baseweb="tab"]:not([aria-selected="true"]) span,
+    div[data-testid="stTabs"] [data-baseweb="tab"]:not([aria-selected="true"]) *,
+    div[data-testid="stTabs"] [data-baseweb="tab"]:not([aria-selected="true"]) p,
+    div[data-testid="stTabs"] [data-baseweb="tab"]:not([aria-selected="true"]) span,
+    button[data-baseweb="tab"]:not([aria-selected="true"]) *,
+    button[data-baseweb="tab"]:not([aria-selected="true"]) p,
+    button[data-baseweb="tab"]:not([aria-selected="true"]) span {
+        color: #475569 !important;
+        opacity: 1 !important;
+        -webkit-text-fill-color: #475569 !important;
+    }
+    div[data-testid="stTabs"] button[role="tab"]:not([aria-selected="true"]) svg,
+    div[data-testid="stTabs"] [data-baseweb="tab"]:not([aria-selected="true"]) svg,
+    button[data-baseweb="tab"]:not([aria-selected="true"]) svg {
+        stroke: #475569 !important;
+        opacity: 1 !important;
+    }
+    div[data-testid="stTabs"] button[role="tab"][aria-selected="true"],
+    div[data-testid="stTabs"] button[data-baseweb="tab"][aria-selected="true"],
+    div[data-testid="stTabs"] [data-baseweb="tab"][aria-selected="true"],
+    button[data-baseweb="tab"][aria-selected="true"] {
+        color: #1976d2 !important;
+        border-bottom: 2px solid #1976d2 !important;
+        opacity: 1 !important;
+        font-weight: 700 !important;
+    }
+    div[data-testid="stTabs"] button[role="tab"][aria-selected="true"] *,
+    div[data-testid="stTabs"] button[data-baseweb="tab"][aria-selected="true"] * {
+        color: #1976d2 !important;
+        -webkit-text-fill-color: #1976d2 !important;
+    }
+
+    /* Popover & Dropdown menu list in Light Mode */
+    div[data-baseweb="popover"],
+    div[data-baseweb="popover"] > div,
+    div[data-baseweb="menu"],
+    ul[role="listbox"] {
+        background-color: #ffffff !important;
+        background: #ffffff !important;
+        color: #1e293b !important;
+        border: 1px solid rgba(0, 0, 0, 0.12) !important;
+    }
+    ul[role="listbox"] li,
+    li[role="option"] {
+        background-color: #ffffff !important;
+        color: #1e293b !important;
+    }
+    li[role="option"]:hover,
+    li[role="option"][aria-selected="true"] {
+        background-color: #e3f2fd !important;
+        color: #1976d2 !important;
+    }
+    li[role="option"] * {
+        color: #1e293b !important;
+    }
+    li[role="option"]:hover *,
+    li[role="option"][aria-selected="true"] * {
+        color: #1976d2 !important;
+    }
+    </style>
+    """)
 
 with st.sidebar:
     st.markdown("### 🎨 デザイン・テーマ設定")
