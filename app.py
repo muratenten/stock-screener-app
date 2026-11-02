@@ -256,32 +256,25 @@ else:
         -webkit-text-fill-color: rgba(0, 0, 0, 0.60) !important;
     }
 
-    /* 4b. Checkboxes & Sliders in Light Mode (Banishing Dark Mode Black Boxes) */
-    html body [data-testid="stApp"] [data-testid="stCheckbox"] label,
-    html body [data-testid="stApp"] [data-testid="stCheckbox"] [data-baseweb="checkbox"],
-    [data-testid="stCheckbox"] [data-baseweb="checkbox"] {
+    /* 4b. Checkboxes in Light Mode (Pure White Box with Border) */
+    div[data-testid="stCheckbox"] label,
+    div[data-testid="stCheckbox"] [data-baseweb="checkbox"],
+    div[data-testid="stCheckbox"] [data-baseweb="checkbox"] * {
         color: #000000 !important;
+        -webkit-text-fill-color: #000000 !important;
     }
-    html body [data-testid="stApp"] [data-testid="stCheckbox"] [data-baseweb="checkbox"] span:first-child,
-    [data-testid="stCheckbox"] [data-baseweb="checkbox"] span:first-child,
-    [data-testid="stCheckbox"] label[data-baseweb="checkbox"] > span:first-child {
+    div[data-testid="stCheckbox"] [data-baseweb="checkbox"] span {
         background-color: #ffffff !important;
         background: #ffffff !important;
         border: 2px solid rgba(0, 0, 0, 0.4) !important;
         border-radius: 4px !important;
     }
-    html body [data-testid="stApp"] [data-testid="stCheckbox"] input:checked + span:first-child,
-    [data-testid="stCheckbox"] input:checked + span:first-child,
-    [data-testid="stCheckbox"] [aria-checked="true"] span:first-child {
+    div[data-testid="stCheckbox"] input:checked ~ span,
+    div[data-testid="stCheckbox"] [aria-checked="true"] span,
+    div[data-testid="stCheckbox"] input:checked + span {
         background-color: #1976d2 !important;
         background: #1976d2 !important;
         border-color: #1976d2 !important;
-    }
-    [data-testid="stCheckbox"] p,
-    [data-testid="stCheckbox"] span:not(:first-child),
-    [data-testid="stCheckbox"] div {
-        color: #000000 !important;
-        -webkit-text-fill-color: #000000 !important;
     }
     [data-testid="stSlider"] label,
     [data-testid="stSlider"] p,
@@ -377,37 +370,21 @@ else:
         stroke: #1e293b !important;
     }
 
-    /* 9. Dropdown Selectboxes in Light Mode (Transparent to match any background) */
+    /* 9. Dropdown Selectboxes in Light Mode (Transparent Background, Pure Black Text) */
     html body [data-testid="stApp"] [data-testid="stSelectbox"] [data-baseweb="select"],
-    html body [data-testid="stApp"] [data-testid="stSelectbox"] [data-baseweb="select"] div,
-    html body [data-testid="stApp"] [data-testid="stSelectbox"] [data-baseweb="select"] > div,
-    html body [data-testid="stApp"] [data-testid="stSelectbox"] [data-baseweb="select"] [role="combobox"],
-    html body [data-testid="stApp"] div[data-baseweb="select"],
-    html body [data-testid="stApp"] div[data-baseweb="select"] div,
-    html body [data-testid="stApp"] div[data-baseweb="select"] > div,
-    html body [data-testid="stApp"] div[data-baseweb="select"] [role="combobox"],
-    div[data-testid="stSelectbox"] div[data-baseweb="select"],
-    div[data-testid="stSelectbox"] div[data-baseweb="select"] div,
-    div[data-testid="stSelectbox"] div[data-baseweb="select"] > div,
+    html body [data-testid="stApp"] [data-testid="stSelectbox"] [data-baseweb="select"] *,
+    div[data-testid="stSelectbox"] [data-baseweb="select"],
+    div[data-testid="stSelectbox"] [data-baseweb="select"] *,
     div[data-baseweb="select"],
-    div[data-baseweb="select"] div,
-    div[data-baseweb="select"] > div,
-    div[data-baseweb="select"] [role="combobox"] {
+    div[data-baseweb="select"] * {
         background-color: transparent !important;
         background: transparent !important;
-        border: 1px solid rgba(0, 0, 0, 0.23) !important;
-        color: #000000 !important;
-    }
-    html body [data-testid="stApp"] [data-testid="stSelectbox"] [data-baseweb="select"] *,
-    html body [data-testid="stApp"] [data-testid="stSelectbox"] [data-baseweb="select"] div *,
-    html body [data-testid="stApp"] div[data-baseweb="select"] *,
-    html body [data-testid="stApp"] div[data-baseweb="select"] div *,
-    div[data-testid="stSelectbox"] div[data-baseweb="select"] *,
-    div[data-baseweb="select"] *,
-    div[data-baseweb="select"] p,
-    div[data-baseweb="select"] span {
         color: #000000 !important;
         -webkit-text-fill-color: #000000 !important;
+    }
+    div[data-testid="stSelectbox"] [data-baseweb="select"] > div,
+    div[data-baseweb="select"] > div {
+        border: 1px solid rgba(0, 0, 0, 0.23) !important;
     }
     div[data-testid="stSelectbox"] svg,
     div[data-baseweb="select"] svg,
@@ -454,35 +431,33 @@ else:
         border-bottom: 1px solid rgba(0, 0, 0, 0.12) !important;
     }
     html body [data-testid="stApp"] [data-testid="stTabs"] button[role="tab"]:not([aria-selected="true"]),
-    html body [data-testid="stApp"] [data-testid="stTabs"] button[data-baseweb="tab"]:not([aria-selected="true"]),
-    html body [data-testid="stApp"] [data-testid="stTabs"] [data-baseweb="tab"]:not([aria-selected="true"]),
-    div[data-testid="stTabs"] button[role="tab"]:not([aria-selected="true"]),
-    div[data-testid="stTabs"] button[data-baseweb="tab"]:not([aria-selected="true"]),
-    div[data-testid="stTabs"] [data-baseweb="tab"]:not([aria-selected="true"]),
-    button[data-baseweb="tab"]:not([aria-selected="true"]) {
-        color: #000000 !important;
-        font-weight: 700 !important;
-        opacity: 1 !important;
-    }
     html body [data-testid="stApp"] [data-testid="stTabs"] button[role="tab"]:not([aria-selected="true"]) *,
+    html body [data-testid="stApp"] [data-testid="stTabs"] button[data-baseweb="tab"]:not([aria-selected="true"]),
     html body [data-testid="stApp"] [data-testid="stTabs"] button[data-baseweb="tab"]:not([aria-selected="true"]) *,
+    html body [data-testid="stApp"] [data-testid="stTabs"] [data-baseweb="tab"]:not([aria-selected="true"]),
     html body [data-testid="stApp"] [data-testid="stTabs"] [data-baseweb="tab"]:not([aria-selected="true"]) *,
-    html body [data-testid="stApp"] [data-testid="stTabs"] [data-baseweb="tab"]:not([aria-selected="true"]) div,
-    html body [data-testid="stApp"] [data-testid="stTabs"] [data-baseweb="tab"]:not([aria-selected="true"]) p,
-    html body [data-testid="stApp"] [data-testid="stTabs"] [data-baseweb="tab"]:not([aria-selected="true"]) span,
+    div[data-testid="stTabs"] button[role="tab"]:not([aria-selected="true"]),
     div[data-testid="stTabs"] button[role="tab"]:not([aria-selected="true"]) *,
+    div[data-testid="stTabs"] button[data-baseweb="tab"]:not([aria-selected="true"]),
     div[data-testid="stTabs"] button[data-baseweb="tab"]:not([aria-selected="true"]) *,
+    div[data-testid="stTabs"] [data-baseweb="tab"]:not([aria-selected="true"]),
     div[data-testid="stTabs"] [data-baseweb="tab"]:not([aria-selected="true"]) *,
+    div[data-testid="stTabs"] [data-testid="stMarkdownContainer"] p,
+    div[data-testid="stTabs"] p,
+    button[data-baseweb="tab"]:not([aria-selected="true"]),
     button[data-baseweb="tab"]:not([aria-selected="true"]) * {
         color: #000000 !important;
         -webkit-text-fill-color: #000000 !important;
+        font-weight: 700 !important;
         opacity: 1 !important;
     }
     html body [data-testid="stApp"] [data-testid="stTabs"] button[role="tab"]:not([aria-selected="true"]) svg,
     html body [data-testid="stApp"] [data-testid="stTabs"] [data-baseweb="tab"]:not([aria-selected="true"]) svg,
     div[data-testid="stTabs"] button[role="tab"]:not([aria-selected="true"]) svg,
+    div[data-testid="stTabs"] [data-baseweb="tab"]:not([aria-selected="true"]) svg,
     button[data-baseweb="tab"]:not([aria-selected="true"]) svg {
         stroke: #000000 !important;
+        fill: #000000 !important;
         opacity: 1 !important;
     }
     div[data-testid="stTabs"] button[role="tab"][aria-selected="true"],
@@ -2262,21 +2237,22 @@ st.html(f"""
     [data-testid="stCheckbox"] [data-baseweb="checkbox"] {{
         color: {text_color} !important;
     }}
-    [data-testid="stCheckbox"] [data-baseweb="checkbox"] span:first-child,
-    [data-testid="stCheckbox"] label[data-baseweb="checkbox"] > span:first-child {{
+    [data-testid="stCheckbox"] [data-baseweb="checkbox"] span {{
         background-color: {'rgba(255, 255, 255, 0.08)' if is_dark else '#ffffff'} !important;
         background: {'rgba(255, 255, 255, 0.08)' if is_dark else '#ffffff'} !important;
         border: 2px solid {'rgba(255, 255, 255, 0.3)' if is_dark else 'rgba(0, 0, 0, 0.4)'} !important;
         border-radius: var(--mui-radius-sm) !important;
     }}
-    [data-testid="stCheckbox"] input:checked + span:first-child,
-    [data-testid="stCheckbox"] [aria-checked="true"] span:first-child {{
+    [data-testid="stCheckbox"] input:checked ~ span,
+    [data-testid="stCheckbox"] [aria-checked="true"] span,
+    [data-testid="stCheckbox"] input:checked + span {{
         background-color: {primary_color} !important;
         background: {primary_color} !important;
         border-color: {primary_color} !important;
     }}
+    [data-testid="stCheckbox"] *,
     [data-testid="stCheckbox"] p,
-    [data-testid="stCheckbox"] span:not(:first-child),
+    [data-testid="stCheckbox"] span,
     [data-testid="stCheckbox"] div {{
         color: {text_color} !important;
         -webkit-text-fill-color: {text_color} !important;
@@ -8829,7 +8805,7 @@ else:
 
 logo_header_html = f'<img src="{logo_data_uri}" style="width: 42px; height: 42px; border-radius: 11px; box-shadow: 0 2px 10px rgba(37,99,235,0.2); border: 1px solid rgba(226,232,240,0.8); background: #ffffff; object-fit: contain; padding: 2px;" />' if logo_data_uri else ""
 
-BUILD_VERSION = "2026.11.02-1531"
+BUILD_VERSION = "2026.11.02-1541"
 st.markdown(f'<div class="title-container" style="display: flex; flex-direction: column; gap: 6px;"><div style="display: flex; align-items: center; gap: 14px; flex-wrap: wrap;">{logo_header_html}<div class="title-text" style="margin: 0; line-height: 1;">ZenStockScreener</div>{badge_html}<span style="font-size: 0.72rem; color: var(--secondary-text-color); opacity: 0.7; font-family: monospace;">build:{BUILD_VERSION}</span></div><div class="subtitle-text" style="margin-top: 4px;">AI分析とファンダメンタルズ指標による日本株上昇期待銘柄の選定システム</div></div>', unsafe_allow_html=True)
 
 # Mobile-friendly Quick Action Header (LINE integration & status)
