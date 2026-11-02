@@ -59,7 +59,7 @@ if is_dark and st.query_params.get("theme") != "dark":
 elif not is_dark and st.query_params.get("theme") == "dark":
     st.query_params["theme"] = "light"
 
-# Immediately inject early sidebar styles before sidebar renders so reactive buttons never flicker or invert
+# Immediately inject early global styles before any controls render so tabs, dropdowns, and buttons never flicker or invert
 st.html(f"""
 <style>
 /* Early Sidebar & Segmented Control Theme Sync */
@@ -96,6 +96,47 @@ st.html(f"""
 [data-testid="stSidebar"] [data-baseweb="button-group"] button[aria-checked="false"] svg,
 [data-testid="stSidebar"] div[data-testid="stSegmentedControl"] button[aria-checked="false"] svg {{
     stroke: {'#94a3b8' if is_dark else '#1e293b'} !important;
+}}
+
+/* Early Dropdown Selectbox Theme Sync (Dark Slate in Dark Mode) */
+div[data-testid="stSelectbox"] div[data-baseweb="select"] > div,
+div[data-baseweb="select"] > div {{
+    background-color: {'rgba(255, 255, 255, 0.08)' if is_dark else '#ffffff'} !important;
+    background: {'rgba(255, 255, 255, 0.08)' if is_dark else '#ffffff'} !important;
+    border: 1px solid {'rgba(255, 255, 255, 0.18)' if is_dark else 'rgba(0, 0, 0, 0.23)'} !important;
+    color: {'#f1f5f9' if is_dark else '#1e293b'} !important;
+}}
+div[data-testid="stSelectbox"] div[data-baseweb="select"] > div *,
+div[data-baseweb="select"] > div *,
+div[data-baseweb="select"] [role="combobox"] * {{
+    color: {'#f1f5f9' if is_dark else '#1e293b'} !important;
+}}
+div[data-testid="stSelectbox"] div[data-baseweb="select"] [data-baseweb="icon"] svg,
+div[data-baseweb="select"] [data-baseweb="icon"] svg {{
+    fill: {'#cbd5e1' if is_dark else '#64748b'} !important;
+    color: {'#cbd5e1' if is_dark else '#64748b'} !important;
+}}
+
+/* Early Tab Typography Luminance Sync (High Luminance Pure White in Dark Mode) */
+div[data-testid="stTabs"] button[role="tab"]:not([aria-selected="true"]),
+div[data-testid="stTabs"] button[data-baseweb="tab"]:not([aria-selected="true"]),
+div[data-testid="stTabs"] [data-baseweb="tab"]:not([aria-selected="true"]),
+button[data-baseweb="tab"]:not([aria-selected="true"]) {{
+    color: {'#ffffff' if is_dark else '#475569'} !important;
+    opacity: 1 !important;
+    font-weight: 600 !important;
+}}
+div[data-testid="stTabs"] button[role="tab"]:not([aria-selected="true"]) *,
+div[data-testid="stTabs"] button[data-baseweb="tab"]:not([aria-selected="true"]) *,
+div[data-testid="stTabs"] [data-baseweb="tab"]:not([aria-selected="true"]) *,
+button[data-baseweb="tab"]:not([aria-selected="true"]) * {{
+    color: {'#ffffff' if is_dark else '#475569'} !important;
+    opacity: 1 !important;
+}}
+div[data-testid="stTabs"] button[role="tab"]:not([aria-selected="true"]) svg,
+div[data-testid="stTabs"] [data-baseweb="tab"]:not([aria-selected="true"]) svg {{
+    stroke: {'#ffffff' if is_dark else '#475569'} !important;
+    opacity: 1 !important;
 }}
 </style>
 """)
@@ -1684,24 +1725,33 @@ st.html(f"""
     }}
     
     /* MUI Selectbox (BaseWeb dropdown select) */
-    div[data-baseweb="select"] > div {{
+    div[data-testid="stSelectbox"] div[data-baseweb="select"] > div,
+    div[data-baseweb="select"] > div,
+    div[data-baseweb="select"] [role="combobox"] {{
         background-color: {'rgba(255, 255, 255, 0.08)' if is_dark else '#ffffff'} !important;
         background: {'rgba(255, 255, 255, 0.08)' if is_dark else '#ffffff'} !important;
-        color: {'#f1f5f9' if is_dark else 'var(--text-color)'} !important;
+        color: {'#f1f5f9' if is_dark else '#1e293b'} !important;
         border: 1px solid {'rgba(255, 255, 255, 0.18)' if is_dark else 'rgba(0, 0, 0, 0.23)'} !important;
         border-radius: var(--mui-radius-sm) !important;
+        min-height: 42px !important;
         transition: border-color 200ms cubic-bezier(0.0, 0, 0.2, 1) 0ms !important;
     }}
-    div[data-baseweb="select"] > div div,
-    div[data-baseweb="select"] > div span,
-    div[data-baseweb="select"] [role="combobox"] {{
-        color: {'#f1f5f9' if is_dark else 'var(--text-color)'} !important;
+    div[data-testid="stSelectbox"] div[data-baseweb="select"] > div *,
+    div[data-baseweb="select"] > div *,
+    div[data-baseweb="select"] [role="combobox"] *,
+    div[data-baseweb="select"] > div p,
+    div[data-baseweb="select"] > div span {{
+        color: {'#f1f5f9' if is_dark else '#1e293b'} !important;
+        -webkit-text-fill-color: {'#f1f5f9' if is_dark else '#1e293b'} !important;
     }}
     div[data-baseweb="select"] > div:hover {{
         border-color: {'rgba(255, 255, 255, 0.87)' if is_dark else 'rgba(0, 0, 0, 0.87)'} !important;
     }}
+    div[data-testid="stSelectbox"] div[data-baseweb="select"] [data-baseweb="icon"] svg,
+    div[data-baseweb="select"] [data-baseweb="icon"] svg,
     div[data-baseweb="select"] [data-baseweb="icon"] {{
         color: {'#cbd5e1' if is_dark else secondary_text_color} !important;
+        fill: {'#cbd5e1' if is_dark else secondary_text_color} !important;
     }}
     
     /* MUI Chip / Tags */
@@ -1834,21 +1884,30 @@ st.html(f"""
     div[data-testid="stTabs"] button[role="tab"]:not([aria-selected="true"]),
     div[data-testid="stTabs"] button[data-baseweb="tab"]:not([aria-selected="true"]),
     [data-baseweb="tab"]:not([aria-selected="true"]) {{
-        color: {'#ffffff' if is_dark else 'rgba(0, 0, 0, 0.7)'} !important;
+        color: {'#ffffff' if is_dark else '#475569'} !important;
         font-weight: 600 !important;
         opacity: 1 !important;
     }}
     div[data-testid="stTabs"] [data-baseweb="tab"]:not([aria-selected="true"]) *,
+    div[data-testid="stTabs"] [data-baseweb="tab"]:not([aria-selected="true"]) p,
+    div[data-testid="stTabs"] [data-baseweb="tab"]:not([aria-selected="true"]) span,
     div[data-testid="stTabs"] button[role="tab"]:not([aria-selected="true"]) *,
+    div[data-testid="stTabs"] button[role="tab"]:not([aria-selected="true"]) p,
+    div[data-testid="stTabs"] button[role="tab"]:not([aria-selected="true"]) span,
     div[data-testid="stTabs"] button[data-baseweb="tab"]:not([aria-selected="true"]) *,
-    [data-baseweb="tab"]:not([aria-selected="true"]) * {{
-        color: {'#ffffff' if is_dark else 'rgba(0, 0, 0, 0.7)'} !important;
+    div[data-testid="stTabs"] button[data-baseweb="tab"]:not([aria-selected="true"]) p,
+    div[data-testid="stTabs"] button[data-baseweb="tab"]:not([aria-selected="true"]) span,
+    [data-baseweb="tab"]:not([aria-selected="true"]) *,
+    [data-baseweb="tab"]:not([aria-selected="true"]) p,
+    [data-baseweb="tab"]:not([aria-selected="true"]) span {{
+        color: {'#ffffff' if is_dark else '#475569'} !important;
         opacity: 1 !important;
+        -webkit-text-fill-color: {'#ffffff' if is_dark else '#475569'} !important;
     }}
     div[data-testid="stTabs"] [data-baseweb="tab"]:not([aria-selected="true"]) svg,
     div[data-testid="stTabs"] button[role="tab"]:not([aria-selected="true"]) svg,
     [data-baseweb="tab"]:not([aria-selected="true"]) svg {{
-        stroke: {'#ffffff' if is_dark else 'rgba(0, 0, 0, 0.7)'} !important;
+        stroke: {'#ffffff' if is_dark else '#475569'} !important;
         opacity: 1 !important;
     }}
 
@@ -2446,20 +2505,21 @@ st.components.v1.html("""
                     !urlParams.has('theme')
                 );
                 
-                // 1. Tab Typography Luminance
-                doc.querySelectorAll('[data-testid="stTabs"] [data-baseweb="tab"], [data-baseweb="tab"]').forEach(tab => {
+                // 1. Tab Typography Luminance (Ultra high luminance for unselected tabs)
+                doc.querySelectorAll('[data-testid="stTabs"] [data-baseweb="tab"], [data-baseweb="tab"], button[role="tab"]').forEach(tab => {
                     const isSelected = tab.getAttribute('aria-selected') === 'true';
                     let targetColor;
                     if (isDark) {
                         targetColor = isSelected ? '#60a5fa' : '#ffffff';
                     } else {
-                        targetColor = isSelected ? '#1976d2' : '#1e293b';
+                        targetColor = isSelected ? '#1976d2' : '#475569';
                     }
                     tab.style.setProperty('color', targetColor, 'important');
                     tab.style.setProperty('opacity', '1', 'important');
-                    tab.querySelectorAll('*').forEach(el => {
+                    tab.querySelectorAll('p, span, div, svg').forEach(el => {
                         el.style.setProperty('color', targetColor, 'important');
                         el.style.setProperty('opacity', '1', 'important');
+                        el.style.setProperty('-webkit-text-fill-color', targetColor, 'important');
                         if (el.tagName && el.tagName.toLowerCase() === 'svg') {
                             el.style.setProperty('stroke', targetColor, 'important');
                             el.style.setProperty('opacity', '1', 'important');
@@ -2501,14 +2561,19 @@ st.components.v1.html("""
                     }
                 });
 
-                // 3. Dropdown select boxes
+                // 3. Dropdown select boxes (Tone down brightness to dark slate in dark mode)
                 if (isDark) {
-                    doc.querySelectorAll('div[data-baseweb="select"] > div').forEach(box => {
+                    doc.querySelectorAll('div[data-testid="stSelectbox"] div[data-baseweb="select"] > div, div[data-baseweb="select"] > div, div[data-baseweb="select"]').forEach(box => {
                         box.style.setProperty('background', 'rgba(255, 255, 255, 0.08)', 'important');
                         box.style.setProperty('background-color', 'rgba(255, 255, 255, 0.08)', 'important');
                         box.style.setProperty('border', '1px solid rgba(255, 255, 255, 0.18)', 'important');
-                        box.querySelectorAll('div, span, [role="combobox"]').forEach(el => {
+                        box.querySelectorAll('p, span, div, [role="combobox"]').forEach(el => {
                             el.style.setProperty('color', '#f1f5f9', 'important');
+                            el.style.setProperty('-webkit-text-fill-color', '#f1f5f9', 'important');
+                        });
+                        box.querySelectorAll('[data-baseweb="icon"] svg, svg').forEach(svg => {
+                            svg.style.setProperty('fill', '#cbd5e1', 'important');
+                            svg.style.setProperty('color', '#cbd5e1', 'important');
                         });
                     });
                 }
@@ -8609,7 +8674,9 @@ with tab_screen:
     if "pending_market" in st.session_state:
         st.session_state["scr_market"] = st.session_state.pop("pending_market")
         
-    if is_mobile:
+    # Always place filter dropdowns cleanly in one horizontal row
+    col_cfg1, col_cfg2, col_cfg3 = st.columns([1.5, 1.4, 0.9])
+    with col_cfg1:
         market = st.selectbox(
             "全体集合（スクリーニング対象）の選択",
             [
@@ -8622,6 +8689,7 @@ with tab_screen:
             ],
             key="scr_market"
         )
+    with col_cfg2:
         theme_filter = st.selectbox(
             "トレンドテーマ絞り込み",
             [
@@ -8636,39 +8704,8 @@ with tab_screen:
             ],
             key="scr_theme"
         )
+    with col_cfg3:
         period = st.selectbox("データ期間 (チャート用)", ["6ヶ月", "1年", "2年"], index=1, key="scr_period")
-    else:
-        col_cfg1, col_cfg2, col_cfg3 = st.columns([1.5, 1.5, 1.0])
-        with col_cfg1:
-            market = st.selectbox(
-                "全体集合（スクリーニング対象）の選択",
-                [
-                    f"日本株 厳選トレンド銘柄 ({len(JP_TICKERS)}件)",
-                    f"米国株 厳選トレンド銘柄 ({len(US_TICKERS)}件)",
-                    "日経平均株価 (日経225全銘柄 - 動的取得)",
-                    "東証プライム (全上場銘柄 - 動的取得)",
-                    "東証グロース (全上場銘柄 - 動的取得)",
-                    "カスタム指定"
-                ],
-                key="scr_market"
-            )
-        with col_cfg2:
-            theme_filter = st.selectbox(
-                "トレンドテーマ絞り込み",
-                [
-                    "すべて",
-                    "AI・半導体関連",
-                    "宇宙産業・開発関連",
-                    "爆発的急騰期待株",
-                    "高配当・バリュー株",
-                    "暗号資産・ネットミーム・ハイベータ",
-                    "エンタメ・VTuber・ゲーム",
-                    "防衛・宇宙・重工業"
-                ],
-                key="scr_theme"
-            )
-        with col_cfg3:
-            period = st.selectbox("データ期間 (チャート用)", ["6ヶ月", "1年", "2年"], index=1, key="scr_period")
             
     period_map = {"6ヶ月": "6m", "1年": "1y", "2年": "2y"}
     selected_period = period_map[period]
