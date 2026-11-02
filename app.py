@@ -192,6 +192,42 @@ button[data-baseweb="tab"]:not([aria-selected="true"]) svg {{
     stroke: {'#ffffff' if is_dark else '#000000'} !important;
     opacity: 1 !important;
 }}
+
+/* Early Selected Tab Typography Luminance & Saturation Boost */
+div[data-testid="stTabs"] button[role="tab"][aria-selected="true"],
+div[data-testid="stTabs"] button[data-baseweb="tab"][aria-selected="true"],
+div[data-testid="stTabs"] [data-baseweb="tab"][aria-selected="true"],
+button[data-baseweb="tab"][aria-selected="true"] {{
+    color: {'#38bdf8' if is_dark else '#1976d2'} !important;
+    border-bottom: 2px solid {'#38bdf8' if is_dark else '#1976d2'} !important;
+    background-color: {'rgba(56, 189, 248, 0.14)' if is_dark else 'rgba(25, 118, 210, 0.05)'} !important;
+    opacity: 1 !important;
+    font-weight: 700 !important;
+}}
+div[data-testid="stTabs"] button[role="tab"][aria-selected="true"] *,
+div[data-testid="stTabs"] button[role="tab"][aria-selected="true"] p,
+div[data-testid="stTabs"] button[role="tab"][aria-selected="true"] span,
+div[data-testid="stTabs"] button[data-baseweb="tab"][aria-selected="true"] *,
+div[data-testid="stTabs"] button[data-baseweb="tab"][aria-selected="true"] p,
+div[data-testid="stTabs"] button[data-baseweb="tab"][aria-selected="true"] span,
+div[data-testid="stTabs"] [data-baseweb="tab"][aria-selected="true"] *,
+div[data-testid="stTabs"] [data-baseweb="tab"][aria-selected="true"] p,
+div[data-testid="stTabs"] [data-baseweb="tab"][aria-selected="true"] span,
+button[data-baseweb="tab"][aria-selected="true"] *,
+button[data-baseweb="tab"][aria-selected="true"] p,
+button[data-baseweb="tab"][aria-selected="true"] span {{
+    color: {'#38bdf8' if is_dark else '#1976d2'} !important;
+    opacity: 1 !important;
+    -webkit-text-fill-color: {'#38bdf8' if is_dark else '#1976d2'} !important;
+    font-weight: 700 !important;
+    text-shadow: {'0 0 10px rgba(56, 189, 248, 0.35)' if is_dark else 'none'} !important;
+}}
+div[data-testid="stTabs"] button[role="tab"][aria-selected="true"] svg,
+div[data-testid="stTabs"] [data-baseweb="tab"][aria-selected="true"] svg,
+button[data-baseweb="tab"][aria-selected="true"] svg {{
+    stroke: {'#38bdf8' if is_dark else '#1976d2'} !important;
+    opacity: 1 !important;
+}}
 </style>
 """)
 
@@ -2145,42 +2181,50 @@ st.html(f"""
     div[data-testid="stTabs"] button[role="tab"]:hover,
     [data-baseweb="tab"]:hover {{
         opacity: 1 !important;
-        color: {'#93c5fd' if is_dark else 'var(--primary-color)'} !important;
+        color: {'#7dd3fc' if is_dark else 'var(--primary-color)'} !important;
     }}
     div[data-testid="stTabs"] [data-baseweb="tab"]:hover *,
     div[data-testid="stTabs"] button[role="tab"]:hover *,
     [data-baseweb="tab"]:hover * {{
-        color: {'#93c5fd' if is_dark else 'var(--primary-color)'} !important;
+        color: {'#7dd3fc' if is_dark else 'var(--primary-color)'} !important;
     }}
     div[data-testid="stTabs"] [data-baseweb="tab"]:hover svg,
     div[data-testid="stTabs"] button[role="tab"]:hover svg {{
-        stroke: {'#93c5fd' if is_dark else 'var(--primary-color)'} !important;
+        stroke: {'#7dd3fc' if is_dark else 'var(--primary-color)'} !important;
     }}
 
-    /* Selected Tab - High contrast accent blue with bottom border */
+    /* Selected Tab - High contrast high luminance/saturation neon cyan/blue */
     div[data-testid="stTabs"] [data-baseweb="tab"][aria-selected="true"],
     div[data-testid="stTabs"] button[role="tab"][aria-selected="true"],
     div[data-testid="stTabs"] button[data-baseweb="tab"][aria-selected="true"],
     [data-baseweb="tab"][aria-selected="true"] {{
-        border-bottom: 2px solid {'#3b82f6' if is_dark else 'var(--primary-color)'} !important;
+        border-bottom: 2px solid {'#38bdf8' if is_dark else 'var(--primary-color)'} !important;
         opacity: 1 !important;
-        background-color: {'rgba(59, 130, 246, 0.15)' if is_dark else 'rgba(25, 118, 210, 0.04)'} !important;
-        color: {'#60a5fa' if is_dark else 'var(--primary-color)'} !important;
+        background-color: {'rgba(56, 189, 248, 0.14)' if is_dark else 'rgba(25, 118, 210, 0.04)'} !important;
+        color: {'#38bdf8' if is_dark else 'var(--primary-color)'} !important;
     }}
     div[data-testid="stTabs"] [data-baseweb="tab"][aria-selected="true"] *,
+    div[data-testid="stTabs"] [data-baseweb="tab"][aria-selected="true"] p,
+    div[data-testid="stTabs"] [data-baseweb="tab"][aria-selected="true"] span,
     div[data-testid="stTabs"] button[role="tab"][aria-selected="true"] *,
+    div[data-testid="stTabs"] button[role="tab"][aria-selected="true"] p,
+    div[data-testid="stTabs"] button[role="tab"][aria-selected="true"] span,
     div[data-testid="stTabs"] button[data-baseweb="tab"][aria-selected="true"] *,
+    div[data-testid="stTabs"] button[data-baseweb="tab"][aria-selected="true"] p,
+    div[data-testid="stTabs"] button[data-baseweb="tab"][aria-selected="true"] span,
     [data-baseweb="tab"][aria-selected="true"] * {{
-        color: {'#60a5fa' if is_dark else 'var(--primary-color)'} !important;
+        color: {'#38bdf8' if is_dark else 'var(--primary-color)'} !important;
+        -webkit-text-fill-color: {'#38bdf8' if is_dark else 'var(--primary-color)'} !important;
         font-weight: 700 !important;
         opacity: 1 !important;
+        text-shadow: {'0 0 10px rgba(56, 189, 248, 0.35)' if is_dark else 'none'} !important;
     }}
     div[data-testid="stTabs"] [data-baseweb="tab"][aria-selected="true"] svg,
     div[data-testid="stTabs"] button[role="tab"][aria-selected="true"] svg,
     div[data-testid="stTabs"] [data-baseweb="tab"][aria-selected="true"] .feather-icon,
     div[data-testid="stTabs"] [data-baseweb="tab"][aria-selected="true"] .lucide-icon,
     [data-baseweb="tab"][aria-selected="true"] svg {{
-        stroke: {'#60a5fa' if is_dark else 'var(--primary-color)'} !important;
+        stroke: {'#38bdf8' if is_dark else 'var(--primary-color)'} !important;
         opacity: 1 !important;
     }}
     div[role="tablist"] {{
@@ -2748,6 +2792,22 @@ st.components.v1.html(f"""<script>
                     tab.querySelectorAll("svg").forEach(s => {
                         s.style.setProperty("color", textColor, "important");
                         s.style.setProperty("stroke", textColor, "important");
+                        s.style.setProperty("opacity", "1", "important");
+                    });
+                });
+
+                // 1b. Active Tab Typography Luminance & Saturation Boost
+                doc.querySelectorAll('[data-testid="stTabs"] [data-baseweb="tab"][aria-selected="true"], [data-testid="stTabs"] button[role="tab"][aria-selected="true"], [data-baseweb="tab"][aria-selected="true"]').forEach(tab => {
+                    const activeColor = isDark ? "#38bdf8" : "#1976d2";
+                    tab.style.setProperty("color", activeColor, "important");
+                    tab.querySelectorAll("p, span, div").forEach(el => {
+                        el.style.setProperty("color", activeColor, "important");
+                        el.style.setProperty("-webkit-text-fill-color", activeColor, "important");
+                        el.style.setProperty("opacity", "1", "important");
+                    });
+                    tab.querySelectorAll("svg").forEach(s => {
+                        s.style.setProperty("color", activeColor, "important");
+                        s.style.setProperty("stroke", activeColor, "important");
                         s.style.setProperty("opacity", "1", "important");
                     });
                 });
@@ -8515,7 +8575,7 @@ else:
 
 logo_header_html = f'<img src="{logo_data_uri}" style="width: 42px; height: 42px; border-radius: 11px; box-shadow: 0 2px 10px rgba(37,99,235,0.2); border: 1px solid rgba(226,232,240,0.8); background: #ffffff; object-fit: contain; padding: 2px;" />' if logo_data_uri else ""
 
-BUILD_VERSION = "2026.11.02-1858"
+BUILD_VERSION = "2026.11.02-1905"
 st.markdown(f'<div class="title-container" style="display: flex; flex-direction: column; gap: 6px;"><div style="display: flex; align-items: center; gap: 14px; flex-wrap: wrap;">{logo_header_html}<div class="title-text" style="margin: 0; line-height: 1;">ZenStockScreener</div>{badge_html}<span style="font-size: 0.72rem; color: var(--secondary-text-color); opacity: 0.7; font-family: monospace;">build:{BUILD_VERSION}</span></div><div class="subtitle-text" style="margin-top: 4px;">AI分析とファンダメンタルズ指標による日本株上昇期待銘柄の選定システム</div></div>', unsafe_allow_html=True)
 
 # Mobile-friendly Quick Action Header (LINE integration & status)
