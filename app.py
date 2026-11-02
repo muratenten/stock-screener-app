@@ -43,8 +43,13 @@ PLOTLY_CONFIG = {
 # Synchronize theme with query parameters and persistent state
 if 'color_theme' not in st.session_state:
     query_theme = st.query_params.get("theme")
+    state_param = st.query_params.get("state", "")
     if query_theme in ("dark", "light"):
         st.session_state['color_theme'] = query_theme
+    elif "__dark" in str(state_param):
+        st.session_state['color_theme'] = 'dark'
+    elif "__light" in str(state_param):
+        st.session_state['color_theme'] = 'light'
     else:
         st.session_state['color_theme'] = 'light'
 
@@ -7597,7 +7602,7 @@ if query_user == "default":
         line_channel_id = st.secrets.get("line_channel_id")
         redirect_uri = st.secrets.get("redirect_uri", "http://localhost:8501/")
         
-        target_frame = "_blank"
+        target_frame = "_top"
         current_theme_slug = "dark" if is_dark else "light"
         theme_query_param = f"&theme={current_theme_slug}"
         oauth_theme_state = f"__{current_theme_slug}"
