@@ -164,24 +164,117 @@ else:
     st.html("""
     <meta id="zen-theme-tracker" data-theme="light">
     <style>
-    /* ===== LIGHT MODE DEDICATED OVERRIDES (PRESERVING PERFECTION) ===== */
-    html, body, [data-testid="stApp"], .stApp {
-        background-color: #ffffff !important;
-        background: #ffffff !important;
-        color: #1e293b !important;
-    }
-    [data-testid="stAppViewContainer"], [data-testid="stHeader"] {
-        background-color: #ffffff !important;
-        background: #ffffff !important;
-        color: #1e293b !important;
-    }
-    [data-testid="stSidebar"], section[data-testid="stSidebar"] {
+    /* ===== LIGHT MODE PRECISE ISOLATION OVERRIDES ===== */
+    /* 1. Base App & Canvas Background */
+    html, body, [data-testid="stApp"], .stApp,
+    [data-testid="stAppViewContainer"], [data-testid="stMainViewContainer"],
+    .main, [data-testid="stMain"], [data-testid="stMainBlockContainer"], .block-container,
+    [data-testid="stHeader"] {
         background-color: #f4f6f8 !important;
         background: #f4f6f8 !important;
         color: #1e293b !important;
     }
 
-    /* Early Sidebar & Segmented Control Theme Sync */
+    /* 2. Normal Headings & Text (Neutralizing config.toml textColor without touching badges, tags, or buttons) */
+    [data-testid="stMainBlockContainer"] h1,
+    [data-testid="stMainBlockContainer"] h2,
+    [data-testid="stMainBlockContainer"] h3,
+    [data-testid="stMainBlockContainer"] h4,
+    [data-testid="stMainBlockContainer"] h5,
+    [data-testid="stMainBlockContainer"] h6,
+    [data-testid="stSidebar"] h1,
+    [data-testid="stSidebar"] h2,
+    [data-testid="stSidebar"] h3,
+    [data-testid="stMainBlockContainer"] > div > div > div > [data-testid="stMarkdownContainer"] > p,
+    [data-testid="stWidgetLabel"] label,
+    [data-testid="stWidgetLabel"] p,
+    [data-testid="stWidgetLabel"] span {
+        color: #1e293b !important;
+        -webkit-text-fill-color: #1e293b !important;
+    }
+
+    /* 3. Sidebar Surface & Text */
+    [data-testid="stSidebar"], section[data-testid="stSidebar"] {
+        background-color: #ffffff !important;
+        background: #ffffff !important;
+        border-right: 1px solid rgba(0, 0, 0, 0.08) !important;
+    }
+    [data-testid="stSidebar"] p:not(button *),
+    [data-testid="stSidebar"] span:not(button *),
+    [data-testid="stSidebar"] label {
+        color: #1e293b !important;
+        -webkit-text-fill-color: #1e293b !important;
+    }
+
+    /* 4. Cards & Containers in Light Mode */
+    .card,
+    div[data-testid="stVerticalBlockBorderWrapper"],
+    div.title-container,
+    [data-testid="stExpander"] {
+        background-color: #ffffff !important;
+        background: #ffffff !important;
+        border: 1px solid rgba(0, 0, 0, 0.12) !important;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08) !important;
+    }
+    .title-text {
+        color: #1976d2 !important;
+        -webkit-text-fill-color: #1976d2 !important;
+    }
+    .subtitle-text {
+        color: rgba(0, 0, 0, 0.60) !important;
+        -webkit-text-fill-color: rgba(0, 0, 0, 0.60) !important;
+    }
+    div[data-testid="stMetricValue"] {
+        color: #1e293b !important;
+        -webkit-text-fill-color: #1e293b !important;
+    }
+    div[data-testid="stMetricLabel"] {
+        color: rgba(0, 0, 0, 0.60) !important;
+        -webkit-text-fill-color: rgba(0, 0, 0, 0.60) !important;
+    }
+
+    /* 5. Primary Buttons (Contained Blue with Crisp White Text) */
+    .stApp [data-testid="stBaseButton-primary"],
+    .stApp button[data-testid="stBaseButton-primary"],
+    .stApp div.stButton > button[kind="primary"],
+    .stApp div.stButton > button[type="primary"] {
+        background-color: #1976d2 !important;
+        background: #1976d2 !important;
+        border: 1px solid #1976d2 !important;
+        color: #ffffff !important;
+        box-shadow: 0 2px 4px rgba(25, 118, 210, 0.25) !important;
+    }
+    .stApp [data-testid="stBaseButton-primary"] *,
+    .stApp button[data-testid="stBaseButton-primary"] *,
+    .stApp div.stButton > button[kind="primary"] *,
+    .stApp div.stButton > button[type="primary"] * {
+        color: #ffffff !important;
+        -webkit-text-fill-color: #ffffff !important;
+        stroke: #ffffff !important;
+    }
+
+    /* 6. Secondary / Normal Buttons (Clean White with Dark Slate Text) */
+    .stApp div.stButton > button:not([kind="primary"]):not([type="primary"]),
+    .stApp [data-testid="stBaseButton-secondary"] button,
+    .stApp button[kind="secondary"] {
+        background-color: #ffffff !important;
+        background: #ffffff !important;
+        border: 1px solid rgba(0, 0, 0, 0.23) !important;
+        color: #1e293b !important;
+    }
+    .stApp div.stButton > button:not([kind="primary"]):not([type="primary"]) *,
+    .stApp [data-testid="stBaseButton-secondary"] button *,
+    .stApp button[kind="secondary"] * {
+        color: #1e293b !important;
+        -webkit-text-fill-color: #1e293b !important;
+    }
+
+    /* 7. Segmented Controls - Active State (Royal Blue) */
+    div[data-testid="stButtonGroup"] button[aria-checked="true"],
+    div[data-baseweb="button-group"] button[aria-checked="true"],
+    div[data-testid="stSegmentedControl"] button[aria-checked="true"],
+    button[data-testid*="segmented_control"][aria-checked="true"],
+    button[data-testid="stBaseButton-segmented_controlActive"],
     [data-testid="stSidebar"] [data-baseweb="button-group"] button[aria-checked="true"],
     [data-testid="stSidebar"] [data-testid="stButtonGroup"] button[aria-checked="true"],
     [data-testid="stSidebar"] div[data-testid="stSegmentedControl"] button[aria-checked="true"],
@@ -193,6 +286,11 @@ else:
         color: #ffffff !important;
         box-shadow: 0 2px 8px rgba(25, 118, 210, 0.3) !important;
     }
+    div[data-testid="stButtonGroup"] button[aria-checked="true"] *,
+    div[data-baseweb="button-group"] button[aria-checked="true"] *,
+    div[data-testid="stSegmentedControl"] button[aria-checked="true"] *,
+    button[data-testid*="segmented_control"][aria-checked="true"] *,
+    button[data-testid="stBaseButton-segmented_controlActive"] *,
     [data-testid="stSidebar"] [data-baseweb="button-group"] button[aria-checked="true"] *,
     [data-testid="stSidebar"] [data-testid="stButtonGroup"] button[aria-checked="true"] *,
     [data-testid="stSidebar"] div[data-testid="stSegmentedControl"] button[aria-checked="true"] *,
@@ -201,6 +299,11 @@ else:
         color: #ffffff !important;
         -webkit-text-fill-color: #ffffff !important;
     }
+    div[data-testid="stButtonGroup"] button[aria-checked="true"] svg,
+    div[data-baseweb="button-group"] button[aria-checked="true"] svg,
+    div[data-testid="stSegmentedControl"] button[aria-checked="true"] svg,
+    button[data-testid*="segmented_control"][aria-checked="true"] svg,
+    button[data-testid="stBaseButton-segmented_controlActive"] svg,
     [data-testid="stSidebar"] [data-baseweb="button-group"] button[aria-checked="true"] svg,
     [data-testid="stSidebar"] [data-testid="stButtonGroup"] button[aria-checked="true"] svg,
     [data-testid="stSidebar"] div[data-testid="stSegmentedControl"] button[aria-checked="true"] svg,
@@ -208,6 +311,12 @@ else:
     [data-testid="stSidebar"] button[data-testid="stBaseButton-segmented_controlActive"] svg {
         stroke: #ffffff !important;
     }
+
+    /* 8. Segmented Controls - Unselected State (White Background + Slate Text) */
+    div[data-testid="stButtonGroup"] button[aria-checked="false"],
+    div[data-baseweb="button-group"] button[aria-checked="false"],
+    div[data-testid="stSegmentedControl"] button[aria-checked="false"],
+    button[data-testid*="segmented_control"][aria-checked="false"],
     [data-testid="stSidebar"] [data-baseweb="button-group"] button[aria-checked="false"],
     [data-testid="stSidebar"] [data-testid="stButtonGroup"] button[aria-checked="false"],
     [data-testid="stSidebar"] div[data-testid="stSegmentedControl"] button[aria-checked="false"],
@@ -217,6 +326,10 @@ else:
         border: 1px solid rgba(0, 0, 0, 0.15) !important;
         color: #1e293b !important;
     }
+    div[data-testid="stButtonGroup"] button[aria-checked="false"] *,
+    div[data-baseweb="button-group"] button[aria-checked="false"] *,
+    div[data-testid="stSegmentedControl"] button[aria-checked="false"] *,
+    button[data-testid*="segmented_control"][aria-checked="false"] *,
     [data-testid="stSidebar"] [data-baseweb="button-group"] button[aria-checked="false"] *,
     [data-testid="stSidebar"] [data-testid="stButtonGroup"] button[aria-checked="false"] *,
     [data-testid="stSidebar"] div[data-testid="stSegmentedControl"] button[aria-checked="false"] *,
@@ -224,6 +337,10 @@ else:
         color: #1e293b !important;
         -webkit-text-fill-color: #1e293b !important;
     }
+    div[data-testid="stButtonGroup"] button[aria-checked="false"] svg,
+    div[data-baseweb="button-group"] button[aria-checked="false"] svg,
+    div[data-testid="stSegmentedControl"] button[aria-checked="false"] svg,
+    button[data-testid*="segmented_control"][aria-checked="false"] svg,
     [data-testid="stSidebar"] [data-baseweb="button-group"] button[aria-checked="false"] svg,
     [data-testid="stSidebar"] [data-testid="stButtonGroup"] button[aria-checked="false"] svg,
     [data-testid="stSidebar"] div[data-testid="stSegmentedControl"] button[aria-checked="false"] svg,
@@ -231,7 +348,7 @@ else:
         stroke: #1e293b !important;
     }
 
-    /* Early Dropdown Selectbox Theme Sync (Pure White in Light Mode) */
+    /* 9. Dropdown Selectboxes in Light Mode (Pristine White with Subtle Border) */
     div[data-testid="stSelectbox"] div[data-baseweb="select"],
     div[data-testid="stSelectbox"] div[data-baseweb="select"] > div,
     div[data-baseweb="select"],
@@ -258,53 +375,7 @@ else:
         stroke: #64748b !important;
     }
 
-    /* Early Tab Typography Luminance Sync (Clear Slate Typography in Light Mode) */
-    div[data-testid="stTabs"] button[role="tab"]:not([aria-selected="true"]),
-    div[data-testid="stTabs"] button[data-baseweb="tab"]:not([aria-selected="true"]),
-    div[data-testid="stTabs"] [data-baseweb="tab"]:not([aria-selected="true"]),
-    button[data-baseweb="tab"]:not([aria-selected="true"]) {
-        color: #475569 !important;
-        opacity: 1 !important;
-        font-weight: 600 !important;
-    }
-    div[data-testid="stTabs"] button[role="tab"]:not([aria-selected="true"]) *,
-    div[data-testid="stTabs"] button[role="tab"]:not([aria-selected="true"]) p,
-    div[data-testid="stTabs"] button[role="tab"]:not([aria-selected="true"]) span,
-    div[data-testid="stTabs"] button[data-baseweb="tab"]:not([aria-selected="true"]) *,
-    div[data-testid="stTabs"] button[data-baseweb="tab"]:not([aria-selected="true"]) p,
-    div[data-testid="stTabs"] button[data-baseweb="tab"]:not([aria-selected="true"]) span,
-    div[data-testid="stTabs"] [data-baseweb="tab"]:not([aria-selected="true"]) *,
-    div[data-testid="stTabs"] [data-baseweb="tab"]:not([aria-selected="true"]) p,
-    div[data-testid="stTabs"] [data-baseweb="tab"]:not([aria-selected="true"]) span,
-    button[data-baseweb="tab"]:not([aria-selected="true"]) *,
-    button[data-baseweb="tab"]:not([aria-selected="true"]) p,
-    button[data-baseweb="tab"]:not([aria-selected="true"]) span {
-        color: #475569 !important;
-        opacity: 1 !important;
-        -webkit-text-fill-color: #475569 !important;
-    }
-    div[data-testid="stTabs"] button[role="tab"]:not([aria-selected="true"]) svg,
-    div[data-testid="stTabs"] [data-baseweb="tab"]:not([aria-selected="true"]) svg,
-    button[data-baseweb="tab"]:not([aria-selected="true"]) svg {
-        stroke: #475569 !important;
-        opacity: 1 !important;
-    }
-    div[data-testid="stTabs"] button[role="tab"][aria-selected="true"],
-    div[data-testid="stTabs"] button[data-baseweb="tab"][aria-selected="true"],
-    div[data-testid="stTabs"] [data-baseweb="tab"][aria-selected="true"],
-    button[data-baseweb="tab"][aria-selected="true"] {
-        color: #1976d2 !important;
-        border-bottom: 2px solid #1976d2 !important;
-        opacity: 1 !important;
-        font-weight: 700 !important;
-    }
-    div[data-testid="stTabs"] button[role="tab"][aria-selected="true"] *,
-    div[data-testid="stTabs"] button[data-baseweb="tab"][aria-selected="true"] * {
-        color: #1976d2 !important;
-        -webkit-text-fill-color: #1976d2 !important;
-    }
-
-    /* Popover & Dropdown menu list in Light Mode */
+    /* 10. Popovers & Menus in Light Mode */
     div[data-baseweb="popover"],
     div[data-baseweb="popover"] > div,
     div[data-baseweb="menu"],
@@ -313,6 +384,7 @@ else:
         background: #ffffff !important;
         color: #1e293b !important;
         border: 1px solid rgba(0, 0, 0, 0.12) !important;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12) !important;
     }
     ul[role="listbox"] li,
     li[role="option"] {
@@ -326,10 +398,64 @@ else:
     }
     li[role="option"] * {
         color: #1e293b !important;
+        -webkit-text-fill-color: #1e293b !important;
     }
     li[role="option"]:hover *,
     li[role="option"][aria-selected="true"] * {
         color: #1976d2 !important;
+        -webkit-text-fill-color: #1976d2 !important;
+    }
+
+    /* 11. Tabs in Light Mode */
+    div[data-testid="stTabs"] [data-baseweb="tab-list"],
+    div[role="tablist"] {
+        border-bottom: 1px solid rgba(0, 0, 0, 0.12) !important;
+    }
+    div[data-testid="stTabs"] button[role="tab"]:not([aria-selected="true"]),
+    div[data-testid="stTabs"] button[data-baseweb="tab"]:not([aria-selected="true"]),
+    div[data-testid="stTabs"] [data-baseweb="tab"]:not([aria-selected="true"]),
+    button[data-baseweb="tab"]:not([aria-selected="true"]) {
+        color: #475569 !important;
+        font-weight: 600 !important;
+    }
+    div[data-testid="stTabs"] button[role="tab"]:not([aria-selected="true"]) *,
+    button[data-baseweb="tab"]:not([aria-selected="true"]) * {
+        color: #475569 !important;
+        -webkit-text-fill-color: #475569 !important;
+    }
+    div[data-testid="stTabs"] button[role="tab"]:not([aria-selected="true"]) svg,
+    button[data-baseweb="tab"]:not([aria-selected="true"]) svg {
+        stroke: #475569 !important;
+    }
+    div[data-testid="stTabs"] button[role="tab"][aria-selected="true"],
+    div[data-testid="stTabs"] button[data-baseweb="tab"][aria-selected="true"],
+    div[data-testid="stTabs"] [data-baseweb="tab"][aria-selected="true"],
+    button[data-baseweb="tab"][aria-selected="true"] {
+        color: #1976d2 !important;
+        border-bottom: 2px solid #1976d2 !important;
+        font-weight: 700 !important;
+    }
+    div[data-testid="stTabs"] button[role="tab"][aria-selected="true"] *,
+    button[data-baseweb="tab"][aria-selected="true"] * {
+        color: #1976d2 !important;
+        -webkit-text-fill-color: #1976d2 !important;
+    }
+    div[data-testid="stTabs"] button[role="tab"][aria-selected="true"] svg,
+    button[data-baseweb="tab"][aria-selected="true"] svg {
+        stroke: #1976d2 !important;
+    }
+
+    /* 12. Text Inputs in Light Mode */
+    div[data-testid="stTextInput"] input {
+        background-color: #ffffff !important;
+        background: #ffffff !important;
+        border: 1px solid rgba(0, 0, 0, 0.23) !important;
+        color: #1e293b !important;
+        -webkit-text-fill-color: #1e293b !important;
+    }
+    div[data-testid="stTextInput"] input::placeholder {
+        color: rgba(0, 0, 0, 0.45) !important;
+        -webkit-text-fill-color: rgba(0, 0, 0, 0.45) !important;
     }
     </style>
     """)
@@ -1051,8 +1177,8 @@ gdg_bg_header = "#1e1e1e" if is_dark else "#f8fafc"
 gdg_bg_cell_hover = "#242526" if is_dark else "#f4f6f8"
 gdg_bg_header_hover = "#242526" if is_dark else "#f1f5f9"
 dataframe_filter = "invert(0.94) hue-rotate(180deg)" if is_dark else "none"
-gdg_bg_header_hover = "#242526" if is_dark else "#f1f5f9"
-dataframe_filter = "invert(0.94) hue-rotate(180deg)" if is_dark else "none"
+
+light_mode_tail_css = ""
 
 st.html(f"""
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -2344,6 +2470,8 @@ st.html(f"""
         background-color: var(--secondary-background-color) !important;
         border: 1px solid var(--border-color) !important;
     }}
+
+    {light_mode_tail_css}
 </style>
 """)
 
