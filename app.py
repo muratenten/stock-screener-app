@@ -1306,6 +1306,57 @@ st.html(f"""
         overflow: visible !important;
         stroke-width: 2 !important;
     }}
+
+    /* Sidebar Segmented Control Buttons (Theme Selector & Layout Selector) - Harmonized with Login Screen */
+    [data-testid="stSidebar"] [data-baseweb="button-group"] button[aria-checked="false"],
+    [data-testid="stSidebar"] [data-testid="stButtonGroup"] button[aria-checked="false"],
+    [data-testid="stSidebar"] button[data-testid*="segmented_control"][aria-checked="false"],
+    [data-testid="stSidebar"] [role="radiogroup"] button[aria-checked="false"],
+    [data-testid="stSidebar"] div[data-testid="stSegmentedControl"] button[aria-checked="false"] {{
+        background-color: {'rgba(255, 255, 255, 0.08)' if is_dark else '#ffffff'} !important;
+        border: 1px solid {'rgba(255, 255, 255, 0.15)' if is_dark else 'rgba(0, 0, 0, 0.15)'} !important;
+        color: {'#94a3b8' if is_dark else 'rgba(0, 0, 0, 0.65)'} !important;
+    }}
+    [data-testid="stSidebar"] [data-baseweb="button-group"] button[aria-checked="false"] svg,
+    [data-testid="stSidebar"] [data-testid="stButtonGroup"] button[aria-checked="false"] svg,
+    [data-testid="stSidebar"] button[data-testid*="segmented_control"][aria-checked="false"] svg,
+    [data-testid="stSidebar"] [data-baseweb="button-group"] button[aria-checked="false"] .feather-icon,
+    [data-testid="stSidebar"] [data-testid="stButtonGroup"] button[aria-checked="false"] .feather-icon,
+    [data-testid="stSidebar"] button[data-testid*="segmented_control"][aria-checked="false"] .feather-icon {{
+        stroke: {'#94a3b8' if is_dark else 'rgba(0, 0, 0, 0.65)'} !important;
+    }}
+    [data-testid="stSidebar"] [data-baseweb="button-group"] button[aria-checked="false"]:hover,
+    [data-testid="stSidebar"] [data-testid="stButtonGroup"] button[aria-checked="false"]:hover,
+    [data-testid="stSidebar"] button[data-testid*="segmented_control"][aria-checked="false"]:hover {{
+        background-color: {'rgba(255, 255, 255, 0.14)' if is_dark else 'rgba(0, 0, 0, 0.05)'} !important;
+        color: {'#ffffff' if is_dark else '#000000'} !important;
+    }}
+    [data-testid="stSidebar"] [data-baseweb="button-group"] button[aria-checked="false"]:hover svg,
+    [data-testid="stSidebar"] [data-testid="stButtonGroup"] button[aria-checked="false"]:hover svg,
+    [data-testid="stSidebar"] button[data-testid*="segmented_control"][aria-checked="false"]:hover svg {{
+        stroke: {'#ffffff' if is_dark else '#000000'} !important;
+    }}
+
+    [data-testid="stSidebar"] [data-baseweb="button-group"] button[aria-checked="true"],
+    [data-testid="stSidebar"] [data-testid="stButtonGroup"] button[aria-checked="true"],
+    [data-testid="stSidebar"] button[data-testid*="segmented_control"][aria-checked="true"],
+    [data-testid="stSidebar"] [role="radiogroup"] button[aria-checked="true"],
+    [data-testid="stSidebar"] div[data-testid="stSegmentedControl"] button[aria-checked="true"],
+    [data-testid="stSidebar"] button[data-testid="stBaseButton-segmented_controlActive"] {{
+        background-color: {'#3b82f6' if is_dark else '#1976d2'} !important;
+        background: {'#3b82f6' if is_dark else '#1976d2'} !important;
+        border: 1px solid {'#3b82f6' if is_dark else '#1976d2'} !important;
+        color: #ffffff !important;
+        box-shadow: 0 2px 8px {'rgba(59, 130, 246, 0.4)' if is_dark else 'rgba(25, 118, 210, 0.3)'} !important;
+    }}
+    [data-testid="stSidebar"] [data-baseweb="button-group"] button[aria-checked="true"] svg,
+    [data-testid="stSidebar"] [data-testid="stButtonGroup"] button[aria-checked="true"] svg,
+    [data-testid="stSidebar"] button[data-testid*="segmented_control"][aria-checked="true"] svg,
+    [data-testid="stSidebar"] [data-baseweb="button-group"] button[aria-checked="true"] .feather-icon,
+    [data-testid="stSidebar"] [data-testid="stButtonGroup"] button[aria-checked="true"] .feather-icon,
+    [data-testid="stSidebar"] button[data-testid*="segmented_control"][aria-checked="true"] .feather-icon {{
+        stroke: #ffffff !important;
+    }}
     .metric-title {{
         color: {secondary_text_color};
         font-size: 0.8125rem;
@@ -1681,9 +1732,16 @@ st.html(f"""
     }}
     
     /* ==========================================================================
-       MUI Tabs & Tab Indicator (Pure White in Dark Mode)
+       MUI Tabs & Tab Indicator (Ultra High-Specificity Pure White in Dark Mode)
        ========================================================================== */
-    button[data-baseweb="tab"] {{
+    div[data-testid="stTabs"] [data-baseweb="tab-list"],
+    div[role="tablist"] {{
+        border-bottom: 1px solid {'rgba(255, 255, 255, 0.15)' if is_dark else 'var(--border-color)'} !important;
+    }}
+    div[data-testid="stTabs"] [data-baseweb="tab"],
+    div[data-testid="stTabs"] button[role="tab"],
+    div[data-testid="stTabs"] button[data-baseweb="tab"],
+    [data-baseweb="tab"] {{
         color: {'#ffffff' if is_dark else secondary_text_color} !important;
         font-weight: 500 !important;
         font-size: 0.875rem !important;
@@ -1691,43 +1749,59 @@ st.html(f"""
         border-bottom: 2px solid transparent !important;
         padding: 12px 18px !important;
         transition: color 250ms cubic-bezier(0.4, 0, 0.2, 1) 0ms, border-color 250ms cubic-bezier(0.4, 0, 0.2, 1) 0ms !important;
-        opacity: {'0.85' if is_dark else '0.7'} !important;
+        opacity: {'0.9' if is_dark else '0.7'} !important;
     }}
-    button[data-baseweb="tab"] div,
-    button[data-baseweb="tab"] p,
-    button[data-baseweb="tab"] span {{
+    div[data-testid="stTabs"] [data-baseweb="tab"] *,
+    div[data-testid="stTabs"] button[role="tab"] *,
+    div[data-testid="stTabs"] button[data-baseweb="tab"] *,
+    [data-baseweb="tab"] * {{
         color: {'#ffffff' if is_dark else secondary_text_color} !important;
     }}
-    button[data-baseweb="tab"] svg.lucide,
-    button[data-baseweb="tab"] .feather-icon {{
+    div[data-testid="stTabs"] [data-baseweb="tab"] svg,
+    div[data-testid="stTabs"] button[role="tab"] svg,
+    div[data-testid="stTabs"] [data-baseweb="tab"] .feather-icon,
+    div[data-testid="stTabs"] [data-baseweb="tab"] .lucide-icon,
+    [data-baseweb="tab"] svg {{
         stroke: {'#ffffff' if is_dark else secondary_text_color} !important;
     }}
-    button[data-baseweb="tab"]:hover {{
+    div[data-testid="stTabs"] [data-baseweb="tab"]:hover,
+    div[data-testid="stTabs"] button[role="tab"]:hover,
+    [data-baseweb="tab"]:hover {{
         opacity: 1 !important;
         color: {'#ffffff' if is_dark else 'var(--primary-color)'} !important;
     }}
-    button[data-baseweb="tab"]:hover div,
-    button[data-baseweb="tab"]:hover p,
-    button[data-baseweb="tab"]:hover span {{
+    div[data-testid="stTabs"] [data-baseweb="tab"]:hover *,
+    div[data-testid="stTabs"] button[role="tab"]:hover *,
+    [data-baseweb="tab"]:hover * {{
         color: {'#ffffff' if is_dark else 'var(--primary-color)'} !important;
     }}
-    button[data-baseweb="tab"]:hover svg.lucide,
-    button[data-baseweb="tab"]:hover .feather-icon {{
+    div[data-testid="stTabs"] [data-baseweb="tab"]:hover svg,
+    div[data-testid="stTabs"] button[role="tab"]:hover svg {{
         stroke: {'#ffffff' if is_dark else 'var(--primary-color)'} !important;
     }}
-    button[data-baseweb="tab"][aria-selected="true"] {{
+
+    /* Selected Tab - High contrast pure white with blue underline */
+    div[data-testid="stTabs"] [data-baseweb="tab"][aria-selected="true"],
+    div[data-testid="stTabs"] button[role="tab"][aria-selected="true"],
+    div[data-testid="stTabs"] button[data-baseweb="tab"][aria-selected="true"],
+    [data-baseweb="tab"][aria-selected="true"] {{
         border-bottom: 2px solid {'#3b82f6' if is_dark else 'var(--primary-color)'} !important;
         opacity: 1 !important;
-        background-color: {'rgba(59, 130, 246, 0.08)' if is_dark else 'rgba(25, 118, 210, 0.04)'} !important;
+        background-color: {'rgba(59, 130, 246, 0.12)' if is_dark else 'rgba(25, 118, 210, 0.04)'} !important;
+        color: {'#ffffff' if is_dark else 'var(--primary-color)'} !important;
     }}
-    button[data-baseweb="tab"][aria-selected="true"] div,
-    button[data-baseweb="tab"][aria-selected="true"] p,
-    button[data-baseweb="tab"][aria-selected="true"] span {{
+    div[data-testid="stTabs"] [data-baseweb="tab"][aria-selected="true"] *,
+    div[data-testid="stTabs"] button[role="tab"][aria-selected="true"] *,
+    div[data-testid="stTabs"] button[data-baseweb="tab"][aria-selected="true"] *,
+    [data-baseweb="tab"][aria-selected="true"] * {{
         color: {'#ffffff' if is_dark else 'var(--primary-color)'} !important;
         font-weight: 700 !important;
     }}
-    button[data-baseweb="tab"][aria-selected="true"] svg.lucide,
-    button[data-baseweb="tab"][aria-selected="true"] .feather-icon {{
+    div[data-testid="stTabs"] [data-baseweb="tab"][aria-selected="true"] svg,
+    div[data-testid="stTabs"] button[role="tab"][aria-selected="true"] svg,
+    div[data-testid="stTabs"] [data-baseweb="tab"][aria-selected="true"] .feather-icon,
+    div[data-testid="stTabs"] [data-baseweb="tab"][aria-selected="true"] .lucide-icon,
+    [data-baseweb="tab"][aria-selected="true"] svg {{
         stroke: {'#ffffff' if is_dark else 'var(--primary-color)'} !important;
     }}
     div[role="tablist"] {{
@@ -1775,46 +1849,53 @@ st.html(f"""
         background: transparent !important;
         border-radius: var(--mui-radius-sm) !important;
     }}
-    div[data-testid="stButtonGroup"] button[data-testid^="stBaseButton-segmented_control"] {{
-        background: var(--unselected-button-bg) !important;
-        color: {secondary_text_color} !important;
-        border: 1px solid var(--border-color) !important;
+    div[data-testid="stButtonGroup"] button[data-testid^="stBaseButton-segmented_control"],
+    div[data-testid="stSegmentedControl"] button {{
+        background: {'rgba(255, 255, 255, 0.08)' if is_dark else '#ffffff'} !important;
+        color: {'#e2e8f0' if is_dark else secondary_text_color} !important;
+        border: 1px solid {'rgba(255, 255, 255, 0.16)' if is_dark else 'var(--border-color)'} !important;
         font-weight: 500 !important;
         font-size: 0.8125rem !important;
         letter-spacing: 0.02857em !important;
         transition: all 0.2s ease !important;
     }}
-    div[data-testid="stButtonGroup"] button[data-testid^="stBaseButton-segmented_control"]:hover {{
-        border-color: var(--primary-color) !important;
-        color: var(--primary-color) !important;
-        background: {'rgba(144, 202, 249, 0.08)' if is_dark else 'rgba(25, 118, 210, 0.04)'} !important;
+    div[data-testid="stButtonGroup"] button[data-testid^="stBaseButton-segmented_control"]:hover,
+    div[data-testid="stSegmentedControl"] button:hover {{
+        border-color: {'#60a5fa' if is_dark else 'var(--primary-color)'} !important;
+        color: {'#ffffff' if is_dark else 'var(--primary-color)'} !important;
+        background: {'rgba(144, 202, 249, 0.15)' if is_dark else 'rgba(25, 118, 210, 0.04)'} !important;
     }}
     div[data-testid="stButtonGroup"] button[data-testid="stBaseButton-segmented_controlActive"],
     div[data-testid="stButtonGroup"] button[aria-checked="true"],
     div[data-testid="stButtonGroup"] button[aria-selected="true"],
-    div[data-testid="stButtonGroup"] button[aria-pressed="true"] {{
-        background: var(--primary-color) !important;
-        background-color: var(--primary-color) !important;
+    div[data-testid="stButtonGroup"] button[aria-pressed="true"],
+    div[data-testid="stSegmentedControl"] button[aria-checked="true"] {{
+        background: {'#3b82f6' if is_dark else 'var(--primary-color)'} !important;
+        background-color: {'#3b82f6' if is_dark else 'var(--primary-color)'} !important;
         color: #ffffff !important;
-        border-color: var(--primary-color) !important;
+        border-color: {'#3b82f6' if is_dark else 'var(--primary-color)'} !important;
         box-shadow: var(--mui-shadow-2) !important;
     }}
-    div[data-testid="stButtonGroup"] button[data-testid^="stBaseButton-segmented_control"] * {{
-        color: var(--text-color) !important;
+    div[data-testid="stButtonGroup"] button[data-testid^="stBaseButton-segmented_control"] *,
+    div[data-testid="stSegmentedControl"] button * {{
+        color: {'#e2e8f0' if is_dark else 'var(--text-color)'} !important;
     }}
     div[data-testid="stButtonGroup"] button[data-testid^="stBaseButton-segmented_control"] .lucide-wrapper[data-lucide-replaced="flame"] svg,
-    div[data-testid="stButtonGroup"] button[data-testid^="stBaseButton-segmented_control"] .feather-wrapper[data-feather-replaced="flame"] svg {{
+    div[data-testid="stButtonGroup"] button[data-testid^="stBaseButton-segmented_control"] .feather-wrapper[data-feather-replaced="flame"] svg,
+    div[data-testid="stSegmentedControl"] button .lucide-wrapper[data-lucide-replaced="flame"] svg {{
         stroke: #f97316 !important;
     }}
     div[data-testid="stButtonGroup"] button[data-testid="stBaseButton-segmented_controlActive"] *,
     div[data-testid="stButtonGroup"] button[aria-checked="true"] *,
     div[data-testid="stButtonGroup"] button[aria-selected="true"] *,
-    div[data-testid="stButtonGroup"] button[aria-pressed="true"] * {{
+    div[data-testid="stButtonGroup"] button[aria-pressed="true"] *,
+    div[data-testid="stSegmentedControl"] button[aria-checked="true"] * {{
         color: #ffffff !important;
     }}
     div[data-testid="stButtonGroup"] button[data-testid="stBaseButton-segmented_controlActive"] .lucide-wrapper[data-lucide-replaced="flame"] svg,
     div[data-testid="stButtonGroup"] button[aria-checked="true"] .lucide-wrapper[data-lucide-replaced="flame"] svg,
-    div[data-testid="stButtonGroup"] button[aria-selected="true"] .lucide-wrapper[data-lucide-replaced="flame"] svg {{
+    div[data-testid="stButtonGroup"] button[aria-selected="true"] .lucide-wrapper[data-lucide-replaced="flame"] svg,
+    div[data-testid="stSegmentedControl"] button[aria-checked="true"] .lucide-wrapper[data-lucide-replaced="flame"] svg {{
         stroke: #ffffff !important;
     }}
     .main div[data-testid="stButtonGroup"] button[data-testid^="stBaseButton-segmented_control"] {{
@@ -2205,6 +2286,19 @@ st.components.v1.html("""
                         }
                     });
                 });
+
+                // Force pure white tab typography and icons in dark mode
+                if ({'true' if is_dark else 'false'}) {
+                    doc.querySelectorAll('[data-testid="stTabs"] [data-baseweb="tab"], [data-baseweb="tab"]').forEach(tab => {
+                        tab.style.setProperty('color', '#ffffff', 'important');
+                        tab.querySelectorAll('*').forEach(el => {
+                            el.style.setProperty('color', '#ffffff', 'important');
+                            if (el.tagName && el.tagName.toLowerCase() === 'svg') {
+                                el.style.setProperty('stroke', '#ffffff', 'important');
+                            }
+                        });
+                    });
+                }
             } catch(e) {}
         });
     }
