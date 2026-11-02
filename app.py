@@ -210,11 +210,24 @@ else:
     .card,
     div[data-testid="stVerticalBlockBorderWrapper"],
     div.title-container,
-    [data-testid="stExpander"] {
+    [data-testid="stExpander"],
+    div[data-testid="stExpander"] details,
+    div[data-testid="stExpander"] summary {
         background-color: #ffffff !important;
         background: #ffffff !important;
         border: 1px solid rgba(0, 0, 0, 0.12) !important;
         box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08) !important;
+        color: #000000 !important;
+    }
+    div[data-testid="stExpander"] summary * {
+        color: #000000 !important;
+        -webkit-text-fill-color: #000000 !important;
+    }
+    div[data-testid="stExpander"] summary svg,
+    div[data-testid="stExpander"] summary span[data-testid="stIconMaterial"] {
+        color: #000000 !important;
+        stroke: #000000 !important;
+        fill: #000000 !important;
     }
     .title-text {
         color: #1976d2 !important;
@@ -231,6 +244,41 @@ else:
     div[data-testid="stMetricLabel"] {
         color: rgba(0, 0, 0, 0.60) !important;
         -webkit-text-fill-color: rgba(0, 0, 0, 0.60) !important;
+    }
+
+    /* 4b. Checkboxes & Sliders in Light Mode (Banishing Dark Mode Black Boxes) */
+    html body [data-testid="stApp"] [data-testid="stCheckbox"] label,
+    html body [data-testid="stApp"] [data-testid="stCheckbox"] [data-baseweb="checkbox"],
+    [data-testid="stCheckbox"] [data-baseweb="checkbox"] {
+        color: #000000 !important;
+    }
+    html body [data-testid="stApp"] [data-testid="stCheckbox"] [data-baseweb="checkbox"] span:first-child,
+    [data-testid="stCheckbox"] [data-baseweb="checkbox"] span:first-child,
+    [data-testid="stCheckbox"] label[data-baseweb="checkbox"] > span:first-child {
+        background-color: #ffffff !important;
+        background: #ffffff !important;
+        border: 2px solid rgba(0, 0, 0, 0.4) !important;
+        border-radius: 4px !important;
+    }
+    html body [data-testid="stApp"] [data-testid="stCheckbox"] input:checked + span:first-child,
+    [data-testid="stCheckbox"] input:checked + span:first-child,
+    [data-testid="stCheckbox"] [aria-checked="true"] span:first-child {
+        background-color: #1976d2 !important;
+        background: #1976d2 !important;
+        border-color: #1976d2 !important;
+    }
+    [data-testid="stCheckbox"] p,
+    [data-testid="stCheckbox"] span:not(:first-child),
+    [data-testid="stCheckbox"] div {
+        color: #000000 !important;
+        -webkit-text-fill-color: #000000 !important;
+    }
+    [data-testid="stSlider"] label,
+    [data-testid="stSlider"] p,
+    [data-testid="stSlider"] span,
+    [data-testid="stSlider"] div[data-testid="stMarkdownContainer"] * {
+        color: #000000 !important;
+        -webkit-text-fill-color: #000000 !important;
     }
 
     /* 5. Primary Buttons (Contained Blue with Crisp White Text) */
@@ -2169,6 +2217,51 @@ st.html(f"""
         stroke: #ffffff !important;
     }}
     
+    /* MUI Expander */
+    [data-testid="stExpander"],
+    div[data-testid="stExpander"] details,
+    div[data-testid="stExpander"] summary {{
+        background-color: {card_bg} !important;
+        background: {card_bg} !important;
+        border: 1px solid {border_color} !important;
+        color: {text_color} !important;
+    }}
+    div[data-testid="stExpander"] summary * {{
+        color: {text_color} !important;
+        -webkit-text-fill-color: {text_color} !important;
+    }}
+    div[data-testid="stExpander"] summary svg,
+    div[data-testid="stExpander"] summary span[data-testid="stIconMaterial"] {{
+        color: {text_color} !important;
+        stroke: {text_color} !important;
+        fill: {text_color} !important;
+    }}
+
+    /* MUI Checkboxes */
+    [data-testid="stCheckbox"] label,
+    [data-testid="stCheckbox"] [data-baseweb="checkbox"] {{
+        color: {text_color} !important;
+    }}
+    [data-testid="stCheckbox"] [data-baseweb="checkbox"] span:first-child,
+    [data-testid="stCheckbox"] label[data-baseweb="checkbox"] > span:first-child {{
+        background-color: {'rgba(255, 255, 255, 0.08)' if is_dark else '#ffffff'} !important;
+        background: {'rgba(255, 255, 255, 0.08)' if is_dark else '#ffffff'} !important;
+        border: 2px solid {'rgba(255, 255, 255, 0.3)' if is_dark else 'rgba(0, 0, 0, 0.4)'} !important;
+        border-radius: var(--mui-radius-sm) !important;
+    }}
+    [data-testid="stCheckbox"] input:checked + span:first-child,
+    [data-testid="stCheckbox"] [aria-checked="true"] span:first-child {{
+        background-color: {primary_color} !important;
+        background: {primary_color} !important;
+        border-color: {primary_color} !important;
+    }}
+    [data-testid="stCheckbox"] p,
+    [data-testid="stCheckbox"] span:not(:first-child),
+    [data-testid="stCheckbox"] div {{
+        color: {text_color} !important;
+        -webkit-text-fill-color: {text_color} !important;
+    }}
+
     /* MUI Menu Listbox */
     ul[role="listbox"] {{
         background-color: var(--secondary-background-color) !important;
@@ -2871,7 +2964,7 @@ st.components.v1.html(f"""<script>
                     }
                 }
                 
-                // Enforce strict separation between themes for tabs and selectboxes
+                // Enforce strict separation between themes for tabs, selectboxes, expanders, and checkboxes
                 if (!isDark) {
                     // LIGHT MODE: Match dropdown background to page canvas (transparent) and force pure black tab labels (#000000)
                     doc.querySelectorAll('[data-testid="stSelectbox"] [data-baseweb="select"], [data-testid="stSelectbox"] [data-baseweb="select"] > div, [data-testid="stSelectbox"] [data-baseweb="select"] div, [data-baseweb="select"], [data-baseweb="select"] > div').forEach(box => {
@@ -2901,6 +2994,34 @@ st.components.v1.html(f"""<script>
                             s.style.setProperty('opacity', '1', 'important');
                         });
                     });
+                    // LIGHT MODE: Expander header (pure white with black text)
+                    doc.querySelectorAll('[data-testid="stExpander"], [data-testid="stExpander"] details, [data-testid="stExpander"] summary').forEach(el => {
+                        el.style.setProperty('background-color', '#ffffff', 'important');
+                        el.style.setProperty('background', '#ffffff', 'important');
+                        el.style.setProperty('color', '#000000', 'important');
+                    });
+                    doc.querySelectorAll('[data-testid="stExpander"] summary *').forEach(el => {
+                        el.style.setProperty('color', '#000000', 'important');
+                        el.style.setProperty('-webkit-text-fill-color', '#000000', 'important');
+                    });
+                    // LIGHT MODE: Checkboxes (white box with dark border, black label)
+                    doc.querySelectorAll('[data-testid="stCheckbox"] [data-baseweb="checkbox"] > span:first-child').forEach(span => {
+                        const input = span.parentElement ? span.parentElement.querySelector('input') : null;
+                        const isChecked = input && (input.checked || input.getAttribute('aria-checked') === 'true');
+                        if (!isChecked) {
+                            span.style.setProperty('background-color', '#ffffff', 'important');
+                            span.style.setProperty('background', '#ffffff', 'important');
+                            span.style.setProperty('border', '2px solid rgba(0, 0, 0, 0.4)', 'important');
+                        } else {
+                            span.style.setProperty('background-color', '#1976d2', 'important');
+                            span.style.setProperty('background', '#1976d2', 'important');
+                            span.style.setProperty('border', '2px solid #1976d2', 'important');
+                        }
+                    });
+                    doc.querySelectorAll('[data-testid="stCheckbox"] p, [data-testid="stCheckbox"] label span:not(:first-child), [data-testid="stCheckbox"] div').forEach(el => {
+                        el.style.setProperty('color', '#000000', 'important');
+                        el.style.setProperty('-webkit-text-fill-color', '#000000', 'important');
+                    });
                 } else {
                     // DARK MODE: Strictly preserve pristine dark state by cleaning any potential light inline styles
                     doc.querySelectorAll('[data-testid="stTabs"] [data-baseweb="tab"], [data-baseweb="tab"], button[role="tab"]').forEach(tab => {
@@ -2921,6 +3042,24 @@ st.components.v1.html(f"""<script>
                             el.style.removeProperty('color');
                             el.style.removeProperty('-webkit-text-fill-color');
                         });
+                    });
+                    doc.querySelectorAll('[data-testid="stExpander"], [data-testid="stExpander"] details, [data-testid="stExpander"] summary').forEach(el => {
+                        el.style.removeProperty('background');
+                        el.style.removeProperty('background-color');
+                        el.style.removeProperty('color');
+                    });
+                    doc.querySelectorAll('[data-testid="stExpander"] summary *').forEach(el => {
+                        el.style.removeProperty('color');
+                        el.style.removeProperty('-webkit-text-fill-color');
+                    });
+                    doc.querySelectorAll('[data-testid="stCheckbox"] [data-baseweb="checkbox"] > span:first-child').forEach(span => {
+                        span.style.removeProperty('background');
+                        span.style.removeProperty('background-color');
+                        span.style.removeProperty('border');
+                    });
+                    doc.querySelectorAll('[data-testid="stCheckbox"] p, [data-testid="stCheckbox"] label span:not(:first-child), [data-testid="stCheckbox"] div').forEach(el => {
+                        el.style.removeProperty('color');
+                        el.style.removeProperty('-webkit-text-fill-color');
                     });
                 }
             } catch(e) {}
