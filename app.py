@@ -2288,7 +2288,10 @@ st.components.v1.html("""
                 });
 
                 // Force pure white tab typography and icons in dark mode
-                if ({'true' if is_dark else 'false'}) {
+                const win = window.parent || window;
+                const urlParams = new URLSearchParams(win.location.search);
+                const isDark = urlParams.get('theme') === 'dark' || (localStorage && localStorage.getItem('zen_color_theme') === 'dark');
+                if (isDark) {
                     doc.querySelectorAll('[data-testid="stTabs"] [data-baseweb="tab"], [data-baseweb="tab"]').forEach(tab => {
                         tab.style.setProperty('color', '#ffffff', 'important');
                         tab.querySelectorAll('*').forEach(el => {
@@ -2327,10 +2330,12 @@ st.components.v1.html("""
 
     // Persist active color theme to localStorage
     try {
-        const activeTheme = "{'dark' if is_dark else 'light'}";
-        localStorage.setItem('zen_color_theme', activeTheme);
+        const win = window.parent || window;
+        const urlParams = new URLSearchParams(win.location.search);
+        const currentTheme = urlParams.get('theme') || 'light';
+        localStorage.setItem('zen_color_theme', currentTheme);
         if (window.parent && window.parent.localStorage) {
-            window.parent.localStorage.setItem('zen_color_theme', activeTheme);
+            window.parent.localStorage.setItem('zen_color_theme', currentTheme);
         }
     } catch(e) {}
 
@@ -7525,10 +7530,12 @@ if query_user == "default":
 
     // Persist active color theme to localStorage in portal
     try {
-        const activeTheme = "{'dark' if is_dark else 'light'}";
-        localStorage.setItem('zen_color_theme', activeTheme);
+        const win = window.parent || window;
+        const urlParams = new URLSearchParams(win.location.search);
+        const currentTheme = urlParams.get('theme') || 'light';
+        localStorage.setItem('zen_color_theme', currentTheme);
         if (window.parent && window.parent.localStorage) {
-            window.parent.localStorage.setItem('zen_color_theme', activeTheme);
+            window.parent.localStorage.setItem('zen_color_theme', currentTheme);
         }
     } catch(e) {}
 
