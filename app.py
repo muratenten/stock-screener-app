@@ -319,7 +319,7 @@ else:
         stroke: #1e293b !important;
     }
 
-    /* 9. Dropdown Selectboxes in Light Mode (Pristine White with Subtle Border) */
+    /* 9. Dropdown Selectboxes in Light Mode (Matching App Background #f4f6f8) */
     html body [data-testid="stApp"] [data-testid="stSelectbox"] [data-baseweb="select"],
     html body [data-testid="stApp"] [data-testid="stSelectbox"] [data-baseweb="select"] div,
     html body [data-testid="stApp"] [data-testid="stSelectbox"] [data-baseweb="select"] > div,
@@ -335,10 +335,10 @@ else:
     div[data-baseweb="select"] div,
     div[data-baseweb="select"] > div,
     div[data-baseweb="select"] [role="combobox"] {
-        background-color: #ffffff !important;
-        background: #ffffff !important;
+        background-color: #f4f6f8 !important;
+        background: #f4f6f8 !important;
         border: 1px solid rgba(0, 0, 0, 0.23) !important;
-        color: #1e293b !important;
+        color: #000000 !important;
     }
     html body [data-testid="stApp"] [data-testid="stSelectbox"] [data-baseweb="select"] *,
     html body [data-testid="stApp"] [data-testid="stSelectbox"] [data-baseweb="select"] div *,
@@ -348,15 +348,15 @@ else:
     div[data-baseweb="select"] *,
     div[data-baseweb="select"] p,
     div[data-baseweb="select"] span {
-        color: #1e293b !important;
-        -webkit-text-fill-color: #1e293b !important;
+        color: #000000 !important;
+        -webkit-text-fill-color: #000000 !important;
     }
     div[data-testid="stSelectbox"] svg,
     div[data-baseweb="select"] svg,
     div[data-baseweb="select"] [data-baseweb="icon"] svg {
-        fill: #64748b !important;
-        color: #64748b !important;
-        stroke: #64748b !important;
+        fill: #1e293b !important;
+        color: #1e293b !important;
+        stroke: #1e293b !important;
     }
 
     /* 10. Popovers & Menus in Light Mode */
@@ -390,7 +390,7 @@ else:
         -webkit-text-fill-color: #1976d2 !important;
     }
 
-    /* 11. Tabs in Light Mode */
+    /* 11. Tabs in Light Mode (Pure Black High Contrast Unselected Text) */
     div[data-testid="stTabs"] [data-baseweb="tab-list"],
     div[role="tablist"] {
         border-bottom: 1px solid rgba(0, 0, 0, 0.12) !important;
@@ -402,8 +402,8 @@ else:
     div[data-testid="stTabs"] button[data-baseweb="tab"]:not([aria-selected="true"]),
     div[data-testid="stTabs"] [data-baseweb="tab"]:not([aria-selected="true"]),
     button[data-baseweb="tab"]:not([aria-selected="true"]) {
-        color: #334155 !important;
-        font-weight: 600 !important;
+        color: #000000 !important;
+        font-weight: 700 !important;
         opacity: 1 !important;
     }
     html body [data-testid="stApp"] [data-testid="stTabs"] button[role="tab"]:not([aria-selected="true"]) *,
@@ -416,15 +416,15 @@ else:
     div[data-testid="stTabs"] button[data-baseweb="tab"]:not([aria-selected="true"]) *,
     div[data-testid="stTabs"] [data-baseweb="tab"]:not([aria-selected="true"]) *,
     button[data-baseweb="tab"]:not([aria-selected="true"]) * {
-        color: #334155 !important;
-        -webkit-text-fill-color: #334155 !important;
+        color: #000000 !important;
+        -webkit-text-fill-color: #000000 !important;
         opacity: 1 !important;
     }
     html body [data-testid="stApp"] [data-testid="stTabs"] button[role="tab"]:not([aria-selected="true"]) svg,
     html body [data-testid="stApp"] [data-testid="stTabs"] [data-baseweb="tab"]:not([aria-selected="true"]) svg,
     div[data-testid="stTabs"] button[role="tab"]:not([aria-selected="true"]) svg,
     button[data-baseweb="tab"]:not([aria-selected="true"]) svg {
-        stroke: #334155 !important;
+        stroke: #000000 !important;
         opacity: 1 !important;
     }
     div[data-testid="stTabs"] button[role="tab"][aria-selected="true"],
@@ -2069,9 +2069,9 @@ st.html(f"""
     div[data-testid="stSelectbox"] div[data-baseweb="select"] > div,
     div[data-baseweb="select"] > div,
     div[data-baseweb="select"] [role="combobox"] {{
-        background-color: {'rgba(255, 255, 255, 0.08)' if is_dark else '#ffffff'} !important;
-        background: {'rgba(255, 255, 255, 0.08)' if is_dark else '#ffffff'} !important;
-        color: {'#f1f5f9' if is_dark else '#1e293b'} !important;
+        background-color: {'rgba(255, 255, 255, 0.08)' if is_dark else '#f4f6f8'} !important;
+        background: {'rgba(255, 255, 255, 0.08)' if is_dark else '#f4f6f8'} !important;
+        color: {'#f1f5f9' if is_dark else '#000000'} !important;
         border: 1px solid {'rgba(255, 255, 255, 0.18)' if is_dark else 'rgba(0, 0, 0, 0.23)'} !important;
         border-radius: var(--mui-radius-sm) !important;
         min-height: 42px !important;
@@ -2085,8 +2085,8 @@ st.html(f"""
     div[data-baseweb="select"] [role="combobox"] *,
     div[data-baseweb="select"] > div p,
     div[data-baseweb="select"] > div span {{
-        color: {'#f1f5f9' if is_dark else '#1e293b'} !important;
-        -webkit-text-fill-color: {'#f1f5f9' if is_dark else '#1e293b'} !important;
+        color: {'#f1f5f9' if is_dark else '#000000'} !important;
+        -webkit-text-fill-color: {'#f1f5f9' if is_dark else '#000000'} !important;
     }}
     div[data-baseweb="select"] > div:hover {{
         border-color: {'rgba(255, 255, 255, 0.87)' if is_dark else 'rgba(0, 0, 0, 0.87)'} !important;
@@ -2094,8 +2094,8 @@ st.html(f"""
     div[data-testid="stSelectbox"] div[data-baseweb="select"] [data-baseweb="icon"] svg,
     div[data-baseweb="select"] [data-baseweb="icon"] svg,
     div[data-baseweb="select"] [data-baseweb="icon"] {{
-        color: {'#cbd5e1' if is_dark else secondary_text_color} !important;
-        fill: {'#cbd5e1' if is_dark else secondary_text_color} !important;
+        color: {'#cbd5e1' if is_dark else '#1e293b'} !important;
+        fill: {'#cbd5e1' if is_dark else '#1e293b'} !important;
     }}
     
     /* MUI Chip / Tags */
@@ -2231,8 +2231,8 @@ st.html(f"""
     div[data-testid="stTabs"] button[role="tab"]:not([aria-selected="true"]),
     div[data-testid="stTabs"] button[data-baseweb="tab"]:not([aria-selected="true"]),
     [data-baseweb="tab"]:not([aria-selected="true"]) {{
-        color: {'#ffffff' if is_dark else '#334155'} !important;
-        font-weight: 600 !important;
+        color: {'#ffffff' if is_dark else '#000000'} !important;
+        font-weight: 700 !important;
         opacity: 1 !important;
     }}
     html body [data-testid="stApp"] div[data-testid="stTabs"] [data-baseweb="tab"]:not([aria-selected="true"]) *,
@@ -2250,16 +2250,16 @@ st.html(f"""
     [data-baseweb="tab"]:not([aria-selected="true"]) *,
     [data-baseweb="tab"]:not([aria-selected="true"]) p,
     [data-baseweb="tab"]:not([aria-selected="true"]) span {{
-        color: {'#ffffff' if is_dark else '#334155'} !important;
+        color: {'#ffffff' if is_dark else '#000000'} !important;
         opacity: 1 !important;
-        -webkit-text-fill-color: {'#ffffff' if is_dark else '#334155'} !important;
+        -webkit-text-fill-color: {'#ffffff' if is_dark else '#000000'} !important;
     }}
     html body [data-testid="stApp"] div[data-testid="stTabs"] [data-baseweb="tab"]:not([aria-selected="true"]) svg,
     html body [data-testid="stApp"] div[data-testid="stTabs"] button[role="tab"]:not([aria-selected="true"]) svg,
     div[data-testid="stTabs"] [data-baseweb="tab"]:not([aria-selected="true"]) svg,
     div[data-testid="stTabs"] button[role="tab"]:not([aria-selected="true"]) svg,
     [data-baseweb="tab"]:not([aria-selected="true"]) svg {{
-        stroke: {'#ffffff' if is_dark else '#334155'} !important;
+        stroke: {'#ffffff' if is_dark else '#000000'} !important;
         opacity: 1 !important;
     }}
 
@@ -2872,21 +2872,22 @@ st.components.v1.html(f"""<script>
                 
                 // Enforce strict separation between themes for tabs and selectboxes
                 if (!isDark) {
-                    // LIGHT MODE: Guarantee pristine pure white selectboxes and high-contrast slate unselected tabs
-                    doc.querySelectorAll('[data-testid="stSelectbox"] [data-baseweb="select"], [data-testid="stSelectbox"] [data-baseweb="select"] > div, [data-testid="stSelectbox"] [data-baseweb="select"] div').forEach(box => {
-                        box.style.setProperty('background-color', '#ffffff', 'important');
-                        box.style.setProperty('background', '#ffffff', 'important');
+                    // LIGHT MODE: Match dropdown background to page canvas (#f4f6f8) and force pure black tab labels (#000000)
+                    doc.querySelectorAll('[data-testid="stSelectbox"] [data-baseweb="select"], [data-testid="stSelectbox"] [data-baseweb="select"] > div, [data-testid="stSelectbox"] [data-baseweb="select"] div, [data-baseweb="select"], [data-baseweb="select"] > div').forEach(box => {
+                        box.style.setProperty('background-color', '#f4f6f8', 'important');
+                        box.style.setProperty('background', '#f4f6f8', 'important');
                         box.style.setProperty('border-color', 'rgba(0, 0, 0, 0.23)', 'important');
-                        box.querySelectorAll('p, span').forEach(el => {
-                            el.style.setProperty('color', '#1e293b', 'important');
-                            el.style.setProperty('-webkit-text-fill-color', '#1e293b', 'important');
+                        box.querySelectorAll('p, span, div, [role="combobox"]').forEach(el => {
+                            el.style.setProperty('color', '#000000', 'important');
+                            el.style.setProperty('-webkit-text-fill-color', '#000000', 'important');
                         });
                     });
-                    doc.querySelectorAll('[data-testid="stTabs"] [data-baseweb="tab"]:not([aria-selected="true"]), [data-testid="stTabs"] button[role="tab"]:not([aria-selected="true"])').forEach(tab => {
-                        tab.style.setProperty('color', '#334155', 'important');
-                        tab.querySelectorAll('p, span').forEach(el => {
-                            el.style.setProperty('color', '#334155', 'important');
-                            el.style.setProperty('-webkit-text-fill-color', '#334155', 'important');
+                    doc.querySelectorAll('[data-testid="stTabs"] [data-baseweb="tab"]:not([aria-selected="true"]), [data-testid="stTabs"] button[role="tab"]:not([aria-selected="true"]), [data-baseweb="tab"]:not([aria-selected="true"])').forEach(tab => {
+                        tab.style.setProperty('color', '#000000', 'important');
+                        tab.querySelectorAll('p, span, div').forEach(el => {
+                            el.style.setProperty('color', '#000000', 'important');
+                            el.style.setProperty('-webkit-text-fill-color', '#000000', 'important');
+                            el.style.setProperty('opacity', '1', 'important');
                         });
                     });
                 } else {
