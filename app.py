@@ -349,6 +349,12 @@ else:
     }
 
     /* 9. Dropdown Selectboxes in Light Mode (Pristine White with Subtle Border) */
+    html body [data-testid="stApp"] div[data-testid="stSelectbox"] div[data-baseweb="select"],
+    html body [data-testid="stApp"] div[data-testid="stSelectbox"] div[data-baseweb="select"] > div,
+    html body [data-testid="stApp"] div[data-baseweb="select"],
+    html body [data-testid="stApp"] div[data-baseweb="select"] > div,
+    html body [data-testid="stApp"] div[data-baseweb="select"] [role="combobox"],
+    html body [data-testid="stApp"] [data-baseweb="select"] > div:first-child,
     div[data-testid="stSelectbox"] div[data-baseweb="select"],
     div[data-testid="stSelectbox"] div[data-baseweb="select"] > div,
     div[data-baseweb="select"],
@@ -359,6 +365,9 @@ else:
         border: 1px solid rgba(0, 0, 0, 0.23) !important;
         color: #1e293b !important;
     }
+    html body [data-testid="stApp"] div[data-testid="stSelectbox"] div[data-baseweb="select"] *,
+    html body [data-testid="stApp"] div[data-baseweb="select"] *,
+    html body [data-testid="stApp"] div[data-baseweb="select"] [role="combobox"] *,
     div[data-testid="stSelectbox"] div[data-baseweb="select"] *,
     div[data-baseweb="select"] *,
     div[data-baseweb="select"] [role="combobox"] *,
@@ -2064,6 +2073,11 @@ st.html(f"""
     }}
     
     /* MUI Selectbox (BaseWeb dropdown select) */
+    html body [data-testid="stApp"] div[data-testid="stSelectbox"] div[data-baseweb="select"],
+    html body [data-testid="stApp"] div[data-testid="stSelectbox"] div[data-baseweb="select"] > div,
+    html body [data-testid="stApp"] div[data-baseweb="select"],
+    html body [data-testid="stApp"] div[data-baseweb="select"] > div,
+    html body [data-testid="stApp"] div[data-baseweb="select"] [role="combobox"],
     div[data-testid="stSelectbox"] div[data-baseweb="select"] > div,
     div[data-baseweb="select"] > div,
     div[data-baseweb="select"] [role="combobox"] {{
@@ -2075,6 +2089,9 @@ st.html(f"""
         min-height: 42px !important;
         transition: border-color 200ms cubic-bezier(0.0, 0, 0.2, 1) 0ms !important;
     }}
+    html body [data-testid="stApp"] div[data-testid="stSelectbox"] div[data-baseweb="select"] *,
+    html body [data-testid="stApp"] div[data-baseweb="select"] *,
+    html body [data-testid="stApp"] div[data-baseweb="select"] [role="combobox"] *,
     div[data-testid="stSelectbox"] div[data-baseweb="select"] > div *,
     div[data-baseweb="select"] > div *,
     div[data-baseweb="select"] [role="combobox"] *,
@@ -2218,15 +2235,21 @@ st.html(f"""
         opacity: 1 !important;
     }}
 
-    /* Explicitly Unselected Tabs - Super bright pure white in dark mode */
+    /* Explicitly Unselected Tabs - Super bright pure white in dark mode, crisp slate in light mode */
+    html body [data-testid="stApp"] div[data-testid="stTabs"] [data-baseweb="tab"]:not([aria-selected="true"]),
+    html body [data-testid="stApp"] div[data-testid="stTabs"] button[role="tab"]:not([aria-selected="true"]),
+    html body [data-testid="stApp"] div[data-testid="stTabs"] button[data-baseweb="tab"]:not([aria-selected="true"]),
     div[data-testid="stTabs"] [data-baseweb="tab"]:not([aria-selected="true"]),
     div[data-testid="stTabs"] button[role="tab"]:not([aria-selected="true"]),
     div[data-testid="stTabs"] button[data-baseweb="tab"]:not([aria-selected="true"]),
     [data-baseweb="tab"]:not([aria-selected="true"]) {{
-        color: {'#ffffff' if is_dark else '#475569'} !important;
+        color: {'#ffffff' if is_dark else '#334155'} !important;
         font-weight: 600 !important;
         opacity: 1 !important;
     }}
+    html body [data-testid="stApp"] div[data-testid="stTabs"] [data-baseweb="tab"]:not([aria-selected="true"]) *,
+    html body [data-testid="stApp"] div[data-testid="stTabs"] button[role="tab"]:not([aria-selected="true"]) *,
+    html body [data-testid="stApp"] div[data-testid="stTabs"] button[data-baseweb="tab"]:not([aria-selected="true"]) *,
     div[data-testid="stTabs"] [data-baseweb="tab"]:not([aria-selected="true"]) *,
     div[data-testid="stTabs"] [data-baseweb="tab"]:not([aria-selected="true"]) p,
     div[data-testid="stTabs"] [data-baseweb="tab"]:not([aria-selected="true"]) span,
@@ -2239,14 +2262,16 @@ st.html(f"""
     [data-baseweb="tab"]:not([aria-selected="true"]) *,
     [data-baseweb="tab"]:not([aria-selected="true"]) p,
     [data-baseweb="tab"]:not([aria-selected="true"]) span {{
-        color: {'#ffffff' if is_dark else '#475569'} !important;
+        color: {'#ffffff' if is_dark else '#334155'} !important;
         opacity: 1 !important;
-        -webkit-text-fill-color: {'#ffffff' if is_dark else '#475569'} !important;
+        -webkit-text-fill-color: {'#ffffff' if is_dark else '#334155'} !important;
     }}
+    html body [data-testid="stApp"] div[data-testid="stTabs"] [data-baseweb="tab"]:not([aria-selected="true"]) svg,
+    html body [data-testid="stApp"] div[data-testid="stTabs"] button[role="tab"]:not([aria-selected="true"]) svg,
     div[data-testid="stTabs"] [data-baseweb="tab"]:not([aria-selected="true"]) svg,
     div[data-testid="stTabs"] button[role="tab"]:not([aria-selected="true"]) svg,
     [data-baseweb="tab"]:not([aria-selected="true"]) svg {{
-        stroke: {'#ffffff' if is_dark else '#475569'} !important;
+        stroke: {'#ffffff' if is_dark else '#334155'} !important;
         opacity: 1 !important;
     }}
 
@@ -2855,98 +2880,25 @@ st.components.v1.html(f"""<script>
                     }
                 }
                 
-                // 1. Tab Typography Luminance (Ultra high luminance for unselected tabs)
+                // Clean inline styles on tabs and selectboxes so CSS controls them 100% reliably
                 doc.querySelectorAll('[data-testid="stTabs"] [data-baseweb="tab"], [data-baseweb="tab"], button[role="tab"]').forEach(tab => {
-                    const isSelected = tab.getAttribute('aria-selected') === 'true';
-                    let targetColor;
-                    if (isDark) {
-                        targetColor = isSelected ? '#60a5fa' : '#ffffff';
-                    } else {
-                        targetColor = isSelected ? '#1976d2' : '#334155';
-                    }
-                    tab.style.setProperty('color', targetColor, 'important');
-                    tab.style.setProperty('opacity', '1', 'important');
-                    tab.querySelectorAll('p, span, div, svg').forEach(el => {
-                        el.style.setProperty('color', targetColor, 'important');
-                        el.style.setProperty('opacity', '1', 'important');
-                        el.style.setProperty('-webkit-text-fill-color', targetColor, 'important');
-                        if (el.tagName && el.tagName.toLowerCase() === 'svg') {
-                            el.style.setProperty('stroke', targetColor, 'important');
-                            el.style.setProperty('opacity', '1', 'important');
-                        }
+                    tab.style.removeProperty('color');
+                    tab.style.removeProperty('opacity');
+                    tab.querySelectorAll('p, span, div').forEach(el => {
+                        el.style.removeProperty('color');
+                        el.style.removeProperty('-webkit-text-fill-color');
+                        el.style.removeProperty('opacity');
                     });
                 });
-
-                // 2. Segmented Control Buttons (Theme mode, layout, and filters)
-                doc.querySelectorAll('div[data-testid="stButtonGroup"] button, div[data-baseweb="button-group"] button, div[data-testid="stSegmentedControl"] button, button[data-testid*="segmented_control"]').forEach(btn => {
-                    const isSelected = btn.getAttribute('aria-checked') === 'true' || 
-                                       btn.getAttribute('data-testid') === 'stBaseButton-segmented_controlActive' || 
-                                       btn.getAttribute('aria-selected') === 'true';
-                    if (isSelected) {
-                        const activeBg = isDark ? '#3b82f6' : '#1976d2';
-                        btn.style.setProperty('background', activeBg, 'important');
-                        btn.style.setProperty('background-color', activeBg, 'important');
-                        btn.style.setProperty('border', `1px solid ${activeBg}`, 'important');
-                        btn.style.setProperty('color', '#ffffff', 'important');
-                        btn.querySelectorAll('*').forEach(el => {
-                            el.style.setProperty('color', '#ffffff', 'important');
-                            el.style.setProperty('-webkit-text-fill-color', '#ffffff', 'important');
-                        });
-                        btn.querySelectorAll('svg').forEach(el => el.style.setProperty('stroke', '#ffffff', 'important'));
-                    } else {
-                        const unselectedBg = isDark ? 'rgba(255, 255, 255, 0.08)' : '#ffffff';
-                        const unselectedBorder = isDark ? 'rgba(255, 255, 255, 0.16)' : 'rgba(0, 0, 0, 0.15)';
-                        const unselectedText = isDark ? '#e2e8f0' : '#1e293b';
-                        btn.style.setProperty('background', unselectedBg, 'important');
-                        btn.style.setProperty('background-color', unselectedBg, 'important');
-                        btn.style.setProperty('border', `1px solid ${unselectedBorder}`, 'important');
-                        btn.style.setProperty('color', unselectedText, 'important');
-                        btn.querySelectorAll('*').forEach(el => {
-                            if (!el.closest('.lucide-wrapper[data-lucide-replaced="flame"]')) {
-                                el.style.setProperty('color', unselectedText, 'important');
-                                el.style.setProperty('-webkit-text-fill-color', unselectedText, 'important');
-                            }
-                        });
-                        btn.querySelectorAll('svg').forEach(el => {
-                            if (!el.closest('.lucide-wrapper[data-lucide-replaced="flame"]')) {
-                                el.style.setProperty('stroke', unselectedText, 'important');
-                            }
-                        });
-                    }
+                doc.querySelectorAll('div[data-testid="stSelectbox"] div[data-baseweb="select"], div[data-baseweb="select"], div[data-baseweb="select"] > div, div[data-baseweb="select"] [role="combobox"]').forEach(box => {
+                    box.style.removeProperty('background');
+                    box.style.removeProperty('background-color');
+                    box.style.removeProperty('border');
+                    box.querySelectorAll('p, span, div, [role="combobox"]').forEach(el => {
+                        el.style.removeProperty('color');
+                        el.style.removeProperty('-webkit-text-fill-color');
+                    });
                 });
-
-                // 3. Dropdown select boxes
-                if (isDark) {
-                    doc.querySelectorAll('div[data-testid="stSelectbox"] div[data-baseweb="select"], div[data-testid="stSelectbox"] div[data-baseweb="select"] > div, div[data-baseweb="select"], div[data-baseweb="select"] > div, div[data-baseweb="select"] [role="combobox"]').forEach(box => {
-                        box.style.setProperty('background', 'rgba(255, 255, 255, 0.08)', 'important');
-                        box.style.setProperty('background-color', 'rgba(255, 255, 255, 0.08)', 'important');
-                        box.style.setProperty('border', '1px solid rgba(255, 255, 255, 0.18)', 'important');
-                        box.querySelectorAll('p, span, div, [role="combobox"]').forEach(el => {
-                            el.style.setProperty('color', '#f1f5f9', 'important');
-                            el.style.setProperty('-webkit-text-fill-color', '#f1f5f9', 'important');
-                        });
-                        box.querySelectorAll('[data-baseweb="icon"] svg, svg').forEach(svg => {
-                            svg.style.setProperty('fill', '#cbd5e1', 'important');
-                            svg.style.setProperty('color', '#cbd5e1', 'important');
-                            svg.style.setProperty('stroke', '#cbd5e1', 'important');
-                        });
-                    });
-                } else {
-                    doc.querySelectorAll('div[data-testid="stSelectbox"] div[data-baseweb="select"], div[data-testid="stSelectbox"] div[data-baseweb="select"] > div, div[data-baseweb="select"], div[data-baseweb="select"] > div, div[data-baseweb="select"] [role="combobox"]').forEach(box => {
-                        box.style.setProperty('background', '#ffffff', 'important');
-                        box.style.setProperty('background-color', '#ffffff', 'important');
-                        box.style.setProperty('border', '1px solid rgba(0, 0, 0, 0.23)', 'important');
-                        box.querySelectorAll('p, span, div, [role="combobox"]').forEach(el => {
-                            el.style.setProperty('color', '#1e293b', 'important');
-                            el.style.setProperty('-webkit-text-fill-color', '#1e293b', 'important');
-                        });
-                        box.querySelectorAll('[data-baseweb="icon"] svg, svg').forEach(svg => {
-                            svg.style.setProperty('fill', '#64748b', 'important');
-                            svg.style.setProperty('color', '#64748b', 'important');
-                            svg.style.setProperty('stroke', '#64748b', 'important');
-                        });
-                    });
-                }
             } catch(e) {}
         });
     }
