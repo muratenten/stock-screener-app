@@ -165,6 +165,16 @@ else:
     <meta id="zen-theme-tracker" data-theme="light">
     <style>
     /* ===== LIGHT MODE PRECISE ISOLATION OVERRIDES ===== */
+    /* 0. Root CSS Variables Override (Neutralizing config.toml secondaryBackgroundColor #0b0f19) */
+    :root, html, body, [data-testid="stApp"], .stApp {
+        --primary-color: #1976d2 !important;
+        --background-color: #f4f6f8 !important;
+        --secondary-background-color: #ffffff !important;
+        --text-color: #000000 !important;
+        --body-font-color: #000000 !important;
+        --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
+    }
+
     /* 1. Base App & Canvas Background */
     html, body, [data-testid="stApp"], .stApp,
     [data-testid="stAppViewContainer"], [data-testid="stMainViewContainer"],
@@ -512,15 +522,29 @@ with st.sidebar:
     st.markdown("### 🎨 デザイン・テーマ設定")
     
     # Material-UI Theme Selector (Light / Dark)
+    if 'color_theme' not in st.session_state:
+        st.session_state['color_theme'] = st.query_params.get("theme", "dark")
+        if st.session_state['color_theme'] not in ("dark", "light"):
+            st.session_state['color_theme'] = "dark"
+
     curr_theme = st.session_state.get('color_theme', 'dark')
     theme_default = "🌙" if curr_theme == 'dark' else "☀️"
     
     st.markdown("<div style='font-size: 0.88rem; font-weight: 600; color: var(--text-color); margin: 10px 0 6px 0;'>テーマモード</div>", unsafe_allow_html=True)
+    
+    def on_theme_toggle():
+        sel = st.session_state.get("mui_theme_selector")
+        if sel:
+            target = "dark" if sel == "🌙" else "light"
+            st.session_state['color_theme'] = target
+            st.query_params["theme"] = target
+
     selected_theme = st.segmented_control(
         "テーマモード",
         options=["☀️", "🌙"],
         default=theme_default,
         key="mui_theme_selector",
+        on_change=on_theme_toggle,
         label_visibility="collapsed"
     )
     if selected_theme:
@@ -531,10 +555,6 @@ with st.sidebar:
             st.rerun()
     
     is_dark = st.session_state.get('color_theme', 'dark') == 'dark'
-    if is_dark and st.query_params.get("theme") != "dark":
-        st.query_params["theme"] = "dark"
-    elif not is_dark and st.query_params.get("theme") == "dark":
-        st.query_params["theme"] = "light"
 
     # Layout optimization
     curr_ui = st.session_state.get('ui_mode', 'PC')
@@ -3088,26 +3108,14 @@ st.components.v1.html(f"""<script>
     replaceEmojisWithLucide(parentDoc);
     purgeStreamlitBadges();
 
-    // Persist active color theme to localStorage
+    // Theme synchronizer
     try {
         const win = window.parent || window;
         const urlParams = new URLSearchParams(win.location.search);
-        const currentTheme = urlParams.get('theme') || 'light';
+        const currentTheme = urlParams.get('theme') || ({theme_js_flag} ? 'dark' : 'light');
         localStorage.setItem('zen_color_theme', currentTheme);
         if (window.parent && window.parent.localStorage) {
             window.parent.localStorage.setItem('zen_color_theme', currentTheme);
-        }
-    } catch(e) {}
-
-    // Automatically restore theme from localStorage if not present in URL
-    try {
-        const savedTheme = localStorage.getItem('zen_color_theme') || (window.parent && window.parent.localStorage ? window.parent.localStorage.getItem('zen_color_theme') : null);
-        const win = window.parent || window;
-        const urlParams = new URLSearchParams(win.location.search);
-        if (savedTheme && (savedTheme === 'dark' || savedTheme === 'light') && !urlParams.has('theme')) {
-            urlParams.set('theme', savedTheme);
-            const newUrl = win.location.pathname + '?' + urlParams.toString();
-            win.location.replace(newUrl);
         }
     } catch(e) {}
 </script>
@@ -8821,7 +8829,7 @@ else:
 
 logo_header_html = f'<img src="{logo_data_uri}" style="width: 42px; height: 42px; border-radius: 11px; box-shadow: 0 2px 10px rgba(37,99,235,0.2); border: 1px solid rgba(226,232,240,0.8); background: #ffffff; object-fit: contain; padding: 2px;" />' if logo_data_uri else ""
 
-BUILD_VERSION = "2026.11.02-1328"
+BUILD_VERSION = "2026.11.02-1531"
 st.markdown(f'<div class="title-container" style="display: flex; flex-direction: column; gap: 6px;"><div style="display: flex; align-items: center; gap: 14px; flex-wrap: wrap;">{logo_header_html}<div class="title-text" style="margin: 0; line-height: 1;">ZenStockScreener</div>{badge_html}<span style="font-size: 0.72rem; color: var(--secondary-text-color); opacity: 0.7; font-family: monospace;">build:{BUILD_VERSION}</span></div><div class="subtitle-text" style="margin-top: 4px;">AI分析とファンダメンタルズ指標による日本株上昇期待銘柄の選定システム</div></div>', unsafe_allow_html=True)
 
 # Mobile-friendly Quick Action Header (LINE integration & status)
