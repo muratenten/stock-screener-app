@@ -7608,7 +7608,7 @@ if query_user == "default":
         line_channel_id = st.secrets.get("line_channel_id")
         redirect_uri = st.secrets.get("redirect_uri", "http://localhost:8501/")
         
-        target_frame = "_top"
+        target_frame = "_blank"
         current_theme_slug = "dark" if is_dark else "light"
         theme_query_param = f"&theme={current_theme_slug}"
         oauth_theme_state = f"__{current_theme_slug}"
