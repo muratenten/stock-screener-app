@@ -2525,6 +2525,9 @@ st.components.v1.html(f"""<script>
         'alert-circle': '<svg class="lucide lucide-alert-circle feather-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>',
         'hourglass': '<svg class="lucide lucide-hourglass feather-icon" viewBox="0 0 24 24"><path d="M5 22h14"></path><path d="M5 2h14"></path><path d="M17 22v-4.172a2 2 0 0 0-.586-1.414L12 12l-4.414 4.414A2 2 0 0 0 7 17.828V22"></path><path d="M7 2v4.172a2 2 0 0 0 .586 1.414L12 12l4.414-4.414A2 2 0 0 0 17 6.172V2"></path></svg>',
         'flame': '<svg class="lucide lucide-flame feather-icon" viewBox="0 0 24 24"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"></path></svg>',
+        'zap': '<svg class="lucide lucide-zap feather-icon" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>',
+        'ticket': '<svg class="lucide lucide-ticket feather-icon" viewBox="0 0 24 24"><path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"></path><path d="M13 5v2"></path><path d="M13 17v2"></path><path d="M13 11v2"></path></svg>',
+        'arrow-up-down': '<svg class="lucide lucide-arrow-up-down feather-icon" viewBox="0 0 24 24"><path d="m21 16-4 4-4-4"></path><path d="M17 20V4"></path><path d="m3 8 4-4 4 4"></path><path d="M7 4v16"></path></svg>',
         'bot': '<svg class="lucide lucide-bot feather-icon" viewBox="0 0 24 24"><path d="M12 8V4H8"></path><rect width="16" height="12" x="4" y="8" rx="2"></rect><path d="M2 14h2"></path><path d="M20 14h2"></path><path d="M15 13v2"></path><path d="M9 13v2"></path></svg>',
         'lightbulb': '<svg class="lucide lucide-lightbulb feather-icon" viewBox="0 0 24 24"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"></path><path d="M9 18h6"></path><path d="M10 22h4"></path></svg>',
         'file-text': '<svg class="lucide lucide-file-text feather-icon" viewBox="0 0 24 24"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"></path><path d="M14 2v4a2 2 0 0 0 2 2h4"></path><path d="M10 9H8"></path><path d="M16 13H8"></path><path d="M16 17H8"></path></svg>',
@@ -2598,12 +2601,14 @@ st.components.v1.html(f"""<script>
         '🔄': 'refresh-cw',
         '✅': 'check-circle-2',
         '⚠': 'alert-triangle', '🚨': 'alert-circle',
-        '💡': 'lightbulb', '⚡': 'sparkles', '🔥': 'flame', '🏋': 'trending-up',
+        '💡': 'lightbulb', '⚡': 'zap', '🔥': 'flame', '🏋': 'trending-up',
+        '🪙': 'coins', '💵': 'coins',
+        '↕': 'arrow-up-down', '↕️': 'arrow-up-down',
         '📄': 'file-text', '📋': 'clipboard', '✏': 'pencil',
         '📚': 'book-open', '📖': 'book-open', '📰': 'file-text',
         '🔐': 'lock', '🔒': 'lock', '🔑': 'key', '🚪': 'log-out',
-        '🎁': 'gift', '🎟': 'tag', '🆓': 'tag',
-        '🗑': 'trash-2', '➕': 'plus', '🔔': 'bell', '👁': 'eye', '🛡': 'shield-check', '🚢': 'anchor',
+        '🎁': 'gift', '🎟': 'ticket', '🎟️': 'ticket', '🆓': 'tag',
+        '🗑': 'trash-2', '➕': 'plus', '🔔': 'bell', '👁': 'eye', '🛡': 'shield-check', '🛡️': 'shield-check', '🚢': 'anchor',
         '📅': 'calendar', '🕒': 'clock',
         '👤': 'user', '🤖': 'bot', '🌐': 'globe', '🌍': 'globe', '🌎': 'globe', '🌏': 'globe', '☁': 'cloud',
         '📱': 'smartphone', '💻': 'monitor',
@@ -6195,22 +6200,47 @@ def render_detail_dashboard(selected_ticker, selected_name, raw_analysis, key_su
     }}
     /* Vertically center segmented buttons and elevate tab emoji position */
     div[class*="st-key-det_tab_select"] button,
-    div[class*="st-key-chart_interval"] button {{
+    div[class*="st-key-chart_interval"] button,
+    div[data-testid="stButtonGroup"] button,
+    div[data-testid="stSegmentedControl"] button {{
         display: inline-flex !important;
         align-items: center !important;
         justify-content: center !important;
     }}
     div[class*="st-key-det_tab_select"] button p,
-    div[class*="st-key-chart_interval"] button p {{
+    div[class*="st-key-det_tab_select"] button div,
+    div[class*="st-key-det_tab_select"] button span,
+    div[class*="st-key-chart_interval"] button p,
+    div[class*="st-key-chart_interval"] button div,
+    div[class*="st-key-chart_interval"] button span {{
         display: inline-flex !important;
         align-items: center !important;
         justify-content: center !important;
         line-height: 1 !important;
         margin: 0 !important;
     }}
+    /* Strongly lift icons (both SVG from Lucide and native emoji spans) up */
+    div[class*="st-key-det_tab_select"] button svg,
+    div[class*="st-key-det_tab_select"] button .feather-icon,
+    div[class*="st-key-det_tab_select"] button .lucide-icon,
+    div[class*="st-key-det_tab_select"] button .lucide-wrapper,
+    div[class*="st-key-det_tab_select"] button .feather-wrapper,
+    div[class*="st-key-det_tab_select"] button .tab-emoji-shift,
+    div[class*="st-key-chart_interval"] button svg,
+    div[class*="st-key-chart_interval"] button .feather-icon,
+    div[class*="st-key-chart_interval"] button .lucide-icon,
+    div[class*="st-key-chart_interval"] button .lucide-wrapper,
+    div[class*="st-key-chart_interval"] button .feather-wrapper,
+    div[class*="st-key-chart_interval"] button .tab-emoji-shift {{
+        vertical-align: middle !important;
+        transform: translateY(-4px) !important;
+        margin-right: 6px !important;
+        margin-bottom: 0 !important;
+        display: inline-block !important;
+    }}
     .tab-emoji-shift {{
         display: inline-block !important;
-        transform: translateY(-3.5px) !important;
+        transform: translateY(-4px) !important;
         margin-right: 6px !important;
         vertical-align: middle !important;
         font-size: 1.1em !important;
@@ -6242,10 +6272,18 @@ def render_detail_dashboard(selected_ticker, selected_name, raw_analysis, key_su
             docs.forEach(function(doc) {
                 var buttons = doc.querySelectorAll('div[class*="st-key-det_tab_select"] button, div[class*="st-key-chart_interval"] button');
                 buttons.forEach(function(btn) {
+                    // 1. Lift any SVG / Lucide icons up by 4px
+                    btn.querySelectorAll('svg, .lucide-wrapper, .feather-wrapper').forEach(function(s) {
+                        s.style.setProperty('transform', 'translateY(-4px)', 'important');
+                        s.style.setProperty('vertical-align', 'middle', 'important');
+                        s.style.setProperty('margin-bottom', '0', 'important');
+                    });
+                    
+                    // 2. Wrap text emoji if not yet converted
                     var el = btn.querySelector('p') || btn.querySelector('div[data-testid="stMarkdownContainer"]') || btn;
                     if (el && !el.dataset.emojiShifted && el.childNodes.length > 0) {
                         var txt = el.textContent.trim();
-                        var match = txt.match(/^(📈|🎁|💡|📊|🔍|🕯️|⏱️)\s*(.+)$/);
+                        var match = txt.match(/^(📈|🎁|💡|📊|🔍|🕯️|⏱️|🎟️|⚡)\s*(.+)$/);
                         if (match) {
                             el.innerHTML = '<span class="tab-emoji-shift">' + match[1] + '</span><span>' + match[2] + '</span>';
                             el.dataset.emojiShifted = "true";
@@ -10213,18 +10251,18 @@ with tab_screen:
                     sort_option = st.selectbox(
                         "↕️ 表示の並び替え（ソート順）",
                         options=[
-                            "🏆 総合スコアが高い順 (おすすめ)",
-                            "💴 株価が安い順 (少額・買いやすい順)",
+                            "⚡ 総合スコアが高い順 (おすすめ)",
+                            "🪙 株価が安い順 (少額・買いやすい順)",
                             "💎 株価が高い順 (値がさ優良株)",
                             "📈 前日比の上昇率が高い順",
                             "📉 前日比の下落率が大きい順 (押し目買い狙い)",
-                            "💰 配当利回りが高い順",
-                            "🎁 優待利回りが高い順",
+                            "💵 配当利回りが高い順",
+                            "🎟️ 優待利回りが高い順",
                             "🎯 PERが低い順 (利益割安順)",
                             "🛡️ PBRが低い順 (純資産割安順)",
                             "📊 ROEが高い順 (高収益・経営効率順)",
-                            "🚀 売上高成長率が高い順 (事業拡大順)",
-                            "🌱 EPS成長率が高い順 (純利益成長順)",
+                            "🔥 売上高成長率が高い順 (事業拡大順)",
+                            "✨ EPS成長率が高い順 (純利益成長順)",
                         ],
                         index=0,
                         key="screening_sort_selector"
@@ -10242,18 +10280,18 @@ with tab_screen:
                     )].reset_index(drop=True)
 
                 sort_map = {
-                    "🏆 総合スコアが高い順 (おすすめ)": ("総合スコア (10点)", False),
-                    "💴 株価が安い順 (少額・買いやすい順)": ("株価", True),
+                    "⚡ 総合スコアが高い順 (おすすめ)": ("総合スコア (10点)", False),
+                    "🪙 株価が安い順 (少額・買いやすい順)": ("株価", True),
                     "💎 株価が高い順 (値がさ優良株)": ("株価", False),
                     "📈 前日比の上昇率が高い順": ("前日比 (%)", False),
                     "📉 前日比の下落率が大きい順 (押し目買い狙い)": ("前日比 (%)", True),
-                    "💰 配当利回りが高い順": ("配当利回り (%)", False),
-                    "🎁 優待利回りが高い順": ("優待利回り (%)", False),
+                    "💵 配当利回りが高い順": ("配当利回り (%)", False),
+                    "🎟️ 優待利回りが高い順": ("優待利回り (%)", False),
                     "🎯 PERが低い順 (利益割安順)": ("PER (倍)", True),
                     "🛡️ PBRが低い順 (純資産割安順)": ("PBR (倍)", True),
                     "📊 ROEが高い順 (高収益・経営効率順)": ("ROE (%)", False),
-                    "🚀 売上高成長率が高い順 (事業拡大順)": ("売上高成長率 (%)", False),
-                    "🌱 EPS成長率が高い順 (純利益成長順)": ("EPS成長率 (%)", False),
+                    "🔥 売上高成長率が高い順 (事業拡大順)": ("売上高成長率 (%)", False),
+                    "✨ EPS成長率が高い順 (純利益成長順)": ("EPS成長率 (%)", False),
                 }
                 
                 sort_col, sort_asc = sort_map.get(sort_option, ("総合スコア (10点)", False))
