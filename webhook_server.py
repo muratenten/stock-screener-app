@@ -332,41 +332,82 @@ def is_line_user_premium(line_user_id: str) -> bool:
             pass
     return False
 
-def build_premium_sniper_msg(sniped_stocks, user_name="会員", n_match=50, future_day=15, thresh=8.0, pbr_label="PBR < 1.0"):
+def build_premium_sniper_msg(sniped_stocks, user_name="会員", n_match=80, future_day=15, thresh=7.0, pbr_label="PBR < 1.0"):
+    short_hits = [s for s in sniped_stocks if s.get("hold_days", 15) <= 5 or s.get("strategy_key") == "short"]
+    main_hits = [s for s in sniped_stocks if s.get("hold_days", 15) > 5 or s.get("strategy_key") == "main"]
+    
     msg = f"🎯【超高勝率スナイパー厳選シグナル】\n{user_name} 様\n\n"
-    msg += f"東証プライム全社中、月4銘柄厳選・勝率80%条件を満たした銘柄です：\n"
+    msg += "東証プライム・PBR1.0倍割れ・DTW動的時間伸縮判定\n\n"
+    
+    # 1. ⚡ 超短期スナイパー
+    msg += "⚡【超短期スナイパー (50d/5d/+8.0%・PF 3.01)】\n"
+    msg += "※ 5営業日で最速利確・全165設定中PF第1位（最速回転型）\n"
     msg += "━━━━━━━━━━━━━━\n"
-    for s in sniped_stocks:
-        ticker_str = s['ticker'] if '.T' in s['ticker'] else f"{s['ticker']}.T"
-        pbr_disp = f"{s['pbr']:.2f}倍" if s.get('pbr') is not None else "---"
-        price = s.get('last_price')
-        if price is not None:
-            price_str = f"{price:,.1f}円" if (price < 1000 and price != int(price)) else f"{int(round(price)):,}円"
-        else:
-            price_str = "---"
-        sector_str = s.get('sector') or 'プライム'
-        win_c = s.get('win_count', 4)
-        sample_c = s.get('sample_count', 4)
-        msg += f"【銘柄】{s['name']}（{ticker_str}）\n"
-        msg += f"【業種】{sector_str}\n"
-        msg += f"【株価】{price_str}（PBR {pbr_disp}）\n"
-        msg += f"【過去検証】類似{sample_c}局面中{win_c}回上昇（平均+{s['avg_ret']:.1f}%）\n"
-        msg += f"【推奨エグジット】\n"
-        msg += f"  ・利確目安: +3.5% 〜 +5.0% で指値利確\n"
-        msg += f"  ・損切りライン: -4.5% 到達で即時撤退\n"
+    if short_hits:
+        for s in short_hits:
+            ticker_str = s['ticker'] if '.T' in s['ticker'] else f"{s['ticker']}.T"
+            pbr_disp = f"{s['pbr']:.2f}倍" if s.get('pbr') is not None else "---"
+            price = s.get('last_price')
+            price_str = f"{price:,.1f}円" if (price and price < 1000 and price != int(price)) else (f"{int(round(price)):,}円" if price else "---")
+            sector_str = s.get('sector') or 'プライム'
+            win_c = s.get('win_count', 5)
+            sample_c = s.get('sample_count', 5)
+            msg += f"【銘柄】{s['name']}（{ticker_str}）\n"
+            msg += f"【業種】{sector_str}（PBR {pbr_disp}）\n"
+            msg += f"【株価】{price_str}\n"
+            msg += f"【過去検証】類似{sample_c}局面中{win_c}回上昇（勝率{s['win_rate']:.0f}%・平均+{s['avg_ret']:.1f}%）\n"
+            msg += f"【推奨エグジット】\n"
+            msg += f"  ・利確目安: +4.0% 〜 +6.0%（5営業日以内でスピード利確）\n"
+            msg += f"  ・損切りライン: -4.5% 到達で即時撤退（下落遮断）\n"
+            msg += "──────────────────\n"
+    else:
+        msg += "本日、超短期スナイプ条件に該当する銘柄はありませんでした。\n"
         msg += "━━━━━━━━━━━━━━\n"
-    msg += f"💡 戦略条件（黄金スナイパー版）:\n"
-    msg += f"・照合期間: {n_match}日（約2.5ヶ月） | 保有期間: {future_day}日（約3週間）\n"
-    msg += f"・DTW動的時間伸縮法 ＆ 200日線トレンド適合 ＆ PBR 1.0倍割れ\n"
-    msg += f"・過去検証実績: 実戦勝率75〜81% / リスクリワード 1 : 2.22\n\n"
+        
+    msg += "\n"
+    
+    # 2. 🏆 本命スイング
+    msg += "🏆【本命スイング (80d/15d/+7.0%・PF 2.83)】\n"
+    msg += "※ 15営業日保有・中期底打ちからの本格リバウンド（本命安定型）\n"
+    msg += "━━━━━━━━━━━━━━\n"
+    if main_hits:
+        for s in main_hits:
+            ticker_str = s['ticker'] if '.T' in s['ticker'] else f"{s['ticker']}.T"
+            pbr_disp = f"{s['pbr']:.2f}倍" if s.get('pbr') is not None else "---"
+            price = s.get('last_price')
+            price_str = f"{price:,.1f}円" if (price and price < 1000 and price != int(price)) else (f"{int(round(price)):,}円" if price else "---")
+            sector_str = s.get('sector') or 'プライム'
+            win_c = s.get('win_count', 5)
+            sample_c = s.get('sample_count', 5)
+            msg += f"【銘柄】{s['name']}（{ticker_str}）\n"
+            msg += f"【業種】{sector_str}（PBR {pbr_disp}）\n"
+            msg += f"【株価】{price_str}\n"
+            msg += f"【過去検証】類似{sample_c}局面中{win_c}回上昇（勝率{s['win_rate']:.0f}%・平均+{s['avg_ret']:.1f}%）\n"
+            msg += f"【推奨エグジット】\n"
+            msg += f"  ・利確目安: +4.0% 〜 +7.0%（15営業日保有）\n"
+            msg += f"  ・損切りライン: -4.5% 到達で即時撤退（下落遮断）\n"
+            msg += "──────────────────\n"
+    else:
+        msg += "本日、本命スイング条件に該当する銘柄はありませんでした。\n"
+        msg += "━━━━━━━━━━━━━━\n"
+        
+    msg += "\n💡 戦略条件概要:\n"
+    msg += "・⚡ 超短期: 照合50日 × 保有5日 × +8.0% (勝率60.0% / PF 3.01)\n"
+    msg += "・🏆 本命: 照合80日 × 保有15日 × +7.0% (勝率60.2% / PF 2.83)\n"
+    msg += "・全銘柄共通: 徹底した -4.5% 逆指値損切り運用\n\n"
     msg += "📱 Webアプリで過去チャート波形やシミュレーションを確認:\n"
     msg += "https://stock-screener-app-crrzltcyekqdt7uulhgpaa.streamlit.app/"
     return msg.strip()
 
-def build_free_sniper_msg(sniped_stocks, user_name="会員", n_match=50, future_day=15, thresh=8.0, pbr_label="PBR < 1.0"):
+def build_free_sniper_msg(sniped_stocks, user_name="会員", n_match=80, future_day=15, thresh=7.0, pbr_label="PBR < 1.0"):
+    short_hits = [s for s in sniped_stocks if s.get("hold_days", 15) <= 5 or s.get("strategy_key") == "short"]
+    main_hits = [s for s in sniped_stocks if s.get("hold_days", 15) > 5 or s.get("strategy_key") == "main"]
+    
     msg = f"🌅【東証プライム・超高勝率スナイパー検知（無料版）】\n{user_name} 様\n\n"
-    msg += f"本日、月4銘柄厳選・実戦勝率75〜81%の\n"
-    msg += f"神シグナル条件に合致する銘柄が出現しました！\n"
+    msg += "本日、神シグナル条件（黄金デュアルスキャン）に\n"
+    msg += f"合致する銘柄が合計 {len(sniped_stocks)}件 出現しました！\n"
+    msg += f"・⚡ 超短期スナイパー (50d/5d/+8%・PF 3.01): {len(short_hits)}件\n"
+    msg += f"・🏆 本命スイング (80d/15d/+7%・PF 2.83): {len(main_hits)}件\n"
     msg += "━━━━━━━━━━━━━━\n"
     for i, s in enumerate(sniped_stocks, 1):
         pbr_disp = f"{s['pbr']:.2f}倍" if s.get('pbr') is not None else "---"
@@ -376,11 +417,12 @@ def build_free_sniper_msg(sniped_stocks, user_name="会員", n_match=50, future_
             p_bracket = f"{int(price // 500 * 500):,}円〜{int((price // 500 + 1) * 500):,}円台"
         else:
             p_bracket = "プライム価格帯"
-        msg += f"【銘柄候補 #{i}】🔒 プレミアム限定\n"
+        strat_disp = s.get('strategy_name', '本命スイング')
+        msg += f"【銘柄候補 #{i}】🔒 プレミアム限定 [{strat_disp}]\n"
         msg += f"【業種】{sector_str}\n"
         msg += f"【株価帯】{p_bracket}\n"
         msg += f"【PBR】{pbr_disp} (解散価値割れ割安)\n"
-        msg += f"【過去検証】平均上昇 +{s['avg_ret']:.1f}% / 損益比 1:2.22\n"
+        msg += f"【過去検証】平均上昇 +{s['avg_ret']:.1f}% / 損切り -4.5%\n"
         msg += "━━━━━━━━━━━━━━\n"
     msg += "🔒 銘柄名・コード・詳細波形分析はプレミアム会員限定です。\n\n"
     msg += "👇 今すぐ銘柄名を確認してプレミアムに登録する\n"
@@ -399,22 +441,20 @@ def broadcast_morning_sniper_routine(force=False):
         
     add_log(f"🎯 [MORNING ROUTINE] Target subscribers: {len(active_subscribers)} people")
     
-    # Run screening with golden default: 50d x 15d x +8.0% x PBR<1.0
+    # Run screening with golden dual mode: 50d5d8% (PF 3.01) + 80d15d7% (PF 2.83)
     sniped_stocks, raw_msg = run_sniper_screening(
-        n_match=50,
-        future_day=15,
-        thresh=8.0,
+        dual_mode=True,
         pbr_max=1.0,
         send_push=False,
         is_interactive=False
     )
     
-    # Record newly sniped stocks into positions store (15-trading-day exit tracking)
+    # Record newly sniped stocks into positions store (5d or 15d exit tracking)
     if sniped_stocks:
         try:
             new_pos_count = spm.record_sniper_positions(sniped_stocks)
             if new_pos_count > 0:
-                add_log(f"🎯 [SNIPER POSITION] Recorded {new_pos_count} new positions for 3-week exit tracking.")
+                add_log(f"🎯 [SNIPER POSITION] Recorded {new_pos_count} new positions for dual exit tracking.")
         except Exception as e:
             add_log(f"⚠️ [SNIPER POSITION] Error recording positions: {e}")
 
@@ -431,9 +471,15 @@ def broadcast_morning_sniper_routine(force=False):
         else:
             p_msg = (
                 f"🌅【毎朝10:00 スナイパーシグナル】\n{uname} 様\n\n"
-                f"本日、勝率72.7%スナイパー条件（東証プライム・照合50日×保有15日×上昇+8.0%×PBR<1.0）を満たす銘柄はありませんでした。\n\n"
+                f"本日、黄金デュアルスナイパー条件（東証プライム・PBR<1.0）を満たす銘柄はありませんでした。\n"
+                f"・⚡ 超短期スナイパー (50d/5d/+8%・PF 3.01): 0件\n"
+                f"・🏆 本命スイング (80d/15d/+7%・PF 2.83): 0件\n\n"
                 f"💡 投資規律を守り、無理なエントリーを見送る日です。"
             )
+
+        ok = send_line_message(p_msg, target_user_id=uid)
+        if ok:
+            sent_count += 1
 
         ok = send_line_message(p_msg, target_user_id=uid)
         if ok:

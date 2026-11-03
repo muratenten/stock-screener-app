@@ -123,6 +123,9 @@ def record_sniper_positions(sniped_stocks: List[Dict], entry_date_str: Optional[
             
         pos_id = f"{ticker.replace('.T', '')}_{entry_date_str}"
         entry_price = s.get("last_price")
+        hold_days = int(s.get("hold_days", 15))
+        target_exit = add_trading_days(entry_date_str, trading_days=hold_days)
+        strategy_label = s.get("strategy_name", "本命スイング" if hold_days >= 15 else "超短期スナイパー")
         
         pos = {
             "id": pos_id,
@@ -134,8 +137,9 @@ def record_sniper_positions(sniped_stocks: List[Dict], entry_date_str: Optional[
             "pbr": s.get("pbr"),
             "min_past_return": s.get("min_ret"),
             "avg_past_return": s.get("avg_ret"),
-            "target_days": 15,
+            "target_days": hold_days,
             "target_exit_date": target_exit,
+            "strategy": strategy_label,
             "status": "holding",
             "notified_entry": True,
             "notified_exit": False,
