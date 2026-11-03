@@ -6219,7 +6219,7 @@ def render_detail_dashboard(selected_ticker, selected_name, raw_analysis, key_su
         line-height: 1 !important;
         margin: 0 !important;
     }}
-    /* Moderately lift icons (both SVG from Lucide and native emoji spans) up by 1.5px */
+    /* Finely position icons slightly down and right (translate(1.5px, 0px)) */
     div[class*="st-key-det_tab_select"] button svg,
     div[class*="st-key-det_tab_select"] button .feather-icon,
     div[class*="st-key-det_tab_select"] button .lucide-icon,
@@ -6233,15 +6233,15 @@ def render_detail_dashboard(selected_ticker, selected_name, raw_analysis, key_su
     div[class*="st-key-chart_interval"] button .feather-wrapper,
     div[class*="st-key-chart_interval"] button .tab-emoji-shift {{
         vertical-align: middle !important;
-        transform: translateY(-1.5px) !important;
-        margin-right: 6px !important;
+        transform: translate(1.5px, 0px) !important;
+        margin-right: 5px !important;
         margin-bottom: 0 !important;
         display: inline-block !important;
     }}
     .tab-emoji-shift {{
         display: inline-block !important;
-        transform: translateY(-1.5px) !important;
-        margin-right: 6px !important;
+        transform: translate(1.5px, 0px) !important;
+        margin-right: 5px !important;
         vertical-align: middle !important;
         font-size: 1.05em !important;
         line-height: 1 !important;
@@ -6272,9 +6272,9 @@ def render_detail_dashboard(selected_ticker, selected_name, raw_analysis, key_su
             docs.forEach(function(doc) {
                 var buttons = doc.querySelectorAll('div[class*="st-key-det_tab_select"] button, div[class*="st-key-chart_interval"] button');
                 buttons.forEach(function(btn) {
-                    // 1. Lift any SVG / Lucide icons up moderately by 1.5px
+                    // 1. Position icons down and right
                     btn.querySelectorAll('svg, .lucide-wrapper, .feather-wrapper').forEach(function(s) {
-                        s.style.setProperty('transform', 'translateY(-1.5px)', 'important');
+                        s.style.setProperty('transform', 'translate(1.5px, 0px)', 'important');
                         s.style.setProperty('vertical-align', 'middle', 'important');
                         s.style.setProperty('margin-bottom', '0', 'important');
                     });
