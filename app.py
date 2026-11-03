@@ -9015,10 +9015,10 @@ def apply_preset(preset_name):
     st.session_state["scr_filter_bb_re"] = False
     st.session_state["scr_filter_vol_su"] = False
     st.session_state["scr_filter_similarity"] = False
-    st.session_state["scr_similarity_match_days"] = 20
-    st.session_state["scr_similarity_future_days"] = 20
-    st.session_state["scr_similarity_days"] = 20
-    st.session_state["scr_similarity_pct"] = 5.0
+    st.session_state["scr_similarity_match_days"] = 80
+    st.session_state["scr_similarity_future_days"] = 15
+    st.session_state["scr_similarity_days"] = 15
+    st.session_state["scr_similarity_pct"] = 7.0
     st.session_state["scr_filter_shape_match"] = False
     st.session_state["scr_filter_shape_match_mobile"] = False
     
@@ -9090,10 +9090,10 @@ def check_preset_match():
         "scr_filter_gc": False, "scr_filter_macd": False, "scr_filter_rsi_os": False,
         "scr_filter_rsi_ob": False, "scr_filter_bb_re": False, "scr_filter_vol_su": False,
         "scr_filter_similarity": False,
-        "scr_similarity_match_days": 20,
-        "scr_similarity_future_days": 20,
-        "scr_similarity_days": 20,
-        "scr_similarity_pct": 5.0,
+        "scr_similarity_match_days": 80,
+        "scr_similarity_future_days": 15,
+        "scr_similarity_days": 15,
+        "scr_similarity_pct": 7.0,
         "scr_filter_shape_match" if st.session_state.get('ui_mode', 'PC') != 'スマホ' else "scr_filter_shape_match_mobile": False
     }
     
