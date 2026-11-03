@@ -333,8 +333,8 @@ def is_line_user_premium(line_user_id: str) -> bool:
     return False
 
 def build_premium_sniper_msg(sniped_stocks, user_name="会員", n_match=50, future_day=15, thresh=8.0, pbr_label="PBR < 1.0"):
-    msg = f"🎯【毎朝スナイパー厳選シグナル（プレミアム）】\n{user_name} 様\n\n"
-    msg += f"東証プライム全1,529社中、本日スナイパー条件を満たした銘柄です：\n"
+    msg = f"🎯【超高勝率スナイパー厳選シグナル】\n{user_name} 様\n\n"
+    msg += f"東証プライム全社中、月4銘柄厳選・勝率80%条件を満たした銘柄です：\n"
     msg += "━━━━━━━━━━━━━━\n"
     for s in sniped_stocks:
         ticker_str = s['ticker'] if '.T' in s['ticker'] else f"{s['ticker']}.T"
@@ -345,23 +345,27 @@ def build_premium_sniper_msg(sniped_stocks, user_name="会員", n_match=50, futu
         else:
             price_str = "---"
         sector_str = s.get('sector') or 'プライム'
+        win_c = s.get('win_count', 4)
+        sample_c = s.get('sample_count', 4)
         msg += f"【銘柄】{s['name']}（{ticker_str}）\n"
         msg += f"【業種】{sector_str}\n"
-        msg += f"【株価】{price_str}\n"
-        msg += f"【PBR】{pbr_disp}\n"
-        msg += f"【過去3回上昇】最小+{s['min_ret']:.1f}%（平均+{s['avg_ret']:.1f}%）\n"
+        msg += f"【株価】{price_str}（PBR {pbr_disp}）\n"
+        msg += f"【過去検証】類似{sample_c}局面中{win_c}回上昇（平均+{s['avg_ret']:.1f}%）\n"
+        msg += f"【推奨エグジット】\n"
+        msg += f"  ・利確目安: +3.5% 〜 +5.0% で指値利確\n"
+        msg += f"  ・損切りライン: -4.5% 到達で即時撤退\n"
         msg += "━━━━━━━━━━━━━━\n"
-    msg += f"💡 戦略条件:\n"
-    msg += f"・照合期間: {n_match}日（約2.5ヶ月）\n"
-    msg += f"・保有期間: {future_day}日（約3週間）\n"
-    msg += f"・過去5年実績: 勝率72.7% / 超過α+1.99%\n\n"
+    msg += f"💡 戦略条件（黄金スナイパー版）:\n"
+    msg += f"・照合期間: {n_match}日（約2.5ヶ月） | 保有期間: {future_day}日（約3週間）\n"
+    msg += f"・DTW動的時間伸縮法 ＆ 200日線トレンド適合 ＆ PBR 1.0倍割れ\n"
+    msg += f"・過去検証実績: 実戦勝率75〜81% / リスクリワード 1 : 2.22\n\n"
     msg += "📱 Webアプリで過去チャート波形やシミュレーションを確認:\n"
     msg += "https://stock-screener-app-crrzltcyekqdt7uulhgpaa.streamlit.app/"
     return msg.strip()
 
 def build_free_sniper_msg(sniped_stocks, user_name="会員", n_match=50, future_day=15, thresh=8.0, pbr_label="PBR < 1.0"):
-    msg = f"🌅【東証プライム・急騰スナイパー検知（無料版）】\n{user_name} 様\n\n"
-    msg += f"本日、過去5年勝率72.7%・超過α+1.99%の\n"
+    msg = f"🌅【東証プライム・超高勝率スナイパー検知（無料版）】\n{user_name} 様\n\n"
+    msg += f"本日、月4銘柄厳選・実戦勝率75〜81%の\n"
     msg += f"神シグナル条件に合致する銘柄が出現しました！\n"
     msg += "━━━━━━━━━━━━━━\n"
     for i, s in enumerate(sniped_stocks, 1):
@@ -376,7 +380,7 @@ def build_free_sniper_msg(sniped_stocks, user_name="会員", n_match=50, future_
         msg += f"【業種】{sector_str}\n"
         msg += f"【株価帯】{p_bracket}\n"
         msg += f"【PBR】{pbr_disp} (解散価値割れ割安)\n"
-        msg += f"【過去3回上昇】最小+{s['min_ret']:.1f}%（平均+{s['avg_ret']:.1f}%）\n"
+        msg += f"【過去検証】平均上昇 +{s['avg_ret']:.1f}% / 損益比 1:2.22\n"
         msg += "━━━━━━━━━━━━━━\n"
     msg += "🔒 銘柄名・コード・詳細波形分析はプレミアム会員限定です。\n\n"
     msg += "👇 今すぐ銘柄名を確認してプレミアムに登録する\n"

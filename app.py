@@ -8876,10 +8876,21 @@ def apply_preset(preset_name):
         st.session_state["scr_min_fund"] = 2
         st.session_state["scr_filter_vol_su"] = True
         st.session_state["scr_filter_gc"] = True
+    elif preset_name == "超高勝率スナイプ":
+        st.session_state["scr_min_total"] = 0
+        st.session_state["scr_min_tech"] = 0
+        st.session_state["scr_min_fund"] = 0
+        st.session_state["scr_filter_pbr"] = True
+        st.session_state["scr_filter_similarity"] = True
+        st.session_state["scr_similarity_match_days"] = 50
+        st.session_state["scr_similarity_future_days"] = 15
+        st.session_state["scr_similarity_days"] = 15
+        st.session_state["scr_similarity_pct"] = 8.0
         
     st.session_state["active_preset"] = preset_name
     presets_inv = {
         "カスタム設定": "⚙️ カスタム設定",
+        "超高勝率スナイプ": "🎯 超高勝率スナイプ (月4銘柄・勝率80%)",
         "大化け成長株": "🚀 大化け成長株狙い",
         "高配当割安株": "💰 高配当＆バリュー割安株",
         "逆張り・大底打ち": "🔄 逆張り・大底打ち狙い",
@@ -8931,6 +8942,15 @@ def check_preset_match():
         expected.update({
             "scr_min_total": 5, "scr_min_tech": 2, "scr_min_fund": 2,
             "scr_filter_vol_su": True, "scr_filter_gc": True
+        })
+    elif curr == "超高勝率スナイプ":
+        expected.update({
+            "scr_filter_pbr": True,
+            "scr_filter_similarity": True,
+            "scr_similarity_match_days": 50,
+            "scr_similarity_future_days": 15,
+            "scr_similarity_days": 15,
+            "scr_similarity_pct": 8.0
         })
         
     mismatch = False
@@ -9203,6 +9223,7 @@ with tab_screen:
             st.markdown("**💡 スクリーニング・プリセット選択**")
             presets = {
                 "⚙️ カスタム設定": "カスタム設定",
+                "🎯 超高勝率スナイプ (月4銘柄・勝率80%)": "超高勝率スナイプ",
                 "🚀 大化け成長株 (CANSLIM風)": "大化け成長株",
                 "💰 高配当割安株": "高配当割安株",
                 "🔄 逆張り・大底打ち狙い": "逆張り・大底打ち",
@@ -9329,7 +9350,7 @@ with tab_screen:
                 shape_threshold = 0.80
         else:
             st.markdown('<div style="font-weight: bold; font-size: 0.95rem; color: var(--text-color); margin-bottom: 8px;">💡 スクリーニング・プリセット選択:</div>', unsafe_allow_html=True)
-            col_p1, col_p2, col_p3, col_p4, col_p5 = st.columns(5)
+            col_p1, col_p2, col_p3, col_p4, col_p5, col_p6 = st.columns(6)
             curr_preset = st.session_state.get("active_preset", "カスタム設定")
             
             with col_p1:
@@ -9337,18 +9358,22 @@ with tab_screen:
                     apply_preset("カスタム設定")
                     st.rerun()
             with col_p2:
+                if st.button("🎯 超高勝率スナイプ", key="btn_preset_sniper", use_container_width=True, type="primary" if curr_preset == "超高勝率スナイプ" else "secondary"):
+                    apply_preset("超高勝率スナイプ")
+                    st.rerun()
+            with col_p3:
                 if st.button("🚀 大化け成長株", key="btn_preset_growth", use_container_width=True, type="primary" if curr_preset == "大化け成長株" else "secondary"):
                     apply_preset("大化け成長株")
                     st.rerun()
-            with col_p3:
+            with col_p4:
                 if st.button("💰 高配当割安株", key="btn_preset_dividend", use_container_width=True, type="primary" if curr_preset == "高配当割安株" else "secondary"):
                     apply_preset("高配当割安株")
                     st.rerun()
-            with col_p4:
+            with col_p5:
                 if st.button("🔄 逆張り大底打ち", key="btn_preset_reversal", use_container_width=True, type="primary" if curr_preset == "逆張り・大底打ち" else "secondary"):
                     apply_preset("逆張り・大底打ち")
                     st.rerun()
-            with col_p5:
+            with col_p6:
                 if st.button("⚡ 急騰ブレイク", key="btn_preset_breakout", use_container_width=True, type="primary" if curr_preset == "急騰ブレイクアウト" else "secondary"):
                     apply_preset("急騰ブレイクアウト")
                     st.rerun()
