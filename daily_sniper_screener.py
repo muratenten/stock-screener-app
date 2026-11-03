@@ -473,14 +473,14 @@ def scan_target_patterns(
     return matched_stocks
 
 def build_dual_sniper_line_message(short_hits, main_hits, latest_market_date="---"):
-    """Compose structured LINE push message containing both 50d5d8% and 80d15d7%."""
-    msg = "🎯【超高勝率スナイプ警報（黄金デュアルスキャン）】\n"
-    msg += "東証プライム・PBR1.0倍割れ・DTW動的時間伸縮判定\n\n"
+    """Compose structured LINE push message containing both 50d5d8% and 80d15d7% in a clean, minimal design."""
+    msg = "【ZenStock スナイパーシグナル】\n"
+    msg += "東証プライム / PBR 1.0倍未満 / DTW動的時間伸縮判定\n\n"
     
     # Section 1: 超短期スナイパー (50d / 5d / +8.0%)
-    msg += "⚡【超短期スナイパー (50d/5d/+8.0%・PF 3.01)】\n"
-    msg += "※ 5営業日保有・最速の資本回転・全165設定中PF第1位\n"
-    msg += "━━━━━━━━━━━━━━\n"
+    msg += "■ 超短期戦略（50d / 5d / +8.0% | PF 3.01）\n"
+    msg += "※ 5営業日保有・資本回転重視（全165設定中PF第1位）\n"
+    msg += "─────────────────\n"
     if short_hits:
         for s in short_hits:
             ticker_str = s['ticker'] if '.T' in s['ticker'] else f"{s['ticker']}.T"
@@ -492,21 +492,21 @@ def build_dual_sniper_line_message(short_hits, main_hits, latest_market_date="--
                 price_str = "---"
             msg += f"【銘柄】{s['name']}（{ticker_str}）\n"
             msg += f"【株価】{price_str}（PBR {pbr_disp}）\n"
-            msg += f"【過去検証】類似{s['sample_count']}局面中{s['win_count']}回上昇（勝率{s['win_rate']:.0f}%・平均+{s['avg_ret']:.1f}%）\n"
+            msg += f"【検証】類似{s['sample_count']}局面中{s['win_count']}回上昇（勝率{s['win_rate']:.0f}% / 平均+{s['avg_ret']:.1f}%）\n"
             msg += f"【推奨エグジット】\n"
-            msg += f"  ・利確目安: +4.0% 〜 +6.0%（5営業日以内でスピード利確）\n"
-            msg += f"  ・損切りライン: -4.5% 到達で即時撤退（下落遮断）\n"
-            msg += "──────────────────\n"
+            msg += f"  ・利確目安: +4.0% 〜 +6.0%（5営業日以内）\n"
+            msg += f"  ・損切りライン: -4.5%（下落リスク限定）\n"
+            msg += "─────────────────\n"
     else:
-        msg += "本日、超短期スナイプ条件に該当する銘柄はありませんでした。\n"
-        msg += "━━━━━━━━━━━━━━\n"
+        msg += "本日、超短期スナイプ条件に該当する銘柄はありません。\n"
+        msg += "─────────────────\n"
         
     msg += "\n"
     
     # Section 2: 本命スイング (80d / 15d / +7.0%)
-    msg += "🏆【本命スイング (80d/15d/+7.0%・PF 2.83)】\n"
-    msg += "※ 15営業日保有・中期底打ちからの本格リバウンド（本命安定型）\n"
-    msg += "━━━━━━━━━━━━━━\n"
+    msg += "■ 本命スイング（80d / 15d / +7.0% | PF 2.83）\n"
+    msg += "※ 15営業日保有・中期底打ち反発（安定型・勝率60.2%）\n"
+    msg += "─────────────────\n"
     if main_hits:
         for s in main_hits:
             ticker_str = s['ticker'] if '.T' in s['ticker'] else f"{s['ticker']}.T"
@@ -518,20 +518,20 @@ def build_dual_sniper_line_message(short_hits, main_hits, latest_market_date="--
                 price_str = "---"
             msg += f"【銘柄】{s['name']}（{ticker_str}）\n"
             msg += f"【株価】{price_str}（PBR {pbr_disp}）\n"
-            msg += f"【過去検証】類似{s['sample_count']}局面中{s['win_count']}回上昇（勝率{s['win_rate']:.0f}%・平均+{s['avg_ret']:.1f}%）\n"
+            msg += f"【検証】類似{s['sample_count']}局面中{s['win_count']}回上昇（勝率{s['win_rate']:.0f}% / 平均+{s['avg_ret']:.1f}%）\n"
             msg += f"【推奨エグジット】\n"
             msg += f"  ・利確目安: +4.0% 〜 +7.0%（15営業日保有）\n"
-            msg += f"  ・損切りライン: -4.5% 到達で即時撤退（下落遮断）\n"
-            msg += "──────────────────\n"
+            msg += f"  ・損切りライン: -4.5%（下落リスク限定）\n"
+            msg += "─────────────────\n"
     else:
-        msg += "本日、本命スイング条件に該当する銘柄はありませんでした。\n"
-        msg += "━━━━━━━━━━━━━━\n"
+        msg += "本日、本命スイング条件に該当する銘柄はありません。\n"
+        msg += "─────────────────\n"
         
-    msg += "\n💡 戦略条件概要:\n"
-    msg += f"・データ基準日: {latest_market_date}\n"
-    msg += "・⚡ 超短期: 照合50日 × 保有5日 × +8.0% (勝率60.0% / PF 3.01)\n"
-    msg += "・🏆 本命: 照合80日 × 保有15日 × +7.0% (勝率60.2% / PF 2.83)\n"
-    msg += "・全銘柄共通: 徹底した -4.5% 逆指値損切り運用\n"
+    msg += "\n[戦略概要]\n"
+    msg += f"・基準日: {latest_market_date}\n"
+    msg += "・超短期: 照合50日 / 保有5日 / 目標+8.0% (勝率60.0% / PF 3.01)\n"
+    msg += "・本命: 照合80日 / 保有15日 / 目標+7.0% (勝率60.2% / PF 2.83)\n"
+    msg += "・全戦略共通: -4.5% 逆指値損切り徹底\n"
     return msg.strip()
 
 def run_sniper_screening(
@@ -628,10 +628,10 @@ def run_sniper_screening(
         if dual_mode:
             result_message = build_dual_sniper_line_message(short_hits, main_hits, latest_market_date=latest_market_date)
         else:
-            msg = f"🎯【超高勝率スナイプ警報】\n\n"
-            msg += f"設定条件（{n_match}d/{future_day}d/+{thresh:.1f}%）のスナイプ銘柄を検知しました！\n"
-            msg += "（東証プライム・PBR1.0倍割れ・DTW動的時間伸縮判定）\n"
-            msg += "━━━━━━━━━━━━━━\n"
+            msg = f"【ZenStock スナイパーシグナル】\n\n"
+            msg += f"設定条件（{n_match}d / {future_day}d / +{thresh:.1f}%）\n"
+            msg += "東証プライム / PBR 1.0倍未満 / DTW動的時間伸縮判定\n"
+            msg += "─────────────────\n"
             for s in sniped_stocks:
                 ticker_str = s['ticker'] if '.T' in s['ticker'] else f"{s['ticker']}.T"
                 pbr_disp = f"{s['pbr']:.2f}倍" if s['pbr'] is not None else "---"
@@ -642,12 +642,12 @@ def run_sniper_screening(
                     price_str = "---"
                 msg += f"【銘柄】{s['name']}（{ticker_str}）\n"
                 msg += f"【株価】{price_str}（PBR {pbr_disp}）\n"
-                msg += f"【過去検証】類似{s['sample_count']}局面中{s['win_count']}回上昇（勝率{s['win_rate']:.0f}%・平均+{s['avg_ret']:.1f}%）\n"
+                msg += f"【検証】類似{s['sample_count']}局面中{s['win_count']}回上昇（勝率{s['win_rate']:.0f}% / 平均+{s['avg_ret']:.1f}%）\n"
                 msg += f"【推奨エグジット】\n"
                 msg += f"  ・利確目安: +4.0% 〜 +7.0% で指値利確\n"
-                msg += f"  ・損切りライン: -4.5% 到達で即時撤退\n"
-                msg += "━━━━━━━━━━━━━━\n"
-            msg += f"💡 戦略条件: 照合{n_match}日 × 保有{future_day}日 × 上昇+{thresh:.1f}% | 損切り-4.5%\n"
+                msg += f"  ・損切りライン: -4.5%（下落リスク限定）\n"
+                msg += "─────────────────\n"
+            msg += f"[戦略条件] 照合{n_match}日 × 保有{future_day}日 × 上昇+{thresh:.1f}% | 損切り-4.5%\n"
             result_message = msg.strip()
             
         if send_push:
@@ -656,13 +656,13 @@ def run_sniper_screening(
         print(f"No stocks triggered sniper criteria today.")
         if is_interactive or test_mode:
             result_message = (
-                f"🎯【ZenStock スナイパー検知通知】\n━━━━━━━━━━━━━━\n"
+                f"【ZenStock スキャナー結果】\n─────────────────\n"
                 f"データ基準日: {latest_market_date}\n"
-                f"本日のスクリーニング（東証プライム全社対象）では、厳格な条件を満たす銘柄はありませんでした。\n\n"
-                f"・⚡ 超短期スナイパー (50d/5d/+8.0%・PF 3.01): 0件\n"
-                f"・🏆 本命スイング (80d/15d/+7.0%・PF 2.83): 0件\n"
-                f"━━━━━━━━━━━━━━\n"
-                f"※ 騙しを回避するため、黄金基準を満たした日のみエントリーシグナルをお届けします。"
+                f"東証プライム全銘柄中、厳格な条件を満たす銘柄はありません。\n\n"
+                f"・超短期 (50d/5d/+8.0% | PF 3.01): 0件\n"
+                f"・本命スイング (80d/15d/+7.0% | PF 2.83): 0件\n"
+                f"─────────────────\n"
+                f"※ 投資規律に基づき、優位性のない日はエントリーを見送ります。"
             )
             if send_push:
                 send_line_message(result_message, target_user_id=target_user_id)
