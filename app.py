@@ -8711,7 +8711,7 @@ else:
 
 logo_header_html = f'<img src="{logo_data_uri}" style="width: 42px; height: 42px; border-radius: 11px; box-shadow: 0 2px 10px rgba(37,99,235,0.2); border: 1px solid rgba(226,232,240,0.8); background: #ffffff; object-fit: contain; padding: 2px;" />' if logo_data_uri else ""
 
-BUILD_VERSION = "2026.11.03-1050"
+BUILD_VERSION = "2026.11.03-1225"
 st.markdown(f'<div class="title-container" style="display: flex; flex-direction: column; gap: 6px;"><div style="display: flex; align-items: center; gap: 14px; flex-wrap: wrap;">{logo_header_html}<div class="title-text" style="margin: 0; line-height: 1;">ZenStockScreener</div>{badge_html}<span style="font-size: 0.72rem; color: var(--secondary-text-color); opacity: 0.7; font-family: monospace;">build:{BUILD_VERSION}</span></div><div class="subtitle-text" style="margin-top: 4px;">AI分析とファンダメンタルズ指標による日本株上昇期待銘柄の選定システム</div></div>', unsafe_allow_html=True)
 
 # Mobile-friendly Quick Action Header (LINE integration & status)
@@ -9673,7 +9673,7 @@ with tab_screen:
                                 'ティッカー': ticker,
                                 '銘柄名': display_name,
                                 '総合スコア (10点)': total_score,
-                                'チャート形状': f"🎯 スナイパー合致 (過去最小+{s['min_ret']:.1f}%)" if is_golden_sniper else f"🔍 類似連動合致 (過去最小+{s['min_ret']:.1f}%)",
+                                'チャート形状': f"🎯 スナイパー合致 (勝率{s.get('win_rate', 80):.0f}%/平均+{s['avg_ret']:.1f}%)" if is_golden_sniper else f"🔍 類似連動合致 (勝率{s.get('win_rate', 80):.0f}%/平均+{s['avg_ret']:.1f}%)",
                                 'テクニカルスコア (3点)': tech_score,
                                 'ファンダスコア (7点)': fund_score,
                                 '株価': float(metrics['price']) if metrics.get('price') is not None else float(s.get('last_price', 0.0)),
@@ -9887,39 +9887,53 @@ with tab_screen:
                             if df_5y.empty:
                                 continue
                             
+                            # 対策1: 移動平均健全トレンドフィルター (200日線以上 & +25%過熱天井排除 & 25日線サポート)
+                            if len(df) >= 200:
+                                close_vals = df['Close'].dropna().values
+                                if len(close_vals) >= 200:
+                                    sma_200 = float(np.mean(close_vals[-200:]))
+                                    sma_25 = float(np.mean(close_vals[-25:]))
+                                    cur_p = float(close_vals[-1])
+                                    if cur_p < sma_200 or cur_p > sma_200 * 1.25 or cur_p < sma_25 * 0.96:
+                                        continue
+
                             N_len = similarity_match_days
                             f_days = similarity_future_days
                             if len(df) < N_len:
                                 continue
                                 
                             target_prices = df['Close'].iloc[-N_len:].values
+                            # 対策4: 上位5局面抽出による統計的ロバスト判定
                             filtered_matches = find_top_similar_patterns(
                                 df_5y,
                                 target_prices,
                                 N_len=N_len,
                                 forward_days=f_days,
-                                top_k=3,
-                                min_days_apart=30
+                                top_k=5,
+                                min_days_apart=25
                             )
                             
-                            pass_similarity_filter = True
-                            if len(filtered_matches) < 3:
-                                pass_similarity_filter = False
-                            else:
+                            pass_similarity_filter = False
+                            if len(filtered_matches) >= 4:
+                                p_rets = []
                                 for m in filtered_matches:
                                     all_prices = m['all_prices']
-                                    if len(all_prices) < N_len + f_days:
-                                        pass_similarity_filter = False
-                                        break
-                                    price_at_end = all_prices[N_len-1]
-                                    price_after = all_prices[-1]
-                                    if price_at_end == 0:
-                                        pass_similarity_filter = False
-                                        break
-                                    ret = (price_after - price_at_end) / price_at_end * 100
-                                    if ret < similarity_threshold_pct:
-                                        pass_similarity_filter = False
-                                        break
+                                    if len(all_prices) >= N_len + f_days:
+                                        price_at_end = all_prices[N_len-1]
+                                        price_after = all_prices[-1]
+                                        if price_at_end > 0:
+                                            ret = (price_after - price_at_end) / price_at_end * 100.0
+                                            p_rets.append(ret)
+                                
+                                if len(p_rets) >= 4:
+                                    win_cnt = sum(1 for r in p_rets if r > 0.0)
+                                    win_r = (win_cnt / len(p_rets)) * 100.0
+                                    avg_r = float(np.mean(p_rets))
+                                    min_r = min(p_rets)
+                                    req_avg = max(5.0, similarity_threshold_pct * 0.7)
+                                    # 勝率80%以上かつ平均期待値達成かつ最悪ドローダウン-4.5%以内
+                                    if win_r >= 80.0 and avg_r >= req_avg and min_r >= -4.5:
+                                        pass_similarity_filter = True
                                         
                             if not pass_similarity_filter:
                                 continue
@@ -12964,6 +12978,16 @@ with tab_practice:
                     
                     # Similarity pattern search filter
                     if p_similarity:
+                        # 対策1: 移動平均健全トレンドフィルター (200日線以上 & +25%過熱天井排除 & 25日線サポート)
+                        if len(df_sliced) >= 200:
+                            close_p_vals = df_sliced['Close'].dropna().values
+                            if len(close_p_vals) >= 200:
+                                p_sma200 = float(np.mean(close_p_vals[-200:]))
+                                p_sma25 = float(np.mean(close_p_vals[-25:]))
+                                p_cur = float(close_p_vals[-1])
+                                if p_cur < p_sma200 or p_cur > p_sma200 * 1.25 or p_cur < p_sma25 * 0.96:
+                                    continue
+
                         df_hist = df_sliced
                         N_len = p_similarity_match_days
                         f_days = p_similarity_future_days
@@ -12971,33 +12995,36 @@ with tab_practice:
                             continue
                             
                         target_prices = df_hist['Close'].iloc[-N_len:].values
+                        # 対策4: 上位5局面抽出による統計的ロバスト判定
                         filtered_matches = find_top_similar_patterns(
                             df_hist,
                             target_prices,
                             N_len=N_len,
                             forward_days=f_days,
-                            top_k=3,
-                            min_days_apart=30
+                            top_k=5,
+                            min_days_apart=25
                         )
                         
-                        pass_similarity_filter = True
-                        if len(filtered_matches) < 3:
-                            pass_similarity_filter = False
-                        else:
+                        pass_similarity_filter = False
+                        if len(filtered_matches) >= 4:
+                            p_rets = []
                             for m in filtered_matches:
                                 all_prices = m['all_prices']
-                                if len(all_prices) < N_len + f_days:
-                                    pass_similarity_filter = False
-                                    break
-                                price_at_end = all_prices[N_len-1]
-                                price_after = all_prices[-1]
-                                if price_at_end == 0:
-                                    pass_similarity_filter = False
-                                    break
-                                ret = (price_after - price_at_end) / price_at_end * 100
-                                if ret < p_similarity_pct:
-                                    pass_similarity_filter = False
-                                    break
+                                if len(all_prices) >= N_len + f_days:
+                                    price_at_end = all_prices[N_len-1]
+                                    price_after = all_prices[-1]
+                                    if price_at_end > 0:
+                                        ret = (price_after - price_at_end) / price_at_end * 100.0
+                                        p_rets.append(ret)
+                            
+                            if len(p_rets) >= 4:
+                                win_cnt = sum(1 for r in p_rets if r > 0.0)
+                                win_r = (win_cnt / len(p_rets)) * 100.0
+                                avg_r = float(np.mean(p_rets))
+                                min_r = min(p_rets)
+                                req_avg = max(5.0, p_similarity_pct * 0.7)
+                                if win_r >= 80.0 and avg_r >= req_avg and min_r >= -4.5:
+                                    pass_similarity_filter = True
                                     
                         if not pass_similarity_filter:
                             continue
