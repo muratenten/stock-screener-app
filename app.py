@@ -6125,15 +6125,17 @@ def render_detail_dashboard(selected_ticker, selected_name, raw_analysis, key_su
         width: 100% !important;
         background: transparent !important;
     }}
-    div[data-testid="stButtonGroup"] > div {{
+    div[data-testid="stButtonGroup"] > div,
+    div[class*="st-key-det_tab_select"] [role="radiogroup"],
+    div[class*="st-key-det_tab_select"] > div {{
         display: flex !important;
         width: 100% !important;
         flex-direction: row !important;
+        flex-wrap: wrap !important;
         gap: 8px !important;
         background: transparent !important;
     }}
     div[data-testid="stButtonGroup"] button[data-testid^="stBaseButton-segmented_control"],
-    div[class*="st-key-det_tab_select"] button,
     div[class*="st-key-chart_interval"] button {{
         flex: 1 1 0% !important;
         text-align: center !important;
@@ -6146,6 +6148,25 @@ def render_detail_dashboard(selected_ticker, selected_name, raw_analysis, key_su
         background-image: none !important;
         color: {local_text_color} !important;
         opacity: 0.65 !important;
+        border: 1px solid {local_border_color} !important;
+        transition: all 0.2s ease !important;
+        box-shadow: none !important;
+    }}
+    /* Detail Tabs: Flexible width adapted to text length and container width without ellipsis */
+    div[class*="st-key-det_tab_select"] button {{
+        flex: 1 1 auto !important;
+        min-width: max-content !important;
+        width: auto !important;
+        text-align: left !important;
+        font-size: 0.92rem !important;
+        padding: 9px 16px !important;
+        white-space: nowrap !important;
+        font-weight: 600 !important;
+        background: {local_unselected_bg} !important;
+        background-color: {local_unselected_bg} !important;
+        background-image: none !important;
+        color: {local_text_color} !important;
+        opacity: 0.75 !important;
         border: 1px solid {local_border_color} !important;
         transition: all 0.2s ease !important;
         box-shadow: none !important;
@@ -6291,15 +6312,20 @@ def render_detail_dashboard(selected_ticker, selected_name, raw_analysis, key_su
             docs.forEach(function(doc) {
                 var buttons = doc.querySelectorAll('div[class*="st-key-det_tab_select"] button, div[class*="st-key-chart_interval"] button');
                 buttons.forEach(function(btn) {
-                    // Left align tabs content naturally
+                    // Left align tabs content naturally with flexible width
                     if (btn.closest('div[class*="st-key-det_tab_select"]')) {
                         btn.style.setProperty('justify-content', 'flex-start', 'important');
                         btn.style.setProperty('text-align', 'left', 'important');
                         btn.style.setProperty('padding-left', '16px', 'important');
+                        btn.style.setProperty('padding-right', '14px', 'important');
+                        btn.style.setProperty('flex', '1 1 auto', 'important');
+                        btn.style.setProperty('min-width', 'max-content', 'important');
+                        btn.style.setProperty('width', 'auto', 'important');
                         var p = btn.querySelector('p') || btn.querySelector('div[data-testid="stMarkdownContainer"]');
                         if (p) {
                             p.style.setProperty('justify-content', 'flex-start', 'important');
                             p.style.setProperty('text-align', 'left', 'important');
+                            p.style.setProperty('white-space', 'nowrap', 'important');
                         }
                     }
 
@@ -6370,19 +6396,19 @@ def render_detail_dashboard(selected_ticker, selected_name, raw_analysis, key_su
             st.markdown('<div style="margin-top: 10px; margin-bottom: 6px; font-weight: 600; font-size: 0.9rem; color: var(--text-color, #1e293b);">📊 表示時間足の選択:</div>', unsafe_allow_html=True)
             interval_options = {
                 "5分足": ("5m", "5d"),
-                "日足 (標準)": ("1d", "1y"),
+                "日足": ("1d", "1y"),
                 "週足": ("1wk", "5y"),
                 "月足": ("1mo", "10y")
             }
             selected_interval_label = st.segmented_control(
                 "時間足",
                 options=list(interval_options.keys()),
-                default="日足 (標準)",
+                default="日足",
                 key=f"chart_interval_{selected_ticker}{key_suffix}",
                 label_visibility="collapsed"
             )
             if not selected_interval_label:
-                selected_interval_label = "日足 (標準)"
+                selected_interval_label = "日足"
                 
             interval, period = interval_options[selected_interval_label]
             
