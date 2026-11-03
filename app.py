@@ -9605,6 +9605,7 @@ with tab_screen:
             
         # Start button
         if start_screening_clicked:
+            _, fund_cache = load_tse_fundamentals_cache()
             # Fast vectorized engine can execute with ANY match/future/thresh settings
             # as long as no other conflicting technical/fundamental filters are active!
             has_conflicting_filters = any([
