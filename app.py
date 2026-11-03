@@ -6219,7 +6219,7 @@ def render_detail_dashboard(selected_ticker, selected_name, raw_analysis, key_su
         line-height: 1 !important;
         margin: 0 !important;
     }}
-    /* Strongly lift icons (both SVG from Lucide and native emoji spans) up */
+    /* Moderately lift icons (both SVG from Lucide and native emoji spans) up by 1.5px */
     div[class*="st-key-det_tab_select"] button svg,
     div[class*="st-key-det_tab_select"] button .feather-icon,
     div[class*="st-key-det_tab_select"] button .lucide-icon,
@@ -6233,17 +6233,17 @@ def render_detail_dashboard(selected_ticker, selected_name, raw_analysis, key_su
     div[class*="st-key-chart_interval"] button .feather-wrapper,
     div[class*="st-key-chart_interval"] button .tab-emoji-shift {{
         vertical-align: middle !important;
-        transform: translateY(-4px) !important;
+        transform: translateY(-1.5px) !important;
         margin-right: 6px !important;
         margin-bottom: 0 !important;
         display: inline-block !important;
     }}
     .tab-emoji-shift {{
         display: inline-block !important;
-        transform: translateY(-4px) !important;
+        transform: translateY(-1.5px) !important;
         margin-right: 6px !important;
         vertical-align: middle !important;
-        font-size: 1.1em !important;
+        font-size: 1.05em !important;
         line-height: 1 !important;
     }}
     </style>
@@ -6272,9 +6272,9 @@ def render_detail_dashboard(selected_ticker, selected_name, raw_analysis, key_su
             docs.forEach(function(doc) {
                 var buttons = doc.querySelectorAll('div[class*="st-key-det_tab_select"] button, div[class*="st-key-chart_interval"] button');
                 buttons.forEach(function(btn) {
-                    // 1. Lift any SVG / Lucide icons up by 4px
+                    // 1. Lift any SVG / Lucide icons up moderately by 1.5px
                     btn.querySelectorAll('svg, .lucide-wrapper, .feather-wrapper').forEach(function(s) {
-                        s.style.setProperty('transform', 'translateY(-4px)', 'important');
+                        s.style.setProperty('transform', 'translateY(-1.5px)', 'important');
                         s.style.setProperty('vertical-align', 'middle', 'important');
                         s.style.setProperty('margin-bottom', '0', 'important');
                     });
@@ -10249,20 +10249,20 @@ with tab_screen:
                     )
                 with col_sort1:
                     sort_option = st.selectbox(
-                        "↕️ 表示の並び替え（ソート順）",
+                        "表示の並び替え（ソート順）",
                         options=[
-                            "⚡ 総合スコアが高い順 (おすすめ)",
-                            "🪙 株価が安い順 (少額・買いやすい順)",
-                            "💎 株価が高い順 (値がさ優良株)",
-                            "📈 前日比の上昇率が高い順",
-                            "📉 前日比の下落率が大きい順 (押し目買い狙い)",
-                            "💵 配当利回りが高い順",
-                            "🎟️ 優待利回りが高い順",
-                            "🎯 PERが低い順 (利益割安順)",
-                            "🛡️ PBRが低い順 (純資産割安順)",
-                            "📊 ROEが高い順 (高収益・経営効率順)",
-                            "🔥 売上高成長率が高い順 (事業拡大順)",
-                            "✨ EPS成長率が高い順 (純利益成長順)",
+                            "総合スコアが高い順 (おすすめ)",
+                            "株価が安い順 (少額・買いやすい順)",
+                            "株価が高い順 (値がさ優良株)",
+                            "前日比の上昇率が高い順",
+                            "前日比の下落率が大きい順 (押し目買い狙い)",
+                            "配当利回りが高い順",
+                            "優待利回りが高い順",
+                            "PERが低い順 (利益割安順)",
+                            "PBRが低い順 (純資産割安順)",
+                            "ROEが高い順 (高収益・経営効率順)",
+                            "売上高成長率が高い順 (事業拡大順)",
+                            "EPS成長率が高い順 (純利益成長順)",
                         ],
                         index=0,
                         key="screening_sort_selector"
@@ -10280,18 +10280,18 @@ with tab_screen:
                     )].reset_index(drop=True)
 
                 sort_map = {
-                    "⚡ 総合スコアが高い順 (おすすめ)": ("総合スコア (10点)", False),
-                    "🪙 株価が安い順 (少額・買いやすい順)": ("株価", True),
-                    "💎 株価が高い順 (値がさ優良株)": ("株価", False),
-                    "📈 前日比の上昇率が高い順": ("前日比 (%)", False),
-                    "📉 前日比の下落率が大きい順 (押し目買い狙い)": ("前日比 (%)", True),
-                    "💵 配当利回りが高い順": ("配当利回り (%)", False),
-                    "🎟️ 優待利回りが高い順": ("優待利回り (%)", False),
-                    "🎯 PERが低い順 (利益割安順)": ("PER (倍)", True),
-                    "🛡️ PBRが低い順 (純資産割安順)": ("PBR (倍)", True),
-                    "📊 ROEが高い順 (高収益・経営効率順)": ("ROE (%)", False),
-                    "🔥 売上高成長率が高い順 (事業拡大順)": ("売上高成長率 (%)", False),
-                    "✨ EPS成長率が高い順 (純利益成長順)": ("EPS成長率 (%)", False),
+                    "総合スコアが高い順 (おすすめ)": ("総合スコア (10点)", False),
+                    "株価が安い順 (少額・買いやすい順)": ("株価", True),
+                    "株価が高い順 (値がさ優良株)": ("株価", False),
+                    "前日比の上昇率が高い順": ("前日比 (%)", False),
+                    "前日比の下落率が大きい順 (押し目買い狙い)": ("前日比 (%)", True),
+                    "配当利回りが高い順": ("配当利回り (%)", False),
+                    "優待利回りが高い順": ("優待利回り (%)", False),
+                    "PERが低い順 (利益割安順)": ("PER (倍)", True),
+                    "PBRが低い順 (純資産割安順)": ("PBR (倍)", True),
+                    "ROEが高い順 (高収益・経営効率順)": ("ROE (%)", False),
+                    "売上高成長率が高い順 (事業拡大順)": ("売上高成長率 (%)", False),
+                    "EPS成長率が高い順 (純利益成長順)": ("EPS成長率 (%)", False),
                 }
                 
                 sort_col, sort_asc = sort_map.get(sort_option, ("総合スコア (10点)", False))
