@@ -21,6 +21,12 @@ import pandas as pd
 import yfinance as yf
 from concurrent.futures import ThreadPoolExecutor
 
+try:
+    import dtw_engine
+except ImportError:
+    sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+    import dtw_engine
+
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 CACHE_FILE = os.path.join(BASE_DIR, "tse_fundamentals_cache.json")
 PRIME_TICKERS_FILE = os.path.join(BASE_DIR, "tse_prime_tickers.json")
@@ -340,7 +346,9 @@ def run_sniper_screening(
     target_user_id=None,
     send_push=True,
     is_interactive=False,
-    force_refresh=False
+    force_refresh=False,
+    use_dtw=True,
+    dtw_window=5
 ):
     """
     Execute sniper screening:
@@ -435,11 +443,23 @@ def run_sniper_screening(
         dots = np.dot(w_norm, target_norm) / n_match
         dots[~valid_mask] = -1.0
         
-        sorted_indices = np.argsort(dots)[::-1]
+        if use_dtw:
+            # 💡 DTW (動的時間伸縮法): 時間軸の伸縮（±w日）を許容し本質波形を捉える
+            top_cand_indices = np.argsort(dots)[::-1][:60]
+            cand_windows = w_norm[top_cand_indices]
+            dtw_dists = dtw_engine.compute_fast_dtw_distances(target_norm, cand_windows, window_radius=dtw_window)
+            dtw_sorted = np.argsort(dtw_dists)
+            sorted_indices = [top_cand_indices[i] for i in dtw_sorted]
+            # 類似度スコアへの換算 (距離0.0->100点, 距離1.5->25点)
+            sim_scores = {top_cand_indices[i]: float(np.clip(100.0 * (1.0 - dtw_dists[i] / 2.0), 0.0, 100.0)) for i in range(len(top_cand_indices))}
+        else:
+            sorted_indices = np.argsort(dots)[::-1]
+            sim_scores = {idx: float(dots[idx]) * 100.0 for idx in sorted_indices}
+        
         chosen_top = []
-        min_dist = max(20, n_match // 2)
+        min_dist = max(15, n_match // 2)
         for idx in sorted_indices:
-            if dots[idx] < 0.45:
+            if not use_dtw and dots[idx] < 0.45:
                 break
             if all(abs(idx - c) >= min_dist for c in chosen_top):
                 chosen_top.append(idx)
@@ -453,7 +473,7 @@ def run_sniper_screening(
             for c_idx in chosen_top:
                 p_end = c_idx + n_match - 1
                 p_fut = p_end + future_day
-                sim_score = float(dots[c_idx]) * 100.0
+                sim_score = sim_scores.get(c_idx, float(dots[c_idx]) * 100.0)
                 if p_fut < len(close):
                     ret = (close[p_fut] - close[p_end]) / close[p_end] * 100.0
                     p_rets.append(ret)
@@ -529,8 +549,9 @@ def run_sniper_screening(
             msg += f"【過去検証】類似{s['sample_count']}局面中{s['win_count']}回上昇（勝率{s['win_rate']:.0f}%・平均+{s['avg_ret']:.1f}%）\n"
             msg += f"【リスク管理】200日線トレンド適合 / -4.5%損切りライン設定\n"
             msg += "━━━━━━━━━━━━━━\n"
-        msg += f"💡 戦略条件（改善版）:\n"
+        msg += f"💡 戦略条件（DTW最適化版）:\n"
         msg += f"・データ基準日: {latest_market_date}\n"
+        msg += f"・照合アルゴリズム: DTW（動的時間伸縮法 ±{dtw_window}日伸縮補正）\n"
         msg += f"・照合期間: {n_match}日（約2.5ヶ月）\n"
         msg += f"・目標保有期間: {future_day}日（約3週間）\n"
         msg += f"・トレンド適合: 200日移動平均線より上 ＆ 天井過熱（+25%超）の事前排除\n"

@@ -9274,11 +9274,11 @@ with tab_screen:
                 st.session_state["scr_filter_similarity"] = False
                 filter_similarity_pattern = False
             else:
-                filter_similarity_pattern = st.checkbox("🔍 類似連動 (過去類似3局面の上昇率フィルタ)", key="scr_filter_similarity", help="直近チャート形状に類似する過去の局面を直近5年間の歴史データから3つ抽出し、そのすべての局面において指定した営業日後の上昇率が指定値以上となった銘柄のみを抽出します。他フィルタで絞り込んだ後、最後に実行されます。")
+                filter_similarity_pattern = st.checkbox("🔍 類似連動 (DTW動的時間伸縮・勝率検証フィルタ)", key="scr_filter_similarity", help="直近チャート形状に対し、時間の伸縮（±5日）を吸収するDTW（動的時間伸縮法）を用いて過去類似局面を高速抽出し、勝率80%以上・十分な期待値を満たす高エッジ銘柄のみを抽出します。")
             if filter_similarity_pattern:
-                similarity_match_days = st.slider("   ↳ 照合する直近チャート期間 (営業日)", 5, 120, int(st.session_state.get("scr_similarity_match_days", 50)), step=5, key="scr_similarity_match_days", help="直近何営業日分のチャート形状（波形）を照合元として使用するかを設定します（推奨: 50日 = 約2.5ヶ月）。")
-                similarity_future_days = st.slider("   ↳ 参照する未来予測期間 (営業日後)", 5, 120, int(st.session_state.get("scr_similarity_future_days", st.session_state.get("scr_similarity_days", 15))), step=5, key="scr_similarity_future_days", help="過去類似局面から何営業日後に上昇したかを判定するかを設定します（推奨: 15日後 = 約3週間）。")
-                similarity_threshold_pct = st.slider("   ↳ 必要上昇率 (%)", 0.0, 15.0, float(st.session_state.get("scr_similarity_pct", 8.0)), step=0.5, key="scr_similarity_pct", help="過去類似局面のすべてで達成しているべき最小上昇率を設定します（推奨: +8.0%）。")
+                similarity_match_days = st.slider("   ↳ 照合する直近チャート期間 (営業日)", 5, 120, int(st.session_state.get("scr_similarity_match_days", 50)), step=5, key="scr_similarity_match_days", help="直近何営業日分のチャート形状（波形）を照合元として使用するかを設定します（推奨最適値: 50日 = 約2.5ヶ月）。")
+                similarity_future_days = st.slider("   ↳ 参照する未来予測期間 (営業日後)", 5, 120, int(st.session_state.get("scr_similarity_future_days", st.session_state.get("scr_similarity_days", 15))), step=5, key="scr_similarity_future_days", help="過去類似局面から何営業日後に上昇したかを判定するかを設定します（推奨最適値: 15日後 = 約3週間）。")
+                similarity_threshold_pct = st.slider("   ↳ 必要上昇率 (%)", 0.0, 15.0, float(st.session_state.get("scr_similarity_pct", 8.0)), step=0.5, key="scr_similarity_pct", help="過去類似局面で達成しているべき最小上昇率を設定します（推奨最適値: +5.0%〜+8.0%）。")
             else:
                 similarity_match_days = 50
                 similarity_future_days = 15
@@ -9402,11 +9402,11 @@ with tab_screen:
                     st.session_state["scr_filter_similarity"] = False
                     filter_similarity_pattern = False
                 else:
-                    filter_similarity_pattern = st.checkbox("🔍 類似連動 (過去類似3局面の上昇率フィルタ)", key="scr_filter_similarity", help="直近チャート形状に類似する過去の局面を直近5年間の歴史データから3つ抽出し、そのすべての局面において指定した営業日後の上昇率が指定値以上となった銘柄のみを抽出します。他フィルタで絞り込んだ後、最後に実行されます。")
+                    filter_similarity_pattern = st.checkbox("🔍 類似連動 (DTW動的時間伸縮・勝率検証フィルタ)", key="scr_filter_similarity", help="直近チャート形状に対し、時間の伸縮（±5日）を吸収するDTW（動的時間伸縮法）を用いて過去類似局面を高速抽出し、勝率80%以上・十分な期待値を満たす高エッジ銘柄のみを抽出します。")
                 if filter_similarity_pattern:
-                    similarity_match_days = st.slider("   ↳ 照合する直近チャート期間 (営業日)", 5, 120, int(st.session_state.get("scr_similarity_match_days", 50)), step=5, key="scr_similarity_match_days", help="直近何営業日分のチャート形状（波形）を照合元として使用するかを設定します（推奨: 50日 = 約2.5ヶ月）。")
-                    similarity_future_days = st.slider("   ↳ 参照する未来予測期間 (営業日後)", 5, 120, int(st.session_state.get("scr_similarity_future_days", st.session_state.get("scr_similarity_days", 15))), step=5, key="scr_similarity_future_days", help="過去類似局面から何営業日後に上昇したかを判定するかを設定します（推奨: 15日後 = 約3週間）。")
-                    similarity_threshold_pct = st.slider("   ↳ 必要上昇率 (%)", 0.0, 15.0, float(st.session_state.get("scr_similarity_pct", 8.0)), step=0.5, key="scr_similarity_pct", help="過去類似局面のすべてで達成しているべき最小上昇率を設定します（推奨: +8.0%）。")
+                    similarity_match_days = st.slider("   ↳ 照合する直近チャート期間 (営業日)", 5, 120, int(st.session_state.get("scr_similarity_match_days", 50)), step=5, key="scr_similarity_match_days", help="直近何営業日分のチャート形状（波形）を照合元として使用するかを設定します（推奨最適値: 50日 = 約2.5ヶ月）。")
+                    similarity_future_days = st.slider("   ↳ 参照する未来予測期間 (営業日後)", 5, 120, int(st.session_state.get("scr_similarity_future_days", st.session_state.get("scr_similarity_days", 15))), step=5, key="scr_similarity_future_days", help="過去類似局面から何営業日後に上昇したかを判定するかを設定します（推奨最適値: 15日後 = 約3週間）。")
+                    similarity_threshold_pct = st.slider("   ↳ 必要上昇率 (%)", 0.0, 15.0, float(st.session_state.get("scr_similarity_pct", 8.0)), step=0.5, key="scr_similarity_pct", help="過去類似局面で達成しているべき最小上昇率を設定します（推奨最適値: +5.0%〜+8.0%）。")
                 else:
                     similarity_match_days = 50
                     similarity_future_days = 15
@@ -9610,7 +9610,7 @@ with tab_screen:
                 p_max = 1.0 if filter_pbr else None
                 is_golden_sniper = (n_m == 50 and f_d == 15 and th == 8.0 and filter_pbr)
                 
-                sp_text = "🎯 高勝率急騰パターン高速スキャン実行中（東証プライム・勝率72.7%スイング判定）..." if is_golden_sniper else f"🎯 類似連動 高速パターン照合中（照合{n_m}日 × 保有{f_d}日後 × 閾値+{th:.1f}%）..."
+                sp_text = "🎯 DTW最適化スキャン実行中（東証プライム・50d×15d・PF 2.41判定）..." if is_golden_sniper else f"🎯 DTW動的時間伸縮 高速パターン照合中（照合{n_m}日 × 保有{f_d}日後 × 閾値+{th:.1f}%）..."
                 with st.spinner(sp_text):
                     import daily_sniper_screener as dss
                     sniped_list, sniper_msg = dss.run_sniper_screening(
