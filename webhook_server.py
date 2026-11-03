@@ -266,9 +266,9 @@ def save_user_preference(user_id: str, params: dict, name: str = None):
     if user_id not in prefs:
         prefs[user_id] = {
             "name": name or "知人ユーザー",
-            "match_days": 50,
+            "match_days": 80,
             "hold_days": 15,
-            "thresh": 8.0,
+            "thresh": 7.0,
             "pbr": 1.0,
             "active": True,
             "registered_at": time.strftime("%Y-%m-%d %H:%M:%S")
@@ -283,9 +283,9 @@ def save_user_preference(user_id: str, params: dict, name: str = None):
 def get_user_preference(user_id: str) -> dict:
     prefs = load_all_preferences()
     return prefs.get(user_id, {
-        "match_days": 50,
+        "match_days": 80,
         "hold_days": 15,
-        "thresh": 8.0,
+        "thresh": 7.0,
         "pbr": 1.0
     })
 
@@ -554,7 +554,7 @@ def broadcast_noon_exit_routine(force=False, test_user_id=None):
     add_log(f"✅ [NOON EXIT ROUTINE] Delivered noon exit signals to {sent_count} subscribers!")
     return sent_count, f"{sent_count}名に売却シグナル通知を配信しました。"
 
-def run_and_push_sniper_for_user(target_user_id: str, match_days: int = 50, hold_days: int = 15, thresh: float = 8.0, pbr_max = 1.0):
+def run_and_push_sniper_for_user(target_user_id: str, match_days: int = 80, hold_days: int = 15, thresh: float = 7.0, pbr_max = 1.0, is_dual: bool = True):
     """Run sniper scan and send appropriate free/premium message to a specific LINE user."""
     sniped_stocks, _ = run_sniper_screening(
         n_match=match_days,
@@ -563,7 +563,8 @@ def run_and_push_sniper_for_user(target_user_id: str, match_days: int = 50, hold
         pbr_max=pbr_max,
         target_user_id=target_user_id,
         send_push=False,
-        is_interactive=True
+        is_interactive=True,
+        dual_mode=is_dual
     )
     is_prem = is_line_user_premium(target_user_id)
     prefs = load_all_preferences()
@@ -577,16 +578,27 @@ def run_and_push_sniper_for_user(target_user_id: str, match_days: int = 50, hold
         else:
             msg = build_free_sniper_msg(sniped_stocks, user_name=uname, n_match=match_days, future_day=hold_days, thresh=thresh, pbr_label=pbr_label)
     else:
-        msg = (
-            f"【ZenStock スキャナー結果】\n━━━━━━━━━━━━━━\n"
-            f"設定条件:\n"
-            f"・照合期間: {match_days}日\n"
-            f"・保有期間: {hold_days}日\n"
-            f"・上昇閾値: +{thresh:.1f}%\n"
-            f"・PBR条件: {pbr_label}\n"
-            f"━━━━━━━━━━━━━━\n"
-            f"本日、上記条件に合致する銘柄はありませんでした。"
-        )
+        if is_dual:
+            msg = (
+                f"🎯【ZenStock スキャナー結果（黄金デュアル）】\n{uname} 様\n━━━━━━━━━━━━━━\n"
+                f"本日、東証プライム全社中、厳格な条件を満たす銘柄はありませんでした。\n\n"
+                f"・⚡ 超短期スナイパー (50d/5d/+8.0%・PF 3.01): 0件\n"
+                f"・🏆 本命スイング (80d/15d/+7.0%・PF 2.83): 0件\n"
+                f"・PBR条件: {pbr_label}\n"
+                f"━━━━━━━━━━━━━━\n"
+                f"💡 投資規律を守り、無理なエントリーを見送る日です。"
+            )
+        else:
+            msg = (
+                f"【ZenStock スキャナー結果】\n{uname} 様\n━━━━━━━━━━━━━━\n"
+                f"設定条件:\n"
+                f"・照合期間: {match_days}日\n"
+                f"・保有期間: {hold_days}日\n"
+                f"・上昇閾値: +{thresh:.1f}%\n"
+                f"・PBR条件: {pbr_label}\n"
+                f"━━━━━━━━━━━━━━\n"
+                f"本日、上記条件に合致する銘柄はありませんでした。"
+            )
     send_line_message(msg, target_user_id=target_user_id)
 
 def _morning_scheduler_loop():
@@ -693,9 +705,9 @@ def clean_for_json(v):
 @app.post("/api/scan")
 def api_scan(payload: dict, background_tasks: BackgroundTasks):
     try:
-        match_days = int(payload.get("match_days", 50))
+        match_days = int(payload.get("match_days", 80))
         hold_days = int(payload.get("hold_days", 15))
-        thresh = float(payload.get("thresh", 8.0))
+        thresh = float(payload.get("thresh", 7.0))
         pbr_raw = payload.get("pbr", "pbr1")
         pbr_max = 1.0 if pbr_raw in ("pbr1", 1.0, 1) else None
         raw_uid = payload.get("user_id")
@@ -1306,39 +1318,56 @@ async def line_webhook(request: Request, background_tasks: BackgroundTasks, x_li
         if text.startswith("スキャン") or text.startswith("スナイプ") or "スキャン実行" in text:
             # Parse parameters if given
             # Format: "スキャン 60 25 10 1" or "🎯 【スナイパースキャン実行】\n照合:60日 | 保有:25日..."
-            match_days = 50
-            hold_days = 15
-            thresh = 8.0
-            pbr_max = 1.0
-
-            # Direct numbers: "スキャン 60 25 10 1"
             nums = re.findall(r"[-+]?\d*\.\d+|\d+", text)
             if len(nums) >= 3:
+                is_dual = False
                 try:
                     match_days = int(nums[0])
                     hold_days = int(nums[1])
                     thresh = float(nums[2])
+                    pbr_max = 1.0
                     if len(nums) >= 4:
                         pbr_val = float(nums[3])
                         pbr_max = 1.0 if pbr_val == 1.0 or pbr_val == 1 else (None if pbr_val == 0 else pbr_val)
                     if "制限なし" in text or "全銘柄" in text:
                         pbr_max = None
                 except Exception:
-                    pass
+                    match_days = 80
+                    hold_days = 15
+                    thresh = 7.0
+                    pbr_max = 1.0
+                    is_dual = True
+            else:
+                match_days = 80
+                hold_days = 15
+                thresh = 7.0
+                pbr_max = 1.0
+                is_dual = True
 
             pbr_label = f"PBR < {pbr_max:.1f}" if pbr_max else "制限なし"
 
             # Send immediate reply
-            reply_text = (
-                f"🎯 スナイパースキャンを開始しました...\n"
-                f"━━━━━━━━━━━━━━\n"
-                f"・照合期間: {match_days}日\n"
-                f"・保有期間: {hold_days}日\n"
-                f"・上昇閾値: +{thresh:.1f}%\n"
-                f"・PBR条件: {pbr_label}\n"
-                f"━━━━━━━━━━━━━━\n"
-                f"約5秒でスクリーニング結果をお届けします！"
-            )
+            if is_dual:
+                reply_text = (
+                    f"🎯 スナイパースキャン（黄金デュアルスキャン）を開始しました...\n"
+                    f"━━━━━━━━━━━━━━\n"
+                    f"・⚡ 超短期: 照合50日 × 保有5日 × +8.0% (PF 3.01)\n"
+                    f"・🏆 本命: 照合80日 × 保有15日 × +7.0% (PF 2.83)\n"
+                    f"・PBR条件: {pbr_label}\n"
+                    f"━━━━━━━━━━━━━━\n"
+                    f"約1秒でスクリーニング結果をお届けします！"
+                )
+            else:
+                reply_text = (
+                    f"🎯 スナイパースキャンを開始しました...\n"
+                    f"━━━━━━━━━━━━━━\n"
+                    f"・照合期間: {match_days}日\n"
+                    f"・保有期間: {hold_days}日\n"
+                    f"・上昇閾値: +{thresh:.1f}%\n"
+                    f"・PBR条件: {pbr_label}\n"
+                    f"━━━━━━━━━━━━━━\n"
+                    f"約1秒でスクリーニング結果をお届けします！"
+                )
             reply_line_message(reply_token, reply_text)
 
             # Background task (Sends tier-separated msg: free gets teaser, premium gets full names)
@@ -1348,7 +1377,8 @@ async def line_webhook(request: Request, background_tasks: BackgroundTasks, x_li
                 match_days=match_days,
                 hold_days=hold_days,
                 thresh=thresh,
-                pbr_max=pbr_max
+                pbr_max=pbr_max,
+                is_dual=is_dual
             )
 
         # 2. Save preference (e.g. "保存 60 25 10 1")
