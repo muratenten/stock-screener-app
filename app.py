@@ -6210,33 +6210,58 @@ def render_detail_dashboard(selected_ticker, selected_name, raw_analysis, key_su
     }}
     .tab-emoji-shift {{
         display: inline-block !important;
-        transform: translateY(-2.5px) !important;
-        margin-right: 5px !important;
+        transform: translateY(-3.5px) !important;
+        margin-right: 6px !important;
         vertical-align: middle !important;
-        font-size: 1.05em !important;
+        font-size: 1.1em !important;
+        line-height: 1 !important;
     }}
     </style>
+    """)
+
+    st.html(r"""
     <script>
-    (function() {{
-        function shiftTabEmojis() {{
-            const paragraphs = document.querySelectorAll('div[class*="st-key-det_tab_select"] button p, div[class*="st-key-chart_interval"] button p');
-            paragraphs.forEach(p => {{
-                if (!p.dataset.emojiShifted && p.textContent) {{
-                    const txt = p.textContent.trim();
-                    const match = txt.match(/^([\uD800-\uDBFF][\uDC00-\uDFFF]|[\u2600-\u27BF]|📈|🎁|💡|📊|🔍)\s*(.+)$/);
-                    if (match) {{
-                        p.innerHTML = `<span class="tab-emoji-shift">${{match[1]}}</span><span>${{match[2]}}</span>`;
-                        p.dataset.emojiShifted = "true";
-                    }}
-                }}
-            }});
-        }}
+    (function() {
+        function getTargetDocs() {
+            var docs = [document];
+            try {
+                if (window.parent && window.parent.document && window.parent.document !== document) {
+                    docs.push(window.parent.document);
+                }
+            } catch(e) {}
+            try {
+                if (window.top && window.top.document && window.top.document !== document && docs.indexOf(window.top.document) === -1) {
+                    docs.push(window.top.document);
+                }
+            } catch(e) {}
+            return docs;
+        }
+
+        function shiftTabEmojis() {
+            var docs = getTargetDocs();
+            docs.forEach(function(doc) {
+                var buttons = doc.querySelectorAll('div[class*="st-key-det_tab_select"] button, div[class*="st-key-chart_interval"] button');
+                buttons.forEach(function(btn) {
+                    var el = btn.querySelector('p') || btn.querySelector('div[data-testid="stMarkdownContainer"]') || btn;
+                    if (el && !el.dataset.emojiShifted && el.childNodes.length > 0) {
+                        var txt = el.textContent.trim();
+                        var match = txt.match(/^(📈|🎁|💡|📊|🔍|🕯️|⏱️)\s*(.+)$/);
+                        if (match) {
+                            el.innerHTML = '<span class="tab-emoji-shift">' + match[1] + '</span><span>' + match[2] + '</span>';
+                            el.dataset.emojiShifted = "true";
+                        }
+                    }
+                });
+            });
+        }
         shiftTabEmojis();
-        if (!window._tabEmojiObserver) {{
-            window._tabEmojiObserver = new MutationObserver(shiftTabEmojis);
-            window._tabEmojiObserver.observe(document.body, {{ childList: true, subtree: true }});
-        }}
-    }})();
+        getTargetDocs().forEach(function(doc) {
+            if (!doc._tabEmojiObserver) {
+                doc._tabEmojiObserver = new MutationObserver(shiftTabEmojis);
+                doc._tabEmojiObserver.observe(doc.body, { childList: true, subtree: true });
+            }
+        });
+    })();
     </script>
     """)
 
@@ -10186,20 +10211,20 @@ with tab_screen:
                     )
                 with col_sort1:
                     sort_option = st.selectbox(
-                        "⇅ 表示の並び替え（ソート順）",
+                        "↕️ 表示の並び替え（ソート順）",
                         options=[
                             "🏆 総合スコアが高い順 (おすすめ)",
                             "💴 株価が安い順 (少額・買いやすい順)",
-                            "🚀 株価が高い順 (値がさ株)",
+                            "💎 株価が高い順 (値がさ優良株)",
                             "📈 前日比の上昇率が高い順",
                             "📉 前日比の下落率が大きい順 (押し目買い狙い)",
-                            "🎁 配当利回りが高い順",
-                            "💎 PERが低い順 (利益割安順)",
-                            "🏢 PBRが低い順 (純資産割安順)",
+                            "💰 配当利回りが高い順",
+                            "🎁 優待利回りが高い順",
+                            "🎯 PERが低い順 (利益割安順)",
+                            "🛡️ PBRが低い順 (純資産割安順)",
                             "📊 ROEが高い順 (高収益・経営効率順)",
                             "🚀 売上高成長率が高い順 (事業拡大順)",
-                            "💰 EPS成長率が高い順 (純利益成長順)",
-                            "💳 優待利回りが高い順",
+                            "🌱 EPS成長率が高い順 (純利益成長順)",
                         ],
                         index=0,
                         key="screening_sort_selector"
@@ -10219,16 +10244,16 @@ with tab_screen:
                 sort_map = {
                     "🏆 総合スコアが高い順 (おすすめ)": ("総合スコア (10点)", False),
                     "💴 株価が安い順 (少額・買いやすい順)": ("株価", True),
-                    "🚀 株価が高い順 (値がさ株)": ("株価", False),
+                    "💎 株価が高い順 (値がさ優良株)": ("株価", False),
                     "📈 前日比の上昇率が高い順": ("前日比 (%)", False),
                     "📉 前日比の下落率が大きい順 (押し目買い狙い)": ("前日比 (%)", True),
-                    "🎁 配当利回りが高い順": ("配当利回り (%)", False),
-                    "💎 PERが低い順 (利益割安順)": ("PER (倍)", True),
-                    "🏢 PBRが低い順 (純資産割安順)": ("PBR (倍)", True),
+                    "💰 配当利回りが高い順": ("配当利回り (%)", False),
+                    "🎁 優待利回りが高い順": ("優待利回り (%)", False),
+                    "🎯 PERが低い順 (利益割安順)": ("PER (倍)", True),
+                    "🛡️ PBRが低い順 (純資産割安順)": ("PBR (倍)", True),
                     "📊 ROEが高い順 (高収益・経営効率順)": ("ROE (%)", False),
                     "🚀 売上高成長率が高い順 (事業拡大順)": ("売上高成長率 (%)", False),
-                    "💰 EPS成長率が高い順 (純利益成長順)": ("EPS成長率 (%)", False),
-                    "💳 優待利回りが高い順": ("優待利回り (%)", False),
+                    "🌱 EPS成長率が高い順 (純利益成長順)": ("EPS成長率 (%)", False),
                 }
                 
                 sort_col, sort_asc = sort_map.get(sort_option, ("総合スコア (10点)", False))
