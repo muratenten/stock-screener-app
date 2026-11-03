@@ -6127,7 +6127,9 @@ def render_detail_dashboard(selected_ticker, selected_name, raw_analysis, key_su
     }}
     div[data-testid="stButtonGroup"] > div,
     div[class*="st-key-det_tab_select"] [role="radiogroup"],
-    div[class*="st-key-det_tab_select"] > div {{
+    div[class*="st-key-det_tab_select"] > div,
+    div[class*="st-key-chart_interval"] [role="radiogroup"],
+    div[class*="st-key-chart_interval"] > div {{
         display: flex !important;
         width: 100% !important;
         flex-direction: row !important;
@@ -6135,9 +6137,9 @@ def render_detail_dashboard(selected_ticker, selected_name, raw_analysis, key_su
         gap: 8px !important;
         background: transparent !important;
     }}
-    div[data-testid="stButtonGroup"] button[data-testid^="stBaseButton-segmented_control"],
-    div[class*="st-key-chart_interval"] button {{
-        flex: 1 1 0% !important;
+    div[data-testid="stButtonGroup"] button[data-testid^="stBaseButton-segmented_control"] {{
+        flex: 1 1 auto !important;
+        min-width: max-content !important;
         text-align: center !important;
         font-size: 0.95rem !important;
         padding: 10px 16px !important;
@@ -6152,12 +6154,12 @@ def render_detail_dashboard(selected_ticker, selected_name, raw_analysis, key_su
         transition: all 0.2s ease !important;
         box-shadow: none !important;
     }}
-    /* Detail Tabs: Flexible width adapted to text length and container width without ellipsis */
-    div[class*="st-key-det_tab_select"] button {{
+    /* Detail Tabs & Chart Interval: Flexible width adapted to text length and container width without ellipsis */
+    div[class*="st-key-det_tab_select"] button,
+    div[class*="st-key-chart_interval"] button {{
         flex: 1 1 auto !important;
         min-width: max-content !important;
         width: auto !important;
-        text-align: left !important;
         font-size: 0.92rem !important;
         padding: 9px 16px !important;
         white-space: nowrap !important;
@@ -6327,6 +6329,15 @@ def render_detail_dashboard(selected_ticker, selected_name, raw_analysis, key_su
                             p.style.setProperty('text-align', 'left', 'important');
                             p.style.setProperty('white-space', 'nowrap', 'important');
                         }
+                    }
+
+                    // Flexible width for chart interval buttons
+                    if (btn.closest('div[class*="st-key-chart_interval"]')) {
+                        btn.style.setProperty('flex', '1 1 auto', 'important');
+                        btn.style.setProperty('min-width', 'max-content', 'important');
+                        btn.style.setProperty('width', 'auto', 'important');
+                        btn.style.setProperty('padding-left', '14px', 'important');
+                        btn.style.setProperty('padding-right', '14px', 'important');
                     }
 
                     // Natural inline alignment for icons
