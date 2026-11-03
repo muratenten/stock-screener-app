@@ -6198,8 +6198,26 @@ def render_detail_dashboard(selected_ticker, selected_name, raw_analysis, key_su
     div[class*="st-key-chart_interval"] button[aria-pressed="true"] * {{
         color: #ffffff !important;
     }}
-    /* Vertically center segmented buttons and elevate tab emoji position */
-    div[class*="st-key-det_tab_select"] button,
+    /* Vertically center segmented buttons and align tab items to the left */
+    div[class*="st-key-det_tab_select"] button {{
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: flex-start !important;
+        text-align: left !important;
+        padding-left: 16px !important;
+        padding-right: 12px !important;
+    }}
+    div[class*="st-key-det_tab_select"] button > div,
+    div[class*="st-key-det_tab_select"] button [data-testid="stMarkdownContainer"],
+    div[class*="st-key-det_tab_select"] button p,
+    div[class*="st-key-det_tab_select"] button span {{
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: flex-start !important;
+        text-align: left !important;
+        line-height: normal !important;
+        margin: 0 !important;
+    }}
     div[class*="st-key-chart_interval"] button,
     div[data-testid="stButtonGroup"] button,
     div[data-testid="stSegmentedControl"] button {{
@@ -6207,9 +6225,6 @@ def render_detail_dashboard(selected_ticker, selected_name, raw_analysis, key_su
         align-items: center !important;
         justify-content: center !important;
     }}
-    div[class*="st-key-det_tab_select"] button p,
-    div[class*="st-key-det_tab_select"] button div,
-    div[class*="st-key-det_tab_select"] button span,
     div[class*="st-key-chart_interval"] button p,
     div[class*="st-key-chart_interval"] button div,
     div[class*="st-key-chart_interval"] button span {{
@@ -6219,7 +6234,7 @@ def render_detail_dashboard(selected_ticker, selected_name, raw_analysis, key_su
         line-height: 1 !important;
         margin: 0 !important;
     }}
-    /* Finely position icons slightly down and right (translate(1.5px, 0px)) */
+    /* Seamless inline flow for icons in tabs (Natural vertical alignment without offsets) */
     div[class*="st-key-det_tab_select"] button svg,
     div[class*="st-key-det_tab_select"] button .feather-icon,
     div[class*="st-key-det_tab_select"] button .lucide-icon,
@@ -6233,16 +6248,20 @@ def render_detail_dashboard(selected_ticker, selected_name, raw_analysis, key_su
     div[class*="st-key-chart_interval"] button .feather-wrapper,
     div[class*="st-key-chart_interval"] button .tab-emoji-shift {{
         vertical-align: middle !important;
-        transform: translate(1.5px, 0px) !important;
-        margin-right: 5px !important;
+        transform: none !important;
+        margin-right: 6px !important;
+        margin-left: 0 !important;
         margin-bottom: 0 !important;
-        display: inline-block !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        flex-shrink: 0 !important;
     }}
     .tab-emoji-shift {{
         display: inline-block !important;
-        transform: translate(1.5px, 0px) !important;
-        margin-right: 5px !important;
         vertical-align: middle !important;
+        transform: none !important;
+        margin-right: 6px !important;
+        margin-left: 0 !important;
         font-size: 1.05em !important;
         line-height: 1 !important;
     }}
@@ -6272,14 +6291,28 @@ def render_detail_dashboard(selected_ticker, selected_name, raw_analysis, key_su
             docs.forEach(function(doc) {
                 var buttons = doc.querySelectorAll('div[class*="st-key-det_tab_select"] button, div[class*="st-key-chart_interval"] button');
                 buttons.forEach(function(btn) {
-                    // 1. Position icons down and right
+                    // Left align tabs content naturally
+                    if (btn.closest('div[class*="st-key-det_tab_select"]')) {
+                        btn.style.setProperty('justify-content', 'flex-start', 'important');
+                        btn.style.setProperty('text-align', 'left', 'important');
+                        btn.style.setProperty('padding-left', '16px', 'important');
+                        var p = btn.querySelector('p') || btn.querySelector('div[data-testid="stMarkdownContainer"]');
+                        if (p) {
+                            p.style.setProperty('justify-content', 'flex-start', 'important');
+                            p.style.setProperty('text-align', 'left', 'important');
+                        }
+                    }
+
+                    // Natural inline alignment for icons
                     btn.querySelectorAll('svg, .lucide-wrapper, .feather-wrapper').forEach(function(s) {
-                        s.style.setProperty('transform', 'translate(1.5px, 0px)', 'important');
+                        s.style.setProperty('transform', 'none', 'important');
                         s.style.setProperty('vertical-align', 'middle', 'important');
+                        s.style.setProperty('margin-right', '6px', 'important');
+                        s.style.setProperty('margin-left', '0', 'important');
                         s.style.setProperty('margin-bottom', '0', 'important');
                     });
                     
-                    // 2. Wrap text emoji if not yet converted
+                    // Wrap text emoji if not yet converted
                     var el = btn.querySelector('p') || btn.querySelector('div[data-testid="stMarkdownContainer"]') || btn;
                     if (el && !el.dataset.emojiShifted && el.childNodes.length > 0) {
                         var txt = el.textContent.trim();
