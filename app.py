@@ -7324,7 +7324,7 @@ if query_user == "default":
     # ---------------------------------------------------------
     # WELCOME PORTAL PAGE (Shown when no user ID is set)
     # ---------------------------------------------------------
-    portal_bg = "#0b0f19" if is_dark else "#f8fafc"
+    portal_bg = "#2f384b" if is_dark else "#f8fafc"
     st.html(("""
     <div class="portal-bg-container">
         <div class="portal-blob portal-blob-1"></div>
@@ -7794,26 +7794,26 @@ if query_user == "default":
         st.html("""
         <style>
         html, body, .stApp, [data-testid="stApp"], [data-testid="stAppViewContainer"], [data-testid="stMainViewContainer"], .main {
-            background-color: #030508 !important;
-            background: radial-gradient(ellipse at 50% 15%, #080e1a 0%, #020305 100%) !important;
-            color: #f1f5f9 !important;
+            background-color: #2f384b !important;
+            background: #2f384b !important;
+            color: #ffffff !important;
         }
         .portal-blob {
             filter: blur(180px) !important;
-            opacity: 0.16 !important;
+            opacity: 0.18 !important;
         }
         .portal-blob-1 {
-            background: rgba(30, 58, 138, 0.28) !important;
+            background: rgba(59, 130, 246, 0.35) !important;
             width: 480px !important;
             height: 480px !important;
         }
         .portal-blob-2 {
-            background: rgba(67, 56, 202, 0.22) !important;
+            background: rgba(99, 102, 241, 0.28) !important;
             width: 520px !important;
             height: 520px !important;
         }
         .portal-blob-3 {
-            background: rgba(15, 23, 42, 0.2) !important;
+            background: rgba(56, 189, 248, 0.22) !important;
             width: 380px !important;
             height: 380px !important;
         }
@@ -7824,7 +7824,7 @@ if query_user == "default":
             color: #ffffff !important;
             -webkit-text-fill-color: #ffffff !important;
             background: none !important;
-            text-shadow: 0 0 25px rgba(96, 165, 250, 0.6), 0 2px 10px rgba(0, 0, 0, 0.9) !important;
+            text-shadow: 0 0 25px rgba(96, 165, 250, 0.6), 0 2px 10px rgba(0, 0, 0, 0.6) !important;
             filter: none !important;
             text-align: center !important;
             margin-top: 16px !important;
@@ -7844,6 +7844,31 @@ if query_user == "default":
             letter-spacing: 0.05em !important;
             display: block !important;
             white-space: nowrap !important;
+        }
+        .login-header-section {
+            border-bottom: 1px solid rgba(255, 255, 255, 0.12) !important;
+        }
+        .login-section-title {
+            color: #ffffff !important;
+        }
+        .login-intro-text {
+            color: #cbd5e1 !important;
+        }
+        .login-info-box {
+            background: #3d495f !important;
+            border-left: 4px solid #3b82f6 !important;
+        }
+        .login-info-title {
+            color: #60a5fa !important;
+        }
+        .login-info-text {
+            color: #e2e8f0 !important;
+        }
+        [data-testid="stForm"] {
+            background: #3d495f !important;
+            border: 1px solid rgba(255, 255, 255, 0.16) !important;
+            color: #ffffff !important;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25) !important;
         }
         .login-portal-center-box {
             max-width: 480px !important;
@@ -7914,16 +7939,16 @@ if query_user == "default":
 
         /* Tokusho Button in Dark Mode */
         div[class*="st-key-portal_tokusho_btn"] button {
-            background: rgba(15, 23, 42, 0.6) !important;
-            border: 1px solid rgba(255, 255, 255, 0.15) !important;
-            color: #94a3b8 !important;
+            background: #3d495f !important;
+            border: 1px solid rgba(255, 255, 255, 0.18) !important;
+            color: #f1f5f9 !important;
             border-radius: 10px !important;
             backdrop-filter: blur(10px) !important;
             transition: all 0.2s ease !important;
         }
         div[class*="st-key-portal_tokusho_btn"] button:hover {
-            background: rgba(30, 41, 59, 0.8) !important;
-            border-color: #60a5fa !important;
+            background: #4a5770 !important;
+            border-color: #3b82f6 !important;
             color: #ffffff !important;
             transform: translateY(-1px) !important;
         }
@@ -8183,11 +8208,11 @@ if query_user == "default":
         oauth_theme_state = f"__{current_theme_slug}"
         
         login_card_style = """
-            background: rgba(15, 23, 42, 0.7) !important;
+            background: #3d495f !important;
             backdrop-filter: blur(20px) !important;
             -webkit-backdrop-filter: blur(20px) !important;
-            border: 1px solid rgba(255, 255, 255, 0.12) !important;
-            box-shadow: 0 10px 35px -5px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.05) !important;
+            border: 1px solid rgba(255, 255, 255, 0.16) !important;
+            box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(255, 255, 255, 0.08) !important;
             border-radius: 14px !important;
             padding: 16px 20px 12px 20px !important;
             margin-bottom: 20px;
@@ -8203,7 +8228,7 @@ if query_user == "default":
             position: relative;
             z-index: 1;
         """
-        login_card_title_color = "#f8fafc" if is_dark else "rgba(0, 0, 0, 0.87)"
+        login_card_title_color = "#ffffff" if is_dark else "rgba(0, 0, 0, 0.87)"
         
         st.markdown(f"""
         <div style="{login_card_style}">
@@ -8686,7 +8711,7 @@ else:
 
 logo_header_html = f'<img src="{logo_data_uri}" style="width: 42px; height: 42px; border-radius: 11px; box-shadow: 0 2px 10px rgba(37,99,235,0.2); border: 1px solid rgba(226,232,240,0.8); background: #ffffff; object-fit: contain; padding: 2px;" />' if logo_data_uri else ""
 
-BUILD_VERSION = "2026.11.02-2130"
+BUILD_VERSION = "2026.11.03-1050"
 st.markdown(f'<div class="title-container" style="display: flex; flex-direction: column; gap: 6px;"><div style="display: flex; align-items: center; gap: 14px; flex-wrap: wrap;">{logo_header_html}<div class="title-text" style="margin: 0; line-height: 1;">ZenStockScreener</div>{badge_html}<span style="font-size: 0.72rem; color: var(--secondary-text-color); opacity: 0.7; font-family: monospace;">build:{BUILD_VERSION}</span></div><div class="subtitle-text" style="margin-top: 4px;">AI分析とファンダメンタルズ指標による日本株上昇期待銘柄の選定システム</div></div>', unsafe_allow_html=True)
 
 # Mobile-friendly Quick Action Header (LINE integration & status)
