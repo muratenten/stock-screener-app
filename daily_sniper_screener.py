@@ -2,11 +2,11 @@
 Daily Sniper Screener & LINE Notification Script
 Condition:
   - Universe: TSE Prime (~1,529 tickers)
-  - Match Days: 50 trading days (~2.5 months)
-  - Holding/Future Days: 15 trading days (~3 weeks, ratio 30%)
-  - Minimum Past Return Threshold: +8.0% (all top 3 matches >= +8.0%)
+  - Match Days: 80 trading days (~4.0 months)
+  - Holding/Future Days: 15 trading days (~3 weeks)
+  - Minimum Past Return Threshold: +7.0%
   - Value Filter: PBR < 1.0
-  - Win Rate Expectancy: Individual 72.65% / Basket 70.49% (Excess Alpha: +1.99%, Avg Return: +4.28%, Annualized ROI: +65.2%/yr)
+  - Win Rate Expectancy: Individual 60.2% / PF 2.83 / Avg Return +2.53%
 """
 
 import os
@@ -532,7 +532,7 @@ def run_sniper_screening(
             
         # Compose LINE Message
         msg = "🎯【超高勝率スナイプ警報】\n\n"
-        msg += "月4銘柄厳選・実戦勝率75〜81%のスナイプ銘柄を検知しました！\n"
+        msg += "黄金プリセット（80d/15d/+7%・PF 2.83）のスナイプ銘柄を検知しました！\n"
         msg += "（東証プライム・PBR1.0倍割れ・DTW動的時間伸縮判定）\n"
         msg += "━━━━━━━━━━━━━━\n"
         for s in sniped_stocks:
@@ -553,9 +553,9 @@ def run_sniper_screening(
         msg += f"💡 戦略条件（黄金スナイパー版）:\n"
         msg += f"・データ基準日: {latest_market_date}\n"
         msg += f"・照合アルゴリズム: DTW動的時間伸縮法（±{dtw_window}日伸縮補正）\n"
-        msg += f"・照合期間: {n_match}日（約2.5ヶ月） | 保有期間: {future_day}日（約3週間）\n"
+        msg += f"・照合期間: {n_match}日（約4ヶ月） | 保有期間: {future_day}日（約3週間）\n"
         msg += f"・トレンド適合: 200日線以上 ＆ 天井過熱（+25%超）事前排除\n"
-        msg += f"・リスクリワード: 1 : 2.22（損失の2倍以上の利益期待値）\n"
+        msg += f"・過去3年検証: 個別勝率 60.2% / PF 2.83 / 平均リターン +2.53%\n"
         result_message = msg.strip()
         
         if send_push:
@@ -566,11 +566,11 @@ def run_sniper_screening(
             result_message = f"【ZenStock スキャナー結果】\n━━━━━━━━━━━━━━\n"
             result_message += f"設定条件:\n"
             result_message += f"・データ基準日: {latest_market_date}\n"
-            result_message += f"・照合期間: {n_match}日（約2.5ヶ月）\n"
+            result_message += f"・照合期間: {n_match}日（約4ヶ月）\n"
             result_message += f"・保有期間: {future_day}日（約3週間）\n"
             result_message += f"・上昇閾値: +{thresh:.1f}%\n"
             result_message += f"・PBR条件: {pbr_label}\n"
-            result_message += f"・過去5年実績: 個別勝率72.7% / 超過α+1.99%\n"
+            result_message += f"・過去3年実績: 個別勝率60.2% / PF 2.83 / 平均利益+2.53%\n"
             result_message += "━━━━━━━━━━━━━━\n"
             result_message += "本日、上記条件に合致する銘柄はありませんでした。"
             if send_push:
@@ -592,9 +592,9 @@ def run_sniper_screening(
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="ZenStock Daily Sniper Screener")
     parser.add_argument("--test", action="store_true", help="Send a test LINE message even if no hits")
-    parser.add_argument("--match", type=int, default=50, help="Match window in days (default: 50)")
+    parser.add_argument("--match", type=int, default=80, help="Match window in days (default: 80)")
     parser.add_argument("--hold", type=int, default=15, help="Holding window in days (default: 15)")
-    parser.add_argument("--thresh", type=float, default=8.0, help="Min return threshold (default: 8.0)")
+    parser.add_argument("--thresh", type=float, default=7.0, help="Min return threshold (default: 7.0)")
     parser.add_argument("--pbr", type=float, default=1.0, help="Max PBR threshold (0 for no limit, default: 1.0)")
     parser.add_argument("--user", type=str, default=None, help="Target LINE User ID (default: LINE_USER_ID)")
     parser.add_argument("--interactive", action="store_true", help="Notify user even if 0 hits (for on-demand scans)")

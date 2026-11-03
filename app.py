@@ -8952,10 +8952,10 @@ widget_defaults = {
     "scr_filter_bb_re": False,
     "scr_filter_vol_su": False,
     "scr_filter_similarity": False,
-    "scr_similarity_match_days": 50,
+    "scr_similarity_match_days": 80,
     "scr_similarity_future_days": 15,
     "scr_similarity_days": 15,
-    "scr_similarity_pct": 8.0,
+    "scr_similarity_pct": 7.0,
     "scr_filter_shape_match": False,
     "scr_filter_shape_match_mobile": False,
     "active_preset": "カスタム設定",
@@ -9059,15 +9059,15 @@ def apply_preset(preset_name):
         st.session_state["scr_min_fund"] = 0
         st.session_state["scr_filter_pbr"] = True
         st.session_state["scr_filter_similarity"] = True
-        st.session_state["scr_similarity_match_days"] = 50
+        st.session_state["scr_similarity_match_days"] = 80
         st.session_state["scr_similarity_future_days"] = 15
         st.session_state["scr_similarity_days"] = 15
-        st.session_state["scr_similarity_pct"] = 8.0
+        st.session_state["scr_similarity_pct"] = 7.0
         
     st.session_state["active_preset"] = preset_name
     presets_inv = {
         "カスタム設定": "⚙️ カスタム設定",
-        "超高勝率スナイプ": "🎯 超高勝率スナイプ (月4銘柄・勝率80%)",
+        "超高勝率スナイプ": "🎯 超高勝率スナイプ (80d/15d/+7%・PF 2.83)",
         "大化け成長株": "🚀 大化け成長株狙い",
         "高配当割安株": "💰 高配当＆バリュー割安株",
         "逆張り・大底打ち": "🔄 逆張り・大底打ち狙い",
@@ -9124,10 +9124,10 @@ def check_preset_match():
         expected.update({
             "scr_filter_pbr": True,
             "scr_filter_similarity": True,
-            "scr_similarity_match_days": 50,
+            "scr_similarity_match_days": 80,
             "scr_similarity_future_days": 15,
             "scr_similarity_days": 15,
-            "scr_similarity_pct": 8.0
+            "scr_similarity_pct": 7.0
         })
         
     mismatch = False
@@ -9400,7 +9400,7 @@ with tab_screen:
             st.markdown("**💡 スクリーニング・プリセット選択**")
             presets = {
                 "⚙️ カスタム設定": "カスタム設定",
-                "🎯 超高勝率スナイプ (月4銘柄・勝率80%)": "超高勝率スナイプ",
+                "🎯 超高勝率スナイプ (80d/15d/+7%・PF 2.83)": "超高勝率スナイプ",
                 "🚀 大化け成長株 (CANSLIM風)": "大化け成長株",
                 "💰 高配当割安株": "高配当割安株",
                 "🔄 逆張り・大底打ち狙い": "逆張り・大底打ち",
@@ -9474,13 +9474,13 @@ with tab_screen:
             else:
                 filter_similarity_pattern = st.checkbox("🔍 類似連動 (DTW動的時間伸縮・勝率検証フィルタ)", key="scr_filter_similarity", help="直近チャート形状に対し、時間の伸縮（±5日）を吸収するDTW（動的時間伸縮法）を用いて過去類似局面を高速抽出し、勝率80%以上・十分な期待値を満たす高エッジ銘柄のみを抽出します。")
             if filter_similarity_pattern:
-                similarity_match_days = st.slider("   ↳ 照合する直近チャート期間 (営業日)", 5, 120, int(st.session_state.get("scr_similarity_match_days", 50)), step=5, key="scr_similarity_match_days", help="直近何営業日分のチャート形状（波形）を照合元として使用するかを設定します（推奨最適値: 50日 = 約2.5ヶ月）。")
+                similarity_match_days = st.slider("   ↳ 照合する直近チャート期間 (営業日)", 5, 120, int(st.session_state.get("scr_similarity_match_days", 80)), step=5, key="scr_similarity_match_days", help="直近何営業日分のチャート形状（波形）を照合元として使用するかを設定します（推奨最適値: 80日 = 約4ヶ月）。")
                 similarity_future_days = st.slider("   ↳ 参照する未来予測期間 (営業日後)", 5, 120, int(st.session_state.get("scr_similarity_future_days", st.session_state.get("scr_similarity_days", 15))), step=5, key="scr_similarity_future_days", help="過去類似局面から何営業日後に上昇したかを判定するかを設定します（推奨最適値: 15日後 = 約3週間）。")
-                similarity_threshold_pct = st.slider("   ↳ 必要上昇率 (%)", 0.0, 15.0, float(st.session_state.get("scr_similarity_pct", 8.0)), step=0.5, key="scr_similarity_pct", help="過去類似局面で達成しているべき最小上昇率を設定します（推奨最適値: +5.0%〜+8.0%）。")
+                similarity_threshold_pct = st.slider("   ↳ 必要上昇率 (%)", 0.0, 15.0, float(st.session_state.get("scr_similarity_pct", 7.0)), step=0.5, key="scr_similarity_pct", help="過去類似局面で達成しているべき最小上昇率を設定します（推奨最適値: +7.0%）。")
             else:
-                similarity_match_days = 50
+                similarity_match_days = 80
                 similarity_future_days = 15
-                similarity_threshold_pct = 8.0
+                similarity_threshold_pct = 7.0
                 
             # Define shape matching filter on mobile
             filter_shape_match = st.checkbox("📈 チャート形状パターン指定", key="scr_filter_shape_match_mobile", help="直近30日間のチャート形状が、指定した特定のパターン（上昇傾向、下降減衰、上昇反転）に類似する銘柄のみを抽出します。")
@@ -9606,13 +9606,13 @@ with tab_screen:
                 else:
                     filter_similarity_pattern = st.checkbox("🔍 類似連動 (DTW動的時間伸縮・勝率検証フィルタ)", key="scr_filter_similarity", help="直近チャート形状に対し、時間の伸縮（±5日）を吸収するDTW（動的時間伸縮法）を用いて過去類似局面を高速抽出し、勝率80%以上・十分な期待値を満たす高エッジ銘柄のみを抽出します。")
                 if filter_similarity_pattern:
-                    similarity_match_days = st.slider("   ↳ 照合する直近チャート期間 (営業日)", 5, 120, int(st.session_state.get("scr_similarity_match_days", 50)), step=5, key="scr_similarity_match_days", help="直近何営業日分のチャート形状（波形）を照合元として使用するかを設定します（推奨最適値: 50日 = 約2.5ヶ月）。")
+                    similarity_match_days = st.slider("   ↳ 照合する直近チャート期間 (営業日)", 5, 120, int(st.session_state.get("scr_similarity_match_days", 80)), step=5, key="scr_similarity_match_days", help="直近何営業日分のチャート形状（波形）を照合元として使用するかを設定します（推奨最適値: 80日 = 約4ヶ月）。")
                     similarity_future_days = st.slider("   ↳ 参照する未来予測期間 (営業日後)", 5, 120, int(st.session_state.get("scr_similarity_future_days", st.session_state.get("scr_similarity_days", 15))), step=5, key="scr_similarity_future_days", help="過去類似局面から何営業日後に上昇したかを判定するかを設定します（推奨最適値: 15日後 = 約3週間）。")
-                    similarity_threshold_pct = st.slider("   ↳ 必要上昇率 (%)", 0.0, 15.0, float(st.session_state.get("scr_similarity_pct", 8.0)), step=0.5, key="scr_similarity_pct", help="過去類似局面で達成しているべき最小上昇率を設定します（推奨最適値: +5.0%〜+8.0%）。")
+                    similarity_threshold_pct = st.slider("   ↳ 必要上昇率 (%)", 0.0, 15.0, float(st.session_state.get("scr_similarity_pct", 7.0)), step=0.5, key="scr_similarity_pct", help="過去類似局面で達成しているべき最小上昇率を設定します（推奨最適値: +7.0%）。")
                 else:
-                    similarity_match_days = 50
+                    similarity_match_days = 80
                     similarity_future_days = 15
-                    similarity_threshold_pct = 8.0
+                    similarity_threshold_pct = 7.0
                 
                 filter_shape_match = st.checkbox("📈 チャート形状パターン指定", key="scr_filter_shape_match", help="直近30日間のチャート形状が、指定した特定のパターン（上昇傾向、下降減衰、上昇反転）に類似する銘柄のみを抽出します。")
                 if filter_shape_match:
