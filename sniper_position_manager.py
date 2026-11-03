@@ -261,16 +261,16 @@ def build_noon_exit_premium_msg(due_stocks: List[Dict], user_name: str = "会員
     time_exits = [s for s in due_stocks if s.get("exit_reason") == "time_exit"]
     
     if stop_losses and not take_profits and not time_exits:
-        main_title = "⚠️【ZenStock スナイパー緊急損切りアラート】"
-        lead_desc = f"保有中のスナイパー銘柄【{count}銘柄】が、リスク管理ルール（最大許容損失 -4.5%）に到達しました。\n想定と異なる値動きとなったため、傷口を広げず次のチャンスへ資金を守る【速やかな損切り手仕舞い】を推奨します。"
+        main_title = "【ZenStock エグジット通知（損切り）】"
+        lead_desc = f"保有中のスナイパー銘柄（{count}件）が、損切りライン（-4.5%）に到達しました。\nリスク管理に基づき、本日後場での手仕舞いを推奨します。"
     elif take_profits and not stop_losses and not time_exits:
-        main_title = "🎉【ZenStock スナイパー目標達成・利確アラート】"
-        lead_desc = f"保有中のスナイパー銘柄【{count}銘柄】が、目標利益（+10.0%以上）をスピード達成しました！\n欲張らずに本日後場での【利益確定（手仕舞い）】を推奨します。"
+        main_title = "【ZenStock エグジット通知（利確）】"
+        lead_desc = f"保有中のスナイパー銘柄（{count}件）が、利確目標を達成しました。\n本日後場での利益確定手仕舞いを推奨します。"
     else:
-        main_title = "🔔【ZenStock スナイパー手仕舞い（売却）アラート】"
-        lead_desc = f"保有中のスナイパー銘柄【{count}銘柄】にエグジットシグナルが発生しました。\n検証ルールに従い、本日後場でのポジション解消（売却）を推奨します。"
+        main_title = "【ZenStock エグジット通知（売却期日）】"
+        lead_desc = f"保有中のスナイパー銘柄（{count}件）にエグジットシグナルが発生しました。\n検証ルールに従い、本日後場でのポジション解消を推奨します。"
 
-    msg = f"{main_title}\n{user_name} 様\n\n{lead_desc}\n━━━━━━━━━━━━━━\n"
+    msg = f"{main_title}\n{user_name} 様\n\n{lead_desc}\n─────────────────\n"
     
     total_ret = 0.0
     for s in due_stocks:
@@ -287,13 +287,12 @@ def build_noon_exit_premium_msg(due_stocks: List[Dict], user_name: str = "会員
         
         reason = s.get("exit_reason", "time_exit")
         if reason == "stop_loss":
-            tag = "⚠️ 損切り発動 (-4.5%到達)"
+            tag = "[損切り発動 / -4.5%到達]"
         elif reason == "take_profit":
-            tag = "🎉 利確スピード達成 (+10%超)"
+            tag = "[利確達成 / +10%超]"
         else:
-            tag = "🔔 満期手仕舞い (15営業日満了)"
+            tag = "[満期手仕舞い / 保有期間満了]"
             
-        ret_icon = "🎉" if ret_pct >= 5.0 else ("📈" if ret_pct > 0 else "📉")
         entry_p_str = f"¥{int(round(entry_p)):,}" if entry_p >= 1000 else f"¥{entry_p:,.1f}"
         curr_p_str = f"¥{int(round(curr_p)):,}" if curr_p >= 1000 else f"¥{curr_p:,.1f}"
         diff_str = f"{diff_sign}¥{int(round(diff_p)):,}" if abs(diff_p) >= 1000 else f"{diff_sign}¥{diff_p:,.1f}"
@@ -302,14 +301,13 @@ def build_noon_exit_premium_msg(due_stocks: List[Dict], user_name: str = "会員
         msg += f"【区分】{tag}\n"
         msg += f"【エントリー】{s.get('entry_date')}（{entry_p_str}）\n"
         msg += f"【現在株価】{curr_p_str}\n"
-        msg += f"【損益】{diff_str}（{ret_icon} {sign}{ret_pct:.1f}%）\n"
-        msg += "━━━━━━━━━━━━━━\n"
+        msg += f"【損益】{diff_str}（{sign}{ret_pct:.1f}%）\n"
+        msg += "─────────────────\n"
         
     avg_ret = total_ret / count if count > 0 else 0.0
     avg_sign = "+" if avg_ret >= 0 else ""
-    msg += f"📊 対象銘柄の平均損益: {avg_sign}{avg_ret:.1f}%\n"
-    msg += f"💡 スナイパー投資法・リスク管理の鉄則:\n"
-    msg += f"「利益は大きく伸ばし、思惑が外れた損失は -4.5% で確実に小さく切る」。この徹底した損小利大の資金管理が長期的な資産形成を支えます。"
+    msg += f"対象銘柄の平均損益: {avg_sign}{avg_ret:.1f}%\n\n"
+    msg += f"※ 利益は伸ばし、思惑が外れた損失は -4.5% で確実に限定する規律運用です。"
     return msg.strip()
 
 def build_noon_exit_free_msg(due_stocks: List[Dict], user_name: str = "会員") -> str:
@@ -319,23 +317,22 @@ def build_noon_exit_free_msg(due_stocks: List[Dict], user_name: str = "会員") 
     avg_ret = total_ret / count if count > 0 else 0.0
     avg_sign = "+" if avg_ret >= 0 else ""
     
-    msg = f"🔔【ZenStock スナイパー売却期日・手仕舞いアラート】\n"
+    msg = f"【ZenStock 手仕舞いアラート（無料版）】\n"
     msg += f"{user_name} 様\n\n"
-    msg += f"過去に配信されたスナイパーシグナル銘柄【{count}銘柄】に、本日手仕舞いシグナルが発生しました！\n\n"
-    msg += f"📈 損益実績（平均）: {avg_sign}{avg_ret:.1f}%\n"
-    msg += "━━━━━━━━━━━━━━\n"
+    msg += f"過去配信のスナイパー銘柄（{count}件）に、本日エグジットシグナルが発生しました。\n\n"
+    msg += f"損益実績（平均）: {avg_sign}{avg_ret:.1f}%\n"
+    msg += "─────────────────\n"
     for idx, s in enumerate(due_stocks, 1):
         ret_pct = s.get("return_pct", 0.0)
         sign = "+" if ret_pct >= 0 else ""
-        ret_icon = "🎉" if ret_pct >= 5.0 else ("📈" if ret_pct > 0 else "📉")
         reason = s.get("exit_reason", "time_exit")
-        reason_label = "損切りルール適用" if reason == "stop_loss" else ("利確目標達成" if reason == "take_profit" else "15営業日満了")
-        msg += f"【{idx}社目】東証プライム（{s.get('sector', '割安バリュー')}）\n"
-        msg += f"【手仕舞い区分】{reason_label}\n"
-        msg += f"【損益実績】{ret_icon} {sign}{ret_pct:.1f}%\n"
-        msg += "━━━━━━━━━━━━━━\n"
-    msg += "🔒 売却対象の銘柄名・コード・適正売却価格はプレミアム会員限定機能です。\n\n"
-    msg += "👇 今すぐプレミアム登録して売却シグナルを受け取る\n"
+        reason_label = "損切りルール適用" if reason == "stop_loss" else ("利確目標達成" if reason == "take_profit" else "保有期間満了")
+        msg += f"【候補 #{idx}】東証プライム（{s.get('sector', 'プライム')}）\n"
+        msg += f"【区分】{reason_label}\n"
+        msg += f"【損益実績】{sign}{ret_pct:.1f}%\n"
+        msg += "─────────────────\n"
+    msg += "※ 銘柄名・現在価格・詳細判定はプレミアム会員限定機能です。\n\n"
+    msg += "プレミアムプランのご案内:\n"
     msg += "https://stock-screener-app-crrzltcyekqdt7uulhgpaa.streamlit.app/?source=line_exit"
     return msg.strip()
 
@@ -347,27 +344,29 @@ def build_holding_summary_msg(user_name: str = "会員") -> str:
     holdings = [p for p in positions if p.get("status") == "holding"]
     
     if not holdings:
-        return f"📋【ZenStock 保有中スナイパー銘柄】\n{user_name} 様\n\n現在、保有中のスナイパーポジションはありません。\n朝10:00のシグナルをお待ちください。"
+        return f"【ZenStock 保有中スナイパー銘柄】\n{user_name} 様\n\n現在、保有中のポジションはありません。\n朝10:00のシグナルをお待ちください。"
         
-    msg = f"📋【ZenStock 保有中スナイパー銘柄】\n{user_name} 様\n\n現在保有中のスナイパー銘柄（全{len(holdings)}件）:\n━━━━━━━━━━━━━━\n"
+    msg = f"【ZenStock 保有中スナイパー銘柄】\n{user_name} 様\n\n現在保有中の銘柄（計 {len(holdings)}件）:\n─────────────────\n"
     for p in holdings:
         entry_date = p.get("entry_date", "")
         exit_date = p.get("target_exit_date", "")
+        hold_target = p.get("hold_days", 15)
         elapsed = count_elapsed_trading_days(entry_date, today_str)
-        remaining = max(0, 15 - elapsed)
+        remaining = max(0, hold_target - elapsed)
         
         name = p.get("name", p["ticker"])
         ticker_str = p["ticker"] if ".T" in p["ticker"] else f"{p['ticker']}.T"
         entry_p = p.get("entry_price", 0.0)
         entry_p_str = f"¥{int(round(entry_p)):,}" if entry_p >= 1000 else f"¥{entry_p:,.1f}"
+        strat = p.get("strategy_name", "本命スイング")
         
-        msg += f"【銘柄】{name}（{ticker_str}）\n"
+        msg += f"【銘柄】{name}（{ticker_str}）[{strat}]\n"
         msg += f"【エントリー】{entry_date}（{entry_p_str}）\n"
-        msg += f"【進捗】{elapsed}/15営業日（売却まで あと{remaining}営業日）\n"
+        msg += f"【進捗】{elapsed}/{hold_target}営業日（残 {remaining}営業日）\n"
         msg += f"【売却期日】{exit_date}（昼12:00通知）\n"
-        msg += "━━━━━━━━━━━━━━\n"
+        msg += "─────────────────\n"
         
-    msg += "💡 目標の15営業日（約3週間）を迎えた当日の【お昼12:00】に自動で売却推奨アラートが届きます。"
+    msg += "※ 保有期日を迎えた当日の昼12:00に自動で売却推奨アラートが届きます。"
     return msg.strip()
 
 def get_positions_summary() -> Dict:
