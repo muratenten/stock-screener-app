@@ -579,7 +579,7 @@
   <!-- Quick Presets -->
   <div class="preset-container">
     <button class="preset-chip active" id="presetSniper" onclick="applyPreset('sniper')">
-      🎯 黄金スナイパー (勝率72.7%)
+      🎯 黄金スナイパー (80d/15d/+7%)
     </button>
     <button class="preset-chip" id="presetSwing" onclick="applyPreset('swing')">
       ⚡ 本命スイング (超過α+2.9%)
@@ -595,7 +595,7 @@
       <div>
         <div class="label">Historical Backtest Data (東証プライム)</div>
         <div style="font-size: 13px; font-weight: 600; margin-top: 2px;" id="currentSummaryTitle">
-          照合50日 × 保有15日 × 閾値+8.0%
+          照合80日 × 保有15日 × 閾値+7.0%
         </div>
       </div>
       <div class="rank-badge" id="rankBadge">
@@ -606,19 +606,19 @@
     <div class="stats-grid">
       <div class="stat-box highlight">
         <span class="stat-label">過去検証 勝率</span>
-        <span class="stat-val win-rate" id="dispWinRate">72.7%</span>
-        <span class="stat-sub" id="dispSampleCount">検証サンプル 117回</span>
+        <span class="stat-val win-rate" id="dispWinRate">60.2%</span>
+        <span class="stat-sub" id="dispSampleCount">検証サンプル 492回</span>
       </div>
 
       <div class="stat-box">
         <span class="stat-label">期待平均利益</span>
-        <span class="stat-val return-val" id="dispReturn">+4.3%</span>
-        <span class="stat-sub" id="dispAlpha">市場超過 +2.0%</span>
+        <span class="stat-val return-val" id="dispReturn">+2.5%</span>
+        <span class="stat-sub" id="dispAlpha">PF 2.83 (損小利大)</span>
       </div>
     </div>
 
     <div style="margin-top: 10px; font-size: 11px; color: var(--text-muted); display: flex; justify-content: space-between; align-items: center;">
-      <span>1回あたり平均ヒット数: <strong id="dispAvgHits" style="color: var(--text);">1.9銘柄</strong></span>
+      <span>1回あたり平均ヒット数: <strong id="dispAvgHits" style="color: var(--text);">10.2銘柄</strong></span>
       <span id="dispPbrFilterStatus" style="color: #34d399;">PBR < 1.0倍 厳選 (636社)</span>
     </div>
   </div>
@@ -629,17 +629,17 @@
     <div class="control-row">
       <div class="control-header">
         <span class="control-title">🔍 チャート照合期間</span>
-        <span class="control-badge" id="valMatch">50 日間</span>
+        <span class="control-badge" id="valMatch">80 日間</span>
       </div>
       <div class="slider-wrap">
-        <input type="range" id="sliderMatch" min="0" max="8" step="1" value="6" oninput="onParamChange()">
+        <input type="range" id="sliderMatch" min="0" max="9" step="1" value="8" oninput="onParamChange()">
       </div>
       <div class="slider-ticks" id="ticksMatch">
         <span data-val="10" style="left: calc(11px + (100% - 22px) * 0);">10日</span>
-        <span data-val="20" style="left: calc(11px + (100% - 22px) * 0.25);">20日</span>
-        <span data-val="30" style="left: calc(11px + (100% - 22px) * 0.5);">30日</span>
-        <span data-val="50" style="left: calc(11px + (100% - 22px) * 0.75);">50日</span>
-        <span data-val="60" style="left: calc(11px + (100% - 22px) * 0.875);">60日</span>
+        <span data-val="20" style="left: calc(11px + (100% - 22px) * 0.222);">20日</span>
+        <span data-val="30" style="left: calc(11px + (100% - 22px) * 0.444);">30日</span>
+        <span data-val="50" style="left: calc(11px + (100% - 22px) * 0.666);">50日</span>
+        <span data-val="80" style="left: calc(11px + (100% - 22px) * 0.888);">80日</span>
         <span data-val="120" style="left: calc(11px + (100% - 22px) * 1);">120日</span>
       </div>
     </div>
@@ -667,10 +667,10 @@
     <div class="control-row">
       <div class="control-header">
         <span class="control-title">📈 過去3回すべての上昇閾値</span>
-        <span class="control-badge" id="valThresh">+8.0 %</span>
+        <span class="control-badge" id="valThresh">+7.0 %</span>
       </div>
       <div class="slider-wrap">
-        <input type="range" id="sliderThresh" min="3.0" max="10.0" step="0.5" value="8.0" oninput="onParamChange()">
+        <input type="range" id="sliderThresh" min="3.0" max="10.0" step="0.5" value="7.0" oninput="onParamChange()">
       </div>
       <div class="slider-ticks" id="ticksThresh">
         <span data-val="3.0" style="left: calc(11px + (100% - 22px) * 0);">+3.0%</span>
@@ -731,7 +731,7 @@
 
 <script>
   // Discrete steps for match and hold days
-  const MATCH_STEPS = [10, 15, 20, 25, 30, 40, 50, 60, 120];
+  const MATCH_STEPS = [10, 15, 20, 25, 30, 40, 50, 60, 80, 120];
   const HOLD_STEPS = [5, 10, 15, 20, 25, 30, 40, 50, 60, 120];
 
   // Dynamically resolve Backend URL (reliably works on liff.line.me, Render, and localhost)
@@ -829,9 +829,9 @@
     
     if (type === 'sniper') {
       document.getElementById('presetSniper').classList.add('active');
-      setSliderValue('sliderMatch', MATCH_STEPS.indexOf(50));
+      setSliderValue('sliderMatch', MATCH_STEPS.indexOf(80));
       setSliderValue('sliderHold', HOLD_STEPS.indexOf(15));
-      setSliderValue('sliderThresh', 8.0);
+      setSliderValue('sliderThresh', 7.0);
       setPbrMode('pbr1');
     } else if (type === 'swing') {
       document.getElementById('presetSwing').classList.add('active');
@@ -1168,6 +1168,7 @@
 
   // Init sequence
   window.addEventListener('DOMContentLoaded', async () => {
+    applyPreset('sniper');
     await initLiff();
     await loadMatrixData();
   });

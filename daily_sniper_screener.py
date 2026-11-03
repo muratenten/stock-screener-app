@@ -2,11 +2,11 @@
 Daily Sniper Screener & LINE Notification Script
 Condition:
   - Universe: TSE Prime (~1,529 tickers)
-  - Match Days: 50 trading days (~2.5 months)
-  - Holding/Future Days: 15 trading days (~3 weeks, ratio 30%)
-  - Minimum Past Return Threshold: +8.0% (all top 3 matches >= +8.0%)
+  - Match Days: 80 trading days (~4.0 months)
+  - Holding/Future Days: 15 trading days (~3 weeks)
+  - Minimum Past Return Threshold: +7.0%
   - Value Filter: PBR < 1.0
-  - Win Rate Expectancy: Individual 72.65% / Basket 70.49% (Excess Alpha: +1.99%, Avg Return: +4.28%, Annualized ROI: +65.2%/yr)
+  - Win Rate Expectancy: Individual 60.2% / PF 2.83 / Avg Return +2.53%
 """
 
 import os
@@ -337,62 +337,21 @@ def get_or_fetch_stock_data(tickers, fund_cache, jp_names, pbr_max=1.0, force_re
         
     return stock_data, stock_info
 
-def run_sniper_screening(
-    n_match=50,
-    future_day=15,
-    thresh=8.0,
-    pbr_max=1.0,
-    test_mode=False,
-    target_user_id=None,
-    send_push=True,
-    is_interactive=False,
-    force_refresh=False,
+def scan_target_patterns(
+    targets,
+    stock_data,
+    n_match,
+    future_day,
+    thresh,
+    strategy_key="main",
+    strategy_name="本命スイング",
     use_dtw=True,
-    dtw_window=5
+    dtw_window=5,
+    latest_market_date="---"
 ):
-    """
-    Execute sniper screening:
-      - Default: 50d match x 15d future x +8.0% thresh x PBR < 1.0
-      - Historical Stats: Individual Win Rate 72.65%, Basket Win Rate 70.49%, Alpha +1.99%, Avg Return +4.28%
-    """
+    """Scan targets with specific pattern matching window and threshold."""
     global _CACHED_DATES
-    t_start = time.time()
-    pbr_label = f"PBR < {pbr_max:.1f}" if (pbr_max is not None and pbr_max > 0) else "PBR制限なし"
-    print("=" * 60)
-    print("🎯 ZenStock Prime Sniper Screener Starting...")
-    print(f"Universe: TSE Prime (~1,529) | Match: {n_match}d | Holding: {future_day}d | Thresh: +{thresh:.1f}% | {pbr_label}")
-    print("=" * 60, flush=True)
-    
-    tickers, fund_cache, jp_names = load_tickers_and_fundamentals()
-    if not tickers:
-        print("[ERROR] No tickers loaded. Exiting.")
-        return [], "エラー: 銘柄リストを読み込めませんでした。"
-        
-    # 1. Fetch or get cached stock data with pre-PBR filtering
-    stock_data, stock_info = get_or_fetch_stock_data(tickers, fund_cache, jp_names, pbr_max=pbr_max, force_refresh=force_refresh)
-    
-    latest_market_date = "---"
-    if stock_data:
-        try:
-            sample_series = next(iter(stock_data.values()))
-            latest_market_date = sample_series.index[-1].strftime('%Y/%m/%d')
-        except Exception:
-            pass
-            
-    # 2. Strict PBR verification with current price
-    targets = {}
-    for ticker, info in stock_info.items():
-        pbr = info['pbr']
-        if pbr_max is not None and pbr_max > 0:
-            if pbr is not None and pbr < pbr_max:
-                targets[ticker] = info
-        else:
-            targets[ticker] = info
-            
-    print(f"Stocks matching {pbr_label}: {len(targets)} / {len(stock_data)}", flush=True)
-    
-    # 3. High-Speed Pattern Matching (NumPy vector ops)
-    sniped_stocks = []
+    matched_stocks = []
     
     for ticker, info in targets.items():
         raw_close = stock_data[ticker]
@@ -402,12 +361,7 @@ def run_sniper_screening(
         if total_len < n_match + 80:
             continue
 
-        # -------------------------------------------------------------
-        # 対策1: 移動平均健全トレンドフィルター (Trend & Regime Filter)
-        # -------------------------------------------------------------
-        # 1. 200日移動平均線を下回る中長期下降トレンド（落ちてくるナイフ）を完全除外
-        # 2. 200日線から+25%以上乖離した歴史的高値圏・天井掴みリスク銘柄を完全除外
-        # 3. 直近25日移動平均線から急激に崩壊している銘柄を除外
+        # 移動平均健全トレンドフィルター
         if total_len >= 200:
             sma_200 = float(np.mean(close[-200:]))
             sma_25 = float(np.mean(close[-25:]))
@@ -444,13 +398,11 @@ def run_sniper_screening(
         dots[~valid_mask] = -1.0
         
         if use_dtw:
-            # 💡 DTW (動的時間伸縮法): 時間軸の伸縮（±w日）を許容し本質波形を捉える
             top_cand_indices = np.argsort(dots)[::-1][:60]
             cand_windows = w_norm[top_cand_indices]
             dtw_dists = dtw_engine.compute_fast_dtw_distances(target_norm, cand_windows, window_radius=dtw_window)
             dtw_sorted = np.argsort(dtw_dists)
             sorted_indices = [top_cand_indices[i] for i in dtw_sorted]
-            # 類似度スコアへの換算 (距離0.0->100点, 距離1.5->25点)
             sim_scores = {top_cand_indices[i]: float(np.clip(100.0 * (1.0 - dtw_dists[i] / 2.0), 0.0, 100.0)) for i in range(len(top_cand_indices))}
         else:
             sorted_indices = np.argsort(dots)[::-1]
@@ -466,7 +418,6 @@ def run_sniper_screening(
                 if len(chosen_top) == 5:
                     break
                     
-        # 対策4: 過去類似5局面（最低4局面）によるロバスト統計判定
         if len(chosen_top) >= 4:
             p_rets = []
             match_details = []
@@ -498,13 +449,9 @@ def run_sniper_screening(
                 min_ret = min(valid_rets)
                 avg_ret = float(np.mean(valid_rets))
                 
-                # 🎯 超高勝率スナイプ黄金セット判定条件 (月3〜4銘柄厳選):
-                # 1. 類似局面における勝率が 80%〜100%（全勝または5戦4勝以上）
-                # 2. 平均期待リターンが +6.0% 以上（高エッジ）
-                # 3. 過去類似で -2.0% を下回る急落局面がゼロ（高安定）
-                req_avg = max(6.0, thresh * 0.75)
+                req_avg = max(5.0 if future_day <= 5 else 6.0, thresh * 0.70)
                 if win_rate >= 80.0 and avg_ret >= req_avg and min_ret >= -2.0:
-                    sniped_stocks.append({
+                    matched_stocks.append({
                         'ticker': ticker,
                         'name': info['name'],
                         'sector': info['sector'],
@@ -516,28 +463,28 @@ def run_sniper_screening(
                         'min_ret': min_ret,
                         'avg_ret': avg_ret,
                         'market_date': latest_market_date,
+                        'strategy_key': strategy_key,
+                        'strategy_name': strategy_name,
+                        'hold_days': future_day,
+                        'match_days': n_match,
+                        'thresh': thresh,
                         'matches': match_details
                     })
+    return matched_stocks
 
-    total_time = time.time() - t_start
-    print(f"\n⚡ [SCAN COMPLETE in {total_time:.2f}s] Hit Stocks: {len(sniped_stocks)}")
+def build_dual_sniper_line_message(short_hits, main_hits, latest_market_date="---"):
+    """Compose structured LINE push message containing both 50d5d8% and 80d15d7%."""
+    msg = "🎯【超高勝率スナイプ警報（黄金デュアルスキャン）】\n"
+    msg += "東証プライム・PBR1.0倍割れ・DTW動的時間伸縮判定\n\n"
     
-    # 4. Process Notification
-    result_message = ""
-    if sniped_stocks:
-        print(f"🔥 {len(sniped_stocks)} STOCKS TRIGGERED SNIPER CRITERIA! 🔥")
-        for s in sniped_stocks:
-            pbr_disp = f"{s['pbr']:.2f}倍" if s['pbr'] is not None else "---"
-            print(f"  - {s['ticker']} {s['name']}: PBR {pbr_disp}, 類似{s['sample_count']}戦{s['win_count']}勝 (勝率{s['win_rate']:.0f}%, 平均+{s['avg_ret']:.1f}%)")
-            
-        # Compose LINE Message
-        msg = "🎯【超高勝率スナイプ警報】\n\n"
-        msg += "月4銘柄厳選・実戦勝率75〜81%のスナイプ銘柄を検知しました！\n"
-        msg += "（東証プライム・PBR1.0倍割れ・DTW動的時間伸縮判定）\n"
-        msg += "━━━━━━━━━━━━━━\n"
-        for s in sniped_stocks:
+    # Section 1: 超短期スナイパー (50d / 5d / +8.0%)
+    msg += "⚡【超短期スナイパー (50d/5d/+8.0%・PF 3.01)】\n"
+    msg += "※ 5営業日保有・最速の資本回転・全165設定中PF第1位\n"
+    msg += "━━━━━━━━━━━━━━\n"
+    if short_hits:
+        for s in short_hits:
             ticker_str = s['ticker'] if '.T' in s['ticker'] else f"{s['ticker']}.T"
-            pbr_disp = f"{s['pbr']:.2f}倍" if s['pbr'] is not None else "---"
+            pbr_disp = f"{s['pbr']:.2f}倍" if s.get('pbr') is not None else "---"
             price = s.get('last_price')
             if price is not None:
                 price_str = f"{price:,.1f}円" if (price < 1000 and price != int(price)) else f"{int(round(price)):,}円"
@@ -547,42 +494,183 @@ def run_sniper_screening(
             msg += f"【株価】{price_str}（PBR {pbr_disp}）\n"
             msg += f"【過去検証】類似{s['sample_count']}局面中{s['win_count']}回上昇（勝率{s['win_rate']:.0f}%・平均+{s['avg_ret']:.1f}%）\n"
             msg += f"【推奨エグジット】\n"
-            msg += f"  ・利確目安: +3.5% 〜 +5.0% で指値利確（約8割が10日以内に到達）\n"
+            msg += f"  ・利確目安: +4.0% 〜 +6.0%（5営業日以内でスピード利確）\n"
             msg += f"  ・損切りライン: -4.5% 到達で即時撤退（下落遮断）\n"
-            msg += "━━━━━━━━━━━━━━\n"
-        msg += f"💡 戦略条件（黄金スナイパー版）:\n"
-        msg += f"・データ基準日: {latest_market_date}\n"
-        msg += f"・照合アルゴリズム: DTW動的時間伸縮法（±{dtw_window}日伸縮補正）\n"
-        msg += f"・照合期間: {n_match}日（約2.5ヶ月） | 保有期間: {future_day}日（約3週間）\n"
-        msg += f"・トレンド適合: 200日線以上 ＆ 天井過熱（+25%超）事前排除\n"
-        msg += f"・リスクリワード: 1 : 2.22（損失の2倍以上の利益期待値）\n"
-        result_message = msg.strip()
+            msg += "──────────────────\n"
+    else:
+        msg += "本日、超短期スナイプ条件に該当する銘柄はありませんでした。\n"
+        msg += "━━━━━━━━━━━━━━\n"
         
+    msg += "\n"
+    
+    # Section 2: 本命スイング (80d / 15d / +7.0%)
+    msg += "🏆【本命スイング (80d/15d/+7.0%・PF 2.83)】\n"
+    msg += "※ 15営業日保有・中期底打ちからの本格リバウンド（本命安定型）\n"
+    msg += "━━━━━━━━━━━━━━\n"
+    if main_hits:
+        for s in main_hits:
+            ticker_str = s['ticker'] if '.T' in s['ticker'] else f"{s['ticker']}.T"
+            pbr_disp = f"{s['pbr']:.2f}倍" if s.get('pbr') is not None else "---"
+            price = s.get('last_price')
+            if price is not None:
+                price_str = f"{price:,.1f}円" if (price < 1000 and price != int(price)) else f"{int(round(price)):,}円"
+            else:
+                price_str = "---"
+            msg += f"【銘柄】{s['name']}（{ticker_str}）\n"
+            msg += f"【株価】{price_str}（PBR {pbr_disp}）\n"
+            msg += f"【過去検証】類似{s['sample_count']}局面中{s['win_count']}回上昇（勝率{s['win_rate']:.0f}%・平均+{s['avg_ret']:.1f}%）\n"
+            msg += f"【推奨エグジット】\n"
+            msg += f"  ・利確目安: +4.0% 〜 +7.0%（15営業日保有）\n"
+            msg += f"  ・損切りライン: -4.5% 到達で即時撤退（下落遮断）\n"
+            msg += "──────────────────\n"
+    else:
+        msg += "本日、本命スイング条件に該当する銘柄はありませんでした。\n"
+        msg += "━━━━━━━━━━━━━━\n"
+        
+    msg += "\n💡 戦略条件概要:\n"
+    msg += f"・データ基準日: {latest_market_date}\n"
+    msg += "・⚡ 超短期: 照合50日 × 保有5日 × +8.0% (勝率60.0% / PF 3.01)\n"
+    msg += "・🏆 本命: 照合80日 × 保有15日 × +7.0% (勝率60.2% / PF 2.83)\n"
+    msg += "・全銘柄共通: 徹底した -4.5% 逆指値損切り運用\n"
+    return msg.strip()
+
+def run_sniper_screening(
+    n_match=80,
+    future_day=15,
+    thresh=7.0,
+    pbr_max=1.0,
+    test_mode=False,
+    target_user_id=None,
+    send_push=True,
+    is_interactive=False,
+    force_refresh=False,
+    use_dtw=True,
+    dtw_window=5,
+    dual_mode=True
+):
+    """
+    Execute sniper screening.
+    When dual_mode is True, runs both:
+      1. 超短期スナイパー (50d / 5d / +8.0%・PF 3.01)
+      2. 本命スイング (80d / 15d / +7.0%・PF 2.83)
+    """
+    global _CACHED_DATES
+    t_start = time.time()
+    pbr_label = f"PBR < {pbr_max:.1f}" if (pbr_max is not None and pbr_max > 0) else "PBR制限なし"
+    print("=" * 60)
+    print("🎯 ZenStock Prime Sniper Screener Starting...")
+    if dual_mode:
+        print(f"Mode: DUAL SNIPER [50d/5d/+8.0% (PF 3.01) & 80d/15d/+7.0% (PF 2.83)] | {pbr_label}")
+    else:
+        print(f"Universe: TSE Prime (~1,529) | Match: {n_match}d | Holding: {future_day}d | Thresh: +{thresh:.1f}% | {pbr_label}")
+    print("=" * 60, flush=True)
+    
+    tickers, fund_cache, jp_names = load_tickers_and_fundamentals()
+    if not tickers:
+        print("[ERROR] No tickers loaded. Exiting.")
+        return [], "エラー: 銘柄リストを読み込めませんでした。"
+        
+    stock_data, stock_info = get_or_fetch_stock_data(tickers, fund_cache, jp_names, pbr_max=pbr_max, force_refresh=force_refresh)
+    
+    latest_market_date = "---"
+    if stock_data:
+        try:
+            sample_series = next(iter(stock_data.values()))
+            latest_market_date = sample_series.index[-1].strftime('%Y/%m/%d')
+        except Exception:
+            pass
+            
+    targets = {}
+    for ticker, info in stock_info.items():
+        pbr = info['pbr']
+        if pbr_max is not None and pbr_max > 0:
+            if pbr is not None and pbr < pbr_max:
+                targets[ticker] = info
+        else:
+            targets[ticker] = info
+            
+    print(f"Stocks matching {pbr_label}: {len(targets)} / {len(stock_data)}", flush=True)
+    
+    if dual_mode:
+        short_hits = scan_target_patterns(
+            targets, stock_data,
+            n_match=50, future_day=5, thresh=8.0,
+            strategy_key="short", strategy_name="超短期スナイパー (50d/5d/+8%)",
+            use_dtw=use_dtw, dtw_window=dtw_window, latest_market_date=latest_market_date
+        )
+        main_hits = scan_target_patterns(
+            targets, stock_data,
+            n_match=80, future_day=15, thresh=7.0,
+            strategy_key="main", strategy_name="本命スイング (80d/15d/+7%)",
+            use_dtw=use_dtw, dtw_window=dtw_window, latest_market_date=latest_market_date
+        )
+        sniped_stocks = short_hits + main_hits
+    else:
+        sniped_stocks = scan_target_patterns(
+            targets, stock_data,
+            n_match=n_match, future_day=future_day, thresh=thresh,
+            strategy_key="single", strategy_name=f"カスタム ({n_match}d/{future_day}d/+{thresh:.1f}%)",
+            use_dtw=use_dtw, dtw_window=dtw_window, latest_market_date=latest_market_date
+        )
+        short_hits = [s for s in sniped_stocks if s.get('hold_days', future_day) <= 5]
+        main_hits = [s for s in sniped_stocks if s.get('hold_days', future_day) > 5]
+
+    total_time = time.time() - t_start
+    print(f"\n⚡ [SCAN COMPLETE in {total_time:.2f}s] Hit Stocks: {len(sniped_stocks)} (Short: {len(short_hits)}, Main: {len(main_hits)})")
+    
+    result_message = ""
+    if sniped_stocks:
+        print(f"🔥 {len(sniped_stocks)} STOCKS TRIGGERED SNIPER CRITERIA! 🔥")
+        for s in sniped_stocks:
+            pbr_disp = f"{s['pbr']:.2f}倍" if s['pbr'] is not None else "---"
+            print(f"  [{s['strategy_name']}] {s['ticker']} {s['name']}: PBR {pbr_disp}, 類似{s['sample_count']}戦{s['win_count']}勝 (勝率{s['win_rate']:.0f}%, 平均+{s['avg_ret']:.1f}%)")
+            
+        if dual_mode:
+            result_message = build_dual_sniper_line_message(short_hits, main_hits, latest_market_date=latest_market_date)
+        else:
+            msg = f"🎯【超高勝率スナイプ警報】\n\n"
+            msg += f"設定条件（{n_match}d/{future_day}d/+{thresh:.1f}%）のスナイプ銘柄を検知しました！\n"
+            msg += "（東証プライム・PBR1.0倍割れ・DTW動的時間伸縮判定）\n"
+            msg += "━━━━━━━━━━━━━━\n"
+            for s in sniped_stocks:
+                ticker_str = s['ticker'] if '.T' in s['ticker'] else f"{s['ticker']}.T"
+                pbr_disp = f"{s['pbr']:.2f}倍" if s['pbr'] is not None else "---"
+                price = s.get('last_price')
+                if price is not None:
+                    price_str = f"{price:,.1f}円" if (price < 1000 and price != int(price)) else f"{int(round(price)):,}円"
+                else:
+                    price_str = "---"
+                msg += f"【銘柄】{s['name']}（{ticker_str}）\n"
+                msg += f"【株価】{price_str}（PBR {pbr_disp}）\n"
+                msg += f"【過去検証】類似{s['sample_count']}局面中{s['win_count']}回上昇（勝率{s['win_rate']:.0f}%・平均+{s['avg_ret']:.1f}%）\n"
+                msg += f"【推奨エグジット】\n"
+                msg += f"  ・利確目安: +4.0% 〜 +7.0% で指値利確\n"
+                msg += f"  ・損切りライン: -4.5% 到達で即時撤退\n"
+                msg += "━━━━━━━━━━━━━━\n"
+            msg += f"💡 戦略条件: 照合{n_match}日 × 保有{future_day}日 × 上昇+{thresh:.1f}% | 損切り-4.5%\n"
+            result_message = msg.strip()
+            
         if send_push:
             send_line_message(result_message, target_user_id=target_user_id)
     else:
-        print(f"No stocks triggered sniper criteria today. (Condition: {pbr_label} & Min Past Return >= +{thresh:.1f}%)")
-        if is_interactive:
-            result_message = f"【ZenStock スキャナー結果】\n━━━━━━━━━━━━━━\n"
-            result_message += f"設定条件:\n"
-            result_message += f"・データ基準日: {latest_market_date}\n"
-            result_message += f"・照合期間: {n_match}日（約2.5ヶ月）\n"
-            result_message += f"・保有期間: {future_day}日（約3週間）\n"
-            result_message += f"・上昇閾値: +{thresh:.1f}%\n"
-            result_message += f"・PBR条件: {pbr_label}\n"
-            result_message += f"・過去5年実績: 個別勝率72.7% / 超過α+1.99%\n"
-            result_message += "━━━━━━━━━━━━━━\n"
-            result_message += "本日、上記条件に合致する銘柄はありませんでした。"
+        print(f"No stocks triggered sniper criteria today.")
+        if is_interactive or test_mode:
+            result_message = (
+                f"🎯【ZenStock スナイパー検知通知】\n━━━━━━━━━━━━━━\n"
+                f"データ基準日: {latest_market_date}\n"
+                f"本日のスクリーニング（東証プライム全社対象）では、厳格な条件を満たす銘柄はありませんでした。\n\n"
+                f"・⚡ 超短期スナイパー (50d/5d/+8.0%・PF 3.01): 0件\n"
+                f"・🏆 本命スイング (80d/15d/+7.0%・PF 2.83): 0件\n"
+                f"━━━━━━━━━━━━━━\n"
+                f"※ 騙しを回避するため、黄金基準を満たした日のみエントリーシグナルをお届けします。"
+            )
             if send_push:
                 send_line_message(result_message, target_user_id=target_user_id)
-        elif test_mode:
-            result_message = "🎯【ZenStock プライムスナイパー通知テスト】\n"
-            result_message += "LINE Messaging APIの接続テストに成功しました！\n"
-            result_message += f"本日のスクリーニング（東証プライム全社・照合{n_match}日×保有{future_day}日×+{thresh:.1f}%×{pbr_label}）では該当銘柄はありませんでした。\n"
-            result_message += f"（データ基準日: {latest_market_date}）\n\n"
-            result_message += "次回、条件を満たす勝率72.7%の神シグナル銘柄が出現した瞬間に自動通知されます。"
-            if send_push:
-                send_line_message(result_message, target_user_id=target_user_id)
+
+    import gc
+    gc.collect()
+
+    return sniped_stocks, result_message
 
     import gc
     gc.collect()
@@ -592,13 +680,14 @@ def run_sniper_screening(
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="ZenStock Daily Sniper Screener")
     parser.add_argument("--test", action="store_true", help="Send a test LINE message even if no hits")
-    parser.add_argument("--match", type=int, default=50, help="Match window in days (default: 50)")
+    parser.add_argument("--match", type=int, default=80, help="Match window in days (default: 80)")
     parser.add_argument("--hold", type=int, default=15, help="Holding window in days (default: 15)")
-    parser.add_argument("--thresh", type=float, default=8.0, help="Min return threshold (default: 8.0)")
+    parser.add_argument("--thresh", type=float, default=7.0, help="Min return threshold (default: 7.0)")
     parser.add_argument("--pbr", type=float, default=1.0, help="Max PBR threshold (0 for no limit, default: 1.0)")
     parser.add_argument("--user", type=str, default=None, help="Target LINE User ID (default: LINE_USER_ID)")
     parser.add_argument("--interactive", action="store_true", help="Notify user even if 0 hits (for on-demand scans)")
     parser.add_argument("--refresh-cache", action="store_true", help="Refresh price cache and auto-sync to Render")
+    parser.add_argument("--single", action="store_true", help="Run single strategy instead of dual mode")
     args = parser.parse_args()
     
     if args.refresh_cache:
@@ -608,6 +697,8 @@ if __name__ == "__main__":
         sys.exit(0 if ok else 1)
         
     pbr_arg = None if args.pbr <= 0 else args.pbr
+    use_dual = not args.single and (args.match == 80 and args.hold == 15 and args.thresh == 7.0)
+    
     run_sniper_screening(
         n_match=args.match,
         future_day=args.hold,
@@ -616,5 +707,6 @@ if __name__ == "__main__":
         test_mode=args.test,
         target_user_id=args.user,
         send_push=True,
-        is_interactive=args.interactive
+        is_interactive=args.interactive,
+        dual_mode=use_dual
     )
