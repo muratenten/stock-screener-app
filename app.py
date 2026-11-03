@@ -6193,7 +6193,51 @@ def render_detail_dashboard(selected_ticker, selected_name, raw_analysis, key_su
     div[class*="st-key-chart_interval"] button[aria-pressed="true"] * {{
         color: #ffffff !important;
     }}
+    /* Vertically center segmented buttons and elevate tab emoji position */
+    div[class*="st-key-det_tab_select"] button,
+    div[class*="st-key-chart_interval"] button {{
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+    }}
+    div[class*="st-key-det_tab_select"] button p,
+    div[class*="st-key-chart_interval"] button p {{
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        line-height: 1 !important;
+        margin: 0 !important;
+    }}
+    .tab-emoji-shift {{
+        display: inline-block !important;
+        transform: translateY(-2.5px) !important;
+        margin-right: 5px !important;
+        vertical-align: middle !important;
+        font-size: 1.05em !important;
+    }}
     </style>
+    <script>
+    (function() {{
+        function shiftTabEmojis() {{
+            const paragraphs = document.querySelectorAll('div[class*="st-key-det_tab_select"] button p, div[class*="st-key-chart_interval"] button p');
+            paragraphs.forEach(p => {{
+                if (!p.dataset.emojiShifted && p.textContent) {{
+                    const txt = p.textContent.trim();
+                    const match = txt.match(/^([\uD800-\uDBFF][\uDC00-\uDFFF]|[\u2600-\u27BF]|📈|🎁|💡|📊|🔍)\s*(.+)$/);
+                    if (match) {{
+                        p.innerHTML = `<span class="tab-emoji-shift">${{match[1]}}</span><span>${{match[2]}}</span>`;
+                        p.dataset.emojiShifted = "true";
+                    }}
+                }}
+            }});
+        }}
+        shiftTabEmojis();
+        if (!window._tabEmojiObserver) {{
+            window._tabEmojiObserver = new MutationObserver(shiftTabEmojis);
+            window._tabEmojiObserver.observe(document.body, {{ childList: true, subtree: true }});
+        }}
+    }})();
+    </script>
     """)
 
     # Use st.segmented_control to completely avoid tab reset on rerun
@@ -10142,7 +10186,7 @@ with tab_screen:
                     )
                 with col_sort1:
                     sort_option = st.selectbox(
-                        "↕️ 表示の並び替え（ソート順）",
+                        "⇅ 表示の並び替え（ソート順）",
                         options=[
                             "🏆 総合スコアが高い順 (おすすめ)",
                             "💴 株価が安い順 (少額・買いやすい順)",
@@ -13125,7 +13169,7 @@ with tab_practice:
         prac_sort_col1, prac_sort_col2 = st.columns([3, 2])
         with prac_sort_col1:
             prac_sort = st.selectbox(
-                "↕️ 並び替え（ソート順）",
+                "⇅ 並び替え（ソート順）",
                 options=[
                     "🏆 テクニカルスコアが高い順",
                     "💎 PBRが低い順 (割安バリュー順)",

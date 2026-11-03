@@ -23413,6 +23413,15 @@
       "roe": 34.28,
       "dividend_yield": 0.17,
       "sector": "東証"
+    },
+    "8061.T": {
+      "name": "西華産業",
+      "sector": "Industrials",
+      "pbr": 1.9343784,
+      "book_value": 1494.02,
+      "per": 12.756003,
+      "dividend_yield": 408.0,
+      "roe": 16.936999999999998
     }
   }
 }
