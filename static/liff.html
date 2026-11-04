@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>ZenStock スナイパー設定</title>
+  <title>ZenStock クオンツ戦略設定</title>
   <link rel="icon" type="image/png" sizes="192x192" href="/static/logo.png">
   <link rel="apple-touch-icon" sizes="180x180" href="/static/apple-touch-icon.png">
   <link rel="manifest" href="/static/manifest.json">
@@ -574,7 +574,7 @@
     <div class="header-brand">
       <div class="logo-badge">Z</div>
       <div class="title-group">
-        <h1>ZenStock スナイパー</h1>
+        <h1>ZenStock クオンツ戦略</h1>
         <p>東証プライム全1,529社 過去全パターン照合</p>
       </div>
     </div>
@@ -587,10 +587,10 @@
   <!-- Quick Presets -->
   <div class="preset-container">
     <button class="preset-chip active" id="presetSniper" onclick="applyPreset('sniper')">
-      🎯 黄金スナイパー (80d/15d/+7%)
+      📊 中短期リバウンド (80d/15d/+7%)
     </button>
     <button class="preset-chip" id="presetSwing" onclick="applyPreset('swing')">
-      ⚡ 本命スイング (超過α+2.9%)
+      ⚡ 高回転モメンタム (50d/5d/+8%)
     </button>
     <button class="preset-chip" id="presetValue" onclick="applyPreset('value')">
       💎 短期急反発 (勝率80%)
@@ -998,7 +998,7 @@
           await liff.sendMessages([
             {
               type: 'text',
-              text: `🎯 【スナイパースキャン実行】\n照合:${p.matchDays}日 | 保有:${p.holdDays}日 | 閾値:+${p.thresh}% | ${pbrText}`
+              text: `📊 【クオンツ解析実行】\n照合:${p.matchDays}日 | 保有:${p.holdDays}日 | 閾値:+${p.thresh}% | ${pbrText}`
             }
           ]);
         } catch (msgErr) {

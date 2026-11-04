@@ -125,7 +125,7 @@ def record_sniper_positions(sniped_stocks: List[Dict], entry_date_str: Optional[
         entry_price = s.get("last_price")
         hold_days = int(s.get("hold_days", 15))
         target_exit = add_trading_days(entry_date_str, trading_days=hold_days)
-        strategy_label = s.get("strategy_name", "本命スイング" if hold_days >= 15 else "超短期スナイパー")
+        strategy_label = s.get("strategy_name", "中短期リバウンド戦略" if hold_days >= 15 else "高回転モメンタム戦略")
         
         pos = {
             "id": pos_id,
@@ -262,13 +262,13 @@ def build_noon_exit_premium_msg(due_stocks: List[Dict], user_name: str = "会員
     
     if stop_losses and not take_profits and not time_exits:
         main_title = "【ZenStock エグジット通知（損切り）】"
-        lead_desc = f"保有中のスナイパー銘柄（{count}件）が、損切りライン（-4.5%）に到達しました。\nリスク管理に基づき、本日後場での手仕舞いを推奨します。"
+        lead_desc = f"保有中のクオンツ厳選銘柄（{count}件）が、損切りライン（-4.5%）に到達しました。\nリスク管理に基づき、本日後場での手仕舞いを推奨します。"
     elif take_profits and not stop_losses and not time_exits:
         main_title = "【ZenStock エグジット通知（利確）】"
-        lead_desc = f"保有中のスナイパー銘柄（{count}件）が、利確目標を達成しました。\n本日後場での利益確定手仕舞いを推奨します。"
+        lead_desc = f"保有中のクオンツ厳選銘柄（{count}件）が、利確目標を達成しました。\n本日後場での利益確定手仕舞いを推奨します。"
     else:
         main_title = "【ZenStock エグジット通知（売却期日）】"
-        lead_desc = f"保有中のスナイパー銘柄（{count}件）にエグジットシグナルが発生しました。\n検証ルールに従い、本日後場でのポジション解消を推奨します。"
+        lead_desc = f"保有中のクオンツ厳選銘柄（{count}件）にエグジットシグナルが発生しました。\n検証ルールに従い、本日後場でのポジション解消を推奨します。"
 
     msg = f"{main_title}\n{user_name} 様\n\n{lead_desc}\n─────────────────\n"
     
@@ -319,7 +319,7 @@ def build_noon_exit_free_msg(due_stocks: List[Dict], user_name: str = "会員") 
     
     msg = f"【ZenStock 手仕舞いアラート（無料版）】\n"
     msg += f"{user_name} 様\n\n"
-    msg += f"過去配信のスナイパー銘柄（{count}件）に、本日エグジットシグナルが発生しました。\n\n"
+    msg += f"過去配信のクオンツ厳選銘柄（{count}件）に、本日エグジットシグナルが発生しました。\n\n"
     msg += f"損益実績（平均）: {avg_sign}{avg_ret:.1f}%\n"
     msg += "─────────────────\n"
     for idx, s in enumerate(due_stocks, 1):
@@ -344,9 +344,9 @@ def build_holding_summary_msg(user_name: str = "会員") -> str:
     holdings = [p for p in positions if p.get("status") == "holding"]
     
     if not holdings:
-        return f"【ZenStock 保有中スナイパー銘柄】\n{user_name} 様\n\n現在、保有中のポジションはありません。\n朝10:00のシグナルをお待ちください。"
+        return f"【ZenStock 保有中クオンツ銘柄】\n{user_name} 様\n\n現在、保有中のポジションはありません。\n朝10:00のシグナルをお待ちください。"
         
-    msg = f"【ZenStock 保有中スナイパー銘柄】\n{user_name} 様\n\n現在保有中の銘柄（計 {len(holdings)}件）:\n─────────────────\n"
+    msg = f"【ZenStock 保有中クオンツ銘柄】\n{user_name} 様\n\n現在保有中の銘柄（計 {len(holdings)}件）:\n─────────────────\n"
     for p in holdings:
         entry_date = p.get("entry_date", "")
         exit_date = p.get("target_exit_date", "")
@@ -358,7 +358,7 @@ def build_holding_summary_msg(user_name: str = "会員") -> str:
         ticker_str = p["ticker"] if ".T" in p["ticker"] else f"{p['ticker']}.T"
         entry_p = p.get("entry_price", 0.0)
         entry_p_str = f"¥{int(round(entry_p)):,}" if entry_p >= 1000 else f"¥{entry_p:,.1f}"
-        strat = p.get("strategy_name", "本命スイング")
+        strat = p.get("strategy_name", "中短期リバウンド")
         
         msg += f"【銘柄】{name}（{ticker_str}）[{strat}]\n"
         msg += f"【エントリー】{entry_date}（{entry_p_str}）\n"
