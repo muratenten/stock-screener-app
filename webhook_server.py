@@ -479,10 +479,6 @@ def broadcast_morning_sniper_routine(force=False):
         ok = send_line_message(p_msg, target_user_id=uid)
         if ok:
             sent_count += 1
-
-        ok = send_line_message(p_msg, target_user_id=uid)
-        if ok:
-            sent_count += 1
         time.sleep(0.3)
     add_log(f"✅ [MORNING ROUTINE] Delivered to {sent_count} subscribers successfully (Tier-separated)!")
     return sent_count, f"{sent_count}名に朝の通知を配信しました。"
