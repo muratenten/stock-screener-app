@@ -1338,11 +1338,6 @@ st.html(f"""
         letter-spacing: 0.015em !important;
     }}
 
-    /* Prevent typing or editing text cursor in selectbox dropdowns (Pure click-only) */
-    div[data-baseweb="select"] input {{
-        caret-color: transparent !important;
-    }}
-
     /* MUI Segmented Control (Toggle Button Group) Base */
     div[data-testid="stSegmentedControl"] {{
         background: var(--card-sub-bg) !important;
@@ -9350,36 +9345,22 @@ with tab_screen:
     if st.session_state.get("scr_market") == "カスタム指定":
         st.session_state["scr_market"] = "銘柄名検索"
         
-    market_map = {
-        "東証プライム": "東証プライム (全上場銘柄 - 動的取得)",
-        "日経平均 (225)": "日経平均株価 (日経225全銘柄 - 動的取得)",
-        "東証グロース": "東証グロース (全上場銘柄 - 動的取得)",
-        f"日本株 厳選 ({len(JP_TICKERS)})": f"日本株 厳選トレンド銘柄 ({len(JP_TICKERS)}件)",
-        f"米国株 厳選 ({len(US_TICKERS)})": f"米国株 厳選トレンド銘柄 ({len(US_TICKERS)}件)",
-        "🔍 銘柄名検索": "銘柄名検索"
-    }
-    rev_market_map = {v: k for k, v in market_map.items()}
-    curr_market = st.session_state.get("scr_market", "東証プライム (全上場銘柄 - 動的取得)")
-    default_market_label = rev_market_map.get(curr_market, "東証プライム")
-
-    st.markdown('<div style="margin-top: 8px; margin-bottom: 6px; font-weight: 600; font-size: 0.92rem; color: var(--text-color, #1e293b);">🎯 全体集合（スクリーニング対象）の選択:</div>', unsafe_allow_html=True)
-    
-    selected_market_label = st.segmented_control(
-        "全体集合",
-        options=list(market_map.keys()),
-        default=default_market_label,
-        key="scr_market_pills",
-        label_visibility="collapsed"
-    )
-    if not selected_market_label:
-        selected_market_label = default_market_label
-        
-    market = market_map.get(selected_market_label, "東証プライム (全上場銘柄 - 動的取得)")
-    st.session_state["scr_market"] = market
-
-    # Theme and Period filters cleanly in one horizontal row
-    col_cfg1, col_cfg2 = st.columns([1.6, 1.0])
+    # Always place filter dropdowns cleanly in one horizontal row
+    col_cfg1, col_cfg2, col_cfg3 = st.columns([1.5, 1.4, 0.9])
     with col_cfg1:
+        market = st.selectbox(
+            "全体集合（スクリーニング対象）の選択",
+            [
+                f"日本株 厳選トレンド銘柄 ({len(JP_TICKERS)}件)",
+                f"米国株 厳選トレンド銘柄 ({len(US_TICKERS)}件)",
+                "日経平均株価 (日経225全銘柄 - 動的取得)",
+                "東証プライム (全上場銘柄 - 動的取得)",
+                "東証グロース (全上場銘柄 - 動的取得)",
+                "銘柄名検索"
+            ],
+            key="scr_market"
+        )
+    with col_cfg2:
         theme_filter = st.selectbox(
             "トレンドテーマ絞り込み",
             [
@@ -9394,7 +9375,7 @@ with tab_screen:
             ],
             key="scr_theme"
         )
-    with col_cfg2:
+    with col_cfg3:
         period = st.selectbox("データ期間 (チャート用)", ["6ヶ月", "1年", "2年"], index=1, key="scr_period")
             
     period_map = {"6ヶ月": "6m", "1年": "1y", "2年": "2y"}
