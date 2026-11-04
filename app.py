@@ -5078,6 +5078,35 @@ INDUSTRY_CATALYSTS = {
     ]
 }
 
+@st.cache_data(ttl=86400, show_spinner=False)
+def fetch_japanese_company_profile(ticker: str) -> dict:
+    """Fetch company profile (特色 & 連結事業) directly from Yahoo Finance JP."""
+    if not ticker:
+        return {"tokushoku": "", "jigyo": ""}
+    code = ticker.split(".")[0]
+    try:
+        url = f"https://finance.yahoo.co.jp/quote/{code}/profile"
+        req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)"})
+        html = urllib.request.urlopen(req, timeout=4).read().decode("utf-8")
+        
+        tokushoku = ""
+        m_t = re.search(r'特色.{1,30}?【特色】\\*n?(.*?)(?:\\*\",|\\*\"})', html)
+        if not m_t:
+            m_t = re.search(r'【特色】\\*n?(.*?)(?:\\*\",|\\*\"}|【)', html)
+        if m_t:
+            tokushoku = m_t.group(1).replace("\\n", " ").replace("\\", "").strip()
+
+        jigyo = ""
+        m_j = re.search(r'連結事業.{1,30}?【連結事業】\\*n?(.*?)(?:\\*\",|\\*\"})', html)
+        if not m_j:
+            m_j = re.search(r'【連結事業】\\*n?(.*?)(?:\\*\",|\\*\"}|【)', html)
+        if m_j:
+            jigyo = m_j.group(1).replace("\\n", " ").replace("\\", "").strip()
+
+        return {"tokushoku": tokushoku, "jigyo": jigyo}
+    except Exception:
+        return {"tokushoku": "", "jigyo": ""}
+
 # Generate IR and Catalyst scenario analysis
 def generate_ir_catalysts(ticker, tags, info):
     # Retrieve raw fields safely
@@ -5109,16 +5138,32 @@ def generate_ir_catalysts(ticker, tags, info):
     if industry != "未分類":
         industry_ja = translate_text(industry)
         
-    # Translate description summary
+    # Retrieve Japanese official profile (特色 & 連結事業)
+    jp_profile = fetch_japanese_company_profile(ticker)
+    tokushoku = jp_profile.get("tokushoku", "")
+    jigyo = jp_profile.get("jigyo", "")
+
+    # Translate description summary or use JP profile
     translated_summary = ""
-    if summary:
+    if tokushoku or jigyo:
+        parts = []
+        if tokushoku:
+            parts.append(f"**【事業概要・特色】**\n{tokushoku}")
+        if jigyo:
+            parts.append(f"**【売上構成・連結事業】**\n{jigyo}")
+        if summary:
+            y_trans = translate_text(summary)
+            if y_trans and y_trans != tokushoku and len(y_trans) > 20:
+                parts.append(f"**【詳細事業サマリー】**\n{y_trans}")
+        translated_summary = "\n\n".join(parts)
+    elif summary:
         translated_summary = translate_text(summary)
     else:
-        translated_summary = "事業サマリー情報はありませんでした。"
+        translated_summary = f"{ticker} の公式事業概要データが現在準備中です。業種分類（{sector_ja} / {industry_ja}）の動向および以下の主要カタリストをご参照ください。"
         
-    # Classify the industry
-    summary_lower = summary.lower()
-    classified = classify_industry(industry, sector, summary_lower)
+    # Classify the industry (combining summary and tokushoku for high accuracy)
+    all_summary_text = f"{summary} {tokushoku} {jigyo}".lower()
+    classified = classify_industry(industry, sector, all_summary_text)
     
     # Initialize catalysts list
     catalysts = []
@@ -5129,31 +5174,31 @@ def generate_ir_catalysts(ticker, tags, info):
     
     # 2. Keyword-Specific Catalyst Injector
     # EV / Battery
-    if any(k in summary_lower for k in ["ev ", "battery", "batteries", "electric vehicle", "electrification", "hybrid"]):
+    if any(k in all_summary_text for k in ["ev ", "battery", "batteries", "electric vehicle", "electrification", "hybrid", "電池", "車載"]):
         catalysts.append("**EV（電気自動車）および次世代バッテリー向け製品・部材の需要拡大**: 主要メーカーによる新型EVの投入や、自社部材（電極材料、バッテリーパック、車載センサー等）の採用実績・販売動向が株価を大きく動かす可能性があります。")
     
     # Hydrogen / Ammonia / Decarbon
-    if any(k in summary_lower for k in ["hydrogen", "ammonia", "decarbon", "renewable", "wind power", "solar power"]):
+    if any(k in all_summary_text for k in ["hydrogen", "ammonia", "decarbon", "renewable", "wind power", "solar power", "水素", "脱炭素", "再生可能エネルギー", "風力", "太陽光"]):
         catalysts.append("**水素・アンモニアおよびクリーンエネルギー（脱炭素）関連プロジェクトの進展**: 政府の温室効果ガス削減目標や補助金支援を受けて開発中の、次世代クリーン燃料供給チェーン構築や大規模実証事業のニュース。")
         
     # AI / Machine Learning
-    if any(k in summary_lower for k in ["ai ", "artificial intelligence", "machine learning", "deep learning", "generative ai"]):
+    if any(k in all_summary_text for k in ["ai ", "artificial intelligence", "machine learning", "deep learning", "generative ai", "人工知能", "機械学習", "生成ai"]):
         catalysts.append("**生成AI（人工知能）ソリューションや機械学習プラットフォームの機能拡張・受注**: 顧客企業の業務効率化やDX（デジタルトランスフォーメーション）加速に向けた新規AI機能の実装や、特化型AIモデルの共同開発IR。")
         
     # Defense / Space
-    if "宇宙" in tags or "防衛" in tags or any(k in summary_lower for k in ["defense", "military", "aerospace", "jaxa"]):
+    if "宇宙" in tags or "防衛" in tags or any(k in all_summary_text for k in ["defense", "military", "aerospace", "jaxa", "防衛", "自衛隊", "宇宙", "航空"]):
         catalysts.append("**防衛装備品や宇宙産業（JAXA等官公庁）関連の大型プロジェクト受注**: 国防予算増額や宇宙開発推進基金を背景とした、国家主導の新型レーダー、飛翔体、宇宙デブリ回収等の大型受注・補助金採択。")
         
     # Inbound / Tourist
-    if any(k in summary_lower for k in ["inbound", "tourist", "tourism", "hotel", "lodging"]):
+    if any(k in all_summary_text for k in ["inbound", "tourist", "tourism", "hotel", "lodging", "インバウンド", "訪日", "免税", "ホテル", "観光"]):
         catalysts.append("**訪日外国人観光客（インバウンド）による免税売上および客単価の上振れ**: 旅行需要の活況や為替の円安傾向を受けた、インバウンド顧客向けの高付加価値サービス販売や免税売上比率の向上。")
         
     # M&A
-    if any(k in summary_lower for k in ["acquisition", "merger", "m&a", "takeover"]):
+    if any(k in all_summary_text for k in ["acquisition", "merger", "m&a", "takeover", "買収", "子会社化", "資本業務提携"]):
         catalysts.append("**M&A（合併・買収）や資本業務提携によるシナジー発揮と事業拡大**: 成長余地の大きい海外企業や、競合・周辺領域企業の買収に伴う連結売上高の急増および新市場への参入スピード加速。")
         
     # Global expansion
-    if any(k in summary_lower for k in ["global", "overseas", "north america", "europe", "china", "asia"]):
+    if any(k in all_summary_text for k in ["global", "overseas", "north america", "europe", "china", "asia", "海外", "北米", "アジア", "欧州"]):
         catalysts.append("**海外事業（グローバル市場）における販売比率の増加と為替影響**: 北米、アジア、欧州など巨大市場でのローカライズ展開や、想定為替レート（円安）に対する上振れ利益メリット。")
 
     # 3. Financial/Structure Catalysts
@@ -6458,7 +6503,8 @@ def render_detail_dashboard(selected_ticker, selected_name, raw_analysis, key_su
                 signals=raw_analysis['signals'],
                 metrics=raw_analysis['metrics']
             )
-        st.markdown(f'<div class="card" style="padding: 25px; margin-top: 15px;">{report_md}</div>', unsafe_allow_html=True)
+        with st.container(border=True):
+            st.markdown(report_md)
             
     elif selected_tab == "🎁 株主優待":
         render_yutai_section(selected_ticker, selected_name, metrics)
@@ -6470,7 +6516,8 @@ def render_detail_dashboard(selected_ticker, selected_name, raw_analysis, key_su
             tags=raw_analysis.get('tags', []),
             info=raw_analysis.get('info_raw', {})
         )
-        st.markdown(f'<div class="card" style="padding: 25px; max-height: 720px; overflow-y: auto;">{ir_md}</div>', unsafe_allow_html=True)
+        with st.container(border=True):
+            st.markdown(ir_md)
         
     elif selected_tab == "📊 財務データ分析":
         # Fundamental details formatted vertically
