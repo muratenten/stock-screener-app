@@ -5286,6 +5286,53 @@ def calculate_indicators_for_df(df, interval="1d"):
     df['BB_Lower'] = lower
     return df
 
+@st.cache_data(ttl=300, show_spinner=False)
+def get_single_stock_analysis(ticker, period="1y"):
+    """Fetch single stock dataframe, calculate indicators, and perform complete evaluation for instant direct viewing."""
+    try:
+        df = fetch_chart_data(ticker, interval="1d", period=period)
+        if df.empty or len(df) < 20:
+            tk = yf.Ticker(ticker)
+            df = tk.history(period=period, interval="1d")
+        if df.empty or len(df) < 5:
+            return None
+        info = get_ticker_info(ticker)
+        analysis = evaluate_stock(ticker, df, info=info)
+        if analysis is None and not df.empty:
+            df = calculate_indicators_for_df(df, interval="1d")
+            close_p = float(df['Close'].iloc[-1])
+            prev_p = float(df['Close'].iloc[-2]) if len(df) >= 2 else close_p
+            chg_p = ((close_p - prev_p) / prev_p * 100) if prev_p > 0 else 0.0
+            analysis = {
+                'df': df,
+                'tech_score': 1,
+                'fund_score': 1,
+                'total_score': 2,
+                'signals': {'golden_cross': False, 'macd_cross': False, 'rsi_oversold': False, 'rsi_overbought': False, 'bb_rebound': False, 'volume_surge': False},
+                'metrics': {
+                    'price': close_p,
+                    'change_pct': chg_p,
+                    'per': info.get('trailingPE') if info else None,
+                    'pbr': info.get('priceToBook') if info else None,
+                    'roe': info.get('returnOnEquity') if info else None,
+                    'dividend_yield': info.get('dividendYield') if info else None,
+                    'market_cap': info.get('marketCap') if info else None,
+                    'name': info.get('longName', ticker) if info else ticker,
+                    'net_income': None,
+                    'op_margin': None,
+                    'total_cash': None,
+                    'total_debt': None,
+                    'debt_equity': None,
+                    'vol_surge_ratio': 1.0,
+                    'rev_growth': None,
+                    'eps_growth': None
+                },
+                'info_raw': info or {}
+            }
+        return analysis
+    except Exception:
+        return None
+
 # Create Plotly interactive chart
 def create_chart(df, ticker, name, interval="1d"):
     is_mobile = False
@@ -9294,6 +9341,10 @@ with tab_screen:
     if "pending_market" in st.session_state:
         st.session_state["scr_market"] = st.session_state.pop("pending_market")
         
+    # Auto-migrate from previous 'カスタム指定'
+    if st.session_state.get("scr_market") == "カスタム指定":
+        st.session_state["scr_market"] = "銘柄名検索"
+        
     # Always place filter dropdowns cleanly in one horizontal row
     col_cfg1, col_cfg2, col_cfg3 = st.columns([1.5, 1.4, 0.9])
     with col_cfg1:
@@ -9305,7 +9356,7 @@ with tab_screen:
                 "日経平均株価 (日経225全銘柄 - 動的取得)",
                 "東証プライム (全上場銘柄 - 動的取得)",
                 "東証グロース (全上場銘柄 - 動的取得)",
-                "カスタム指定"
+                "銘柄名検索"
             ],
             key="scr_market"
         )
@@ -9330,37 +9381,60 @@ with tab_screen:
     period_map = {"6ヶ月": "6m", "1年": "1y", "2年": "2y"}
     selected_period = period_map[period]
 
-    # Custom tickers input with full name search capability
+    # Direct Stock Search with Instant Chart Display
     custom_tickers = ""
-    if market == "カスタム指定":
-        st.markdown("##### 🔍 銘柄名・コードでスクリーニング対象を指定")
+    if market in ["銘柄名検索", "カスタム指定"]:
+        st.markdown("##### 🔍 銘柄名検索（選んだ銘柄の個別チャート・詳細分析を即座に表示）")
         
         c_search_kw = st.text_input(
-            "銘柄名・企業名、または証券コードで検索して候補追加",
-            placeholder="例: トヨタ、任天堂、すかいらーく、ユニクロ、7203、Apple、NVDA...",
+            "銘柄名・企業名、または証券コードを入力",
+            placeholder="例: トヨタ、任天堂、すかいらーく、ソニー、7203、Apple、NVDA...",
             key="scr_custom_search_kw"
         )
         
         if c_search_kw and c_search_kw.strip():
             c_matches = search_stocks_by_query(c_search_kw.strip(), limit=8)
             if c_matches:
-                st.caption("検索ヒット（クリックして下欄に追加）:")
+                st.caption("検索ヒット銘柄（クリックで直ちに個別チャートを表示）:")
                 c_btn_cols = st.columns(min(len(c_matches), 4))
                 for idx_m, (m_t, m_n, m_m) in enumerate(c_matches):
                     with c_btn_cols[idx_m % min(len(c_matches), 4)]:
-                        if st.button(f"➕ {m_n} ({m_t})", key=f"add_custom_btn_{m_t}", use_container_width=True):
-                            curr_val = st.session_state.get("scr_custom_tickers", "")
-                            if m_t not in curr_val:
-                                new_val = (curr_val + f", {m_t}" if curr_val.strip() else m_t).strip(", ")
-                                st.session_state["scr_custom_tickers"] = new_val
-                                st.rerun()
-
-        custom_tickers = st.text_area(
-            "スクリーニング対象銘柄（コード・企業名・カンマ区切り）",
-            placeholder="例: トヨタ自動車, ソニーグループ, 任天堂, 7203.T, AAPL, NVDA\n(※ 企業名でも証券コードでも自由に入力可能です)",
-            help="企業名（トヨタ、任天堂など）またはティッカーコード（7203.T, AAPLなど）をカンマまたは改行区切りで入力してください",
-            key="scr_custom_tickers"
-        )
+                        if st.button(f"📊 {m_n} ({m_t})", key=f"direct_view_btn_{m_t}", use_container_width=True):
+                            st.session_state["direct_view_ticker"] = m_t
+                            st.session_state["direct_view_name"] = m_n
+                            st.rerun()
+            else:
+                st.info("該当する銘柄が見つかりませんでした。別のキーワードや4桁コードをお試しください。")
+                
+        # Direct Chart & Detail Dashboard Display
+        active_direct_ticker = st.session_state.get("direct_view_ticker")
+        active_direct_name = st.session_state.get("direct_view_name")
+        
+        # Default to first match if user entered query and hasn't clicked yet
+        if not active_direct_ticker and c_search_kw and c_search_kw.strip():
+            c_matches = search_stocks_by_query(c_search_kw.strip(), limit=1)
+            if c_matches:
+                active_direct_ticker = c_matches[0][0]
+                active_direct_name = c_matches[0][1]
+                
+        if active_direct_ticker:
+            st.markdown(f'<div id="deep-analysis-section" style="margin-top: 15px;"></div>', unsafe_allow_html=True)
+            with st.spinner(f"【{active_direct_name or active_direct_ticker}】の個別チャートと詳細分析データを読み込み中..."):
+                direct_analysis = get_single_stock_analysis(active_direct_ticker, period=selected_period)
+                
+            if direct_analysis:
+                render_detail_dashboard(active_direct_ticker, active_direct_name or active_direct_ticker, direct_analysis, key_suffix="_direct_search")
+            else:
+                st.warning(f"【{active_direct_name or active_direct_ticker}】の株価データを取得できませんでした。証券コード（例: 7203.T）をお確かめください。")
+                
+        # Optional: batch screening multi-ticker input
+        with st.expander("📝 複数銘柄をまとめてスクリーニングリストに入力したい場合はこちら"):
+            custom_tickers = st.text_area(
+                "スクリーニング対象銘柄（コード・企業名・カンマ区切り）",
+                placeholder="例: トヨタ自動車, ソニーグループ, 任天堂, 7203.T, AAPL, NVDA\n(※ 企業名でも証券コードでも自由に入力可能です)",
+                help="企業名またはティッカーコードをカンマまたは改行区切りで入力してください",
+                key="scr_custom_tickers"
+            )
 
     # Added: Conditional Sector & Size filters for TSE Prime & Growth
     selected_sectors = []
