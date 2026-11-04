@@ -881,6 +881,30 @@ if os.path.exists(logo_path):
         pass
 logo_data_uri = f"data:image/png;base64,{logo_b64}" if logo_b64 else ""
 
+# Prepare PWA web app manifest data URI
+manifest_data_uri = ""
+if logo_data_uri:
+    manifest_dict = {
+        "short_name": "ZenStock",
+        "name": "ZenStock - クオンツ高勝率スクリーナー",
+        "description": "東証プライム・クオンツ急騰シグナル解析ツール",
+        "icons": [
+            {
+                "src": logo_data_uri,
+                "type": "image/png",
+                "sizes": "192x192 512x512",
+                "purpose": "any maskable"
+            }
+        ],
+        "start_url": "./",
+        "background_color": "#0b0f19",
+        "theme_color": "#0b0f19",
+        "display": "standalone",
+        "orientation": "portrait-primary"
+    }
+    manifest_b64 = base64.b64encode(json.dumps(manifest_dict).encode("utf-8")).decode("utf-8")
+    manifest_data_uri = f"data:application/manifest+json;base64,{manifest_b64}"
+
 # Inject high-res favicon, apple-touch-icon, PWA manifest, and credit removal script
 if logo_data_uri:
     st.markdown(
@@ -891,24 +915,64 @@ if logo_data_uri:
             <link rel="apple-touch-icon" sizes="180x180" href="{logo_data_uri}">
             <link rel="apple-touch-icon-precomposed" href="{logo_data_uri}">
             <link rel="shortcut icon" href="{logo_data_uri}">
+            <link rel="manifest" href="{manifest_data_uri}">
             <meta name="apple-mobile-web-app-title" content="ZenStock">
             <meta name="application-name" content="ZenStock">
             <meta name="apple-mobile-web-app-capable" content="yes">
+            <meta name="mobile-web-app-capable" content="yes">
             <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
             <meta name="theme-color" content="#0b0f19">
         </head>
         <script>
             (function() {{
-                var links = document.querySelectorAll("link[rel*='icon'], link[rel*='apple-touch']");
-                links.forEach(function(el) {{
-                    el.href = "{logo_data_uri}";
+                var targetDocs = [document];
+                try {{
+                    if (window.parent && window.parent.document && window.parent.document !== document) {{
+                        targetDocs.push(window.parent.document);
+                    }}
+                }} catch (e) {{}}
+
+                targetDocs.forEach(function(doc) {{
+                    try {{
+                        // Inject or update icons
+                        var links = doc.querySelectorAll("link[rel*='icon'], link[rel*='apple-touch']");
+                        links.forEach(function(el) {{
+                            el.href = "{logo_data_uri}";
+                        }});
+                        
+                        if (!doc.querySelector("link[rel='apple-touch-icon']")) {{
+                            var appleIcon = doc.createElement('link');
+                            appleIcon.rel = 'apple-touch-icon';
+                            appleIcon.href = "{logo_data_uri}";
+                            doc.head.appendChild(appleIcon);
+                        }}
+
+                        if (!doc.querySelector("link[rel='manifest']")) {{
+                            var mLink = doc.createElement('link');
+                            mLink.rel = 'manifest';
+                            mLink.href = "{manifest_data_uri}";
+                            doc.head.appendChild(mLink);
+                        }}
+
+                        var metaTags = [
+                            {{ name: 'apple-mobile-web-app-capable', content: 'yes' }},
+                            {{ name: 'mobile-web-app-capable', content: 'yes' }},
+                            {{ name: 'apple-mobile-web-app-status-bar-style', content: 'black-translucent' }},
+                            {{ name: 'apple-mobile-web-app-title', content: 'ZenStock' }},
+                            {{ name: 'application-name', content: 'ZenStock' }},
+                            {{ name: 'theme-color', content: '#0b0f19' }}
+                        ];
+                        metaTags.forEach(function(m) {{
+                            var meta = doc.querySelector("meta[name='" + m.name + "']");
+                            if (!meta) {{
+                                meta = doc.createElement('meta');
+                                meta.name = m.name;
+                                doc.head.appendChild(meta);
+                            }}
+                            meta.content = m.content;
+                        }});
+                    }} catch (err) {{}}
                 }});
-                if (!document.querySelector("link[rel='apple-touch-icon']")) {{
-                    var appleIcon = document.createElement('link');
-                    appleIcon.rel = 'apple-touch-icon';
-                    appleIcon.href = "{logo_data_uri}";
-                    document.head.appendChild(appleIcon);
-                }}
 
                 // Aggressive Streamlit Community Cloud badge and footer cleanup
                 function cleanStreamlitBadges() {{
