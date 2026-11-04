@@ -732,7 +732,7 @@ def show_upgrade_dialog():
         <div style="background: rgba(168, 85, 247, 0.05); border-left: 4px solid #a855f7; padding: 15px; border-radius: 4px; margin-bottom: 20px;">
             <p style="font-weight: bold; margin-top: 0; font-size: 0.95rem; color: var(--text-color);">👑 プレミアムプラン限定特典：</p>
             <ul style="margin: 0; padding-left: 20px; font-size: 0.88rem; line-height: 1.6; opacity: 0.9; color: var(--text-color);">
-                <li>📱 <b>LINE急騰スナイパー速報（毎朝10:00）：銘柄名・コードをフル開示</b></li>
+                <li>📱 <b>LINEクオンツ厳選速報（毎朝10:00）：銘柄名・コードをフル開示</b></li>
                 <li>過去練習モード（タイムトラベル）の結果表示：<b>無制限</b></li>
                 <li>類似連動フィルタ・類似パターン検索：<b>すべて解放</b></li>
                 <li>保有銘柄（シミュレーション購入）：<b>無制限（無料版は10個まで）</b></li>
@@ -764,7 +764,7 @@ LINE_SVG_PATH = "M19.365 9.863c.349 0 .63.285.63.631 0 .345-.281.63-.63.63H17.61
 LINE_OFFICIAL_SVG_GREEN = f'<svg style="width: 20px; height: 20px; vertical-align: middle; fill: #06c755; display: inline-block; flex-shrink: 0;" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="{LINE_SVG_PATH}" /></svg>'
 LINE_OFFICIAL_SVG_WHITE = f'<svg style="width: 20px; height: 20px; vertical-align: middle; fill: #ffffff; display: inline-block; flex-shrink: 0;" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="{LINE_SVG_PATH}" /></svg>'
 
-@st.dialog("LINE連携（毎朝のスナイパー急騰速報）", width="medium")
+@st.dialog("LINE連携（毎朝のクオンツ厳選速報）", width="medium")
 def show_line_link_dialog():
     u_key = st.session_state.get('user_key', 'default')
     
@@ -786,7 +786,7 @@ def show_line_link_dialog():
     line_link_url = f"https://line.me/R/oaMessage/@317uxnml/?連携_{u_key}"
     st.markdown(f"""
     <div style="font-size: 0.92rem; line-height: 1.6;">
-        <p><b>平日の毎朝10:00</b>に東証プライム全1,529銘柄から自動検出される【勝率72.7%スナイパー銘柄】の速報をLINEで受け取れます。</p>
+        <p><b>平日の毎朝10:00</b>に東証プライム全1,529銘柄から自動検出される【クオンツ厳選銘柄（PF 3.01）】の速報をLINEで受け取れます。</p>
         
         <div style="background: rgba(6, 199, 85, 0.08); border: 1.5px solid #06c755; border-radius: 12px; padding: 16px; margin: 15px 0; text-align: center;">
             <p style="font-weight: bold; margin-top: 0; color: #06c755; font-size: 1rem; display: flex; align-items: center; justify-content: center; gap: 8px;">
@@ -8757,7 +8757,7 @@ if has_linked_line:
         {LINE_OFFICIAL_SVG_GREEN}
         <div style="line-height: 1.3;">
             <b style="color: #06c755;">LINE連携中</b><br>
-            <span style="opacity: 0.75; font-size: 0.75rem;">毎朝のスナイパー急騰通知を受信中</span>
+            <span style="opacity: 0.75; font-size: 0.75rem;">毎朝のクオンツ厳選通知を受信中</span>
         </div>
     </div>
     """, unsafe_allow_html=True)
@@ -9066,7 +9066,7 @@ if not has_line:
             {LINE_OFFICIAL_SVG_GREEN}
             <div style="line-height: 1.35;">
                 <b style="color: #06c755;">LINE連携が未設定です</b><br>
-                <span style="opacity: 0.8; font-size: 0.78rem;">平日の毎朝10:00に勝率72.7%スナイパー急騰速報をLINEへ自動配信します</span>
+                <span style="opacity: 0.8; font-size: 0.78rem;">平日の毎朝10:00にクオンツ厳選速報（PF 3.01）をLINEへ自動配信します</span>
             </div>
         </div>
         """, unsafe_allow_html=True)
@@ -9079,7 +9079,7 @@ else:
     <div style="background: rgba(6, 199, 85, 0.08); border: 1px solid rgba(6, 199, 85, 0.25); border-radius: 9999px; padding: 5px 14px; margin-top: 8px; font-size: 0.8rem; display: inline-flex; align-items: center; gap: 8px;">
         {LINE_OFFICIAL_SVG_GREEN}
         <b style="color: #06c755;">LINE連携中</b>
-        <span style="opacity: 0.75; font-size: 0.76rem;">（毎朝10:00のスナイパー急騰通知を受信中）</span>
+        <span style="opacity: 0.75; font-size: 0.76rem;">（毎朝10:00のクオンツ厳選通知を受信中）</span>
     </div>
     """, unsafe_allow_html=True)
 
@@ -9225,7 +9225,7 @@ def apply_preset(preset_name):
     st.session_state["active_preset"] = preset_name
     presets_inv = {
         "カスタム設定": "⚙️ カスタム設定",
-        "超高勝率スナイプ": "🎯 超高勝率スナイプ (80d/15d/+7%・PF 2.83)",
+        "超高勝率スナイプ": "📊 中短期リバウンド (80d/15d/+7%・PF 2.83)",
         "大化け成長株": "🚀 大化け成長株狙い",
         "高配当割安株": "💰 高配当＆バリュー割安株",
         "逆張り・大底打ち": "🔄 逆張り・大底打ち狙い",
@@ -9585,7 +9585,7 @@ with tab_screen:
             st.markdown("**💡 スクリーニング・プリセット選択**")
             presets = {
                 "⚙️ カスタム設定": "カスタム設定",
-                "🎯 超高勝率スナイプ (80d/15d/+7%・PF 2.83)": "超高勝率スナイプ",
+                "📊 中短期リバウンド (80d/15d/+7%・PF 2.83)": "超高勝率スナイプ",
                 "🚀 大化け成長株 (CANSLIM風)": "大化け成長株",
                 "💰 高配当割安株": "高配当割安株",
                 "🔄 逆張り・大底打ち狙い": "逆張り・大底打ち",
@@ -9720,7 +9720,7 @@ with tab_screen:
                     apply_preset("カスタム設定")
                     st.rerun()
             with col_p2:
-                if st.button("🎯 超高勝率スナイプ", key="btn_preset_sniper", use_container_width=True, type="primary" if curr_preset == "超高勝率スナイプ" else "secondary"):
+                if st.button("📊 中短期リバウンド", key="btn_preset_sniper", use_container_width=True, type="primary" if curr_preset == "超高勝率スナイプ" else "secondary"):
                     apply_preset("超高勝率スナイプ")
                     st.rerun()
             with col_p3:
@@ -10061,7 +10061,7 @@ with tab_screen:
                                 'ティッカー': ticker,
                                 '銘柄名': display_name,
                                 '総合スコア (10点)': total_score,
-                                'チャート形状': f"🎯 スナイパー合致 (勝率{s.get('win_rate', 80):.0f}%/平均+{s['avg_ret']:.1f}%)" if is_golden_sniper else f"🔍 類似連動合致 (勝率{s.get('win_rate', 80):.0f}%/平均+{s['avg_ret']:.1f}%)",
+                                'チャート形状': f"📊 クオンツ合致 (勝率{s.get('win_rate', 80):.0f}%/平均+{s['avg_ret']:.1f}%)" if is_golden_sniper else f"🔍 類似連動合致 (勝率{s.get('win_rate', 80):.0f}%/平均+{s['avg_ret']:.1f}%)",
                                 'テクニカルスコア (3点)': tech_score,
                                 'ファンダスコア (7点)': fund_score,
                                 '株価': float(metrics['price']) if metrics.get('price') is not None else float(s.get('last_price', 0.0)),
@@ -10074,7 +10074,7 @@ with tab_screen:
                                 '配当利回り (%)': float(metrics['dividend_yield']) if metrics.get('dividend_yield') is not None else None,
                                 '優待利回り (%)': float(y_yield_val) if (y_has and y_yield_val > 0) else (0.0 if y_has else None),
                                 '株主優待': (", ".join(y_cats[:2])) if y_has else 'なし',
-                                'テーマ/タグ': "🎯 急騰スナイパー候補, 東証プライム, PBR割安" if is_golden_sniper else f"🔍 類似連動（照合{n_m}日/保有{f_d}日）, 東証プライム",
+                                'テーマ/タグ': "📊 クオンツ厳選候補, 東証プライム, PBR割安" if is_golden_sniper else f"🔍 類似連動（照合{n_m}日/保有{f_d}日）, 東証プライム",
                                 'raw_data': analysis
                             })
                             

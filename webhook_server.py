@@ -336,11 +336,11 @@ def build_premium_sniper_msg(sniped_stocks, user_name="会員", n_match=80, futu
     short_hits = [s for s in sniped_stocks if s.get("hold_days", 15) <= 5 or s.get("strategy_key") == "short"]
     main_hits = [s for s in sniped_stocks if s.get("hold_days", 15) > 5 or s.get("strategy_key") == "main"]
     
-    msg = f"【ZenStock スナイパーシグナル】\n{user_name} 様\n\n"
+    msg = f"【ZenStock クオンツ厳選シグナル】\n{user_name} 様\n\n"
     msg += "東証プライム / PBR 1.0倍未満 / DTW動的時間伸縮判定\n\n"
     
-    # 1. 超短期スナイパー
-    msg += "■ 超短期戦略（50d / 5d / +8.0% | PF 3.01）\n"
+    # 1. 高回転モメンタム戦略
+    msg += "■ 高回転モメンタム戦略（Alpha-Momentum 5D | PF 3.01）\n"
     msg += "※ 5営業日保有・資本回転重視（全165設定中PF第1位）\n"
     msg += "─────────────────\n"
     if short_hits:
@@ -361,13 +361,13 @@ def build_premium_sniper_msg(sniped_stocks, user_name="会員", n_match=80, futu
             msg += f"  ・損切りライン: -4.5%（下落リスク限定）\n"
             msg += "─────────────────\n"
     else:
-        msg += "本日、超短期スナイプ条件に該当する銘柄はありません。\n"
+        msg += "本日、高回転モメンタム条件に該当する銘柄はありません。\n"
         msg += "─────────────────\n"
         
     msg += "\n"
     
-    # 2. 本命スイング
-    msg += "■ 本命スイング（80d / 15d / +7.0% | PF 2.83）\n"
+    # 2. 中短期リバウンド戦略
+    msg += "■ 中短期リバウンド戦略（Core-Rebound 15D | PF 2.83）\n"
     msg += "※ 15営業日保有・中期底打ち反発（安定型・勝率60.2%）\n"
     msg += "─────────────────\n"
     if main_hits:
@@ -388,12 +388,12 @@ def build_premium_sniper_msg(sniped_stocks, user_name="会員", n_match=80, futu
             msg += f"  ・損切りライン: -4.5%（下落リスク限定）\n"
             msg += "─────────────────\n"
     else:
-        msg += "本日、本命スイング条件に該当する銘柄はありません。\n"
+        msg += "本日、中短期リバウンド条件に該当する銘柄はありません。\n"
         msg += "─────────────────\n"
         
     msg += "\n[戦略条件]\n"
-    msg += "・超短期: 照合50日 / 保有5日 / 目標+8.0% (勝率60.0% / PF 3.01)\n"
-    msg += "・本命: 照合80日 / 保有15日 / 目標+7.0% (勝率60.2% / PF 2.83)\n"
+    msg += "・高回転モメンタム: 照合50日 / 保有5日 / 目標+8.0% (勝率60.0% / PF 3.01)\n"
+    msg += "・中短期リバウンド: 照合80日 / 保有15日 / 目標+7.0% (勝率60.2% / PF 2.83)\n"
     msg += "・全戦略共通: -4.5% 逆指値損切り徹底\n\n"
     msg += "Webアプリ（波形照合・シミュレーション）:\n"
     msg += "https://stock-screener-app-crrzltcyekqdt7uulhgpaa.streamlit.app/"
@@ -403,10 +403,10 @@ def build_free_sniper_msg(sniped_stocks, user_name="会員", n_match=80, future_
     short_hits = [s for s in sniped_stocks if s.get("hold_days", 15) <= 5 or s.get("strategy_key") == "short"]
     main_hits = [s for s in sniped_stocks if s.get("hold_days", 15) > 5 or s.get("strategy_key") == "main"]
     
-    msg = f"【ZenStock スナイパー速報（無料版）】\n{user_name} 様\n\n"
+    msg = f"【ZenStock クオンツ速報（無料版）】\n{user_name} 様\n\n"
     msg += f"本日、厳選基準を満たす銘柄を計 {len(sniped_stocks)}件 検知しました。\n"
-    msg += f"・超短期 (50d/5d/+8.0% | PF 3.01): {len(short_hits)}件\n"
-    msg += f"・本命スイング (80d/15d/+7.0% | PF 2.83): {len(main_hits)}件\n"
+    msg += f"・高回転モメンタム (50d/5d/+8.0% | PF 3.01): {len(short_hits)}件\n"
+    msg += f"・中短期リバウンド (80d/15d/+7.0% | PF 2.83): {len(main_hits)}件\n"
     msg += "─────────────────\n"
     for i, s in enumerate(sniped_stocks, 1):
         pbr_disp = f"{s['pbr']:.2f}倍" if s.get('pbr') is not None else "---"
@@ -416,7 +416,7 @@ def build_free_sniper_msg(sniped_stocks, user_name="会員", n_match=80, future_
             p_bracket = f"{int(price // 500 * 500):,}円〜{int((price // 500 + 1) * 500):,}円台"
         else:
             p_bracket = "プライム価格帯"
-        strat_disp = s.get('strategy_name', '本命スイング')
+        strat_disp = s.get('strategy_name', '中短期リバウンド')
         msg += f"【銘柄候補 #{i}】[プレミアム限定 / {strat_disp}]\n"
         msg += f"【業種】{sector_str}\n"
         msg += f"【株価帯】{p_bracket}\n"
@@ -469,10 +469,10 @@ def broadcast_morning_sniper_routine(force=False):
                 p_msg = build_free_sniper_msg(sniped_stocks, user_name=uname)
         else:
             p_msg = (
-                f"【ZenStock スナイパーシグナル】\n{uname} 様\n\n"
+                f"【ZenStock クオンツ厳選シグナル】\n{uname} 様\n\n"
                 f"本日、東証プライム・PBR 1.0倍未満の厳選基準を満たす銘柄はありません。\n"
-                f"・超短期 (50d/5d/+8.0% | PF 3.01): 0件\n"
-                f"・本命スイング (80d/15d/+7.0% | PF 2.83): 0件\n\n"
+                f"・高回転モメンタム (50d/5d/+8.0% | PF 3.01): 0件\n"
+                f"・中短期リバウンド (80d/15d/+7.0% | PF 2.83): 0件\n\n"
                 f"※ 投資規律に基づき、優位性のない日はエントリーを見送ります。"
             )
 
@@ -481,6 +481,18 @@ def broadcast_morning_sniper_routine(force=False):
             sent_count += 1
         time.sleep(0.3)
     add_log(f"✅ [MORNING ROUTINE] Delivered to {sent_count} subscribers successfully (Tier-separated)!")
+    
+    # Optional Twitter (X) automated broadcast
+    try:
+        import twitter_bot
+        t_res = twitter_bot.post_morning_tweet(sniped_stocks, latest_market_date=latest_date)
+        if t_res.get("status") == "success":
+            add_log(f"🐦 [TWITTER] Posted morning quant signal tweet (ID: {t_res.get('tweet_id')})")
+        elif t_res.get("status") == "error":
+            add_log(f"⚠️ [TWITTER] Tweet error: {t_res.get('response') or t_res.get('message')}")
+    except Exception as te:
+        add_log(f"⚠️ [TWITTER] Failed to post tweet: {te}")
+
     return sent_count, f"{sent_count}名に朝の通知を配信しました。"
 
 def broadcast_noon_exit_routine(force=False, test_user_id=None):
@@ -545,6 +557,13 @@ def broadcast_noon_exit_routine(force=False, test_user_id=None):
     # Mark positions as exited unless this was just a simulation test
     if not test_user_id and due_items and not is_simulated:
         spm.mark_positions_as_exited(due_items)
+        try:
+            import twitter_bot
+            t_res = twitter_bot.post_noon_exit_tweet(due_items)
+            if t_res.get("status") == "success":
+                add_log(f"🐦 [TWITTER] Posted noon exit tweet (ID: {t_res.get('tweet_id')})")
+        except Exception as te:
+            add_log(f"⚠️ [TWITTER] Failed to post noon exit tweet: {te}")
         
     add_log(f"✅ [NOON EXIT ROUTINE] Delivered noon exit signals to {sent_count} subscribers!")
     return sent_count, f"{sent_count}名に売却シグナル通知を配信しました。"
@@ -575,10 +594,10 @@ def run_and_push_sniper_for_user(target_user_id: str, match_days: int = 80, hold
     else:
         if is_dual:
             msg = (
-                f"【ZenStock スキャナー結果】\n{uname} 様\n─────────────────\n"
+                f"【ZenStock クオンツ解析結果】\n{uname} 様\n─────────────────\n"
                 f"本日、東証プライム全銘柄中、厳格な条件を満たす銘柄はありません。\n\n"
-                f"・超短期 (50d/5d/+8.0% | PF 3.01): 0件\n"
-                f"・本命スイング (80d/15d/+7.0% | PF 2.83): 0件\n"
+                f"・高回転モメンタム (50d/5d/+8.0% | PF 3.01): 0件\n"
+                f"・中短期リバウンド (80d/15d/+7.0% | PF 2.83): 0件\n"
                 f"・PBR条件: {pbr_label}\n"
                 f"─────────────────\n"
                 f"※ 投資規律に基づき、優位性のない日はエントリーを見送ります。"
@@ -1075,9 +1094,9 @@ async def stripe_webhook(request: Request):
                 save_user_preference(target_line_uid, {"tier": "premium"})
                 send_line_message(
                     "🎉 プレミアムプランへのご登録ありがとうございます！\n\n"
-                    "👑 PCアプリ（過去チャート無制限練習・類似連動全解放）および\n"
-                    "📱 毎朝のスナイパー急騰速報（銘柄名フル開示）がすべてアンロックされました！\n\n"
-                    "平日の毎朝10:00に、条件合致した銘柄名を完全開示でお届けします。お楽しみに！🎯",
+                    "👑 PCアプリ（過去チャート無制限検証・類似連動全解放）および\n"
+                    "📱 毎朝のクオンツ厳選速報（銘柄名フル開示）がすべてアンロックされました！\n\n"
+                    "平日の毎朝10:00に、条件合致した銘柄名を完全開示でお届けします。お楽しみに！",
                     target_user_id=target_line_uid
                 )
 
@@ -1155,9 +1174,9 @@ async def line_webhook(request: Request, background_tasks: BackgroundTasks, x_li
                 user_name = profile.get("displayName") or "知人"
                 save_user_preference(user_id, {}, name=user_name)
             welcome_msg = (
-                f"こんにちは、{user_name}さん！🎯\n"
-                f"ZenStock スナイパーBotへようこそ。\n\n"
-                f"平日の毎朝 10:00 に、東証プライム全社から過去5年勝率72.7%・超過α+1.99%を誇る【神シグナル銘柄】を自動配信します。\n\n"
+                f"こんにちは、{user_name}さん！\n"
+                f"ZenStock クオンツ厳選Botへようこそ。\n\n"
+                f"平日の毎朝 10:00 に、東証プライム全社からバックテストPF 3.01を誇る【クオンツ厳選銘柄】を自動配信します。\n\n"
                 f"「スキャン」と送信すると、今すぐリアルタイムスクリーニングも実行できます！"
             )
             if reply_token:
@@ -1287,7 +1306,7 @@ async def line_webhook(request: Request, background_tasks: BackgroundTasks, x_li
                     continue
                 tier_label = "👑 プレミアム会員" if res.get("tier") == "premium" else "🌱 無料会員"
                 tier_desc = (
-                    "Webアプリのプレミアム権限とLINEが同期されました！\n平日の毎朝10:00に、スナイパー急騰銘柄（銘柄名フル開示）をお届けします🎯"
+                    "Webアプリのプレミアム権限とLINEが同期されました！\n平日の毎朝10:00に、クオンツ厳選銘柄（銘柄名フル開示）をお届けします。"
                     if res.get("tier") == "premium" else
                     "WebアカウントとLINEが正常にペアリングされました。\nWebアプリでプレミアムに加入されると、LINE側も自動で銘柄名フル開示に昇格します！"
                 )
@@ -1344,17 +1363,17 @@ async def line_webhook(request: Request, background_tasks: BackgroundTasks, x_li
             # Send immediate reply
             if is_dual:
                 reply_text = (
-                    f"【ZenStock】スキャンを開始しました\n"
+                    f"【ZenStock】デュアル・クオンツ分析を開始しました\n"
                     f"─────────────────\n"
-                    f"・超短期: 照合50日 / 保有5日 / +8.0% (PF 3.01)\n"
-                    f"・本命: 照合80日 / 保有15日 / +7.0% (PF 2.83)\n"
+                    f"・高回転モメンタム: 照合50日 / 保有5日 / +8.0% (PF 3.01)\n"
+                    f"・中短期リバウンド: 照合80日 / 保有15日 / +7.0% (PF 2.83)\n"
                     f"・対象: 東証プライム / {pbr_label}\n"
                     f"─────────────────\n"
                     f"解析結果をお届けします。"
                 )
             else:
                 reply_text = (
-                    f"【ZenStock】スキャンを開始しました\n"
+                    f"【ZenStock】クオンツ分析を開始しました\n"
                     f"─────────────────\n"
                     f"・照合期間: {match_days}日\n"
                     f"・保有期間: {hold_days}日\n"
@@ -1413,8 +1432,8 @@ async def line_webhook(request: Request, background_tasks: BackgroundTasks, x_li
         elif any(k in text for k in ["設定", "条件", "スライダー", "メニュー", "ヘルプ", "開く"]):
             liff_link = f"https://liff.line.me/{LINE_LIFF_ID}" if LINE_LIFF_ID else "https://YOUR_SERVER_URL/liff"
             reply_text = (
-                f"🎯【ZenStock スナイパー設定】\n\n"
-                f"下のリンクからスライダーを動かして、自分好みの条件設定＆即時スキャンができます👇\n\n"
+                f"【ZenStock クオンツ条件設定】\n\n"
+                f"下のリンクからスライダーを動かして、自分好みの条件設定＆即時分析ができます👇\n\n"
                 f"{liff_link}\n\n"
                 f"💡 操作可能な項目:\n"
                 f"・照合期間（10〜120日）\n"
@@ -1429,9 +1448,9 @@ async def line_webhook(request: Request, background_tasks: BackgroundTasks, x_li
         else:
             liff_link = f"https://liff.line.me/{LINE_LIFF_ID}" if LINE_LIFF_ID else "https://YOUR_SERVER_URL/liff"
             reply_text = (
-                f"こんにちは！ZenStock スナイパーBotです🎯\n\n"
-                f"「スキャン」と送信すると、東証プライム全社から勝率72.7%・超過α+1.99%の神シグナル銘柄を即座にスキャンします。\n\n"
-                f"条件を自由に変更したい場合は「設定」と送るか、以下からスライダーを開いてください👇\n"
+                f"こんにちは！ZenStock クオンツ厳選Botです。\n\n"
+                f"「スキャン」と送信すると、東証プライム全社から期待値の高いクオンツ厳選銘柄を即座に解析します。\n\n"
+                f"条件を自由に変更したい場合は「設定」と送るか、以下から設定画面を開いてください👇\n"
                 f"{liff_link}"
             )
             reply_line_message(reply_token, reply_text)

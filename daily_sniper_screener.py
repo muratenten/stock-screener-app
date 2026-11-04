@@ -344,7 +344,7 @@ def scan_target_patterns(
     future_day,
     thresh,
     strategy_key="main",
-    strategy_name="本命スイング",
+    strategy_name="中短期リバウンド",
     use_dtw=True,
     dtw_window=5,
     latest_market_date="---"
@@ -474,11 +474,11 @@ def scan_target_patterns(
 
 def build_dual_sniper_line_message(short_hits, main_hits, latest_market_date="---"):
     """Compose structured LINE push message containing both 50d5d8% and 80d15d7% in a clean, minimal design."""
-    msg = "【ZenStock スナイパーシグナル】\n"
+    msg = "【ZenStock クオンツ厳選シグナル】\n"
     msg += "東証プライム / PBR 1.0倍未満 / DTW動的時間伸縮判定\n\n"
     
-    # Section 1: 超短期スナイパー (50d / 5d / +8.0%)
-    msg += "■ 超短期戦略（50d / 5d / +8.0% | PF 3.01）\n"
+    # Section 1: 高回転モメンタム戦略 (50d / 5d / +8.0%)
+    msg += "■ 高回転モメンタム戦略（Alpha-Momentum 5D | PF 3.01）\n"
     msg += "※ 5営業日保有・資本回転重視（全165設定中PF第1位）\n"
     msg += "─────────────────\n"
     if short_hits:
@@ -498,13 +498,13 @@ def build_dual_sniper_line_message(short_hits, main_hits, latest_market_date="--
             msg += f"  ・損切りライン: -4.5%（下落リスク限定）\n"
             msg += "─────────────────\n"
     else:
-        msg += "本日、超短期スナイプ条件に該当する銘柄はありません。\n"
+        msg += "本日、高回転モメンタム条件に該当する銘柄はありません。\n"
         msg += "─────────────────\n"
         
     msg += "\n"
     
-    # Section 2: 本命スイング (80d / 15d / +7.0%)
-    msg += "■ 本命スイング（80d / 15d / +7.0% | PF 2.83）\n"
+    # Section 2: 中短期リバウンド戦略 (80d / 15d / +7.0%)
+    msg += "■ 中短期リバウンド戦略（Core-Rebound 15D | PF 2.83）\n"
     msg += "※ 15営業日保有・中期底打ち反発（安定型・勝率60.2%）\n"
     msg += "─────────────────\n"
     if main_hits:
@@ -524,13 +524,13 @@ def build_dual_sniper_line_message(short_hits, main_hits, latest_market_date="--
             msg += f"  ・損切りライン: -4.5%（下落リスク限定）\n"
             msg += "─────────────────\n"
     else:
-        msg += "本日、本命スイング条件に該当する銘柄はありません。\n"
+        msg += "本日、中短期リバウンド条件に該当する銘柄はありません。\n"
         msg += "─────────────────\n"
         
     msg += "\n[戦略概要]\n"
     msg += f"・基準日: {latest_market_date}\n"
-    msg += "・超短期: 照合50日 / 保有5日 / 目標+8.0% (勝率60.0% / PF 3.01)\n"
-    msg += "・本命: 照合80日 / 保有15日 / 目標+7.0% (勝率60.2% / PF 2.83)\n"
+    msg += "・高回転モメンタム: 照合50日 / 保有5日 / 目標+8.0% (勝率60.0% / PF 3.01)\n"
+    msg += "・中短期リバウンド: 照合80日 / 保有15日 / 目標+7.0% (勝率60.2% / PF 2.83)\n"
     msg += "・全戦略共通: -4.5% 逆指値損切り徹底\n"
     return msg.strip()
 
@@ -595,13 +595,13 @@ def run_sniper_screening(
         short_hits = scan_target_patterns(
             targets, stock_data,
             n_match=50, future_day=5, thresh=8.0,
-            strategy_key="short", strategy_name="超短期スナイパー (50d/5d/+8%)",
+            strategy_key="short", strategy_name="高回転モメンタム (50d/5d/+8%)",
             use_dtw=use_dtw, dtw_window=dtw_window, latest_market_date=latest_market_date
         )
         main_hits = scan_target_patterns(
             targets, stock_data,
             n_match=80, future_day=15, thresh=7.0,
-            strategy_key="main", strategy_name="本命スイング (80d/15d/+7%)",
+            strategy_key="main", strategy_name="中短期リバウンド (80d/15d/+7%)",
             use_dtw=use_dtw, dtw_window=dtw_window, latest_market_date=latest_market_date
         )
         sniped_stocks = short_hits + main_hits
@@ -628,7 +628,7 @@ def run_sniper_screening(
         if dual_mode:
             result_message = build_dual_sniper_line_message(short_hits, main_hits, latest_market_date=latest_market_date)
         else:
-            msg = f"【ZenStock スナイパーシグナル】\n\n"
+            msg = f"【ZenStock クオンツ厳選シグナル】\n\n"
             msg += f"設定条件（{n_match}d / {future_day}d / +{thresh:.1f}%）\n"
             msg += "東証プライム / PBR 1.0倍未満 / DTW動的時間伸縮判定\n"
             msg += "─────────────────\n"
@@ -659,8 +659,8 @@ def run_sniper_screening(
                 f"【ZenStock スキャナー結果】\n─────────────────\n"
                 f"データ基準日: {latest_market_date}\n"
                 f"東証プライム全銘柄中、厳格な条件を満たす銘柄はありません。\n\n"
-                f"・超短期 (50d/5d/+8.0% | PF 3.01): 0件\n"
-                f"・本命スイング (80d/15d/+7.0% | PF 2.83): 0件\n"
+                f"・高回転モメンタム (50d/5d/+8.0% | PF 3.01): 0件\n"
+                f"・中短期リバウンド (80d/15d/+7.0% | PF 2.83): 0件\n"
                 f"─────────────────\n"
                 f"※ 投資規律に基づき、優位性のない日はエントリーを見送ります。"
             )
