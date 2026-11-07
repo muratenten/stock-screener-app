@@ -1,7 +1,7 @@
 {
   "metadata": {
-    "last_updated": "2026-11-01 06:15:37",
-    "total_tickers": 1326,
+    "last_updated": "2026-11-08 06:38:57",
+    "total_tickers": 1327,
     "version": "1.0"
   },
   "data": {
@@ -24,7 +24,7 @@
       "eps_growth": null,
       "sector": "Consumer Cyclical",
       "industry": "Residential Construction",
-      "market_cap": 76818620416.0
+      "market_cap": 75775041536.0
     },
     "1414.T": {
       "ticker": "1414.T",
@@ -45,70 +45,70 @@
       "eps_growth": 7.9,
       "sector": "Industrials",
       "industry": "Engineering & Construction",
-      "market_cap": 250665697280.0
+      "market_cap": 250966491136.0
     },
     "1301.T": {
       "ticker": "1301.T",
       "name": "Kyokuyo Co., Ltd.",
-      "eps": 606.17,
-      "bps": 6660.76,
+      "eps": 605.94,
+      "bps": 6832.4,
       "dps": 160.0,
       "dividend_yield": null,
       "per": null,
       "pbr": null,
-      "roe": 9.178001,
-      "op_margin": 3.5439998,
-      "net_income": 7317000192.0,
-      "total_cash": 8175000064.0,
-      "total_debt": 91937996800.0,
-      "debt_to_equity": 114.96,
-      "rev_growth": 13.5,
-      "eps_growth": 28.499999999999996,
+      "roe": 8.9779995,
+      "op_margin": 2.6919998,
+      "net_income": 7222000128.0,
+      "total_cash": 7263000064.0,
+      "total_debt": 98715000832.0,
+      "debt_to_equity": 120.273,
+      "rev_growth": 9.4,
+      "eps_growth": -8.4,
       "sector": "Consumer Defensive",
       "industry": "Packaged Foods",
-      "market_cap": 54172237824.0
+      "market_cap": 52033859584.0
     },
     "1332.T": {
       "ticker": "1332.T",
       "name": "Nissui Corporation",
-      "eps": 95.62,
-      "bps": 1007.71,
+      "eps": 95.61,
+      "bps": 1033.68,
       "dps": 32.0,
       "dividend_yield": null,
       "per": null,
       "pbr": null,
-      "roe": 10.2589995,
-      "op_margin": 4.8340000000000005,
-      "net_income": 28448000000.0,
-      "total_cash": 30267000832.0,
-      "total_debt": 300739985408.0,
-      "debt_to_equity": 95.197,
-      "rev_growth": 14.099999999999998,
-      "eps_growth": 17.2,
+      "roe": 9.49,
+      "op_margin": 3.5020000000000002,
+      "net_income": 26781999104.0,
+      "total_cash": 13610000384.0,
+      "total_debt": 292647993344.0,
+      "debt_to_equity": 90.266,
+      "rev_growth": 9.700000000000001,
+      "eps_growth": -21.4,
       "sector": "Consumer Defensive",
       "industry": "Packaged Foods",
-      "market_cap": 336935944192.0
+      "market_cap": 309943828480.0
     },
     "1375.T": {
       "ticker": "1375.T",
       "name": "Yukiguni Factory Co., Ltd.",
-      "eps": 63.7,
-      "bps": 343.83,
+      "eps": 63.69,
+      "bps": 376.83,
       "dps": 20.0,
       "dividend_yield": null,
       "per": null,
       "pbr": null,
-      "roe": 26.201,
-      "op_margin": -5.4229997,
-      "net_income": 3288000000.0,
-      "total_cash": 1976000000.0,
-      "total_debt": 15662000128.0,
-      "debt_to_equity": 114.213,
-      "rev_growth": 9.6,
-      "eps_growth": null,
+      "roe": 28.775000000000002,
+      "op_margin": 14.078,
+      "net_income": 3899000064.0,
+      "total_cash": 1356999936.0,
+      "total_debt": 16385999872.0,
+      "debt_to_equity": 108.971,
+      "rev_growth": 24.2,
+      "eps_growth": 85.2,
       "sector": "Consumer Defensive",
       "industry": "Packaged Foods",
-      "market_cap": 44987826176.0
+      "market_cap": 44828295168.0
     },
     "1605.T": {
       "ticker": "1605.T",
@@ -129,7 +129,7 @@
       "eps_growth": 62.9,
       "sector": "Energy",
       "industry": "Oil & Gas E&P",
-      "market_cap": 4673050771456.0
+      "market_cap": 3923523141632.0
     },
     "1720.T": {
       "ticker": "1720.T",
@@ -150,7 +150,7 @@
       "eps_growth": 36.5,
       "sector": "Industrials",
       "industry": "Engineering & Construction",
-      "market_cap": 126571380736.0
+      "market_cap": 123808276480.0
     },
     "1417.T": {
       "ticker": "1417.T",
@@ -171,7 +171,7 @@
       "eps_growth": null,
       "sector": "Industrials",
       "industry": "Engineering & Construction",
-      "market_cap": 286508843008.0
+      "market_cap": 265260154880.0
     },
     "1662.T": {
       "ticker": "1662.T",
@@ -192,7 +192,7 @@
       "eps_growth": -79.4,
       "sector": "Energy",
       "industry": "Oil & Gas E&P",
-      "market_cap": 447230771200.0
+      "market_cap": 372396752896.0
     },
     "1518.T": {
       "ticker": "1518.T",
@@ -211,9 +211,9 @@
       "debt_to_equity": 89.07,
       "rev_growth": 15.2,
       "eps_growth": 76.2,
-      "sector": "Energy",
-      "industry": "Thermal Coal",
-      "market_cap": 83201826816.0
+      "sector": "Industrials",
+      "industry": "Conglomerates",
+      "market_cap": 78832525312.0
     },
     "1377.T": {
       "ticker": "1377.T",
@@ -234,7 +234,7 @@
       "eps_growth": -37.0,
       "sector": "Consumer Defensive",
       "industry": "Farm Products",
-      "market_cap": 176706338816.0
+      "market_cap": 177126080512.0
     },
     "1663.T": {
       "ticker": "1663.T",
@@ -255,49 +255,49 @@
       "eps_growth": -9.0,
       "sector": "Utilities",
       "industry": "Utilities - Regulated Gas",
-      "market_cap": 99524943872.0
+      "market_cap": 92259573760.0
     },
     "1515.T": {
       "ticker": "1515.T",
       "name": "Nittetsu Mining Co., Ltd.",
-      "eps": 153.72,
-      "bps": 2040.74,
+      "eps": 187.07,
+      "bps": 2123.38,
       "dps": 62.0,
       "dividend_yield": null,
       "per": null,
       "pbr": null,
-      "roe": 11.096,
-      "op_margin": 8.863,
-      "net_income": 15518000128.0,
-      "total_cash": 39586000896.0,
-      "total_debt": 70626000896.0,
-      "debt_to_equity": 41.877,
-      "rev_growth": 24.4,
-      "eps_growth": 46.2,
+      "roe": 10.5550006,
+      "op_margin": 6.143,
+      "net_income": 15016999936.0,
+      "total_cash": 33866000384.0,
+      "total_debt": 77076996096.0,
+      "debt_to_equity": 44.555,
+      "rev_growth": 19.1,
+      "eps_growth": -13.200000000000001,
       "sector": "Basic Materials",
       "industry": "Copper",
-      "market_cap": 207996338176.0
+      "market_cap": 201236119552.0
     },
     "1721.T": {
       "ticker": "1721.T",
       "name": "COMSYS Holdings Corporation",
-      "eps": 327.63,
-      "bps": 3438.13,
+      "eps": 347.52,
+      "bps": 3492.82,
       "dps": 135.0,
       "dividend_yield": null,
       "per": null,
       "pbr": null,
-      "roe": 10.163,
-      "op_margin": 7.0760004,
-      "net_income": 39052001280.0,
-      "total_cash": 71262003200.0,
-      "total_debt": 2776000000.0,
-      "debt_to_equity": 0.687,
-      "rev_growth": 8.6,
-      "eps_growth": 48.6,
+      "roe": 10.5229996,
+      "op_margin": 8.456001,
+      "net_income": 40998998016.0,
+      "total_cash": 59434999808.0,
+      "total_debt": 2800999936.0,
+      "debt_to_equity": 0.688,
+      "rev_growth": 9.4,
+      "eps_growth": 29.9,
       "sector": "Industrials",
       "industry": "Engineering & Construction",
-      "market_cap": 635229634560.0
+      "market_cap": 551111426048.0
     },
     "1762.T": {
       "ticker": "1762.T",
@@ -318,13 +318,13 @@
       "eps_growth": 309.5,
       "sector": "Industrials",
       "industry": "Engineering & Construction",
-      "market_cap": 143800270848.0
+      "market_cap": 137184763904.0
     },
     "1429.T": {
       "ticker": "1429.T",
       "name": "Nippon Aqua Co., Ltd.",
-      "eps": 61.26,
-      "bps": 350.69,
+      "eps": 61.28,
+      "bps": 366.62,
       "dps": 35.0,
       "dividend_yield": null,
       "per": null,
@@ -339,7 +339,7 @@
       "eps_growth": 5.6000000000000005,
       "sector": "Industrials",
       "industry": "Engineering & Construction",
-      "market_cap": 23991007232.0
+      "market_cap": 24280442880.0
     },
     "1719.T": {
       "ticker": "1719.T",
@@ -360,7 +360,7 @@
       "eps_growth": 34.8,
       "sector": "Industrials",
       "industry": "Engineering & Construction",
-      "market_cap": 274623823872.0
+      "market_cap": 266387456000.0
     },
     "1433.T": {
       "ticker": "1433.T",
@@ -381,7 +381,7 @@
       "eps_growth": null,
       "sector": "Industrials",
       "industry": "Engineering & Construction",
-      "market_cap": 10557032448.0
+      "market_cap": 9749730304.0
     },
     "1379.T": {
       "ticker": "1379.T",
@@ -402,7 +402,7 @@
       "eps_growth": -66.8,
       "sector": "Consumer Defensive",
       "industry": "Farm Products",
-      "market_cap": 65277169664.0
+      "market_cap": 64524333056.0
     },
     "1766.T": {
       "ticker": "1766.T",
@@ -423,7 +423,7 @@
       "eps_growth": -8.6,
       "sector": "Real Estate",
       "industry": "Real Estate Services",
-      "market_cap": 139982471168.0
+      "market_cap": 138872389632.0
     },
     "1333.T": {
       "ticker": "1333.T",
@@ -444,7 +444,7 @@
       "eps_growth": -47.199999999999996,
       "sector": "Consumer Defensive",
       "industry": "Packaged Foods",
-      "market_cap": 181873508352.0
+      "market_cap": 179832537088.0
     },
     "1786.T": {
       "ticker": "1786.T",
@@ -465,7 +465,7 @@
       "eps_growth": -70.5,
       "sector": "Industrials",
       "industry": "Engineering & Construction",
-      "market_cap": 40776445952.0
+      "market_cap": 39232860160.0
     },
     "1780.T": {
       "ticker": "1780.T",
@@ -486,7 +486,7 @@
       "eps_growth": -2.8000000000000003,
       "sector": "Industrials",
       "industry": "Engineering & Construction",
-      "market_cap": 25854052352.0
+      "market_cap": 25527246848.0
     },
     "1773.T": {
       "ticker": "1773.T",
@@ -528,7 +528,7 @@
       "eps_growth": 17.9,
       "sector": "Industrials",
       "industry": "Engineering & Construction",
-      "market_cap": 2184213299200.0
+      "market_cap": 2061816037376.0
     },
     "1833.T": {
       "ticker": "1833.T",
@@ -549,7 +549,7 @@
       "eps_growth": -7.000000000000001,
       "sector": "Industrials",
       "industry": "Engineering & Construction",
-      "market_cap": 189938630656.0
+      "market_cap": 183116644352.0
     },
     "1803.T": {
       "ticker": "1803.T",
@@ -570,7 +570,7 @@
       "eps_growth": 398.20000000000005,
       "sector": "Industrials",
       "industry": "Engineering & Construction",
-      "market_cap": 1384210235392.0
+      "market_cap": 1318948700160.0
     },
     "1808.T": {
       "ticker": "1808.T",
@@ -591,7 +591,7 @@
       "eps_growth": 73.5,
       "sector": "Consumer Cyclical",
       "industry": "Residential Construction",
-      "market_cap": 704518356992.0
+      "market_cap": 710345228288.0
     },
     "1802.T": {
       "ticker": "1802.T",
@@ -612,7 +612,7 @@
       "eps_growth": 122.30000000000001,
       "sector": "Industrials",
       "industry": "Engineering & Construction",
-      "market_cap": 2043016773632.0
+      "market_cap": 2018269593600.0
     },
     "1813.T": {
       "ticker": "1813.T",
@@ -633,28 +633,28 @@
       "eps_growth": 0.2,
       "sector": "Industrials",
       "industry": "Engineering & Construction",
-      "market_cap": 41118982144.0
+      "market_cap": 38225199104.0
     },
     "1814.T": {
       "ticker": "1814.T",
       "name": "Daisue Construction Co., Ltd.",
-      "eps": 467.15,
-      "bps": 2484.16,
+      "eps": 467.14,
+      "bps": 2642.29,
       "dps": 234.0,
       "dividend_yield": null,
       "per": null,
       "pbr": null,
-      "roe": 19.528000000000002,
-      "op_margin": 7.579,
-      "net_income": 4735000064.0,
-      "total_cash": 6141000192.0,
-      "total_debt": 5565000192.0,
-      "debt_to_equity": 21.757,
-      "rev_growth": 29.5,
-      "eps_growth": 192.70000000000002,
+      "roe": 20.442,
+      "op_margin": 9.398,
+      "net_income": 5230000128.0,
+      "total_cash": 6622000128.0,
+      "total_debt": 9077999616.0,
+      "debt_to_equity": 33.366,
+      "rev_growth": 4.3,
+      "eps_growth": 44.4,
       "sector": "Real Estate",
       "industry": "Real Estate - Development",
-      "market_cap": 40717574144.0
+      "market_cap": 37165727744.0
     },
     "1801.T": {
       "ticker": "1801.T",
@@ -675,7 +675,7 @@
       "eps_growth": 9.3,
       "sector": "Industrials",
       "industry": "Engineering & Construction",
-      "market_cap": 1815935320064.0
+      "market_cap": 1705075408896.0
     },
     "1871.T": {
       "ticker": "1871.T",
@@ -696,7 +696,7 @@
       "eps_growth": 22.0,
       "sector": "Industrials",
       "industry": "Engineering & Construction",
-      "market_cap": 108152922112.0
+      "market_cap": 103564591104.0
     },
     "1852.T": {
       "ticker": "1852.T",
@@ -717,7 +717,7 @@
       "eps_growth": 59.599999999999994,
       "sector": "Industrials",
       "industry": "Engineering & Construction",
-      "market_cap": 68925669376.0
+      "market_cap": 66568740864.0
     },
     "1879.T": {
       "ticker": "1879.T",
@@ -738,7 +738,7 @@
       "eps_growth": 4.3999999999999995,
       "sector": "Industrials",
       "industry": "Engineering & Construction",
-      "market_cap": 125109059584.0
+      "market_cap": 119728021504.0
     },
     "1887.T": {
       "ticker": "1887.T",
@@ -759,7 +759,7 @@
       "eps_growth": 21.7,
       "sector": "Industrials",
       "industry": "Engineering & Construction",
-      "market_cap": 40537006080.0
+      "market_cap": 39419842560.0
     },
     "1860.T": {
       "ticker": "1860.T",
@@ -780,7 +780,7 @@
       "eps_growth": 237.6,
       "sector": "Industrials",
       "industry": "Engineering & Construction",
-      "market_cap": 427037425664.0
+      "market_cap": 407054745600.0
     },
     "1815.T": {
       "ticker": "1815.T",
@@ -801,7 +801,7 @@
       "eps_growth": 49.9,
       "sector": "Industrials",
       "industry": "Engineering & Construction",
-      "market_cap": 58509787136.0
+      "market_cap": 56002224128.0
     },
     "1861.T": {
       "ticker": "1861.T",
@@ -822,28 +822,28 @@
       "eps_growth": 24.7,
       "sector": "Industrials",
       "industry": "Engineering & Construction",
-      "market_cap": 210724503552.0
+      "market_cap": 204606701568.0
     },
     "1878.T": {
       "ticker": "1878.T",
       "name": "Daito Trust Construction Co.,Ltd.",
       "eps": 334.25,
       "bps": 1651.26,
-      "dps": 163.0,
+      "dps": 165.0,
       "dividend_yield": null,
       "per": null,
       "pbr": null,
-      "roe": 20.658001000000002,
-      "op_margin": 8.203000000000001,
-      "net_income": 98604998656.0,
-      "total_cash": 251284996096.0,
-      "total_debt": 300824985600.0,
-      "debt_to_equity": 60.69,
-      "rev_growth": 0.4,
-      "eps_growth": -0.1,
+      "roe": 22.105,
+      "op_margin": 7.847999999999999,
+      "net_income": 113319002112.0,
+      "total_cash": 358378995712.0,
+      "total_debt": 421549998080.0,
+      "debt_to_equity": 78.322,
+      "rev_growth": 5.7,
+      "eps_growth": 59.699999999999996,
       "sector": "Real Estate",
       "industry": "Real Estate - Diversified",
-      "market_cap": 1050685276160.0
+      "market_cap": 1061110677504.0
     },
     "1882.T": {
       "ticker": "1882.T",
@@ -864,7 +864,7 @@
       "eps_growth": null,
       "sector": "Industrials",
       "industry": "Engineering & Construction",
-      "market_cap": 71350231040.0
+      "market_cap": 69727248384.0
     },
     "1820.T": {
       "ticker": "1820.T",
@@ -885,7 +885,7 @@
       "eps_growth": 182.0,
       "sector": "Industrials",
       "industry": "Engineering & Construction",
-      "market_cap": 207569666048.0
+      "market_cap": 201765453824.0
     },
     "1835.T": {
       "ticker": "1835.T",
@@ -906,7 +906,7 @@
       "eps_growth": -3.3000000000000003,
       "sector": "Industrials",
       "industry": "Engineering & Construction",
-      "market_cap": 137250111488.0
+      "market_cap": 132600479744.0
     },
     "1885.T": {
       "ticker": "1885.T",
@@ -927,7 +927,7 @@
       "eps_growth": 9.2,
       "sector": "Industrials",
       "industry": "Engineering & Construction",
-      "market_cap": 158759763968.0
+      "market_cap": 153191972864.0
     },
     "1873.T": {
       "ticker": "1873.T",
@@ -948,7 +948,7 @@
       "eps_growth": null,
       "sector": "Consumer Cyclical",
       "industry": "Residential Construction",
-      "market_cap": 12479435776.0
+      "market_cap": 12439437312.0
     },
     "1870.T": {
       "ticker": "1870.T",
@@ -969,7 +969,7 @@
       "eps_growth": 14.899999999999999,
       "sector": "Industrials",
       "industry": "Engineering & Construction",
-      "market_cap": 89817923584.0
+      "market_cap": 88047476736.0
     },
     "1888.T": {
       "ticker": "1888.T",
@@ -990,7 +990,7 @@
       "eps_growth": 10.475,
       "sector": "Industrials",
       "industry": "Engineering & Construction",
-      "market_cap": 44865757184.0
+      "market_cap": 41806729216.0
     },
     "1893.T": {
       "ticker": "1893.T",
@@ -1011,49 +1011,49 @@
       "eps_growth": 6.1,
       "sector": "Industrials",
       "industry": "Engineering & Construction",
-      "market_cap": 366026326016.0
+      "market_cap": 336965894144.0
     },
     "1898.T": {
       "ticker": "1898.T",
       "name": "Seikitokyu Kogyo Co., Ltd.",
-      "eps": 128.3,
-      "bps": 1175.75,
+      "eps": 128.25,
+      "bps": 1206.91,
       "dps": 75.0,
       "dividend_yield": null,
       "per": null,
       "pbr": null,
-      "roe": 10.673001,
-      "op_margin": 2.347,
-      "net_income": 4456999936.0,
-      "total_cash": 19369000960.0,
-      "total_debt": 6677000192.0,
-      "debt_to_equity": 15.503,
-      "rev_growth": -3.2,
-      "eps_growth": -49.6,
+      "roe": 10.586,
+      "op_margin": 7.117999999999999,
+      "net_income": 4544000000.0,
+      "total_cash": 16920999936.0,
+      "total_debt": 6652000256.0,
+      "debt_to_equity": 15.032,
+      "rev_growth": 8.6,
+      "eps_growth": 7.9,
       "sector": "Industrials",
       "industry": "Engineering & Construction",
-      "market_cap": 52017639424.0
+      "market_cap": 51028570112.0
     },
     "1899.T": {
       "ticker": "1899.T",
       "name": "Fukuda Corporation",
-      "eps": 386.95,
-      "bps": 5647.54,
+      "eps": 388.38,
+      "bps": 5802.98,
       "dps": 140.0,
       "dividend_yield": null,
       "per": null,
       "pbr": null,
-      "roe": 8.271,
-      "op_margin": 6.265999999999999,
-      "net_income": 7373000192.0,
-      "total_cash": 42557001728.0,
-      "total_debt": 851000000.0,
-      "debt_to_equity": 0.915,
-      "rev_growth": 26.200000000000003,
-      "eps_growth": 133.6,
+      "roe": 8.4910005,
+      "op_margin": 6.979,
+      "net_income": 7720000000.0,
+      "total_cash": 31914000384.0,
+      "total_debt": 1639000064.0,
+      "debt_to_equity": 1.743,
+      "rev_growth": 11.4,
+      "eps_growth": 19.8,
       "sector": "Industrials",
       "industry": "Engineering & Construction",
-      "market_cap": 78596620288.0
+      "market_cap": 74158415872.0
     },
     "1925.T": {
       "ticker": "1925.T",
@@ -1074,28 +1074,28 @@
       "eps_growth": 9.0,
       "sector": "Real Estate",
       "industry": "Real Estate - Development",
-      "market_cap": 2828201361408.0
+      "market_cap": 2830679670784.0
     },
     "1911.T": {
       "ticker": "1911.T",
       "name": "Sumitomo Forestry Co., Ltd.",
       "eps": 97.85,
-      "bps": 1785.11,
+      "bps": 1704.65,
       "dps": 50.0,
       "dividend_yield": null,
       "per": null,
       "pbr": null,
-      "roe": 10.3269994,
-      "op_margin": 4.926,
-      "net_income": 84997996544.0,
-      "total_cash": 232579006464.0,
-      "total_debt": 1598950998016.0,
-      "debt_to_equity": 128.861,
-      "rev_growth": 29.799999999999997,
-      "eps_growth": -64.3,
+      "roe": 9.431000000000001,
+      "op_margin": 5.553,
+      "net_income": 77255999488.0,
+      "total_cash": 198249005056.0,
+      "total_debt": 1659736948736.0,
+      "debt_to_equity": 140.297,
+      "rev_growth": 27.900000000000002,
+      "eps_growth": -37.9,
       "sector": "Consumer Cyclical",
       "industry": "Residential Construction",
-      "market_cap": 773835456512.0
+      "market_cap": 763104788480.0
     },
     "1934.T": {
       "ticker": "1934.T",
@@ -1116,7 +1116,7 @@
       "eps_growth": 53.800000000000004,
       "sector": "Industrials",
       "industry": "Engineering & Construction",
-      "market_cap": 170343284736.0
+      "market_cap": 157842292736.0
     },
     "1929.T": {
       "ticker": "1929.T",
@@ -1137,7 +1137,7 @@
       "eps_growth": 28.7,
       "sector": "Industrials",
       "industry": "Engineering & Construction",
-      "market_cap": 48201564160.0
+      "market_cap": 46530801664.0
     },
     "1928.T": {
       "ticker": "1928.T",
@@ -1158,7 +1158,7 @@
       "eps_growth": -2.4,
       "sector": "Consumer Cyclical",
       "industry": "Residential Construction",
-      "market_cap": 2257740627968.0
+      "market_cap": 2253201866752.0
     },
     "1926.T": {
       "ticker": "1926.T",
@@ -1179,7 +1179,7 @@
       "eps_growth": 24.9,
       "sector": "Industrials",
       "industry": "Engineering & Construction",
-      "market_cap": 153241206784.0
+      "market_cap": 145669668864.0
     },
     "1961.T": {
       "ticker": "1961.T",
@@ -1200,7 +1200,7 @@
       "eps_growth": 146.5,
       "sector": "Industrials",
       "industry": "Engineering & Construction",
-      "market_cap": 382586519552.0
+      "market_cap": 322105769984.0
     },
     "1938.T": {
       "ticker": "1938.T",
@@ -1221,28 +1221,28 @@
       "eps_growth": 21.256,
       "sector": "Industrials",
       "industry": "Engineering & Construction",
-      "market_cap": 59993706496.0
+      "market_cap": 56202280960.0
     },
     "1951.T": {
       "ticker": "1951.T",
       "name": "EXEO Group, Inc.",
-      "eps": 174.27,
-      "bps": 1687.55,
+      "eps": 174.48,
+      "bps": 1730.8,
       "dps": 80.0,
       "dividend_yield": null,
       "per": null,
       "pbr": null,
-      "roe": 10.306,
-      "op_margin": 6.865,
-      "net_income": 34265999360.0,
-      "total_cash": 67149000704.0,
-      "total_debt": 121562996736.0,
-      "debt_to_equity": 34.938,
-      "rev_growth": 12.4,
-      "eps_growth": 90.3,
+      "roe": 10.589,
+      "op_margin": 7.348000000000001,
+      "net_income": 36216000512.0,
+      "total_cash": 60114001920.0,
+      "total_debt": 120752996352.0,
+      "debt_to_equity": 33.879,
+      "rev_growth": 4.3999999999999995,
+      "eps_growth": 31.2,
       "sector": "Industrials",
       "industry": "Engineering & Construction",
-      "market_cap": 512621936640.0
+      "market_cap": 457897607168.0
     },
     "1950.T": {
       "ticker": "1950.T",
@@ -1253,17 +1253,17 @@
       "dividend_yield": null,
       "per": null,
       "pbr": null,
-      "roe": 9.199,
-      "op_margin": 3.091,
-      "net_income": 18911000576.0,
-      "total_cash": 32962000896.0,
-      "total_debt": 100000000.0,
-      "debt_to_equity": 0.045,
-      "rev_growth": 15.7,
-      "eps_growth": 144.1,
+      "roe": 10.032,
+      "op_margin": 11.560000500000001,
+      "net_income": 20700999680.0,
+      "total_cash": 26368999424.0,
+      "total_debt": 16099999744.0,
+      "debt_to_equity": 7.253,
+      "rev_growth": 14.299999999999999,
+      "eps_growth": 82.1,
       "sector": "Industrials",
       "industry": "Infrastructure Operations",
-      "market_cap": 217144229888.0
+      "market_cap": 200067497984.0
     },
     "1959.T": {
       "ticker": "1959.T",
@@ -1284,7 +1284,7 @@
       "eps_growth": 47.8,
       "sector": "Industrials",
       "industry": "Engineering & Construction",
-      "market_cap": 548548575232.0
+      "market_cap": 487645872128.0
     },
     "1944.T": {
       "ticker": "1944.T",
@@ -1295,38 +1295,38 @@
       "dividend_yield": null,
       "per": null,
       "pbr": null,
-      "roe": 14.601,
-      "op_margin": 8.376999999999999,
-      "net_income": 74976002048.0,
-      "total_cash": 224625999872.0,
-      "total_debt": 245420998656.0,
-      "debt_to_equity": 56.624,
-      "rev_growth": 14.799999999999999,
-      "eps_growth": 137.1,
+      "roe": 14.636,
+      "op_margin": 11.716999999999999,
+      "net_income": 78203002880.0,
+      "total_cash": 170220994560.0,
+      "total_debt": 229513003008.0,
+      "debt_to_equity": 50.976,
+      "rev_growth": -0.5,
+      "eps_growth": -4.9,
       "sector": "Industrials",
       "industry": "Engineering & Construction",
-      "market_cap": 969455239168.0
+      "market_cap": 877345439744.0
     },
     "1945.T": {
       "ticker": "1945.T",
       "name": "Tokyo Energy & Systems Inc.",
-      "eps": 156.93,
-      "bps": 2170.35,
+      "eps": 156.89,
+      "bps": 2193.16,
       "dps": 77.0,
       "dividend_yield": null,
       "per": null,
       "pbr": null,
-      "roe": 6.235,
-      "op_margin": 4.666,
-      "net_income": 4385999872.0,
-      "total_cash": 9000999936.0,
-      "total_debt": 17132999680.0,
-      "debt_to_equity": 23.824,
-      "rev_growth": 31.6,
-      "eps_growth": 13.4,
+      "roe": 6.563000400000001,
+      "op_margin": 7.314,
+      "net_income": 4691999744.0,
+      "total_cash": 9916000256.0,
+      "total_debt": 19431000064.0,
+      "debt_to_equity": 26.723,
+      "rev_growth": 9.1,
+      "eps_growth": 43.4,
       "sector": "Industrials",
       "industry": "Engineering & Construction",
-      "market_cap": 64016371712.0
+      "market_cap": 56362401792.0
     },
     "1963.T": {
       "ticker": "1963.T",
@@ -1347,7 +1347,7 @@
       "eps_growth": 107.2,
       "sector": "Industrials",
       "industry": "Engineering & Construction",
-      "market_cap": 511748603904.0
+      "market_cap": 472169185280.0
     },
     "1942.T": {
       "ticker": "1942.T",
@@ -1358,38 +1358,38 @@
       "dividend_yield": null,
       "per": null,
       "pbr": null,
-      "roe": 16.861999,
-      "op_margin": 12.478,
-      "net_income": 64048001024.0,
-      "total_cash": 99242000384.0,
-      "total_debt": 11706000384.0,
-      "debt_to_equity": 2.919,
-      "rev_growth": -4.5,
-      "eps_growth": 7.000000000000001,
+      "roe": 16.709,
+      "op_margin": 12.508,
+      "net_income": 66201001984.0,
+      "total_cash": 102005997568.0,
+      "total_debt": 8705999872.0,
+      "debt_to_equity": 2.089,
+      "rev_growth": 10.5,
+      "eps_growth": 18.8,
       "sector": "Industrials",
       "industry": "Engineering & Construction",
-      "market_cap": 915066126336.0
+      "market_cap": 808394686464.0
     },
     "1939.T": {
       "ticker": "1939.T",
       "name": "Yondenko Corporation",
       "eps": 166.85,
       "bps": 1533.49,
-      "dps": 84.0,
+      "dps": 100.0,
       "dividend_yield": null,
       "per": null,
       "pbr": null,
-      "roe": 12.4960005,
-      "op_margin": 11.686,
-      "net_income": 8408000000.0,
-      "total_cash": 16915999744.0,
-      "total_debt": 5039000064.0,
-      "debt_to_equity": 7.127,
-      "rev_growth": 18.9,
-      "eps_growth": 86.2,
+      "roe": 13.538,
+      "op_margin": 12.42,
+      "net_income": 9413000192.0,
+      "total_cash": 16039999488.0,
+      "total_debt": 4296999936.0,
+      "debt_to_equity": 5.906,
+      "rev_growth": 9.1,
+      "eps_growth": 42.1,
       "sector": "Industrials",
       "industry": "Engineering & Construction",
-      "market_cap": 101722079232.0
+      "market_cap": 105982197760.0
     },
     "1930.T": {
       "ticker": "1930.T",
@@ -1410,28 +1410,28 @@
       "eps_growth": 176.29999999999998,
       "sector": "Industrials",
       "industry": "Engineering & Construction",
-      "market_cap": 39933685760.0
+      "market_cap": 37210935296.0
     },
     "1941.T": {
       "ticker": "1941.T",
       "name": "Chudenko Corporation",
       "eps": 430.63,
       "bps": 4929.92,
-      "dps": 140.0,
+      "dps": 150.0,
       "dividend_yield": null,
       "per": null,
       "pbr": null,
-      "roe": 7.7649995999999994,
-      "op_margin": 10.309,
-      "net_income": 18606999552.0,
-      "total_cash": 57806999552.0,
+      "roe": 8.067001,
+      "op_margin": 14.291,
+      "net_income": 19963000832.0,
+      "total_cash": 66461999104.0,
       "total_debt": 0.0,
       "debt_to_equity": null,
-      "rev_growth": 13.3,
-      "eps_growth": 6.1,
+      "rev_growth": 9.2,
+      "eps_growth": 37.4,
       "sector": "Industrials",
       "industry": "Engineering & Construction",
-      "market_cap": 267889065984.0
+      "market_cap": 259153559552.0
     },
     "1952.T": {
       "ticker": "1952.T",
@@ -1452,7 +1452,7 @@
       "eps_growth": 73.0,
       "sector": "Industrials",
       "industry": "Building Products & Equipment",
-      "market_cap": 134510854144.0
+      "market_cap": 121210085376.0
     },
     "1946.T": {
       "ticker": "1946.T",
@@ -1463,17 +1463,17 @@
       "dividend_yield": null,
       "per": null,
       "pbr": null,
-      "roe": 12.149000000000001,
+      "roe": 12.149999000000001,
       "op_margin": 8.009,
       "net_income": 18166999040.0,
       "total_cash": 37700001792.0,
       "total_debt": 71752998912.0,
-      "debt_to_equity": 44.986,
+      "debt_to_equity": 44.987,
       "rev_growth": 0.5,
       "eps_growth": -38.7,
       "sector": "Industrials",
       "industry": "Engineering & Construction",
-      "market_cap": 167770357760.0
+      "market_cap": 154685194240.0
     },
     "1968.T": {
       "ticker": "1968.T",
@@ -1494,7 +1494,7 @@
       "eps_growth": 108.3,
       "sector": "Industrials",
       "industry": "Engineering & Construction",
-      "market_cap": 152838815744.0
+      "market_cap": 140154830848.0
     },
     "1964.T": {
       "ticker": "1964.T",
@@ -1505,17 +1505,17 @@
       "dividend_yield": null,
       "per": null,
       "pbr": null,
-      "roe": 13.771,
-      "op_margin": -3.399,
-      "net_income": 3889999872.0,
-      "total_cash": 7673999872.0,
-      "total_debt": 4835999744.0,
-      "debt_to_equity": 16.442,
-      "rev_growth": -3.5999999999999996,
-      "eps_growth": null,
+      "roe": 13.333999999999998,
+      "op_margin": 8.514,
+      "net_income": 3897999872.0,
+      "total_cash": 5714999808.0,
+      "total_debt": 4453000192.0,
+      "debt_to_equity": 14.829,
+      "rev_growth": 18.0,
+      "eps_growth": 5.800000000000001,
       "sector": "Industrials",
       "industry": "Specialty Industrial Machinery",
-      "market_cap": 25377316864.0
+      "market_cap": 24923527168.0
     },
     "1975.T": {
       "ticker": "1975.T",
@@ -1536,7 +1536,7 @@
       "eps_growth": 10.7,
       "sector": "Industrials",
       "industry": "Engineering & Construction",
-      "market_cap": 94187487232.0
+      "market_cap": 81767161856.0
     },
     "1969.T": {
       "ticker": "1969.T",
@@ -1557,7 +1557,7 @@
       "eps_growth": -28.000000000000004,
       "sector": "Industrials",
       "industry": "Building Products & Equipment",
-      "market_cap": 522404397056.0
+      "market_cap": 465479073792.0
     },
     "1976.T": {
       "ticker": "1976.T",
