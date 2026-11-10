@@ -887,31 +887,7 @@ if os.path.exists(logo_path):
         pass
 logo_data_uri = f"data:image/png;base64,{logo_b64}" if logo_b64 else ""
 
-# Prepare PWA web app manifest data URI
-manifest_data_uri = ""
-if logo_data_uri:
-    manifest_dict = {
-        "short_name": "ZenStock",
-        "name": "ZenStock - クオンツ高勝率スクリーナー",
-        "description": "東証プライム・クオンツ急騰シグナル解析ツール",
-        "icons": [
-            {
-                "src": logo_data_uri,
-                "type": "image/png",
-                "sizes": "192x192 512x512",
-                "purpose": "any maskable"
-            }
-        ],
-        "start_url": "./",
-        "background_color": "#0b0f19",
-        "theme_color": "#0b0f19",
-        "display": "standalone",
-        "orientation": "portrait-primary"
-    }
-    manifest_b64 = base64.b64encode(json.dumps(manifest_dict).encode("utf-8")).decode("utf-8")
-    manifest_data_uri = f"data:application/manifest+json;base64,{manifest_b64}"
-
-# Inject high-res favicon, apple-touch-icon, PWA manifest, and credit removal script
+# Inject high-res favicon, apple-touch-icon, and credit removal script
 if logo_data_uri:
     st.markdown(
         f"""
@@ -921,7 +897,6 @@ if logo_data_uri:
             <link rel="apple-touch-icon" sizes="180x180" href="{logo_data_uri}">
             <link rel="apple-touch-icon-precomposed" href="{logo_data_uri}">
             <link rel="shortcut icon" href="{logo_data_uri}">
-            <link rel="manifest" href="{manifest_data_uri}">
             <meta name="apple-mobile-web-app-title" content="ZenStock">
             <meta name="application-name" content="ZenStock">
             <meta name="apple-mobile-web-app-capable" content="yes">
@@ -931,6 +906,14 @@ if logo_data_uri:
         </head>
         <script>
             (function() {{
+                // If opened directly on streamlit.app (e.g. from an old shortcut), redirect to the official PWA host
+                try {{
+                    if (window.self === window.top && window.location.hostname.includes("streamlit.app")) {{
+                        window.location.replace("https://zenstock-screener.web.app" + window.location.search);
+                        return;
+                    }}
+                }} catch (e) {{}}
+
                 var targetDocs = [document];
                 try {{
                     if (window.parent && window.parent.document && window.parent.document !== document) {{
@@ -951,13 +934,6 @@ if logo_data_uri:
                             appleIcon.rel = 'apple-touch-icon';
                             appleIcon.href = "{logo_data_uri}";
                             doc.head.appendChild(appleIcon);
-                        }}
-
-                        if (!doc.querySelector("link[rel='manifest']")) {{
-                            var mLink = doc.createElement('link');
-                            mLink.rel = 'manifest';
-                            mLink.href = "{manifest_data_uri}";
-                            doc.head.appendChild(mLink);
                         }}
 
                         var metaTags = [
