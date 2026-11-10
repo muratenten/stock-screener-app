@@ -53,9 +53,12 @@
     }
 
     #stream-frame {
-      width: 100%;
-      height: 100%;
-      height: 100dvh;
+      position: absolute;
+      top: -34px;
+      left: -6px;
+      width: calc(100% + 12px);
+      height: calc(100% + 82px);
+      height: calc(100dvh + 82px);
       border: none;
       outline: none;
       display: block;
@@ -264,6 +267,11 @@
   function dismissBanner() {
     document.getElementById("ios-pwa-banner").style.display = "none";
     localStorage.setItem("zenstock_pwa_banner_dismissed", "true");
+  }
+
+  // Register service worker for first-class Android PWA installation
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/sw.js').catch(() => {});
   }
 </script>
 

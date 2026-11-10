@@ -1126,8 +1126,8 @@ st.html(f"""
         opacity: 1 !important;
         pointer-events: auto !important;
         position: fixed !important;
-        top: 14px !important;
-        left: 14px !important;
+        top: 48px !important;
+        left: 20px !important;
         z-index: 1000001 !important;
         background-color: var(--secondary-background-color, #ffffff) !important;
         color: var(--text-color, #1e293b) !important;
@@ -1171,8 +1171,8 @@ st.html(f"""
 
     /* Remove extra top margin caused by hidden header and ensure comfortable bottom space */
     .stAppViewContainer > .main {{
-        padding-top: 1.2rem !important;
-        padding-bottom: 4rem !important;
+        padding-top: 3.2rem !important;
+        padding-bottom: 5rem !important;
     }}
 
     /* CSS theme overrides on root */
@@ -7891,8 +7891,8 @@ if query_user == "default":
         opacity: 1 !important;
         pointer-events: auto !important;
         position: fixed !important;
-        top: 14px !important;
-        left: 14px !important;
+        top: 48px !important;
+        left: 20px !important;
         z-index: 1000001 !important;
         background-color: var(--secondary-background-color, #ffffff) !important;
         color: var(--text-color, #1e293b) !important;
