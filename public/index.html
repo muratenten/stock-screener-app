@@ -49,16 +49,15 @@
       top: 0;
       left: 0;
       overflow: hidden;
+      background-color: #0b0f19;
     }
 
     #stream-frame {
-      position: absolute;
-      top: 0;
-      left: 0;
       width: 100%;
-      height: calc(100% + 46px);
-      height: calc(100dvh + 46px);
+      height: 100%;
+      height: 100dvh;
       border: none;
+      outline: none;
       display: block;
       background-color: #0b0f19;
     }
@@ -219,14 +218,12 @@
   const isStandalone = window.navigator.standalone === true || 
                        window.matchMedia('(display-mode: standalone)').matches;
 
-  // Set Iframe Target URL preserving parameters
-  const BASE_APP_URL = "https://stock-screener-app-crrzltcyekqdt7uulhgpaa.streamlit.app/";
+  // Set Iframe Target URL pointing directly to the unwrapped Streamlit instance (/~/+/)
+  const BASE_APP_URL = "https://stock-screener-app-crrzltcyekqdt7uulhgpaa.streamlit.app/~/+/";
   const searchParams = window.location.search;
   let targetUrl = BASE_APP_URL;
   if (searchParams) {
-    targetUrl += searchParams.includes("embed=") ? searchParams : (searchParams + "&embed=true");
-  } else {
-    targetUrl += "?embed=true";
+    targetUrl += searchParams.startsWith("?") ? searchParams : ("?" + searchParams);
   }
 
   const iframe = document.getElementById("stream-frame");

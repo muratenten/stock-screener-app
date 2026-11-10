@@ -63,9 +63,15 @@ elif not is_dark and st.query_params.get("theme") == "dark":
 st.html(f"""
 <style>
 /* Early Global Canvas & Sidebar Background Sync (Sophisticated dark slate gray in dark mode) */
-.stApp {{
+html, body, #root, .stApp, [data-testid="stAppViewRoot"], [data-testid="stAppViewContainer"] {{
     background-color: {'#2f384b' if is_dark else '#ffffff'} !important;
     color: {'#ffffff' if is_dark else '#1e293b'} !important;
+    border: none !important;
+    border-radius: 0px !important;
+    box-shadow: none !important;
+    outline: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
 }}
 section[data-testid="stSidebar"],
 [data-testid="stSidebar"],
