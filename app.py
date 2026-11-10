@@ -1187,9 +1187,10 @@ st.html(f"""
     div[data-testid="stBottomBlockContainer"] {{display: none !important;}}
     button[title*="fullscreen" i], button[title*="View fullscreen"], button[title*="全画面" i] {{display: none !important;}}
 
-    /* Remove extra top margin caused by hidden header */
+    /* Remove extra top margin caused by hidden header and ensure comfortable bottom space */
     .stAppViewContainer > .main {{
         padding-top: 1.2rem !important;
+        padding-bottom: 4rem !important;
     }}
 
     /* CSS theme overrides on root */
