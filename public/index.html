@@ -214,6 +214,14 @@
 </div>
 
 <script>
+  // If opened inside LINE in-app browser, automatically bounce to external browser (Safari / Chrome)
+  // This enables Google OAuth, eliminates in-app warning banner, and allows adding to home screen
+  const isLine = /Line\//i.test(navigator.userAgent);
+  if (isLine && !window.location.search.includes("openExternalBrowser=1")) {
+    const sep = window.location.href.includes("?") ? "&" : "?";
+    window.location.href = window.location.href + sep + "openExternalBrowser=1";
+  }
+
   // Check if running in standalone PWA mode
   const isStandalone = window.navigator.standalone === true || 
                        window.matchMedia('(display-mode: standalone)').matches;
