@@ -4,19 +4,19 @@
   "description": "東証プライム・クオンツ急騰シグナル解析ツール",
   "icons": [
     {
-      "src": "/icon-192-v2.png",
+      "src": "/icon-192-v3.png",
       "type": "image/png",
       "sizes": "192x192",
       "purpose": "any maskable"
     },
     {
-      "src": "/apple-touch-icon-v2.png",
+      "src": "/apple-touch-icon-v3.png",
       "type": "image/png",
       "sizes": "180x180",
       "purpose": "any"
     },
     {
-      "src": "/icon-512-v2.png",
+      "src": "/icon-512-v3.png",
       "type": "image/png",
       "sizes": "512x512",
       "purpose": "any maskable"
